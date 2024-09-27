@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist"],
+  "configureWebpack": {
+    "resolve": {
+        "extensions": [".js", ".vue", ".json"]
+    }
+}
+}

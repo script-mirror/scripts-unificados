@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style_bbce.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/multi-select.css') }}">
+    <title>Produtos BBCCE</title>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-* navbar-light bg-light">
+      <a class="navbar-brand" href="#" data-toggle="collapse" data-target="#navbarSupportedContent">Selecione os produtos</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <div id='selectProdutos'>
+              
+            </div>
+
+          </li>
+          <li class="nav-item">
+            <button type="button" class="btn btn-link nav-lin" onclick="getListaProdutos()">Atualizar lista de produtos</button>
+          </li>
+
+        </ul>
+      </div>
+
+    </nav>
+
+    <!-- <h1 class>Selecione os produtos</h1> -->
+
+    
+    <div class="container" id="tabelasBBCE">
+    </div>
+
+
+    <!-- [INICIO] Modal com o spinner de loading-->
+    <div id="modalLoading" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered justify-content-center" role="document">
+            <button id="btn_spinner" class="btn btn-primary spinner_loading wx_cor" disabled>
+              <!-- <span class="spinner-grow spinner-grow-sm"></span> -->
+              Carregando
+            </button>
+        </div>
+    </div>
+    <!-- [INICIO] Modal com o spinner de loading -->
+
+
+    <!-- [INICIO] lugar onde ficarao os toasts -->
+    <div aria-live="polite" aria-atomic="true" style="min-height: 200px;">
+      <div id="toastMsgs" style="position: fixed; bottom: 1%; right: 0.5%; z-index: 999; overflow: visible !important;">
+      </div>
+    </div>
+    <!-- [FIM] lugar onde ficarao os toasts -->
+
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.js" ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://momentjs.com/downloads/moment.js"></script>
+    <script src="{{ url_for('static', filename='js/jquery.multi-select.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.quicksearch.js') }}"></script>
+    <script>
+
+    var teste;
+    var toastId = '';
+    var listaProdutos = {};
+
+
+    $(window).on('load', function(){
+
+      toastId = exibirToast('Atualização em andamento...', 'A lista de produtos esta sendo atualizada', tipo='confirmacao', tmp=0)
+
+      getListaProdutos()
+
+
+      setInterval( function() {
+        atualizarTabela()
+      }, 30*1000 );
+      
+      // configure the requesto to be sync
+      // jQuery.ajaxSetup({async:false});
+
+      // updatetable()
+
+    })
+
+
+    function atualizarTabela(){
+
+      listaIDs = $('#pre-selected-options').val()
+      if (listaIDs.length > 0){
+        console.log(listaIDs)
+        $.get("/middle/API/get/produtoInfoProdutos", {'IDs': listaIDs.join(',')}, function(resposta) {
+          console.log(typeof(resposta), resposta)
+          if (resposta == 'O maximo de request excedeu o permitido, sera feita uma nova tentativa em 30 segundos!'){
+            exibirToast('Máximo de request atingido!', resposta, tipo='alerta', tmp=5000)
+
+          }
+          else{
+            updatetable(resposta)
+          }
+        })
+      }
+    }
+
+    function getListaProdutos(){
+
+      divMultiselect = document.getElementById('selectProdutos')
+      divMultiselect.innerHTML = '';
+
+      var select_elm = document.createElement("select");
+      select_elm.id = 'pre-selected-options'
+      select_elm.setAttribute('multiple', 'multiple')
+      divMultiselect.appendChild(select_elm)
+
+      $('#pre-selected-options').multiSelect({
+        selectableHeader: "<input type='text' class='form-control-sm mb-1' style='width: 100%' autocomplete='off'>",
+        selectionHeader: "<input type='text' class='form-control-sm mb-1' style='width: 100%' autocomplete='off'>",
+        afterInit: function(ms){
+          var that = this,
+              $selectableSearch = that.$selectableUl.prev(),
+              $selectionSearch = that.$selectionUl.prev(),
+              selectableSearchString = '#'+that.$container.attr('id')+' .ms-elem-selectable:not(.ms-selected)',
+              selectionSearchString = '#'+that.$container.attr('id')+' .ms-elem-selection.ms-selected';
+
+          that.qs1 = $selectableSearch.quicksearch(selectableSearchString)
+          .on('keydown', function(e){
+            if (e.which === 40){
+              that.$selectableUl.focus();
+              return false;
+            }
+          });
+
+          that.qs2 = $selectionSearch.quicksearch(selectionSearchString)
+          .on('keydown', function(e){
+            if (e.which == 40){
+              that.$selectionUl.focus();
+              return false;
+            }
+          });
+        },
+        afterSelect: function(){
+          this.qs1.cache();
+          this.qs2.cache();
+        },
+        afterDeselect: function(){
+          this.qs1.cache();
+          this.qs2.cache();
+        }
+      });
+
+
+      // Animacao de loading do contrato
+      btn_spinner = document.getElementById("btn_spinner")
+      if (btn_spinner.getElementsByTagName('span').length == 0){
+        var spinner = document.createElement("span");
+        spinner.classList.add("spinner-grow", "spinner-grow-sm")
+        btn_spinner.appendChild(spinner)
+      }
+      $('#modalLoading').modal('show')
+
+
+      $.get("/middle/API/get/listaProdutosBbbce", function(resposta) {
+        for (let produto of resposta['model']){
+          if (produto['quantidade']>0){
+            listaProdutos[produto['id']] = produto['descricao']
+            $('#pre-selected-options').multiSelect('addOption', { value: produto['id'], text: produto['descricao']});
+          }
+
+          if (produto == resposta['model'][resposta['model'].length-1]){
+            toastId
+            atualizarToast(toastId, 'Lista de produtos atualizada', 'A lista de produtos foi atualizada com sucesso')
+            setTimeout(function(){
+              // btn_spinner.remove()
+              $('#modalLoading').modal('hide')
+            },1000);
+          }
+
+        }
+
+
+      })
+    }
+
+
+    function updatetable(data){
+
+        produtos = Object.keys(data)
+        teste = data
+        tabelasBBCE = document.getElementById("tabelasBBCE")
+
+        div = document.createElement("div");
+        div.classList.add("tableBBCE")
+        
+        table = document.createElement("table");
+        div.appendChild(table)
+        // table.setAttribute("hidden", "true")
+        table.classList.add("table", "table-bordered")
+        // table.classList.add("table", "table-bordered", "table-dark")
+        table.style.float= "left"
+
+        thead = document.createElement("thead");
+        tr = document.createElement("tr");
+        th = document.createElement("th");
+        tr.appendChild(th)
+
+        th = document.createElement("th");
+        th.colSpan = 2;
+        th.innerHTML = "Compra"
+        tr.appendChild(th)
+
+        th = document.createElement("th");
+        th.colSpan = 2;
+        th.innerHTML = "Venda"
+        tr.appendChild(th)
+
+        th = document.createElement("th");
+        th.colSpan = 2;
+        th.innerHTML = "Compra"
+        tr.appendChild(th)
+
+        th = document.createElement("th");
+        th.colSpan = 2;
+        th.innerHTML = "Venda"
+        tr.appendChild(th)
+
+        thead.appendChild(tr) 
+        table.appendChild(thead)
+
+        thead = document.createElement("thead");
+        table.appendChild(thead)
+        tr = document.createElement("tr");
+        thead.appendChild(tr)
+
+        th = document.createElement("th");
+        th.innerHTML = "Produto"
+        tr.appendChild(th)
+        
+        th = document.createElement("th");
+        th.innerHTML = "Qtd"
+        tr.appendChild(th)
+        
+        th = document.createElement("th");
+        th.innerHTML = "$"
+        tr.appendChild(th)
+
+        th = document.createElement("th");
+        th.innerHTML = "Qtd"
+        tr.appendChild(th)
+        
+        th = document.createElement("th");
+        th.innerHTML = "$"
+        tr.appendChild(th)
+
+        th = document.createElement("th");
+        th.innerHTML = "Qtd"
+        tr.appendChild(th)
+        
+        th = document.createElement("th");
+        th.innerHTML = "$"
+        tr.appendChild(th)
+
+        th = document.createElement("th");
+        th.innerHTML = "Qtd"
+        tr.appendChild(th)
+        
+        th = document.createElement("th");
+        th.innerHTML = "$"
+        tr.appendChild(th)
+
+        tbody = document.createElement("tbody");
+        table.appendChild(tbody)
+
+        tabelasBBCE = document.getElementById("tabelasBBCE")
+          while (tabelasBBCE.firstChild) {
+            tabelasBBCE.removeChild(tabelasBBCE.firstChild);
+          }
+
+
+        for (i=0; i<produtos.length; i++){
+          
+
+
+          models = data[produtos[i]]['model']
+
+          var classesColors = {0:"amarelo", 1:"wxOrdem", 2:"melhorOpt", 3:"vermelho", 4:"wxOpt"}
+
+         tr = document.createElement("tr");
+          tbody.appendChild(tr)
+
+          td = document.createElement("td");
+          // td.innerHTML = produtos[i].substring(0,produtos[i].indexOf('-')-1)
+          // td.innerHTML = listaProdutos[produtos[i]].substring(0,listaProdutos[produtos[i]].indexOf('-')-1)
+          td.innerHTML = listaProdutos[produtos[i]]
+          listaProdutos[produtos[0]]
+          // td.innerHTML = models[ii]["$id"]
+          td.classList.add("idProd")
+          tr.appendChild(td)
+
+
+          td = document.createElement("td");
+          if (models[0]["quantidadeCompra"] != 0){
+            td.innerHTML = models[0]["quantidadeCompra"]
+            td.classList.add(classesColors[models[0]["statusLimiteCompra"]])
+          }
+          tr.appendChild(td)
+
+          td = document.createElement("td");
+          if (models[0]["quantidadeCompra"] != 0){
+            td.innerHTML = "R$" + (models[0]["precoCompra"].toFixed(2)).replace(".",",")
+            td.classList.add(classesColors[models[0]["statusLimiteCompra"]])
+          }
+          tr.appendChild(td)
+
+          td = document.createElement("td");
+          if (models[0]["quantidadeVenda"] != 0){
+            td.innerHTML = models[0]["quantidadeVenda"]
+            td.classList.add(classesColors[models[0]["statusLimiteVenda"]])
+          }
+          tr.appendChild(td)
+
+          td = document.createElement("td");
+          if (models[0]["quantidadeVenda"] != 0){
+            td.innerHTML = "R$" + (models[0]["precoVenda"].toFixed(2)).replace(".",",")
+            td.classList.add(classesColors[models[0]["statusLimiteVenda"]])
+          }
+          tr.appendChild(td)
+
+          wxFlag = 0
+          for (ii=0; ii<models.length; ii++){
+            if (([2, 4]).includes(models[ii]["statusLimiteCompra"]) && models[ii]["quantidadeCompra"] != 0){
+              td = document.createElement("td");
+              td.innerHTML = models[ii]["quantidadeCompra"]
+              td.classList.add(classesColors[models[ii]["statusLimiteCompra"]])
+              tr.appendChild(td)
+
+              td = document.createElement("td");
+              td.innerHTML = "R$" + (models[ii]["precoCompra"].toFixed(2)).replace(".",",")
+              td.classList.add(classesColors[models[ii]["statusLimiteCompra"]])
+              tr.appendChild(td)
+              wxFlag = 1
+              break;
+            }
+          }
+
+          //Caso nao tenha adicionado nenhuma compra, é inserido celulas em branco
+          if (wxFlag == 0){
+              td = document.createElement("td");
+              tr.appendChild(td)
+
+              td = document.createElement("td");
+              tr.appendChild(td)
+          }
+
+          wxFlag = 0
+
+          for (ii=0; ii<models.length; ii++){
+            if (([2, 4]).includes(models[ii]["statusLimiteVenda"])&& models[ii]["quantidadeVenda"] != 0){
+              td = document.createElement("td");
+              td.innerHTML = models[ii]["quantidadeVenda"]
+              td.classList.add(classesColors[models[ii]["statusLimiteVenda"]])
+              tr.appendChild(td)
+
+              td = document.createElement("td");
+              td.innerHTML = "R$" + (models[ii]["precoVenda"].toFixed(2)).replace(".",",")
+              td.classList.add(classesColors[models[ii]["statusLimiteVenda"]])
+              tr.appendChild(td)
+              wxFlag = 1
+              break;
+            }
+          }
+
+          if (wxFlag == 0){
+              td = document.createElement("td");
+              tr.appendChild(td)
+
+              td = document.createElement("td");
+              tr.appendChild(td)
+          }
+          tabelasBBCE.appendChild(div)
+
+          if (i == produtos.length-1){
+            dt = moment();
+            atualizarToast(toastId, 'Atualização', `Ultima atualização: ${dt.format("h:mm:ss a")}`)
+          }
+        }
+    }
+
+    function generateId(){
+      return '_' + Math.random().toString(36).substr(2, 9);
+    };
+
+    function removerToast(elmId){
+      elm = document.getElementById(elmId)
+      elm.remove()
+    }
+
+    function atualizarToast(toastId, titulo, msg){
+
+      document.getElementById(toastId).getElementsByTagName('strong')[0].innerHTML = titulo
+      document.getElementById(toastId).getElementsByClassName('toast-body')[0].innerHTML = msg
+
+    }
+
+    function exibirToast(titulo, msg, tipo='', tmp=10000){
+      // titulo [str]: Titulo da mensagem a ser exibida pelo toast
+      // msg [str]: Mensagem a ser exibida pelo toast
+      // tmp [str]: tempo em milisecundos em que o toast sera exibido, default 10 seg
+      
+      toastsDiv = document.getElementById("toastMsgs")
+      var div1 = document.createElement("div");
+      var new_id = generateId()
+      div1.id = new_id
+      div1.classList.add("toast")
+      div1.setAttribute("role", "alert");
+      div1.setAttribute("aria-live", "assertive");
+      div1.setAttribute("aria-atomic", "true");
+
+      var div2 = document.createElement("div");
+      div2.classList.add("toast-header")
+      var titulo_strong = document.createElement("strong");
+      titulo_strong.classList.add("mr-auto")
+      titulo_strong.innerHTML = titulo
+
+      var btn0 = document.createElement("button");
+      btn0.classList.add("ml-2", "mb-1", "close")
+      btn0.addEventListener("click", function() { removerToast(new_id); });
+
+      var span0 = document.createElement("span");
+      span0.setAttribute("aria-hidden", "true");
+      span0.innerHTML = '&times;'
+
+      var div3 = document.createElement("div");
+      div3.classList.add("toast-body")
+      div3.innerHTML = msg
+
+      if(tipo!=''){
+        div2.classList.add(tipo)
+        div3.classList.add(tipo)
+      }
+
+      if(tmp==0){
+        div1.setAttribute("data-autohide", "false");
+      } else{
+        div1.setAttribute("data-delay", tmp);
+      }
+
+      btn0.appendChild(span0)
+      div2.appendChild(titulo_strong)
+      div2.appendChild(btn0)
+      div1.appendChild(div2)
+      div1.appendChild(div3)
+      toastsDiv.appendChild(div1)
+      $('#'+new_id).toast('show');
+      return new_id
+    }
+
+  </script>
+
+  </body>
+</html>

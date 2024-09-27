@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
+<link href="https://cdn.anychart.com/releases/8.11.0/css/anychart-ui.min.css" rel="stylesheet" type="text/css">
+<link href="https://cdn.anychart.com/releases/8.11.0/fonts/css/anychart-font.min.css" rel="stylesheet" type="text/css">
+<script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-core.min.js"></script>
+<script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-stock.min.js"></script>
+<script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-cartesian.min.js"></script>
+<script src="https://cdn.anychart.com/releases/8.11.0/themes/dark_glamour.min.js"></script>
+
+<script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-ui.min.js"></script>
+<script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-data-adapter.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/negociacoesBBCE.css') }}">
+<link href="{{ url_for('static', filename='css/modal.css') }}" rel="stylesheet">
+
+<style>
+  .chart-height {
+    height: 90vh;
+    align-self:flex-end;
+  }
+
+  /* body{
+    background-color: #382626;
+  } */
+</style>
+
+
+{% endblock %}
+
+{% block title %}
+<title>NEGOCIACOES BBCE</title>
+{% endblock %}
+
+
+{% block content %}
+
+
+<nav class="navbar navbar-expand-lg bg-wx-original-escuro">
+  <div class="container-fluid">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item dropdown">
+
+      </li>
+    </ul>
+    <a class="navbar-title mx-auto" href="#">DASHBOARD NEGOCIAÇÕES BBCE</a>
+
+    <div class="form-inline">
+      <!-- <input class="form-control mr-sm-2 bg-wx-original-escuro ema" type="text" placeholder="digite o EMA desejado"
+        aria-label="Search" id="emaValue">
+      <button class="btn bg-wx-original-escuro my-2 my-sm-0" type="button" id="emaButton">EMA</button> -->
+      <button class="btn bg-wx-original-escuro my-2 my-sm-0 ml-2" type="button" id="plotButton">Plotar</button>
+      <div id="loadingIndicator" class="spinner-border ml-2" role="status" style="display: none;">
+        <span class="sr-only">Loading...</span>
+      </div>
+    </div>
+
+
+  </div>
+</nav>
+
+
+<div class="col-12" id="charts-container">
+  <div class="filtro col-4">
+    <div class="d-flex align-items-center text-center">
+      <label for="dynamicDropdown" class="m-0"">Produto 1</label>
+      <select class="selectpicker" data-live-search="true" data-actions-box="false" title="Selecionar Produto"
+      id='dynamicDropdown'>
+    </select>
+  </div>
+    <div class=" chart-height" style="border: 1px solid;" id="chart-0"></div>
+  </div>
+
+  <div class="filtro col-4">
+    <div class="d-flex align-items-center text-center">
+
+      <label for="dynamicDropdown2" class="m-0"">Produto 2</label>
+      <select class="selectpicker" data-live-search="true" data-actions-box="false" title="Selecionar Produto"
+      id='dynamicDropdown2'>
+    </select>
+  </div>
+    <div class=" chart-height" style="border: 1px solid;" id="chart-1"></div>
+  </div>
+
+  <div class="filtro col-4">
+  <div class="" style="height: 38px;"></div>
+  <div class=" chart-height" style="border: 1px solid;" id="chart-2"></div>
+  </div>
+
+</div>
+
+
+
+
+{% endblock %}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.0/jquery.min.js"></script>
+{% block scripts %}
+
+<!-- Importe seus novos JS aq -->
+
+<script src="{{ url_for('static', filename='js/negociacoesBBCE.js') }}"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
+{% endblock %}

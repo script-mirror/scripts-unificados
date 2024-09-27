@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="content" class="center">
+
+        <div id="div-imagens" class="flex">
+
+        </div>
+    
+      </div>
+</body>
+
+<script>
+    
+    parametros = window.location.search;
+    urlParams = new URLSearchParams(parametros);
+    data = urlParams.get('data')
+    ano = data.substr(0,4)
+    mes = data.substr(5,2)
+    dia = data.substr(8,2)
+    dt_str = ano + mes + dia
+    membro = urlParams.get('membro')
+
+    semanas = [1,2,3,4,5,6,7]
+    if(urlParams.get('semanas') != null){
+        semanas = eval(urlParams.get('semanas'))
+    }
+
+    html = ''
+    semanas.forEach(function selecionarMarcas(sem, indice) {
+        html +=  `<img src="http://35.173.154.94:8180/WX2TB/Documentos/saidas-modelos/ecmwf-ens/${dt_str}00/semana-energ/${sem}semana_energ-${dt_str}00_m${membro.padStart(2, '0')}.gif" loading="lazy" alt="" width="33%">`;
+    })
+
+    document.getElementById('div-imagens').innerHTML = html
+
+</script>
+</html>

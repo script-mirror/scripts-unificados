@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style_bbce.css') }}">
+
+    <title>Hello, world!</title>
+  </head>
+  <body>
+
+<div class="container" id="tabelasBBCE">
+</div>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.js" ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+    <script>
+
+    var teste;
+    $(window).on('load', function(){
+
+      
+      // configure the requesto to be sync
+      jQuery.ajaxSetup({async:false});
+
+      updatetable()
+
+    })
+
+
+    function updatetable(){
+            $.get("/middle/API/get/prodBBCE", function(data) {
+        teste = data
+        console.log(data)
+
+        produtos = Object.keys(data)
+
+        tabelasBBCE = document.getElementById("tabelasBBCE")
+
+        div = document.createElement("div");
+        div.classList.add("tableBBCE")
+        
+        table = document.createElement("table");
+        div.appendChild(table)
+        // table.setAttribute("hidden", "true")
+        table.classList.add("table", "table-bordered")
+        // table.classList.add("table", "table-bordered", "table-dark")
+        table.style.float= "left"
+
+        thead = document.createElement("thead");
+        tr = document.createElement("tr");
+        th = document.createElement("th");
+        tr.appendChild(th)
+
+        th = document.createElement("th");
+        th.colSpan = 2;
+        th.innerHTML = "Compra"
+        tr.appendChild(th)
+
+        th = document.createElement("th");
+        th.colSpan = 2;
+        th.innerHTML = "Venda"
+        tr.appendChild(th)
+
+        th = document.createElement("th");
+        th.colSpan = 2;
+        th.innerHTML = "Compra"
+        tr.appendChild(th)
+
+        th = document.createElement("th");
+        th.colSpan = 2;
+        th.innerHTML = "Venda"
+        tr.appendChild(th)
+
+        thead.appendChild(tr) 
+        table.appendChild(thead)
+
+        thead = document.createElement("thead");
+        table.appendChild(thead)
+        tr = document.createElement("tr");
+        thead.appendChild(tr)
+
+        th = document.createElement("th");
+        th.innerHTML = "Produto"
+        tr.appendChild(th)
+        
+        th = document.createElement("th");
+        th.innerHTML = "Qtd"
+        tr.appendChild(th)
+        
+        th = document.createElement("th");
+        th.innerHTML = "$"
+        tr.appendChild(th)
+
+        th = document.createElement("th");
+        th.innerHTML = "Qtd"
+        tr.appendChild(th)
+        
+        th = document.createElement("th");
+        th.innerHTML = "$"
+        tr.appendChild(th)
+
+        th = document.createElement("th");
+        th.innerHTML = "Qtd"
+        tr.appendChild(th)
+        
+        th = document.createElement("th");
+        th.innerHTML = "$"
+        tr.appendChild(th)
+
+        th = document.createElement("th");
+        th.innerHTML = "Qtd"
+        tr.appendChild(th)
+        
+        th = document.createElement("th");
+        th.innerHTML = "$"
+        tr.appendChild(th)
+
+        tbody = document.createElement("tbody");
+        table.appendChild(tbody)
+
+
+        for (i=0; i<produtos.length; i++){
+          
+
+
+          models = data[produtos[i]]['model']
+
+          // var car = {type:"Fiat", model:"500", color:"white"};
+          var classesColors = {0:"amarelo", 1:"wxOrdem", 2:"melhorOpt", 3:"vermelho", 4:"wxOpt"}
+
+         tr = document.createElement("tr");
+          tbody.appendChild(tr)
+
+          td = document.createElement("td");
+          td.innerHTML = produtos[i].substring(0,produtos[i].indexOf('-')-1)
+          // td.innerHTML = models[ii]["$id"]
+          td.classList.add("idProd")
+          tr.appendChild(td)
+
+
+          td = document.createElement("td");
+          if (models[0]["quantidadeCompra"] != 0){
+            td.innerHTML = models[0]["quantidadeCompra"]
+            td.classList.add(classesColors[models[0]["statusLimiteCompra"]])
+          }
+          tr.appendChild(td)
+
+          td = document.createElement("td");
+          if (models[0]["quantidadeCompra"] != 0){
+            td.innerHTML = "R$" + (models[0]["precoCompra"].toFixed(2)).replace(".",",")
+            td.classList.add(classesColors[models[0]["statusLimiteCompra"]])
+          }
+          tr.appendChild(td)
+
+          td = document.createElement("td");
+          if (models[0]["quantidadeVenda"] != 0){
+            td.innerHTML = models[0]["quantidadeVenda"]
+            td.classList.add(classesColors[models[0]["statusLimiteVenda"]])
+          }
+          tr.appendChild(td)
+
+          td = document.createElement("td");
+          if (models[0]["quantidadeVenda"] != 0){
+            td.innerHTML = "R$" + (models[0]["precoVenda"].toFixed(2)).replace(".",",")
+            td.classList.add(classesColors[models[0]["statusLimiteVenda"]])
+          }
+          tr.appendChild(td)
+
+          wxFlag = 0
+          for (ii=0; ii<models.length; ii++){
+            if (([2, 4]).includes(models[ii]["statusLimiteCompra"]) && models[ii]["quantidadeCompra"] != 0){
+              td = document.createElement("td");
+              td.innerHTML = models[ii]["quantidadeCompra"]
+              td.classList.add(classesColors[models[ii]["statusLimiteCompra"]])
+              tr.appendChild(td)
+
+              td = document.createElement("td");
+              td.innerHTML = "R$" + (models[ii]["precoCompra"].toFixed(2)).replace(".",",")
+              td.classList.add(classesColors[models[ii]["statusLimiteCompra"]])
+              tr.appendChild(td)
+              wxFlag = 1
+              break;
+            }
+          }
+
+          //Caso nao tenha adicionado nenhuma compra, é inserido celulas em branco
+          if (wxFlag == 0){
+              td = document.createElement("td");
+              tr.appendChild(td)
+
+              td = document.createElement("td");
+              tr.appendChild(td)
+          }
+
+          wxFlag = 0
+
+          for (ii=0; ii<models.length; ii++){
+            if (([2, 4]).includes(models[ii]["statusLimiteVenda"])&& models[ii]["quantidadeVenda"] != 0){
+              td = document.createElement("td");
+              td.innerHTML = models[ii]["quantidadeVenda"]
+              td.classList.add(classesColors[models[ii]["statusLimiteVenda"]])
+              tr.appendChild(td)
+
+              td = document.createElement("td");
+              td.innerHTML = "R$" + (models[ii]["precoVenda"].toFixed(2)).replace(".",",")
+              td.classList.add(classesColors[models[ii]["statusLimiteVenda"]])
+              tr.appendChild(td)
+              wxFlag = 1
+              break;
+            }
+          }
+
+          if (wxFlag == 0){
+              td = document.createElement("td");
+              tr.appendChild(td)
+
+              td = document.createElement("td");
+              tr.appendChild(td)
+          }
+          tabelasBBCE.appendChild(div)
+        }
+      })
+    }
+
+
+
+  </script>
+
+
+  <script>
+
+    setInterval( function() {
+
+      tabelasBBCE = document.getElementById("tabelasBBCE")
+        while (tabelasBBCE.firstChild) {
+          tabelasBBCE.removeChild(tabelasBBCE.firstChild);
+        }
+
+      updatetable()
+
+      
+    }, 60*1000 );
+
+  </script>
+
+  </body>
+</html>

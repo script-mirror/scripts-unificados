@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/slider.css') }}"></link>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+
+<style>
+    .filter-option {
+        margin: auto;
+        padding: 2px 10px;
+    }
+
+    /* .grafico{ */
+    /* border: 1px solid red; */
+    /* } */
+    .grafico {
+        height: 90vh;
+        width: 80vw;
+        margin: 64px auto;
+    }
+
+    .custom-control>.custom-switch {
+        height: 100%;
+    }
+</style>
+{% endblock %}
+
+
+{% block title %}
+<title>Carga - ONS Dados Abertos</title>
+{% endblock %}
+
+
+
+{% block content %}
+<div class="mt-5 mb-5" style="width: 90vw; margin: auto; ">
+
+    <div class="mb-5" id="filtros">
+
+        <div class="row mt-1 mb-3">
+
+            <div class="container">
+
+                <div class="row d-flex justify-content-end">
+                    <div class="form-group">
+                        <label class="sr-only" for="data-inicio">Data Inicio</label>
+                        <input class="" id="data-inicio" type="date" name="dataInicio">
+                    </div>
+                    <div class="form-group">
+                        <label class="sr-only" for="data-fim">Data Fim</label>
+                        <input class="" id="data-fim" type="date" name="dataFim">
+                    </div>
+                </div>
+                <div class="row">
+                    <div id="slider"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="row mt-1 mb-1">
+            <div class="container">
+                <p>Geração</p>
+                <ul class="list-unstyled d-flex flex-direction-row m-auto">
+
+                    <li class="filter-option">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="ckb-todos-geracao">
+                            <label class="custom-control-label" for="ckb-todos-geracao">Todos</label>
+                        </div>
+                    </li>
+                    <li class="filter-option option-geracao">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input ckb-filtro ckb-filtro-geracao" id="ckb-carga-global" value="carga-global"
+                                name="carga-global">
+                            <label class="custom-control-label" for="ckb-carga-global">Carga Global</label>
+                        </div>
+                    </li>
+                    <li class="filter-option option-geracao">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input ckb-filtro ckb-filtro-geracao" id="ckb-geracao-total"
+                                value="geracao-total" name="geracao[]" >
+                            <label class="custom-control-label" for="ckb-geracao-total">Geração Total</label>
+                        </div>
+                    </li>
+                    <li class="filter-option option-geracao">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input ckb-filtro ckb-filtro-geracao" id="ckb-geracao-hidraulica"
+                                value="geracao-hidraulica" name="geracao[]" >
+                            <label class="custom-control-label" for="ckb-geracao-hidraulica">Geração Hidráulica</label>
+                        </div>
+                    </li>
+                    <li class="filter-option option-geracao">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input ckb-filtro ckb-filtro-geracao" id="ckb-geracao-termica"
+                                value="geracao-termica" name="geracao[]" >
+                            <label class="custom-control-label" for="ckb-geracao-termica">Geração Térmica</label>
+                        </div>
+                    </li>
+                    <li class="filter-option option-geracao">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input ckb-filtro ckb-filtro-geracao" id="ckb-geracao-eolica"
+                                value="geracao-eolica" name="geracao[]" >
+                            <label class="custom-control-label" for="ckb-geracao-eolica">Geração Eólica</label>
+                        </div>
+                    </li>
+                    <li class="filter-option option-geracao">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input ckb-filtro ckb-filtro-geracao" id="ckb-geracao-nuclear"
+                                value="geracao-nuclear" name="geracao[]" >
+                            <label class="custom-control-label" for="ckb-geracao-nuclear">Geração Nuclear</label>
+                        </div>
+                    </li>
+                    <li class="filter-option option-geracao">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input ckb-filtro ckb-filtro-geracao" id="ckb-geracao-solar"
+                                value="geracao-solar" name="geracao[]" >
+                            <label class="custom-control-label" for="ckb-geracao-solar">Geração Solar</label>
+                        </div>
+                    </li>
+
+
+                </ul>
+            </div>
+        </div>
+
+        <div class="row mt-1 mb-1">
+            <div class="container">
+                <p>Constrained Off Eolica</p>
+                <ul class="list-unstyled d-flex flex-direction-row m-auto">
+                    <li class="filter-option">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="ckb-todos-eolica">
+                            <label class="custom-control-label" for="ckb-todos-eolica">Todos</label>
+                        </div>
+                    </li>
+                    <li class="filter-option option-eolica">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input ckb-filtro ckb-filtro-eolica" id="ckb-constrained-off-eolica-none"
+                                value="constrained-off-eolica-none" name="geracao[]">
+                            <label class="custom-control-label" for="ckb-constrained-off-eolica-none">N/A</label>
+                        </div>
+                    </li>
+
+                    <li class="filter-option option-eolica">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input ckb-filtro ckb-filtro-eolica" id="ckb-constrained-off-eolica-cnf"
+                                value="constrained-off-eolica-cnf" name="geracao[]">
+                            <label class="custom-control-label" for="ckb-constrained-off-eolica-cnf">CNF</label>
+                        </div>
+                    </li>
+
+
+                    <li class="filter-option option-eolica">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input ckb-filtro ckb-filtro-eolica" id="ckb-constrained-off-eolica-ene"
+                                value="constrained-off-eolica-ene" name="geracao[]">
+                            <label class="custom-control-label" for="ckb-constrained-off-eolica-ene">ENE</label>
+                        </div>
+                    </li>
+
+
+                    <li class="filter-option option-eolica">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input ckb-filtro ckb-filtro-eolica" id="ckb-constrained-off-eolica-rel"
+                                value="constrained-off-eolica-rel" name="geracao[]">
+                            <label class="custom-control-label" for="ckb-constrained-off-eolica-rel">REL</label>
+                        </div>
+                    </li>                    
+                </ul>
+                <p>Constrained Off Solar</p>
+                <ul class="list-unstyled d-flex flex-direction-row m-auto">
+                    <li class="filter-option">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="ckb-todos-solar">
+                            <label class="custom-control-label" for="ckb-todos-solar">Todos</label>
+                        </div>
+                    </li>
+                    <li class="filter-option option-solar">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input ckb-filtro ckb-filtro-solar" id="ckb-constrained-off-solar-none"
+                                value="constrained-off-solar-none" name="geracao[]">
+                            <label class="custom-control-label" for="ckb-constrained-off-solar-none">N/A</label>
+                        </div>
+                    </li>
+                    <li class="filter-option option-solar">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input ckb-filtro ckb-filtro-solar" id="ckb-constrained-off-solar-cnf"
+                                value="constrained-off-solar-cnf" name="geracao[]">
+                            <label class="custom-control-label" for="ckb-constrained-off-solar-cnf">CNF</label>
+                        </div>
+                    </li>
+                    <li class="filter-option option-solar">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input ckb-filtro ckb-filtro-solar" id="ckb-constrained-off-solar-ene"
+                                value="constrained-off-solar-ene" name="geracao[]">
+                            <label class="custom-control-label" for="ckb-constrained-off-solar-ene">ENE</label>
+                        </div>
+                    </li>
+                    <li class="filter-option option-solar">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input ckb-filtro ckb-filtro-solar" id="ckb-constrained-off-solar-rel"
+                                value="constrained-off-solar-rel" name="geracao[]">
+                            <label class="custom-control-label" for="ckb-constrained-off-solar-rel">REL</label>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+
+        <div class="row mt-1 mb-1">
+            <div class="container d-flex flex-direction-row">
+                <button class="btn btn-dark" id="buscar">Buscar</button>
+                <div class="spinner-border " id="loading" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="tab-content mb-5" id="graficos">
+        {% include 'carga_dados_abertos/sin.html' %}
+        {% include 'carga_dados_abertos/sudeste.html' %}
+        {% include 'carga_dados_abertos/sul.html' %}
+        {% include 'carga_dados_abertos/nordeste.html' %}
+        {% include 'carga_dados_abertos/norte.html' %}
+
+    </div>
+    <ul class="nav nav-pills fixed-bottom" id="nav-main" role="tablist" style="margin-bottom: 1%; margin-left: 1%;">
+
+        <li class="nav-item">
+            <a class="nav-link btn-outline-dark active" id="sin-tab" data-toggle="tab" href="#sin" role="tab"
+                aria-controls="sin" aria-selected="true">Sin</a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link btn-outline-dark" id="sudeste-tab" data-toggle="tab" href="#sudeste"
+                role="tab" aria-controls="sudeste" aria-selected="false">Sudeste</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link btn-outline-dark" id="sul-tab" data-toggle="tab" href="#sul" role="tab"
+                aria-controls="sul" aria-selected="false">Sul</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link btn-outline-dark" id="nordeste-tab" data-toggle="tab" href="#nordeste"
+                role="tab" aria-controls="nordeste" aria-selected="false">Nordeste</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link btn-outline-dark" id="norte-tab" data-toggle="tab" href="#norte" role="tab"
+                aria-controls="norte" aria-selected="false">Norte</a>
+        </li>
+
+    </ul>
+</div>
+{% endblock %}
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.0/jquery.min.js"></script>
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/slider/Slider.js') }}"></script>
+<script src="{{ url_for('static', filename='js/slider/rangeslider.umd.min.js') }}"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment-with-locales.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@^1"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
+<script src="{{ url_for('static', filename='js/carga_dados_abertos.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
+
+{% endblock %}

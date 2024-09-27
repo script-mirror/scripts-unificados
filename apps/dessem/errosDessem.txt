@@ -1,0 +1,130 @@
+############################ Erro ############################
+
+ERRO: Unidade termica 003 da usina 201, inicia o estudo ligada.
+      Entra em manutencao no periodo   1 antes de terminar o seu tempo minimo de acionamento ou 
+      o tempo de trajetoria de rampa de desligamento (  1.0).
+
+- motivo:
+	A maquina 3 da usina 201 inicia em manutenção de acordo com o entdados e no operut consta que ela inicia ligada
+
+	* entdados.dat (MANUTENCAO TERMELETRICA [MT])
+		&   ute  ug  di hi m df hf m F
+		...
+		MT  201 003  18 00 0 19 00 0 0
+		MT  201 004  18 00 0 19 00 0 0
+
+	* operut.dat
+		 us     nome       ug   st   GerInic     tempo MH A/D
+		201  APARECIDA      1    0         0.00      0  0  0
+		201  APARECIDA      2    1        43.00    713  0  0
+		201  APARECIDA      3    1        30.00      0  0  0
+		201  APARECIDA      4    0         0.00   1316  1  0
+
+- Solucoes:
+	Para as rodadas definitivas é recomendado que a manutencao seja comentada, pois essas manutencoes sao do dia anterior e o perut e do dia atual do ONS
+	
+	* Tirar a maquina 3 da manutenção 
+		&MT  201 003  18 00 0 19 00 0 0
+
+	* iniciar a simulacao com maquina 3 desligada e geracao inicial = 0(entdados.dat)
+		201  APARECIDA      3    0        00.00      0  0  0
+	
+
+
+
+
+
+############################ Erro ############################
+
+ERRO: Usina 201 (APARECIDA   ) com geracao minima (       73.00) - definida nos registros UT -, 
+      superior a soma das geracoes maximas (       68.00) - definidas no arquivo TERM - 
+      de suas unidades - definidas no arquivo OPERUT - no periodo   1. 
+      Neste periodo nao decorreu tempo suficiente para o acionamento das unidades 
+      (tempo de TOFF e rampa de acionamento definidos no arquivo TERM).
+
+- motivo:
+	No entdados consta que a usina 201 possui uma geracao minima igual a 73 mas no operut a soma equivale a 43
+
+	* entdados.dat (USINA TERMELETRICA [UT])
+		&   No     Nome       ss F di hi midf hf mf   F   Gmin      Gmax   
+		&X  XXX  XXXXXXXXXXXX XX X XX XX X XX XX X    xXXXXXXXXXXxxxxxxxxxx
+		UT  201  APAREC B1     4 2 18  0 0  F                73.0      77.0          
+		UT  201  APAREC B1     4 2 18  3 0  F                73.0      76.0          
+		UT  201  APAREC B1     4 2 18  3 1  F                73.0      78.0          
+		UT  201  APAREC B1     4 2 18  5 0  F                73.0      76.0          
+		UT  201  APAREC B1     4 2 18  5 1  F                73.0      75.0 
+
+	* operut.dat
+		 us     nome       ug   st   GerInic     tempo MH A/D
+		&XX XXXXXXXXXXXX  XXX   XX   XXXXXXXXXX  XXXXX  X  X
+		201  APARECIDA      1    0        00.00      0  0  0
+		201  APARECIDA      2    1        43.00    713  0  0
+		201  APARECIDA      3    0        00.00      0  0  0
+		201  APARECIDA      4    0         0.00   1316  1  0
+
+
+- Solucoes:
+	* diminuir o Gmin do entdados
+	* adicionar GerInic ao operut em alguma das unidades geradoras
+
+
+
+
+############################ Erro ############################
+
+ERRO: Unidade termica 001 da usina 146, inicia o estudo ligada com geracao inicial (      0.00)
+      inferior a minima (     13.00), sem estar definida o tipo de trajetoria - acionamento ou desligamento.
+      Registro No.:   263 Arquivo:  operut.dat                                                                     
+
+- motivo:
+
+	geração da unidade geradora na meia hora anterior ao início do período de otimização for inferior
+	a geração mínima da unidade, informa se a mesma encontra-se em trajetória de acionamento (1) ou
+	desligamento (2
+
+	* operut.dat
+		&us     nome       ug   st   GerInic     tempo MH A/D
+		&XX XXXXXXXXXXXX  XXX   XX   XXXXXXXXXX  XXXXX  X  X 
+		146  STA VITORIA    1    1         0.00      0  1  0
+
+	* entdados.dat
+		&   No     Nome       ss F di hi midf hf mf   F   Gmin      Gmax
+		&X  XXX  XXXXXXXXXXXX XX X XX XX X XX XX X    xXXXXXXXXXXxxxxxxxxxx
+		UT  146  SANTA VITORI  1 2 23  0 0  F                 0.0      20.0
+
+- Solucoes:
+	informa no arquivo operut que a UG encontra-se em trajetória de acionamento
+	* operut.dat
+		146  STA VITORIA    1    1         0.00      0  1  1
+	
+
+
+############################ Erro ############################
+
+ERRO RAMPA TERMICA:
+           Geracao do ultimo passo de acionamento da usina 211 (BAIXADA FLU ), unidade   3 superior a potencia instalada.
+           Potencia instalada:      520.0
+           Potencia no passo:       530.0
+
+
+- motivo:
+	Potmin da unidade 3 temporariamente devido a incompatilidade com a disponibilidade declarada
+
+    * rampas.dat
+    	&us uni seg  C   T  Potencia   Tempo Flag meia hora
+    	&XX XXX XXX  X   X  XXXXXXXXXX XXXXX X
+		211   3      C   A     530.000     7 0
+
+- Solucoes:
+	Modificar a potencia para a minima reportada no erro
+    * rampas.dat
+		211   3      C   A     530.000     7 0
+
+
+ERRO: Nao ha configuracao de unidades (geracao minima para acionamento) da usina termica SAO SEPE     (  149)
+       que atenda os limites estabelecido nos registros UT para o periodo    40.
+
+Entdados e apagar a MT da 149
+MT  149 001  19 00 0 19 19 0 0
+
+

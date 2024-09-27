@@ -1,0 +1,10 @@
+9                                                 'Quantidade de bacias sub-modeladas
+BOQ                                               'Boqueirao - SMAP                                                                                    
+IRAPE                                             'Irape                                                                                               
+ITAPEBI                                           'Itapebi                                                                                             
+PCAVALO                                           'PEDRA DO CAVALO                                                                                     
+QM                                                'Queimado SMAP                                                                                       
+RB-SMAP                                           'Retiro Baixo - SMAP                                                                                 
+SFR2                                              'Sao Francisco - SMAP                                                                                
+SRM2                                              'Sao Romao - SMAP                                                                                    
+TM-SMAP                                           'Três Marias - SMAP                                                                                  

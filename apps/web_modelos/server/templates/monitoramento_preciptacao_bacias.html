@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <link href="{{ url_for('static', filename='css/monitoramento_preciptacao_bacia.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block title %}
+	<title> Monitoramento de precipitação (bacia) </title>
+{% endblock %}
+
+
+
+
+{% block content %} 
+
+  <div id='enaDiariaBacia' class="wrapper">
+    <nav id="sidebar" class="active">
+
+        <div class="sidebar-header">
+            <h3>Filtros</h3>
+        </div>
+
+        <ul id="listaFiltros" class="list-unstyled components ml-2">
+
+            <li class='texto-centro'>Periodo</li>
+            <li>
+              <div class='row'>
+                <div class="form-group mx-3">
+                  <label for="in_periodoMolhado">Data</label>
+                  <input type="text" class="form-control input-extra-small" id="in_periodoMolhado" placeholder="dd/mm" value="01/10">
+                </div>
+                <div class="form-group">
+                  <label for="in_numDias">Número de dias</label>
+                  <input type="text" class="form-control input-extra-small" id="in_numDias" value="100">
+                </div>
+              </div>
+            </li>
+
+            <li class='texto-centro'>Média</li>
+            <li>
+              <div class='row'>
+                <div class="form-group mx-3">
+                  <label for="inp_anoInicialMedia">Ano inicial</label>
+                  <select class="form-control input-extra-small" id="inp_anoInicialMedia">
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="inp_anoFinalMedia">Ano final</label>
+                  <select class="form-control input-extra-small" id="inp_anoFinalMedia">
+                  </select>
+                </div>
+              </div>
+            </li>
+
+            <li>
+                <div class="row justify-content-md-center">
+                    <button type="button" id="" class="btn btn-light btn-atualizar">
+                        <span>Atualizar</span>
+                    </button>
+
+                </div>
+            </li> 
+
+            <hr>
+            <li class='texto-centro'>Séries anuais</li>
+            <li>
+              <div id='seriesAnuais'>
+              </div>
+            </li>
+
+            <hr>
+            <li class='texto-centro'>Bacias</li>
+            <li>
+              <div id='linksBacias'>
+              </div>
+            </li>
+
+        </ul>
+
+    </nav>
+
+   <div id="content" >
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+
+            <button type="button" id="sidebarCollapse" class="btn bg-wx-original-claro">
+                <i class="fas fa-align-left"></i>
+                <span>Filtros</span>
+            </button>
+
+            <button type="button" class="btn bg-wx-original-claro" id='btn_comutarLegenda'>ON/Off Legenda</button>
+
+        </div>
+    </nav>
+
+    <div class="jumbotron jumbotron-fluid">
+      <div class="container">
+        <h3>Monitoramento de precipitação das bacias</h3>
+        <p class="lead">Resultados baseados no histórico MERGE/CPTEC.</p>
+      </div>
+    </div>
+
+    <div class="row text-center" id='graphs_bacia_smap'>
+    </div>
+
+       <!-- Dark Overlay element -->
+    <div class="overlay"></div>
+
+    <!-- [INICIO] Modal com o spinner de loading-->
+    <div id="modalLoading" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered justify-content-center" role="document">
+            <button id="btn_spinner" class="btn bg-wx-original-claro spinner_loading" disabled>
+              <!-- <span class="spinner-grow spinner-grow-sm"></span> -->
+              
+            </button>
+        </div>
+    </div>
+    <!-- [INICIO] Modal com o spinner de loading -->
+  </div>
+</div> 
+
+
+
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+<!-- <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.1.8/vue.js"></script> -->
+
+<!-- <script src="{{ url_for('static', filename='js/ena_diaria_bacia.js') }}"></script> -->
+
+ <script>
+  // 'ALTO PARANÁ', 'AMAZONAS (SE)', 'BAIXO PARANÁ', 'BAIXO SAO FRANCISCO', 'GRANDE', 'IGUAÇU', 'INCREMENTAL ITAIPU', 'JACUÍ', 'JEQUITINHONHA (SE)', 'MANSO', 'MEDIO SAO FRANCISCO', 'PARANAPANEMA', 'PARANAPANEMA (S)', 'PARANAÍBA', 'PARNAÍBA', 'SUBMEDIO SAO FRANCISCO', 'SÃO FRANCISCO (NE)', 'SÃO FRANCISCO (SE)', 'TIETÊ', 'TOCANTINS (N)', 'TOCANTINS (SE)', 'URUGUAI', 'XINGU'
+    
+    // Bacias adicionadas
+    // AMAZONAS (SE), BAIXO SAO FRANCISCO, JEQUITINHONHA (SE), 'MANSO', MEDIO SAO FRANCISCO, PARNAÍBA, 'SUBMEDIO SAO FRANCISCO', 'XINGU', 'JACUÍ'
+
+    // Bacias retiradas
+    // 'ALTO TIETÊ':'ALTO TIETÊ'
+    // 'ITAJAÍ-AÇU':'ITAJAÍ-AÇU'
+    // 'CAPIVARI':'CAPIVARI'
+    var bacia_aux = {'GRANDE':'GRANDE', 'PARANAÍBA':'PARANAÍBA', 'TIETÊ':'TIETÊ', 'PARANAPANEMA':'PARANAPANEMA',  'ALTO PARANÁ':'ALTO PARANÁ', 'BAIXO PARANÁ':'BAIXO PARANÁ', 'INCREMENTAL ITAIPU':'INCREMENTAL DE ITAIPU', 'JEQUITINHONHA (SE)': 'JEQUITINHONHA (SUDESTE)', 'AMAZONAS (SE)':'AMAZONAS  (SUDESTE)', 'SÃO FRANCISCO (SE)':'SÃO FRANCISCO (SUDESTE)', 'TOCANTINS (SE)':'TOCANTINS (SUDESTE)', 'MANSO': 'MANSO', 'IGUAÇU':'IGUAÇU', 'JACUÍ':'JACUÍ', 'URUGUAI':'URUGUAI', 'PARANAPANEMA (S)':'PARANAPANEMA (SUL)', 'SÃO FRANCISCO (NE)':'SÃO FRANCISCO (NORDESTE)', 'MEDIO SAO FRANCISCO': 'MÉDIO SÃO FRANCISCO', 'SUBMEDIO SAO FRANCISCO': 'SUBMÉDIO SÃO FRANCISCO', 'BAIXO SAO FRANCISCO': 'BAIXO SÃO FRANCISCO', 'PARNAÍBA': 'PARNAÍBA', 'TOCANTINS (N)':'TOCANTINS (NORTE)', 'XINGU': 'XINGU'}
+    var coresCurvas = ['#2DFE54', '#3E82FC', '#47C072', '#FCB005', '#C83CB9', '#017B92', '#FE2C54', '#82A67D', '#3F012C', '#017B92', '#805B87', '#FF7052', '#BB3F3F', '#FCF679', '#41FDFE', '#6C3161', '#FF81C0', '#044A05', '#FC824A', '#B04E0F', '#FDDC5C', '#DA9753', '#8DB7C1', '#07A224', '#36DABB']
+    var debug
+    var charts = {}
+    var datasetCache = {}
+    var timeFormat = 'DD/MM/YYYY';
+    var mostrar_legendas = true
+
+
+   // Executar ao abrir a pagina
+   $(window).on('load', function(){
+
+      parametros = window.location.search;
+      urlParams = new URLSearchParams(parametros);
+
+      // Verifica se alguma data foi passada em parâmetro
+      if(urlParams.get('data') != null){
+          // formato YYYY-MM-DD
+          str_today = urlParams.get('data')
+      } else{
+          str_today = moment().format("YYYY-MM-DD")
+      }
+
+
+      // Desabilita a legenda dos graficos de acordo com o tamanho das telas
+      largura_pagina = screen.width
+      if (largura_pagina <= 1000){
+          mostrar_legendas = false
+      }
+
+      // Criação dos canvas para os graficos
+      span_graph = document.getElementById("graphs_bacia_smap")
+      for (bacia in bacia_aux){
+          var div_aux = document.createElement("div");
+          div_aux.classList = "col-12 col-sm-12 col-md-12 col-lg-12 col-xl-9 mt-3 center"
+          var canvas_aux = document.createElement("canvas");
+          canvas_aux.id = "chart " + bacia
+
+          div_aux.appendChild(canvas_aux);
+          span_graph.appendChild(div_aux);
+      }
+
+
+      // Criação e configuracao dos graficos
+      for (bacia in bacia_aux){
+          var ctx = document.getElementById("chart "+bacia).getContext("2d");
+
+          charts[bacia] = new Chart(ctx, {
+              type: 'line',
+              options: {
+                  title: {
+                    display: true,
+                    text: bacia_aux[bacia],
+                  },
+                  legend: {
+                    display: mostrar_legendas,
+                    position: 'bottom'
+                  },
+                  tooltips: {
+                    mode: 'index',
+                    axis: 'x'
+                  },
+
+                  scales: {
+                      xAxes: [{
+                          type: 'time',
+                          time: {
+                              unit: 'day'
+                          },
+                          scaleLabel: {
+                              display: true,
+                              labelString: 'Data'
+                          },
+                          ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: 100
+                          }
+                      }],
+                      yAxes: [{
+                          scaleLabel: {
+                              display: true,
+                              labelString: 'Precipitacao [mm]'
+                          }
+                      }]
+                  },
+                  animation: {
+                      duration: 0
+                  }
+              }
+          })
+      }
+
+      configuracaoInicial()
+      iniciarListeners()
+      requestDados()
+
+    })
+
+   function iniciarListeners(){
+       $('.btn-atualizar').click(requestDados);
+       $('#sidebarCollapse').on('click', function () {
+           $('#sidebar').toggleClass('active');
+       });
+       $('#btn_comutarLegenda').click(comutarLegenda);
+   }
+
+   function configuracaoInicial(){
+
+    let $anoInicialMedia, $anoFinalMedia, anoCorrente, $listaBacias
+
+    $anoInicialMedia = $('#inp_anoInicialMedia')
+    $anoFinalMedia = $('#inp_anoFinalMedia')
+    anoCorrente = new Date().getFullYear()
+
+    for (let ano=1998; ano<=anoCorrente; ano++){
+      $('<option>')
+          .val(ano)
+          .append(`${ano}`)
+          .appendTo($anoInicialMedia);
+      $('<option>')
+          .val(ano)
+          .append(`${ano}`)
+          .appendTo($anoFinalMedia);
+
+      // Default values
+      $anoInicialMedia.val(1998)
+      $anoFinalMedia.val(2013)
+    }
+
+
+    $listaBacias = $('#linksBacias')
+
+    let bacias = Object.keys(bacia_aux)
+    bacias.sort()
+
+    for (let i = 0; i < bacias.length; i++) {
+      let bacia = bacias[i]
+      $('<a>')
+          .attr("href", `#chart ${bacia}`)
+          .append(`${bacia_aux[bacia]}`)
+          .appendTo($listaBacias);
+    }
+
+
+    // <a href='#chart GRANDE'>GRANDE</a>
+
+    
+   }
+
+
+
+    $(window).on('ready', function(){
+
+    })
+
+
+    var preciptacao = {}
+
+    function requestDados() {
+
+      habilitarSpinner()
+
+      let inicioPeriodoMolhado = $('#in_periodoMolhado').val()
+      let numeroDiasAnalise = $('#in_numDias').val()
+      let anoInicialMedia = $('#inp_anoInicialMedia').val()
+      let anoFinalMedia = $('#inp_anoFinalMedia').val()
+
+
+      var $seriesAnuais = $('#seriesAnuais')
+      $seriesAnuais.html("");
+
+      // Limpeza do grafico
+      for (bacia in bacia_aux){
+          charts[bacia].data.datasets = []
+          charts[bacia].update();
+
+          datasetCache[bacia] = []
+
+      }
+
+      $.get('/middle/API/getacumuladomergebacia', {'inicioPeriodoMolhado': inicioPeriodoMolhado, 'numeroDias': numeroDiasAnalise, 'anoInicialMedia': anoInicialMedia, 'anoFinalMedia': anoFinalMedia}, function(resposta) {
+
+        desabilitarSpinner()
+
+        let momentPerMolhado = moment(inicioPeriodoMolhado, 'DD-MM')
+        debug = resposta
+        let indexCor = 1
+         for (let curva in resposta){
+
+          if (curva.includes("media_")){
+            var cor = coresCurvas[0]
+          }
+          else{
+            var cor = coresCurvas[indexCor]
+            indexCor += 1
+
+            $div = $('<div>')
+                      .appendTo($seriesAnuais)
+
+            $('<input>')
+                .attr('type', 'checkbox')
+                .addClass('ml-3')
+                .val(curva)
+                .change(filtrarModelos)
+                .appendTo($div)
+            
+            $('<label>')
+                .append(curva)
+                .appendTo($div);
+
+          }
+          preciptacao[curva] = {}
+          for (let bacia in resposta[curva]){
+            preciptacao[curva][bacia] = []
+            for (let data in resposta[curva][bacia]){
+              let dt = moment(data, 'YYYY-MM-DD')
+              let val = null
+              if (resposta[curva][bacia][data] != ""){
+                val = resposta[curva][bacia][data].toFixed(2)
+              }
+              preciptacao[curva][bacia].push({t:dt, y:val})
+            }
+            // if (curva.includes("media_") && charts[bacia] != undefined){
+            if (charts[bacia] != undefined){
+              let newDataset = {
+                label: curva,
+                backgroundColor: cor,
+                borderColor: cor,
+                borderWidth: 1,
+                fill: false,
+                data: preciptacao[curva][bacia],
+                pointRadius: 2
+              }
+
+              if (curva.includes("media_")){
+                charts[bacia].data.datasets.push(newDataset);
+                charts[bacia].update();
+              }
+              
+              datasetCache[bacia].push(newDataset)
+            }
+          }
+         }
+      })
+     }    
+
+     function ramdomColor(){
+         int1 = Math.floor(255 * Math.random())
+         int2 = Math.floor(255 * Math.random())
+         int3 = Math.floor(255 * Math.random())
+         return 'rgba(' + int1 + ',' + int2 + ',' + int3 + ',1)'
+       }
+
+    function comutarLegenda(){
+        for (let bacia in charts){
+            charts[bacia].options.legend.display = !charts[bacia].options.legend.display
+            charts[bacia].update();
+        }
+    }
+
+
+    function filtrarModelos(evt){
+      let elm, anoLabel
+      
+      elm = evt.currentTarget
+      anoLabel = elm.value
+      if (elm.checked){
+        for (let bacia in charts){
+          serieDesejada = datasetCache[bacia].filter(x => x.label == anoLabel)
+          charts[bacia].data.datasets = charts[bacia].data.datasets.concat(serieDesejada)
+          charts[bacia].update()
+        }
+      }
+      else{
+        for (let bacia in charts){
+          var datasetIndex = charts[bacia].data.datasets.length
+          while (datasetIndex--) {
+            labelDataset = charts[bacia].data.datasets[datasetIndex].label
+            if (labelDataset == anoLabel){
+                  charts[bacia].data.datasets.splice(datasetIndex,1)
+              }
+          }
+          charts[bacia].update()
+        }
+      }
+    }
+
+  function habilitarSpinner(){
+    let $spinner
+    $spinner = $('#btn_spinner')
+
+    $('<span>')
+        .attr('type', 'checkbox')
+        .addClass("spinner-grow", "spinner-grow-sm")
+        .appendTo($spinner)
+
+    $spinner.append('Carregando...')
+
+    $('#modalLoading').modal('show')
+  }
+
+  function desabilitarSpinner(){
+    let $spinner
+    $spinner = $('#btn_spinner')
+    $spinner.html("");
+    // btn_spinner.remove()
+    $('#modalLoading').modal('hide')
+  }
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block head %}
+<!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/pauta_Aneel.css') }}"> -->
+{% endblock %}
+
+{% block title %}
+<title>Conversor path</title>
+{% endblock %}
+
+{% block content %}
+
+<div id="app" class="container">
+    <div class="form-group"></div>
+        <input v-model="path_arquivo" placeholder="Arquivo">
+        <p><br>Path (linux):  [[path_linux]] </p>
+        <p>Path (windows):  [[path_windows]]  </p>
+        <p>Comando copiar:  [['scp admin@35.173.154.94:"' + path_linux + '" ' + '"'+ path_windows +'"']] </p> 
+        <p><small></small>Caso o seu path linux tenha espaço tenha espaço, coloque apenas os nomes das pastas entre aba simples</small></p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+<!-- Importe seus novos JS aq -->
+
+<script src="{{ url_for('static', filename='js/configPath.js') }}"></script>
+
+{% endblock %}

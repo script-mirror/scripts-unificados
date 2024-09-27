@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/acomph_new.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+{% endblock %}
+
+{% block title %}
+    <title>ENA Análises</title>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div id="boxWarning" class="boxWarning">
+        <img onclick="fecharAviso()" src="../static/images/botaoFechar.png">
+        <p> Operação Inválida! </p>
+        <p id="warningText" class="warningText"></p>
+    </div>
+
+    <div id="boxBtns" class="boxBtns">
+        <div class="btn">
+            <div class="btnTitle">
+                <p> Produto </p>
+            </div>
+            <div class="select-container">
+                <select class="selectProduct" id="selectProduct">
+                    <option value="" selected>
+                        --
+                    </option>
+                    <option value="acomph">
+                        Acomph
+                    </option>
+                    <option value="previsoes">
+                        Previsoes - ENA
+                    </option>
+                </select>
+            </div>    
+            <button class="btnProduct" onclick="escolherProduto()">
+                <span class="span">🔎</span>
+            </button>
+        </div>
+
+
+        <div id="parameters1" class="parameters1">
+            <div class="btnTitle">
+                <p> Defina o período </p>
+            </div>
+            <div class="boxParameters">
+                <div>
+                    <p>Data Inicial</p>
+                    <input id="startDate" class="date" type="date">
+                </div>
+                
+                <div>
+                    <p>Data Final</p>
+                    <input id="endDate" class="date" type="date">
+                </div>    
+            </div>
+        </div>
+
+
+        <div id="parameters2" class="parameters2">
+            <div class="btnTitle">
+                <p> Defina uma data </p>
+            </div>
+                <div>
+                    <input id="modelsDate" class="date" type="date">
+                </div>
+        </div>
+
+
+        <div class="btnPlotar">
+            <button class="button" id="btnPlotar">
+                <svg
+                  viewBox="0 0 16 16"
+                  class="bi bi-lightning-charge-fill"
+                  fill="currentColor"
+                  height="16"
+                  width="16"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"
+                  ></path></svg
+                > Plotar
+              </button>
+        </div>
+
+    </div>
+    <div id="loading" class="loading"></div>
+    <div id="boxGraphs" class="boxGraphs">
+        <!-- Plotar gráficos aqui -->
+    </div>
+    <div id="boxTables" class="boxTables">
+        <!-- Plotar as tabelas com os dados aqui -->
+         <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Rodadas:</th>
+                        <th>0</th>
+                        <th>6</th>
+                        <th>12</th>
+                        <th>18</th>    
+                    </tr>
+                </thead>
+                <tbody id="bodyTable">
+                </tbody>
+            </table>   
+         </div>
+         
+    </div>
+</div>    
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.2/echarts.min.js"></script>
+    <script src="{{ url_for('static', filename='js/acomph_new.js') }}"></script>
+{% endblock %}

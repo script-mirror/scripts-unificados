@@ -1,0 +1,50 @@
+input:focus::placeholder {
+  color: transparent;
+}
+
+.botaoAdicionar,
+.botaoSalvar {
+  border: #782777;
+  background-color: #782777;
+  color: white;
+}
+
+.btn-outline-secondary:hover,
+.btn-secondary:hover{
+  border-color: #9c339b;
+  background-color: #9c339b;
+
+}
+
+.btn-outline-primary:hover{
+  border-color: #e45d5d;  
+  background-color: #e45d5d;
+}
+
+.botaoRemover {
+  border-color: #e40202;  
+  background-color: #e40202;
+  color: white;
+}
+
+table,
+thead,
+tr,
+tbody,
+th,
+td {
+  text-align: center;
+}
+
+#ano, #pldMaxHora, #pldMaxEstr, #pldMin,#custoDeficit {
+  text-align: center;
+}
+
+
+@media (min-width: 768px) { 
+
+  .container-pagina{
+    max-width: 750px;
+  }
+
+}

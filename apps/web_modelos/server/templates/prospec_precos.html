@@ -1,0 +1,738 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/ion.rangeSlider.css') }}"/> -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/jquery.dataTables.css') }}"/>
+
+
+{% endblock %}
+
+{% block title %}
+<title> Preços </title>
+{% endblock %}
+
+{% block content %} 
+
+<div class="container-fluid mt-5">
+
+    <div class="row justify-content-center">
+      <div class="col col-sm-8">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="revisao-tab" data-toggle="tab" href="#matriz" role="tab" aria-controls="matriz" aria-selected="true">Matriz</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="data-tab" data-toggle="tab" href="#data" role="tab" aria-controls="data" aria-selected="false">Rodadas diárias</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tab-content m-2" id="menu-selecao">
+
+      <div class="tab-pane fade show active" id="matriz" role="tabpanel" aria-labelledby="matriz-tab">
+        
+        <div class="row justify-content-center my-4">
+          <div class="col-7 col-sm-3">
+            <label for="diasAtras" class="form-label">Data rodada</label>
+            <input id="dataRodadaMatriz" type="date" class="form-control">
+          </div>
+          <div class="col-5 col-sm-2">
+            <label for="diasAtras" class="form-label">Historico</label>
+            <input id="diasAtrasMatriz" type="text" class="form-control">
+          </div>
+          <div class="col-12 col-sm-3">
+            <div class="row">
+              <div class="col-12">
+                <button type="button" id="btnBuscarRodadasMatriz" class="btn bg-wx-original-claro col-12 m-1"><span>Buscar rodadas</span></button>
+              </div>
+              <div class="col-12">
+                <!-- <button type="button" id="btnBuscarRodadasMatriz" class="btn bg-wx-original-claro col-12 m-1"><span>Plotar dif.</span></button> -->
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" value="" id="plotar_diferenca">
+                  <label class="form-check-label" for="flexCheckDefault">
+                    Plotar diferença
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row justify-content-center">
+          <div id="cadastroMatriz" class="text-center col col-sm-8"></div>
+        </div>
+
+        <div id="matriz_pld" class='row mb-5 text-center'></div>
+
+      </div>
+
+      <div class="tab-pane fade" id="data" role="tabpanel" aria-labelledby="data-tab">
+        <div class="row justify-content-center my-4">
+
+          <div class="col-3">
+            <label for="dataRodada" class="form-label">Data rodada</label>
+            <input id="dataRodada" type="date" class="form-control">
+          </div>
+          <div class="col-3" style="display: none;">
+            <label for="idRodada" class="form-label">ID</label>
+            <input id="idRodada" type="number" class="form-control">
+          </div>
+          <div class="col-2">
+            <label for="diasAtras" class="form-label">Historico</label>
+            <input id="diasAtras" type="text" class="form-control">
+          </div>
+
+          <div class="col-3">
+
+            <div class="row">
+              <span class="col-12 p-1">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input radio-tipo-pesquisa" type="radio" name="tipo_pesquisa" id="r_pesquisa_historico" value="historico" checked>
+                  <label class="form-check-label" for="r_pesquisa_historico">Histórico</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input radio-tipo-pesquisa" type="radio" name="tipo_pesquisa" id="r_pesquisa_data" value="data">
+                  <label class="form-check-label" for="r_pesquisa_data">Data</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input radio-tipo-pesquisa" type="radio" name="tipo_pesquisa" id="r_pesquisa_id" value="id">
+                  <label class="form-check-label" for="r_pesquisa_id">Id</label>
+                </div>
+              </span>
+            </div>
+
+            <div class="row" style="display: none;">
+              <span class=" col-6 p-1">
+                <button type="button" id="btnAddRodadas" class="btn bg-wx-original-claro btn-block"><span>Add</span></button>
+              </span>
+              <span class="col-6 p-1">
+                <button type="button" id="btnLimparRodadas" class="btn bg-wx-original-claro btn-block"><span>Limpar</span></button>
+              </span>
+            </div>
+            <div class="row">
+              <span class=" col-12 p-1">
+                <button type="button" id="btnBuscarRodadas" class="btn bg-wx-original-claro btn-block"><span>Buscar rodadas</span></button>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div id="selecaoSubmercados" style="display: none;" class="m-3">
+          <label class="form-label">Submercados</label>
+          <div class="row">
+            <div class="col-6">
+              <button type="button" class="btn bg-wx-original-claro esconder-submercado col-12 m-1" data-column="se"><span>Sudeste</span></button>
+              <button type="button" class="btn bg-wx-original-claro esconder-submercado col-12 m-1" data-column="s"><span>Sul</span></button>
+            </div>
+            <div class="col-6">
+              <button type="button" class="btn bg-wx-original-claro esconder-submercado col-12 m-1" data-column="ne"><span>Nordeste</span></button>
+              <button type="button" class="btn bg-wx-original-claro esconder-submercado col-12 m-1" data-column="n"><span>Norte</span></button>
+            </div>
+          </div>
+        </div>
+
+        <div id="resultados"></div>
+        <div class="row justify-content-between my-2" id="botoesPlot" style="display: none;">
+          <div class="col-4 p1">
+            <button type="button" id="btnPlotar"  class="btn bg-wx-original-claro btn-block"><span>plotar</span></button>
+          </div>
+          <div class="col-4 p1">
+            <button type="button" id="btnSelecionatTodos"  class="btn bg-wx-original-claro btn-block" onclick="selectAll()"><span>selecionar todos</span></button>
+          </div>
+          <div class="col-4 p1">
+            <button type="button" id="btnLimparSelecao"  class="btn bg-wx-original-claro btn-block" onclick="unselectAll()"><span>limpar seleção</span></button>
+          </div>
+        </div>
+        <div class="text-center" id='chart_precos'></div>
+
+      </div>
+      
+    </div>
+
+  </div>
+
+  
+</div>
+
+{% endblock %}
+
+
+
+
+{% block scripts %}
+
+ <script type="javascript" src="{{ url_for('static', filename='js/Chart.min.js') }}"></script>
+
+ <!-- <script src="{{ url_for('static', filename='js/ion.rangeSlider.js') }}"></script> -->
+ <script src="{{ url_for('static', filename='js/moment.js') }}"></script>
+
+ <script type="text/javascript" charset="utf8"  src="{{ url_for('static', filename='js/jquery.dataTables.js') }}"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+
+ <script>
+
+  var datas_rodadas = new Set();
+  var id_rodadas = new Set();
+  var valores_tabela = {};
+
+  var tabela = {};
+  var charts = {}
+
+
+  var matrizCadastro = null;
+  var matrizResultados = {};
+
+
+  // var rodadas = null;
+  var dataAtual = moment();
+
+  var submercados = ['SUDESTE','SUL','NORDESTE','NORTE']
+
+  $(window).on('load', function(){
+
+    $('#dataRodada').val(dataAtual.format('YYYY-MM-DD'))
+    $('#dataRodadaMatriz').val(dataAtual.format('YYYY-MM-DD'))
+
+    $('.esconder-submercado').on('click', function() {
+      let submercado = $(this).attr('data-column')
+      let numerColunas = valores_tabela.colunas.length
+      let posInicial = null;
+      switch (submercado) {
+        case 'se':
+          posInicial = 3;
+          break;
+
+        case 's':
+          posInicial = 4;
+          break;
+
+        case 'ne':
+          posInicial = 5;
+          break;
+
+        case 'n':
+          posInicial = 6;
+          break;
+      }
+
+      $(this).toggleClass('bg-wx-original-claro');
+      for (let i=0; i<numerColunas; i++){
+        let col = tabela.column(posInicial+i*4)
+        col.visible( ! col.visible() );
+      }
+
+    });  
+
+    $('.radio-tipo-pesquisa').on('click', function() {
+      atualizarAreaPesquisa($(this).val())
+    })
+
+    $('#btnAddRodadas').on('click', function(){
+      datas_rodadas.add($('#dataRodada').val())
+      getRodadasByDataRodada(datas_rodadas)
+    });
+
+    $('#btnLimparRodadas').on('click', function(){
+      limparTabela()
+      datas_rodadas = new Set();
+      id_rodadas = new Set();
+      // valores_tabela = {};
+    });
+
+    $('#btnBuscarRodadas').on('click', function(){
+      let dtInicial = $('#dataRodada').val()
+      let ndias = $('#diasAtras').val()
+      if (ndias == ''){
+        ndias = 0
+      }
+      getRodadasByRangeData(dtInicial,ndias)
+    });
+
+    $('#btnBuscarRodadasMatriz').on('click', function(){
+      getCadastroRodadas()
+    });
+
+    $('#btnPlotar').on('click', function(){
+        plotar()
+    });
+
+  })
+
+  function atualizarAreaPesquisa(tipo_pesquisa){
+    console.log(tipo_pesquisa)
+    switch (tipo_pesquisa) {
+      case 'data':
+        $('#dataRodada').closest('div').css('display', '')
+        $('#idRodada').closest('div').css('display', 'none')
+        $('#diasAtras').closest('div').css('display', 'none')
+        $('#btnAddRodadas').closest('div').css('display', '')
+        $('#btnLimparRodadas').closest('div').css('display', '')
+        $('#btnBuscarRodadas').closest('div').css('display', 'none')
+
+        $('#btnAddRodadas').prop("onclick", null).off('click');
+        $('#btnAddRodadas').on('click', function(){
+          datas_rodadas.add($('#dataRodada').val())
+          getRodadasByDataRodada(datas_rodadas)
+        });
+        break;
+      case 'id':
+        $('#dataRodada').closest('div').css('display', 'none')
+        $('#idRodada').closest('div').css('display', '')
+        $('#diasAtras').closest('div').css('display', 'none')
+        $('#btnAddRodadas').closest('div').css('display', '')
+        $('#btnLimparRodadas').closest('div').css('display', '')
+        $('#btnBuscarRodadas').closest('div').css('display', 'none')
+
+        $('#btnAddRodadas').prop("onclick", null).off('click');
+        $('#btnAddRodadas').on('click', function(){
+          id_rodadas.add($('#idRodada').val())
+          getRodadasById2(id_rodadas,0,null)
+        });
+        break;
+
+      case 'historico':
+        $('#dataRodada').closest('div').css('display', '')
+        $('#idRodada').closest('div').css('display', 'none')
+        $('#diasAtras').closest('div').css('display', '')
+        $('#btnBuscarRodadas').closest('div').css('display', '')
+        $('#btnAddRodadas').closest('div').css('display', 'none')
+        $('#btnLimparRodadas').closest('div').css('display', 'none')
+        break;
+    }
+  }
+
+  function criarCharts(){
+
+    // Criação dos canvas para os graficos
+    let div_graph = document.getElementById("chart_precos")
+    div_graph.innerHTML = ''
+
+    for (let sub of submercados){
+        let div_aux = document.createElement("div");
+        div_aux.classList = "mt-3"
+
+        let canvas_aux = document.createElement("canvas");
+        canvas_aux.id = "chart_" + sub
+        canvas_aux.setAttribute("height", 120);
+
+        div_aux.appendChild(canvas_aux);
+        div_graph.appendChild(div_aux);
+    }
+
+
+    // Criação e configuracao dos graficos
+    for (let sub of submercados){
+        var ctx = document.getElementById("chart_"+sub).getContext("2d");
+
+        charts[sub] = new Chart(ctx, {
+            type: 'bar',
+            data: {labels: valores_tabela.colunas},
+            options: {
+                title: {
+                  display: true,
+                  text: sub,
+                },
+                tooltips: {
+                  mode: 'x'
+                },
+            }
+      })
+    }
+  }
+
+  function getCadastroRodadas(){
+
+    var dataRodada = $('#dataRodadaMatriz').val()
+    var historico = $('#diasAtrasMatriz').val()
+
+    if (historico == ''){
+      historico = 0
+    }
+
+    $.get("/middle/API/prospec/getcadastrorodadas", {'dataRodada':dataRodada, 'historico':historico, 'flagMatriz':1}, function(resposta) {
+      var e_resultados = document.getElementById('cadastroMatriz')
+      e_resultados.innerHTML = ''
+
+      var e_tabela = document.createElement('table');
+      e_tabela.classList.add('hover')
+      e_tabela.setAttribute('style', 'width:100%');
+      e_tabela.setAttribute('id', 'matrizResultados');
+      e_resultados.appendChild(e_tabela)
+
+      var e_thead = document.createElement('thead');
+      e_tabela.appendChild(e_thead)
+
+      var e_tr1 = document.createElement('tr');
+      e_thead.appendChild(e_tr1)
+
+      var e_th = document.createElement('th');
+      e_th.textContent = 'ID (prospec)'
+      e_tr1.appendChild(e_th)
+
+      var e_th = document.createElement('th');
+      e_th.textContent = 'Mês referente'
+      e_tr1.appendChild(e_th)
+
+      var e_th = document.createElement('th');
+      e_th.textContent = 'Data da rodada'
+      e_tr1.appendChild(e_th)
+
+      var e_th = document.createElement('th');
+      e_th.textContent = 'Comentário'
+      e_tr1.appendChild(e_th)
+
+      matrizCadastro = $('#matrizResultados').DataTable( {
+          data: resposta,
+          destroy: true,
+          select: true,
+          order: [[ 0, "desc" ]]
+      });
+
+      // $('#matrizResultados tbody').on('click', 'tr', function () {
+      //     var data = matrizCadastro.row( this ).data();
+      //     getRodadasById(data[0],1)
+      // } );
+
+      $('#matrizResultados tbody').on('click', 'tr', function () {
+          var data = matrizCadastro.row( this ).data();
+          $(this).toggleClass('selected');
+          getRodadasById2(data[0],1,data[3])
+      } );
+
+    })
+
+  }
+
+  function dividirLinhas(dados, numLinhas){
+    let numColunas = dados.length/numLinhas
+    return new Array(Math.ceil(dados.length / numColunas))
+      .fill()
+      .map(_ => dados.splice(0, numColunas))
+  }
+
+ 
+  function pickHex(weight, color1, color2) {
+
+      var w1 = weight;
+      var w2 = 1 - w1;
+      var rgb = [Math.round(color1[0] * w1 + color2[0] * w2),
+          Math.round(color1[1] * w1 + color2[1] * w2),
+          Math.round(color1[2] * w1 + color2[2] * w2)];
+      return rgb;
+      
+  }
+
+  function limparTabela(){
+
+    // Limpeza tabela
+    $('#botoesPlot').css('display', 'none')
+    $('#selecaoSubmercados').css('display', 'none')
+    $('#resultados').html('')
+    
+    // Limpeza tabela
+    $('#chart_precos').html('')
+
+  }
+
+  function getRodadasByDataRodada(datas_rodadas){
+    limparTabela()
+    dts = '"'+Array.from(datas_rodadas).join('","')+'"'
+    $.get("/middle/API/prospec/getrodadas", {'datasRodadas':dts, 'flagMatriz':0}, function(resp) {
+      valores_tabela = resp
+      atualizarTabela()
+    })
+  }
+
+  function getRodadasByRangeData(dtInicial,ndias){
+    limparTabela()
+    $.get("/middle/API/prospec/getrodadas", {'dataInicial':dtInicial, 'ndias':ndias, 'flagMatriz':0}, function(resp) {
+      valores_tabela = resp
+      atualizarTabela()
+    })
+  }
+
+  function getRodadasById2(id,flagMatriz,coment){
+    if (flagMatriz == 0){
+      limparTabela()
+      ids = Array.from(id_rodadas).join(',')
+    }
+    else{
+      ids = id
+    }
+
+    $.get("/middle/API/prospec/getrodadas", {'idProspec':ids, 'flagMatriz':flagMatriz, 'comentario':coment}, function(resp) {
+      if (flagMatriz == 0){
+        valores_tabela = resp
+        atualizarTabela()
+      }
+      else{
+        matrizResultados[ids+' - '+coment] = resp
+        atualizarMatriz()
+      }
+    })
+  }
+
+
+  function atualizarTabela(){
+
+    if (Object.keys(valores_tabela).length > 0){
+      var e_resultados = document.getElementById('resultados')
+      e_resultados.innerHTML = ''
+
+      var e_tabela = document.createElement('table');
+      e_tabela.classList.add('hover')
+      e_tabela.setAttribute('style', 'width:100%');
+      e_tabela.setAttribute('id', 'tabelaResultados');
+      e_resultados.appendChild(e_tabela)
+
+      var e_thead = document.createElement('thead');
+      e_tabela.appendChild(e_thead)
+
+      var e_tr1 = document.createElement('tr');
+      e_thead.appendChild(e_tr1)
+
+      var e_th = document.createElement('th');
+      e_th.setAttribute('rowspan', '2');
+      e_th.textContent = 'Sensibilidade'
+      e_tr1.appendChild(e_th)
+
+      var e_th = document.createElement('th');
+      e_th.setAttribute('rowspan', '2');
+      e_th.textContent = 'Data'
+      e_tr1.appendChild(e_th)
+
+      var e_th = document.createElement('th');
+      e_th.setAttribute('rowspan', '2');
+      e_th.textContent = 'Variavel'
+      e_tr1.appendChild(e_th)
+
+      var e_tr2 = document.createElement('tr');
+      e_thead.appendChild(e_tr2)
+
+      for (let item of valores_tabela.colunas) {
+          var e_th = document.createElement('th');
+          e_th.setAttribute('colspan', '4');
+          e_th.textContent = item
+          e_tr1.appendChild(e_th)
+
+          var e_th = document.createElement('th');
+          e_th.textContent = 'SE'
+          e_tr2.appendChild(e_th)
+
+          var e_th = document.createElement('th');
+          e_th.textContent = 'S'
+          e_tr2.appendChild(e_th)
+
+          var e_th = document.createElement('th');
+          e_th.textContent = 'NE'
+          e_tr2.appendChild(e_th)
+
+          var e_th = document.createElement('th');
+          e_th.textContent = 'N'
+          e_tr2.appendChild(e_th)
+
+      }
+
+      $('#selecaoSubmercados').css('display', '')
+      $('#botoesPlot').css('display', '')
+
+      tabela = $('#tabelaResultados').DataTable( {
+          data: valores_tabela.dados,
+          destroy: true,
+          scrollX: true,
+          select: true,
+          pageLength: 25,
+      });
+
+      $('#tabelaResultados tbody').on('click', 'tr', function () {
+          var data = tabela.row( this ).data();
+          $(this).toggleClass('selected');
+      } );
+
+    }
+  }
+
+  function atualizarMatriz(){
+
+    let matrizesSelecionadas = matrizCadastro.rows('.selected').data()
+    let numero_matrizes = matrizesSelecionadas.length
+
+    let fl_plotar_diferenca = false
+    if ($('#plotar_diferenca')[0].checked && numero_matrizes >= 2){
+      fl_plotar_diferenca = true
+      numero_matrizes += 1 
+    }
+
+    let tamanhoMatriz = 12/numero_matrizes
+    
+    var resultadosMatriz = document.getElementById('matriz_pld')
+    resultadosMatriz.innerHTML = ''
+
+    for (let i=0; i<numero_matrizes; i++){
+
+      let matriz_tmp, titulo_matriz
+
+      if (fl_plotar_diferenca && i == numero_matrizes-1)
+      {
+        let id1 = matrizesSelecionadas[i-1][0] + ' - ' + matrizesSelecionadas[i-1][3] 
+        let id2 = matrizesSelecionadas[i-2][0] + ' - ' + matrizesSelecionadas[i-2][3] 
+        matriz_tmp = JSON.parse(JSON.stringify(matrizResultados[id1]));
+
+        for (let sub of ['SUDESTE', 'NORDESTE', 'SUL', 'NORTE']){
+          matriz_tmp['dados'][sub] = matriz_tmp['dados'][sub].map(function(n, i) { return Math.round(n - matrizResultados[id2]['dados'][sub][i]); })
+        }
+
+        // Cor da matriz
+        var color1 = [255,51,51]
+        var color2 = [255,255,0]
+
+        titulo_matriz = 'Diferença'
+
+      }
+      else {
+        let id = matrizesSelecionadas[i][0] + ' - ' + matrizesSelecionadas[i][3] //matrizesSelecionadas[i][0]
+        matriz_tmp = matrizResultados[id]
+
+        // Cor da matriz
+        var color1 = [0, 125, 101]
+        var color2 = [255, 255, 108]
+        
+        titulo_matriz = matriz_tmp['revisao_referente'] + ' (' + matriz_tmp['titulo'] + ')'
+
+      }
+
+      var e_divCol = document.createElement('div');
+      e_divCol.classList.add('col-'+tamanhoMatriz)
+      resultadosMatriz.appendChild(e_divCol)
+
+      for (let sub of ['SUDESTE', 'NORDESTE', 'SUL', 'NORTE']){
+        
+        var e_p = document.createElement('p');
+        e_p.innerHTML = sub + ' - ' + titulo_matriz
+        e_divCol.appendChild(e_p)
+
+        var e_tabela = document.createElement('table');
+        e_divCol.appendChild(e_tabela)
+        e_tabela.classList.add('table', 'table-hover', 'mb-5')
+        e_tabela.style.textAlign = "center";
+
+        var e_thead = document.createElement('thead');
+        e_tabela.appendChild(e_thead)
+        
+        var e_tbody = document.createElement('tbody');
+        e_tabela.appendChild(e_tbody)
+
+        var e_tr = document.createElement('tr');
+        e_thead.appendChild(e_tr)
+
+        var e_th = document.createElement('th');
+        e_th.setAttribute('scope', 'col');
+        e_th.textContent = 'SUL/SE'
+        e_tr.appendChild(e_th)
+
+       for (let ena of matriz_tmp['ena_sudeste']){
+         var e_th = document.createElement('th');
+         e_th.setAttribute('scope', 'col');
+         e_th.textContent = ena
+         e_tr.appendChild(e_th)
+       }
+
+       let pld_sub = [...matriz_tmp['dados'][sub]]
+       let max = Math.max(...pld_sub);
+       if (max == 0){
+        max = 1
+       }
+       let min = Math.min(...pld_sub);
+       let diff_btween_max_min = max - min;
+       let pld = dividirLinhas(pld_sub, matriz_tmp['ena_sul'].length)
+       for (let i_row = 0; i_row < pld.length; i_row++ ){
+        var e_tr = document.createElement('tr');
+        var e_th = document.createElement('th');
+        e_th.setAttribute('scope', 'row');
+        e_th.textContent = matriz_tmp['ena_sul'][i_row]
+        e_tr.appendChild(e_th)
+        e_tbody.appendChild(e_tr)
+      
+        for (let i_cell = 0; i_cell < pld[i_row].length; i_cell++ ){
+          let e_td = document.createElement('td');
+          let val_pld = pld[i_row][i_cell]
+          e_td.textContent = Math.round(val_pld)
+          let cor = pickHex((max-val_pld)/diff_btween_max_min, color1, color2)
+          e_td.style.backgroundColor = 'rgb('+cor.join()+')'
+          e_tr.appendChild(e_td)
+        }
+       }
+      }
+
+    }
+
+  }
+
+
+  function gerarCor(i){
+    r = Math.pow(i*36, 2)%255
+    g = Math.pow(i*89, 3)%255
+    b = Math.pow(i*111, 4)%255
+    return 'rgb(' + r + ',' + g + ',' + b + ')'
+  }
+
+  function unselectAll(){
+    tabela.$('tr.selected').removeClass('selected');
+  }
+
+  function selectAll(){
+    unselectAll()
+    $("#tabelaResultados tbody tr").addClass('selected');
+  }
+
+  function plotar(){
+    let linhasSelecionadas = tabela.rows('.selected').data()
+    // let visibilidadeColunas = tabela.columns().visible();
+
+    criarCharts()
+
+    for (let i=0; i<linhasSelecionadas.length; i++){
+      let linha = linhasSelecionadas[i]
+      if ( i == 0 ){
+        var variavelPlotar = linha[2]
+      }
+      else if ( linha[2] != variavelPlotar ){
+        let numLinha = i+1
+        alert( 'Você selecionou duas variáveis diferentes para serem plotadas. [verifique a linha ' + numLinha + ']');
+        return
+      }
+
+      let dataPlot = {'SUDESTE':[],'SUL':[],'NORDESTE':[],'NORTE':[]}
+
+      let titulo = linha[0] + ' (' + linha[1] + ')'
+
+      for (let i_valores=0; i_valores<valores_tabela.colunas.length; i_valores++){
+        dataPlot['SUDESTE'].push(linha[3+i_valores*4])
+        dataPlot['SUL'].push(linha[4+i_valores*4])
+        dataPlot['NORDESTE'].push(linha[5+i_valores*4])
+        dataPlot['NORTE'].push(linha[6+i_valores*4])
+      }
+
+      for (let sub of submercados){
+        let newDataset = {
+            label: titulo,
+            type: 'line',
+            backgroundColor: gerarCor(i),
+            borderColor: gerarCor(i),
+            fill: false,
+            data: dataPlot[sub],
+        }
+
+        charts[sub].data.datasets.push(newDataset);
+        charts[sub].update();
+      }
+
+    }
+  }
+
+ </script>
+
+
+{% endblock %}

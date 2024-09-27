@@ -1,0 +1,1588 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+    <link href="{{ url_for('static', filename='css/menu_lateral.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lista_close.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+
+{% endblock %}
+
+{% block title %}
+	<title> Carga SIN </title>
+{% endblock %}
+
+
+{% block content %} 
+
+    <div id='enaDiariaBacia' class="wrapper">
+
+        <nav id="sidebar" class="bg-wx-original-claro active">
+
+            <div class="sidebar-header">
+                <h3>Menu</h3>
+            </div>
+
+            <div class="row ml-2 mr-2">
+                <div class="form-group col-sm">
+                    <label for="data-interesse">Data</label>
+                    <input class="form-control" type="date" id="data-interesse">
+                </div>
+            </div>
+
+
+            <div class="lista-close">
+              <ul id="listaDias" class="list-unstyled ml-2">
+              </ul>
+            </div>
+
+            <hr>
+
+            <ul id="listaFiltros" class="list-unstyled components ml-2">
+                <li class='texto-centro'>Carga</li>
+                <li>
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="ckb-carga" value="carga" name="carga" checked>
+                    <label class="custom-control-label" for="ckb-carga">Carga</label>
+                  </div>
+                </li>
+                <li class='texto-centro'>Geração</li>
+                <li>
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="ckb-geracao-todas" value="Geração Total" name="geracao[]">
+                    <label class="custom-control-label" for="ckb-geracao-todas">Total</label>
+                  </div>
+                </li>
+                <li>
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="ckb-geracao-hidro" value="Geração Hidráulica" name="geracao[]">
+                    <label class="custom-control-label" for="ckb-geracao-hidro">Hidráulica</label>
+                  </div>
+                </li>
+                <li>
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="ckb-geracao-termica" value="Geração Térmica" name="geracao[]">
+                    <label class="custom-control-label" for="ckb-geracao-termica">Térmica</label>
+                  </div>
+                </li>
+                <li>
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="ckb-geracao-eolica" value="Geração Eólica" name="geracao[]">
+                    <label class="custom-control-label" for="ckb-geracao-eolica">Eólica</label>
+                  </div>
+                </li>
+                <li>
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="ckb-geracao-nuclear" value="Geração Nuclear" name="geracao[]">
+                    <label class="custom-control-label" for="ckb-geracao-nuclear">Nuclear</label>
+                  </div>
+                </li>
+                <li>
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="ckb-geracao-solar" value="Geração Solar" name="geracao[]">
+                    <label class="custom-control-label" for="ckb-geracao-solar">Solar</label>
+                  </div>
+                </li>
+
+                <li class='texto-centro'>Temperatura</li>
+                <li>
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="ckb-temperatura" value="temperatura observada" name="temperatura">
+                    <label class="custom-control-label" for="ckb-temperatura">Temperatura</label>
+                  </div>
+                </li>
+
+                <hr>
+
+                <div class="row justify-content-md-center">
+                    <button type="button" id="atualizarHistorico" class="btn btn-light btn-atualizar">
+                        <span>Atualizar</span>
+                    </button>
+                </div>
+
+                <hr>
+
+                <li class='texto-centro'>Previsão</li>
+                <div class="row ml-2 mr-2">
+                    <div class="form-group col-sm">
+                        <label for="data-previsao"></label>
+                        <input class="form-control" type="date" id="data-previsao">
+                    </div>
+                </div>
+
+
+                
+                <div class="lista-dias-previsao">
+                  <label for="listaDiasPrev">Carga</label>
+                  <ul id="listaDiasPrev" class="list-unstyled  ml-2">
+                  </ul>
+                </div>
+
+
+                <hr>
+                <div class="lista-dias-previsao">
+                  <label for="listaDiasPrevLiquida">Carga Líquida</label>
+                  <ul id="listaDiasPrevLiquida" class="list-unstyled  ml-2">
+                  </ul>
+                </div>
+
+
+                <hr>
+
+                <div class="lista-dias-previsao">
+                  <label for="listaDiasPrevTemperatura">Temperatura</label>
+                  <ul id="listaDiasPrevTemperatura" class="list-unstyled  ml-2">
+                  </ul>
+                </div>
+
+
+                <li>
+                    <div class="row justify-content-md-center">
+                        <button type="button" id="atualizarPrevisao" class="btn btn-light btn-atualizar">
+                            <span>Atualizar</span>
+                        </button>
+
+                    </div>
+                </li>
+
+            </ul>
+
+        </nav>
+
+      <div id="content">
+
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+
+                <button type="button" id="sidebarCollapse" class="btn bg-wx-original-claro">
+                    <i class="fas fa-align-left"></i>
+                    <span>Menu</span>
+                </button>
+
+                <div>
+                  <button type="button" class="btn bg-wx-original-claro" id='btn_atualizar_superior'>Atualizar</button>
+                  <button type="button" class="btn bg-wx-original-claro" id='btn_comutarLegenda'>ON/Off Legenda</button>
+                  
+                  <button type="button" class="btn bg-wx-original-claro" id='btn_comutar_grafico_temperatura'>
+                     <i id='icon-temperatura-bar' class="fas fa-chart-bar"></i>
+                     <i id='icon-temperatura-line' style="display: none" class="fas fa-chart-line"></i>
+                  </button>
+                  
+
+                </div>
+
+
+                
+                
+
+            </div>
+        </nav>
+
+        <div id = 'alertas'>
+                  
+        </div>
+
+        <div id='graphs_carga'>
+
+        </div>
+
+
+{% endblock %}
+
+
+{% block scripts %}
+
+ <script>
+  
+  var diasInteresse = []
+
+  var timeFormat = 'DD/MM/YYYY';
+  var subsistemas = {'SIN':'SIN', 'SUDESTE':'Sudeste', 'SUL':'Sul', 'NORDESTE':'Nordeste', 'NORTE':'Norte'}
+
+  var cores_fixas = ['rgba(13, 0, 194, 1)', 'rgba(170, 157, 8, 1)', 'rgba(20, 163, 144, 1)', 'rgba(224, 107, 11, 1)', 'rgba(168, 0, 0, 1)', 'rgba(112, 0, 168, 1)', 'rgba(69, 232, 88, 1)', 'rgba(209, 0, 209, 1)']
+  
+  var cores_temperatura = ['rgba(50,205,50,0.5)','rgba(255,0,255,0.5)','rgba(255,0,0,0.5)','rgba(28,28,28,0.5)']
+
+  var estiloLinha = {'Geração Total':[1,1], 'Geração Hidráulica':[10,10], 'Geração Térmica':[15, 3, 3, 3], 'Geração Solar':[1,1], 'Geração Eólica':[10, 10], 'Geração Nuclear':[15, 3, 3, 3]}
+
+  var cores = {}
+  var cores_temperatura = {}
+
+  var charts = {}
+  var curvas = {'Carga':{}, 'Previsão de carga':{},'Previsão de carga DP':{},'Previsao Carga Liquida DP':{}, 'Geração Total':{}, 'Geração Hidráulica':{}, 'Geração Térmica':{}, 'Geração Eólica':{}, 'Geração Nuclear':{}, 'Geração Solar':{}, 'Previsao Carga Liquida':{},'temperatura observada':{},'temperatura prevista':{}}
+  
+
+  // Configuracoes para abortar todas as requisiçoes quando o usuario pedir para atualizar
+  $.xhrPool = [];
+  $.xhrPool.abortAll = function() {
+      $(this).each(function(idx, jqXHR) {
+          jqXHR.abort();
+      });
+      $(this).each(function(idx, jqXHR) {
+          var index = $.inArray(jqXHR, $.xhrPool);
+          if (index > -1) {
+              $.xhrPool.splice(index, 1);
+          }
+      });
+  };
+
+  $.ajaxSetup({
+      beforeSend: function(jqXHR) {
+          $.xhrPool.push(jqXHR);
+      },
+      complete: function(jqXHR) {
+          var index = $.inArray(jqXHR, $.xhrPool);
+          if (index > -1) {
+              $.xhrPool.splice(index, 1);
+          }
+      }
+  });
+
+
+   // Executar ao abrir a pagina
+   $(window).on('load', function(){
+
+      // Pegar os parametros passados via url
+      var queryString = window.location.search;
+      queryString = queryString.replace("?", "");
+
+      parametros = queryString.split("&");
+
+       // Set a data para hoje
+      hoje = moment()
+      str_today = hoje.format('YYYY-MM-DD')
+      $("#data-interesse").val(str_today)
+      $('#data-previsao').val(str_today)
+
+      // Criação dos canvas para os graficos
+      span_graph = document.getElementById("graphs_carga")
+      for (sub in subsistemas){
+          var div_aux = document.createElement("div");
+          div_aux.className = "col-12 col-sm-12 col-md-12 col-lg-11 center"
+          var canvas_aux = document.createElement("canvas");
+          canvas_aux.id = "chart " + sub
+
+          div_aux.appendChild(canvas_aux);
+          span_graph.appendChild(div_aux);
+      }
+
+
+    // Criação e configuracao dos graficos
+    for (sub in subsistemas){
+        var ctx = document.getElementById("chart "+sub).getContext("2d");
+
+        charts[sub] = new Chart(ctx, {
+            type: 'line',
+            options: {
+                title: {
+                  display: true,
+                  text: subsistemas[sub],
+                },
+                legend: {
+                  position: 'right',
+                },
+
+                tooltips: {
+                  intersect: false,
+                  mode: 'nearest',
+                },
+                hover: {
+                    intersect: false,
+                    mode: 'nearest',
+                },
+
+
+                // tooltips: {
+                //   mode: 'index',
+                //   axis: 'x'
+                //   // intersect: 'true',
+                //   // callbacks: {
+                //   //    // Funcao para calcular a media
+                //   //    label: function(tooltipItem, data) {
+                //   //       var soma = 0
+                //   //       var label = data.datasets[tooltipItem.datasetIndex].label || ''
+                       
+                //   //       for(var i=0; i<=tooltipItem.index; i++ ){
+                //   //          soma += Number(data.datasets[tooltipItem.datasetIndex].data[i]['y'])
+                //   //       }
+
+                //   //       media = soma/(tooltipItem.index+1)
+
+                //   //       return `${label}: ${tooltipItem.yLabel} (media: ${media.toFixed(2)})`;
+                //   //    },
+                //   // },
+                // },
+
+                scales: {
+                    xAxes: [
+                        {
+                        type: 'time',
+                        stacked: true,
+                        time: {
+                            unit: 'hour',
+                            displayFormats: {
+                                hour: 'HH:mm'
+                            },
+                            tooltipFormat: "HH:mm",
+                        },
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Data'
+                        },
+                        ticks: {
+                          maxRotation: 45,  // Rotação máxima de 45 graus
+                          minRotation: 45   // Rotação mínima de 45 graus
+                      }
+                    },
+                    ],
+                    yAxes: [
+                    {
+
+                        id: 'eixo_carga',
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Carga (MW)'
+                        }
+                    },
+
+                    {
+                      id: 'eixo_temperatura',
+                      position: 'right',
+                      // stacked: true,
+                      scaleLabel: {
+                        display: true,
+                        labelString: 'Temperatura',
+                      },
+              
+                      ticks: {
+                          display: true,
+                          max: 40,
+                          min: 15,
+                      },
+                      gridLines: {
+                        drawOnChartArea: false
+                      },
+                    },
+
+                  ]
+                },
+
+            }
+        })
+    }
+
+    iniciarListeners()
+    
+    // update os graficos com a serie da data de hoje
+    adicionarData()
+    atualizar()
+
+    })
+
+  function adicionarData(){
+
+
+    let novaDt, $listaDias, $li, $span
+
+    novaDt = moment($("#data-interesse").val())
+    novaDt_str = novaDt.format("DD/MM/YYYY")
+
+    if(diasInteresse.includes(novaDt_str))
+      return ''
+
+    $listaDias = $("#listaDias")
+
+    $li = $('<li>')
+            .text(novaDt_str)
+            .appendTo($listaDias);
+
+    $span = $('<span>')
+              .addClass('close')
+              .text("x")
+              .appendTo($li)
+              .click(removerData);
+
+    diasInteresse.push(novaDt_str)
+
+   }
+
+  function removerData(ev){
+    let $span, $li, dataDelete;
+
+    $span = $(ev.currentTarget);
+    
+    $li = $span.parent("li")
+
+    $li.remove();
+
+    // Ao pegar o text do li, ele acaba pegando o elemento child (botao de remocao)
+    dataDelete = $li.clone()    //clone the element
+                    .children() //select all the children
+                    .remove()   //remove all the children
+                    .end()      //again go back to selected element
+                    .text();
+
+    // filtra a data removida
+    diasInteresse = diasInteresse.filter(function(item) {
+      return item !== dataDelete
+    })
+
+  }
+
+  function iniciarListeners(){
+
+    $('#sidebarCollapse').on('click', function () {
+        $('#sidebar').toggleClass('active');
+    });
+
+    
+    $('#btn_atualizar_superior').on('click', atualizar);
+    $('#atualizarHistorico').on('click', atualizar);
+
+    $('#atualizarPrevisao').on('click',getCargaLiquida);
+    $('#atualizarPrevisao').on('click',getCargaLiquidaDP);
+
+
+    $('#atualizarPrevisao').on('click', getTemperaturaPrev);
+
+    $('#atualizarPrevisao').on('click', atualizarPrevisao);
+    $('#atualizarPrevisao').on('click', getCargaBlocoDP);
+
+
+    
+
+
+    $('#data-interesse').on('change', adicionarData);
+
+    $('#btn_comutarLegenda').click(comutarLegenda);
+
+    $('#btn_comutar_grafico_temperatura').on('click', function () {
+        for (submercado in charts){ 
+          for(dataset of charts[submercado].data.datasets){
+            if (dataset.yAxisID != undefined){
+              
+              if (dataset.type=='bar'){
+                dataset.type = 'line' 
+                charts[submercado].config.options.scales.yAxes[1].ticks = {}
+                
+                $('#icon-temperatura-bar')[0].style.display = ''
+                $('#icon-temperatura-line')[0].style.display = 'none'
+                charts[submercado].config.options.scales.yAxes[1].ticks['reverse'] = false
+                charts[submercado].config.options.scales.yAxes[1].ticks.min = 15
+                charts[submercado].config.options.scales.yAxes[1].ticks.max = 40
+              }
+              else{
+                dataset.type='bar'
+                $('#icon-temperatura-bar')[0].style.display = 'none'
+                $('#icon-temperatura-line')[0].style.display = ''
+                charts[submercado].config.options.scales.yAxes[1].ticks['reverse'] = true
+                charts[submercado].config.options.scales.yAxes[1].ticks.min = 15
+                charts[submercado].config.options.scales.yAxes[1].ticks.max = 40
+              } 
+
+              charts[submercado].update()
+            }
+          }
+        }
+    });
+
+  }
+
+  function atualizarPrevisao(){
+
+    divAlerta = document.getElementById('alertas')
+    divAlerta.innerHTML = ''
+
+    data = moment($('#data-previsao').val())
+    let $listDiasPrevisao = $('#listaDiasPrev')
+    $listDiasPrevisao.empty()
+
+    $.get("/middle/API/database/get/previsaoCargaDs", {'data': data.format("YYYY-MM-DD")}, function(resposta) {
+
+      if (resposta['carga'] === undefined){
+        exibirAlerta(`Sem informação de previsao de carga para a data ${data.format("YYYY-MM-DD")} !`, 'danger', 5000)
+        return
+      }
+
+      if(resposta['mensagem'] != undefined){
+        criarAviso(resposta['mensagem'])
+      }
+
+      let carga = resposta['carga']['PrevCarga']
+
+      
+      for(let dt in carga['SUDESTE']){
+
+        let $ckb, $label, $li, $div, id;
+
+        id = 'prev_' + dt.replace(/[/]/g, '_')
+
+        $div = $('<div>')
+                .addClass('form-check')
+                .appendTo($listDiasPrevisao);
+
+        $ckb = $('<input>')
+                .addClass('form-check-input')
+                .attr("type","checkbox")
+                .attr("id",id)
+                .val(dt)
+                .appendTo($div);
+
+        $label = $('<label>')
+                .addClass('form-check-label')
+                .attr("for", id)
+                .text(dt)
+                .appendTo($div);
+
+        $ckb.change(
+          function() {
+            filtrarCurvaPrevisao(this.value, this.checked)
+          })
+
+      }
+
+      let prevCarga = {}
+      for (sub in subsistemas){
+
+        prevCarga[sub] = [];
+        curvas['Previsão de carga'][sub] = {}
+
+          for (dia in carga[sub]){
+              prevCarga[sub][dia] = [];
+
+              for (hora in carga[sub][dia]){
+              
+                if (carga[sub][dia][hora] != null){
+                  prevCarga[sub][dia].push({x:moment(hora, 'HH:mm'), y:carga[sub][dia][hora].toFixed(2)});
+                }
+                else{
+                  prevCarga[sub][dia].push({x:moment(hora, 'HH:mm'), y:null});
+                }
+              }
+
+              prevCarga[sub][dia].push({x:moment('23:59', 'HH:mm'), y:carga[sub][dia][hora].toFixed(2)});
+
+
+              let label, cor_curva;
+
+              label = dia;
+
+              if (cores[label] == undefined){
+              // if (cores[label] == undefined ){
+                if (Object.keys(cores).length < cores_fixas.length){
+                  cores[label] = cores_fixas[Object.keys(cores).length]
+                }
+                else{
+                  cores[label] = ramdomColor()
+                }
+              }
+
+              cor_curva = cores[label];
+              
+              label = `${label}(prev${data.format("DD/MM")})`
+
+
+              newDataset = {
+                    label: label,
+                    type: 'line',
+                    backgroundColor: cor_curva,
+                    borderColor: cor_curva,
+                    fill: false,
+                    data: prevCarga[sub][dia],
+                    pointRadius: 0,
+                    borderWidth: 1
+              }
+
+              // if(data.format("DD/MM/YYYY") != dia){
+              //   newDataset.steppedLine = true
+              // }
+
+
+              curvas['Previsão de carga'][sub][dia] = newDataset
+
+          }
+
+      }
+
+    })
+
+  }
+
+
+  function getCargaBlocoDP(){
+
+    data = moment($('#data-previsao').val())
+    let $listDiasPrevisao = $('#listaDiasPrev')
+    // $listDiasPrevisao.empty()
+
+    $.get("/middle/API/database/get/previsaoCargaDs_DP", {'data': data.format("YYYY-MM-DD")}, function(resposta) {
+
+      if (resposta['carga'] === undefined){
+        exibirAlerta(`Sem informação de previsao de carga do bloco DP para a data ${data.format("YYYY-MM-DD")} !`, 'danger', 5000)
+        return
+      }
+
+      if(resposta['mensagem'] != undefined){
+        criarAviso(resposta['mensagem'])
+      }
+
+      let carga = resposta['carga']['Bloco_DP']
+
+      
+      for(let dt in carga['SUDESTE']){
+
+        let $ckb, $label, $li, $div, id;
+
+        id = 'prev_' + dt.replace(/[/]/g, '_')
+
+        $div = $('<div>')
+                .addClass('form-check')
+                .appendTo($listDiasPrevisao);
+
+        $ckb = $('<input>')
+                .addClass('form-check-input')
+                .attr("type","checkbox")
+                .attr("id",id)
+                .val(dt + ' (Oficial)')
+                .appendTo($div);
+
+        $label = $('<label>')
+                .addClass('form-check-label')
+                .attr("for", id)
+                .text(dt + ' (Oficial)')
+                .appendTo($div);
+
+        $ckb.change(
+          function() {
+            filtrarCurvaPrevisao(this.value, this.checked)
+          })
+
+      }
+
+      let prevCargaDP = {}
+      for (sub in subsistemas){
+
+        prevCargaDP[sub] = [];
+        curvas['Previsão de carga DP'][sub] = {}
+
+          for (dia in carga[sub]){
+              prevCargaDP[sub][dia] = [];
+
+              for (hora in carga[sub][dia]){
+              
+                if (carga[sub][dia][hora] != null){
+                  prevCargaDP[sub][dia].push({x:moment(hora, 'HH:mm'), y:carga[sub][dia][hora].toFixed(2)});
+                }
+                else{
+                  prevCargaDP[sub][dia].push({x:moment(hora, 'HH:mm'), y:null});
+                }
+              }
+
+              prevCargaDP[sub][dia].push({x:moment('23:59', 'HH:mm'), y:carga[sub][dia][hora].toFixed(2)});
+
+
+              let label, cor_curva;
+
+              label = dia;
+
+              if (cores[label] == undefined){
+              // if (cores[label] == undefined ){
+                if (Object.keys(cores).length < cores_fixas.length){
+                  cores[label] = cores_fixas[Object.keys(cores).length]
+                }
+                else{
+                  cores[label] = ramdomColor()
+                }
+              }
+
+              cor_curva = cores[label];
+              
+              label = `${label}(prevOficial${data.format("DD/MM")})`
+
+
+              newDataset = {
+                    label: label,
+                    type: 'line',
+                    backgroundColor: cor_curva,
+                    borderColor: cor_curva,
+                    fill: false,
+                    data: prevCargaDP[sub][dia],
+                    pointRadius: 0,
+                    borderWidth: 1
+              }
+
+              curvas['Previsão de carga DP'][sub][dia] = newDataset
+
+          }
+
+      }
+
+    })
+
+  }
+
+  function filtrarCurvaPrevisao(label, mostrar){
+
+    console.log(label + "asdasd")
+    console.log(mostrar)
+
+    for (sub in subsistemas){
+
+      if (mostrar == true){
+
+        if (label.endsWith('(Liquida)')){
+          label_aux = label.replace(' (Liquida)', "")
+
+          if (curvas['Previsao Carga Liquida'][sub][label_aux] != undefined){
+            charts[sub].data.datasets.push(curvas['Previsao Carga Liquida'][sub][label_aux])
+          }
+        }
+        else if (label.endsWith('(Liquida Oficial)')){
+          label_aux = label.replace(' (Liquida Oficial)', "")
+           
+          if (curvas['Previsao Carga Liquida DP'][sub][label_aux] != undefined){
+            charts[sub].data.datasets.push(curvas['Previsao Carga Liquida DP'][sub][label_aux])
+          }
+        }
+
+        else if(label.endsWith('(temperatura)')){
+          label_aux = label.replace(' (temperatura)', "")
+          
+          if (curvas['temperatura prevista'][sub] != undefined){
+            charts[sub].data.datasets.push({ ...curvas['temperatura prevista'][sub][label_aux] });
+          }
+
+        }
+        else if (label.endsWith('(Oficial)')){
+          label_aux = label.replace(' (Oficial)', "")
+          charts[sub].data.datasets.push({ ...curvas['Previsão de carga DP'][sub][label_aux] });
+
+        }
+        else{
+          charts[sub].data.datasets.push({ ...curvas['Previsão de carga'][sub][label] });
+
+        }
+        
+      }
+      else {
+
+        if (label.endsWith('(Liquida)')){
+          label_aux = label.replace(' (Liquida)', "")
+
+          charts[sub].data.datasets = charts[sub].data.datasets.filter( function (curva){
+            return !curva.label.match(`${label_aux}[(]prevLiquida[0-9]{2}/[0-9]{2}[)]`)
+          })
+          
+        }
+        else if (label.endsWith('(Liquida Oficial)')){
+          label_aux = label.replace(' (Liquida Oficial)', "")
+          
+          charts[sub].data.datasets = charts[sub].data.datasets.filter( function (curva){
+            return !curva.label.match(`${label_aux}[(]prevLiquidaOficial[0-9]{2}/[0-9]{2}[)]`)
+          })
+
+        }
+        else if(label.endsWith('(temperatura)')){
+          label_aux = label.replace(' (temperatura)', "")
+
+          charts[sub].data.datasets = charts[sub].data.datasets.filter( function (curva){
+            return !curva.label.match(`${label_aux}[(]prevTemp[0-9]{2}/[0-9]{2}[)]`)
+          })
+
+        }
+        else if (label.endsWith('(Oficial)')){
+          label_aux = label.replace(' (Oficial)', "")
+
+          charts[sub].data.datasets = charts[sub].data.datasets.filter( function (curva){
+            return !curva.label.match(`${label_aux}[(]prevOficial[0-9]{2}/[0-9]{2}[)]`)
+          })
+
+        }
+
+        else{
+
+          charts[sub].data.datasets = charts[sub].data.datasets.filter( function (curva){
+            return !curva.label.match(`${label}[(]prev[0-9]{2}/[0-9]{2}[)]`)
+          })
+
+        }
+
+        
+
+      }
+      charts[sub].update();
+
+    }
+
+  }
+
+
+  function atualizar(){
+
+    let dtHoje;
+    dtHoje = moment().format("DD/MM/YYYY")
+
+    $.xhrPool.abortAll();
+
+
+    let $checkboxCarga = $("input[type='checkbox'][name='carga']:checked");
+    let $checkboxGeracao = $("input[type='checkbox'][name='geracao[]']:checked");
+    let $checkboxTemperatura = $("input[type='checkbox'][name='temperatura']:checked");
+
+    datasets={}
+    for (sub in subsistemas){
+      datasets[sub] = charts[sub].data.datasets.filter( function (curva){
+            return curva.label.match(`.*(prevLiquida[0-9]{2}/[0-9]{2})`)
+        })
+
+       datasets[sub] = datasets[sub].concat(charts[sub].data.datasets.filter( function (curva){
+          return curva.label.match(`.*(prev[0-9]{2}/[0-9]{2})`)
+      }))
+
+       datasets[sub] = datasets[sub].concat(charts[sub].data.datasets.filter( function (curva){
+          return curva.label.match(`.*(prevTemp[0-9]{2}/[0-9]{2})`)
+      }))
+
+       charts[sub].data.datasets = datasets[sub]
+    }
+
+    for (let dt of diasInteresse) {
+
+      if($checkboxCarga.length>0){
+        if(dt == dtHoje || curvas['Carga'][dt] == undefined){
+          getCarga(dt)
+        }
+        else{
+          for (sub in subsistemas){
+            charts[sub].data.datasets.push({ ...curvas['Carga'][dt][sub] })
+            charts[sub].update();
+          }
+        }
+      }
+
+      if($checkboxGeracao.length>0){
+        if(dt == dtHoje || curvas['Geração Total'][dt] == undefined){
+          getGeracao(dt)
+        }
+        else{
+          for (sub in subsistemas){
+            for (let ckcbox of $checkboxGeracao){
+              charts[sub].data.datasets.push({ ...curvas[ckcbox.value][dt][sub] })
+            }
+            charts[sub].update();
+          }
+        }
+      }
+
+      if($checkboxTemperatura.length>0){
+        if(dt == dtHoje || curvas['temperatura observada'][dt] == undefined){
+          getTemperaturaObs(dt)
+        }
+        else{
+          if (curvas['temperatura observada'][suberc] == undefined){
+            for (submerc in subsistemas){
+
+              charts["SIN"].data.datasets.push({ ...curvas['temperatura observada'][submerc][dt] });
+            }
+          }
+          else{
+            charts[sub].data.datasets.push({ ...curvas['temperatura observada'][submerc][dt]});
+          }
+          charts[sub].update();
+          
+        }
+      }
+
+    }
+
+  }
+
+  function getGeracao(data){
+    data = moment(data, "DD/MM/YYYY")
+
+    let $checkboxGeracao = $("input[type='checkbox'][name='geracao[]']:checked");
+    curvasGeracaoPlot = []
+    for (let ckcbox of $checkboxGeracao){
+      curvasGeracaoPlot.push(ckcbox.value)
+    }
+
+
+    $.get("/middle/API/database/get/geracaoHoraria", {'data': data.format("YYYY-MM-DD")}, function(resposta) {
+
+      if (Object.entries(resposta['geracao']).length === 0){
+        exibirAlerta(`Sem informação de geração para a data ${data.format("DD/MM/YYYY")} !`, 'danger', 5000)
+        
+        return
+      }
+
+      geracao = {}
+      for (sub in subsistemas){
+
+        geracao[sub] = {}
+        for (tipoGeracao in resposta['geracao'][sub]){
+          geracao[sub][tipoGeracao] = []
+        }
+
+        for (tipoGeracao in resposta['geracao'][sub]){
+
+          for (hora in resposta['geracao'][sub][tipoGeracao]){
+            if (resposta['geracao'][sub][tipoGeracao][hora] != null){
+              geracao[sub][tipoGeracao].push({x:moment(hora, 'HH:mm'), y:resposta['geracao'][sub][tipoGeracao][hora].toFixed(2)})
+            }
+            else{
+              geracao[sub][tipoGeracao].push({x:moment(hora, 'HH:mm'), y:null})
+            }
+
+          }
+        }
+
+      }
+
+
+      data_str = data.format('DD/MM/YYYY')
+      label = data_str
+
+      for (sub in subsistemas){
+        for (tipoGeracao in resposta['geracao'][sub]){
+          tipo = tipoGeracao.substring("Geração ".length)
+
+          labelCurva = `${label} (${tipo})`
+
+          if (cores[data_str] == undefined){
+           if (Object.keys(cores).length < cores_fixas.length){
+             cores[data_str] = cores_fixas[Object.keys(cores).length]
+           }
+           else{
+             cores[data_str] = ramdomColor()
+           }
+          }
+
+          newDataset = {
+              label: labelCurva,
+              type: 'line',
+              backgroundColor: cores[data_str] ,
+              borderColor: cores[data_str] ,
+              fill: false,
+              pointRadius: 0,
+              data: geracao[sub][tipoGeracao],
+              borderDash: estiloLinha[tipoGeracao]
+          }
+
+          if (curvas[tipoGeracao][data_str] == undefined){
+            curvas[tipoGeracao][data_str] = {}
+          }
+          curvas[tipoGeracao][data_str][sub] = newDataset
+          
+          if(curvasGeracaoPlot.includes(tipoGeracao)){
+            charts[sub].data.datasets.push({ ...newDataset })
+          }
+
+       }
+       charts[sub].update();
+      }
+
+    })
+
+  }
+
+  function getCarga(data){
+
+    data = moment(data, "DD/MM/YYYY")
+    $.get("/middle/API/database/get/cargaHoraria", {'data': data.format("YYYY-MM-DD")}, function(resposta) {
+      let carga = {}
+      if (Object.entries(resposta.carga).length === 0){
+        exibirAlerta(`Sem informação de carga para a data ${data.format("DD/MM/YYYY")} !`, 'danger', 5000)
+        return
+      }
+
+      for (sub in subsistemas){
+
+        if (carga[sub] == undefined){
+            carga[sub] = []
+        }
+
+        for (hora in resposta['carga'][sub]){
+          if (resposta['carga'][sub][hora] != null){
+            carga[sub].push({x:moment(hora, 'HH:mm'), y:resposta['carga'][sub][hora].toFixed(2)})
+          }
+          else{
+            carga[sub].push({x:moment(hora, 'HH:mm'), y:null})
+          }
+        }
+      }
+
+      let label = data.format("DD/MM/YYYY")
+    
+      if (cores[label] == undefined){
+        if (Object.keys(cores).length < cores_fixas.length){
+          cores[label] = cores_fixas[Object.keys(cores).length]
+        }
+        else{
+          cores[label] = ramdomColor()
+        }
+      }
+
+    let cor_curva = cores[label]
+
+     for (sub in subsistemas){
+
+      newDataset = {
+          label: label,
+          type: 'line',
+          backgroundColor: cor_curva,
+          borderColor: cor_curva,
+          fill: false,
+          data: carga[sub],
+          pointRadius: 0,
+      }
+
+      if (curvas['Carga'][label] == undefined){
+        curvas['Carga'][label] = {}
+      }
+      curvas['Carga'][label][sub] = newDataset
+      
+      charts[sub].data.datasets.push({ ...newDataset })
+      charts[sub].update();
+
+     }
+    })
+
+  }
+
+  function ramdomColor(){
+    
+      int1 = Math.floor(255 * Math.random())
+      int2 = Math.floor(255 * Math.random())
+      int3 = Math.floor(255 * Math.random())
+      str_defalt = 'rgba(' + int1 + ',' + int2 + ',' + int3 + ',1)'
+      return str_defalt
+  }
+
+  function comutarLegenda(){
+      for (subm in charts){
+          charts[subm].options.legend.display = !charts[subm].options.legend.display
+          charts[subm].update();
+      }
+  }
+
+  function rmElemento(elm, tempo){
+    //elm [element html] -> elemento a ser removido
+    // tempo [int] -> numero de milisegundos ate que a messagem desapareca, coloque 0 para nao desaparecer
+
+    setTimeout(
+        function() {
+          elm.remove();
+        }, tempo);
+    
+  }
+
+  function exibirAlerta(msg, tipo, tempo){
+    // msg [str] -> mensagem a ser mostrada
+    // tipo [str] -> tipo de messagem  (success, danger, info)
+    // tempo [int] -> numero de milisegundos ate que a messagem desapareca, coloque 0 para nao desaparecer
+    // exibirAlerta('Mensagem do tipo Danger quer ira desparecer em 3 sec', 'danger', 2000)
+    div_alerta = document.getElementById('alertas')
+    var new_elm = document.createElement('div');
+    new_elm.classList.add("alert", `alert-${tipo}`, "col-8", "center", "mt-3");
+    new_elm.setAttribute('role', 'alert')
+    new_elm.innerText = msg
+    div_alerta.appendChild(new_elm)
+
+
+    if (tempo != 0){
+      rmElemento(new_elm, tempo)
+    }
+
+  }
+
+  function criarAviso(msg) {
+    // Criação dos elementos HTML
+    divAlerta = document.getElementById('alertas')
+    var new_elm = document.createElement('div');
+    new_elm.className = "alert alert-warning alert-dismissible";
+    new_elm.role = "alert";
+
+    var botaoFechar = document.createElement("button");
+    botaoFechar.type = "button";
+    botaoFechar.className = "close";
+    botaoFechar.setAttribute("data-dismiss", "alert");
+    botaoFechar.setAttribute("aria-label", "Close");
+
+    var spanFechar = document.createElement("span");
+    spanFechar.setAttribute("aria-hidden", "true");
+    spanFechar.innerHTML = "&times;";
+
+    var strong = document.createElement("strong");
+    strong.innerHTML = "Warning!  ";
+
+    var mensagem = document.createTextNode(msg);
+
+    // Anexar elementos uns aos outros
+    botaoFechar.appendChild(spanFechar);
+    new_elm.appendChild(botaoFechar);
+    new_elm.appendChild(strong);
+    new_elm.appendChild(mensagem);
+
+    // Adicionar alerta ao corpo do documento
+    divAlerta.appendChild(new_elm)
+  }
+
+
+var resposta_carga_liquida
+var prevCargaLiquida 
+
+function getCargaLiquida(){
+  data = moment($('#data-previsao').val())
+
+  let $listDiasPrevisao = $('#listaDiasPrevLiquida')
+
+  $listDiasPrevisao.empty()
+
+  $.get("/middle/API/get/prev_carga_liquida", {'data_referente': data.format("YYYY-MM-DD"),'fonte_carga': 'PrevCargaDessem'}, function(resposta) {
+
+
+      resposta_carga_liquida = resposta
+      
+
+      if (Object.entries(resposta_carga_liquida['carga liquida']).length === 0){
+        exibirAlerta(`Sem informação de carga liquida prevista para a data ${dt_prev.format("DD/MM/YYYY")} !`, 'danger', 5000)
+        
+        return
+      }
+
+      let carga = resposta_carga_liquida['carga liquida']
+
+
+      for(let dt in carga['SUDESTE']){
+
+        let $ckb, $label, $li, $div, id;
+
+        id = 'prev_' + dt.replace(/[/]/g, '_')
+
+        $div = $('<div>')
+                .addClass('form-check')
+                .appendTo($listDiasPrevisao);
+
+        $ckb = $('<input>')
+                .addClass('form-check-input')
+                .attr("type","checkbox")
+                .attr("id",id)
+                .val(dt + ' (Liquida)')
+                .appendTo($div);
+
+        $label = $('<label>')
+                .addClass('form-check-label')
+                .attr("for", id)
+                .text(dt)
+                .appendTo($div);
+
+        $ckb.change(
+          function() {
+            filtrarCurvaPrevisao(this.value, this.checked)
+          })
+
+      }
+
+
+
+       prevCargaLiquida = {}
+      for (submercado in carga){
+
+        curvas['Previsao Carga Liquida'][submercado] = {}
+
+        prevCargaLiquida[submercado] = {}
+
+        for (dia in carga[submercado]){
+
+          prevCargaLiquida[submercado][dia] = []
+
+          for(hora in carga[submercado][dia]){
+
+            prevCargaLiquida[submercado][dia].push({x:moment(hora, 'HH:mm'), y:carga[submercado][dia][hora].toFixed(2)})
+
+          }
+          prevCargaLiquida[submercado][dia].push({x:moment('23:59', 'HH:mm'), y:carga[submercado][dia][hora].toFixed(2)});
+
+           let label, cor_curva;
+
+              label = dia;
+
+              if (cores[label] == undefined){
+                if (Object.keys(cores).length < cores_fixas.length){
+                  cores[label] = cores_fixas[Object.keys(cores).length]
+                }
+                else{
+                  cores[label] = ramdomColor()
+                }
+              }
+
+              cor_curva = cores[label];
+              
+              label = `${label}(prevLiquida${data.format("DD/MM")})`
+
+
+              newDataset = {
+                    label: label,
+                    type: 'line',
+                    backgroundColor: cor_curva,
+                    borderColor: cor_curva,
+                    fill: false,
+                    data: prevCargaLiquida[submercado][dia],
+                    pointRadius: 0,
+                    borderWidth: 1
+              }
+
+
+              curvas['Previsao Carga Liquida'][submercado][dia] = newDataset
+
+
+        }
+      }
+
+  })
+
+}
+
+
+function getCargaLiquidaDP(){
+  data = moment($('#data-previsao').val())
+
+  let $listDiasPrevisao = $('#listaDiasPrevLiquida')
+
+  $.get("/middle/API/get/prev_carga_liquida", {'data_referente': data.format("YYYY-MM-DD"),'fonte_carga': 'bloco_dp'}, function(resposta) {
+
+
+      resposta_carga_liquida_dp = resposta
+      
+
+      if (Object.entries(resposta_carga_liquida_dp['carga liquida']).length === 0){
+        exibirAlerta(`Sem informação de carga liquida prevista utilizando o bloco DP para a data ${dt_prev.format("DD/MM/YYYY")} !`, 'danger', 5000)
+        
+        return
+      }
+
+      let carga = resposta_carga_liquida_dp['carga liquida']
+
+
+      for(let dt in carga['SUDESTE']){
+
+        let $ckb, $label, $li, $div, id;
+
+        id = 'prev_' + dt.replace(/[/]/g, '_')
+
+        $div = $('<div>')
+                .addClass('form-check')
+                .appendTo($listDiasPrevisao);
+
+        $ckb = $('<input>')
+                .addClass('form-check-input')
+                .attr("type","checkbox")
+                .attr("id",id)
+                .val(dt + ' (Liquida Oficial)')
+                .appendTo($div);
+
+        $label = $('<label>')
+                .addClass('form-check-label')
+                .attr("for", id)
+                .text(dt + ' (Oficial)')
+                .appendTo($div);
+
+        $ckb.change(
+          function() {
+            filtrarCurvaPrevisao(this.value, this.checked)
+          })
+
+      }
+
+
+       prevCargaLiquidaDP = {}
+      for (submercado in carga){
+
+        curvas['Previsao Carga Liquida DP'][submercado] = {}
+
+        prevCargaLiquidaDP[submercado] = {}
+
+        for (dia in carga[submercado]){
+
+          prevCargaLiquidaDP[submercado][dia] = []
+
+          for(hora in carga[submercado][dia]){
+
+            prevCargaLiquidaDP[submercado][dia].push({x:moment(hora, 'HH:mm'), y:carga[submercado][dia][hora].toFixed(2)})
+
+          }
+          prevCargaLiquidaDP[submercado][dia].push({x:moment('23:59', 'HH:mm'), y:carga[submercado][dia][hora].toFixed(2)});
+
+           let label, cor_curva;
+
+              label = dia;
+
+              if (cores[label] == undefined){
+                if (Object.keys(cores).length < cores_fixas.length){
+                  cores[label] = cores_fixas[Object.keys(cores).length]
+                }
+                else{
+                  cores[label] = ramdomColor()
+                }
+              }
+
+              cor_curva = cores[label];
+              
+              label = `${label}(prevLiquidaOficial${data.format("DD/MM")})`
+
+
+              newDataset = {
+                    label: label,
+                    type: 'line',
+                    backgroundColor: cor_curva,
+                    borderColor: cor_curva,
+                    fill: false,
+                    data: prevCargaLiquidaDP[submercado][dia],
+                    pointRadius: 0,
+                    borderWidth: 1
+              }
+
+
+              curvas['Previsao Carga Liquida DP'][submercado][dia] = newDataset
+
+
+        }
+      }
+
+  })
+
+}
+
+
+
+var respostaTemperaturaObs
+var temperaturaObs
+
+function getTemperaturaObs(dt){
+  dt_ini = moment(dt,"DD/MM/YYYY")
+  dt_fim = moment(dt,"DD/MM/YYYY").add(1,'days')
+
+  $.get("/middle/API/get/temperatura_obs", {'dt_ini': dt_ini.format("YYYY-MM-DD"),'dt_fim':dt_fim.format("YYYY-MM-DD")}, function(resposta) {
+
+
+      respostaTemperaturaObs = resposta
+      
+
+      if (respostaTemperaturaObs['temperatura'] == undefined){
+        exibirAlerta(`Sem informação de temperatura observada para a data ${dt_ini.format("DD/MM/YYYY")} !`, 'danger', 5000)
+        
+        return
+      }
+
+      let temperatura = respostaTemperaturaObs['temperatura']
+      
+      temperaturaObs = {}
+      for (submercado in temperatura){
+
+        curvas['temperatura observada'][submercado] = {}
+
+        temperaturaObs[submercado] = {}
+
+        for (dia in temperatura[submercado]){
+
+          dia_aux = moment(dia).format("DD/MM/YYYY")
+
+          temperaturaObs[submercado][dia_aux] = []
+
+          for(hora in temperatura[submercado][dia]){
+
+            temperaturaObs[submercado][dia_aux].push({x:moment(hora, 'HH:mm'), y:temperatura[submercado][dia][hora].toFixed(1)})
+
+          }
+          temperaturaObs[submercado][dia_aux].push({x:moment('23:59', 'HH:mm'), y:temperatura[submercado][dia][hora].toFixed(1)});
+
+           let label, cor_curva;
+
+              label = dia_aux;
+
+              if (cores_temperatura[label] == undefined){
+                if (Object.keys(cores).length < cores_temperatura.length){
+                  cores_temperatura[label] = cores_temperatura[Object.keys(cores).length]
+                }
+                else{
+                  cores_temperatura[label] = ramdomColor()
+                }
+              }
+
+              cor_curva = cores_temperatura[label];
+              
+              label = `${label}(TempObs${dt_ini.format("DD/MM")})`
+
+
+              newDataset = {
+                    label: label,
+                    type: 'line',
+                    yAxisID:'eixo_temperatura',
+                    backgroundColor: cor_curva,
+                    borderColor: cor_curva,
+                    fill: false,
+                    data: temperaturaObs[submercado][dia_aux],
+                    borderWidth: 1,
+                    pointStyle: 'circle',
+                    stack: 'Stack 1'
+              }
+
+
+              curvas['temperatura observada'][submercado][dia_aux] = newDataset
+
+              charts[submercado].data.datasets.push({ ...newDataset })
+              charts[submercado].update();
+
+        }
+      }
+
+      
+  })
+
+}
+  
+
+
+var respostaTemperaturaPrev
+var temperaturaPrev
+
+function getTemperaturaPrev(){
+  
+  dt_prev = moment($('#data-previsao').val())//.subtract(1,'days')
+
+  $.get("/middle/API/get/temperatura_prev", 
+    {
+      'dt_deck': dt_prev.format("YYYY-MM-DD"),
+    }, 
+
+    function(resposta) {
+
+
+
+
+      let $listDiasPrevisao = $('#listaDiasPrevTemperatura')
+      respostaTemperaturaPrev = resposta
+      
+
+      $listDiasPrevisao.empty()
+
+      if (respostaTemperaturaPrev['temperatura prev'] === undefined){
+        exibirAlerta(`Sem informação de temperatura prevista para a data ${dt_prev.format("DD/MM/YYYY")} !`, 'danger', 5000)
+        
+        return
+      }
+      
+      if(respostaTemperaturaPrev['mensagem'] != undefined){
+        criarAviso(respostaTemperaturaPrev['mensagem'])
+      }
+
+      let temperatura = respostaTemperaturaPrev['temperatura prev'][dt_prev.format("YYYY-MM-DD")]
+
+      for(let dt in respostaTemperaturaPrev['temperatura prev'][dt_prev.format("YYYY-MM-DD")]['SUDESTE']){
+
+        let $ckb, $label, $li, $div, id;
+
+        id = 'prev_' + dt.replace(/[/]/g, '_')
+
+        $div = $('<div>')
+                .addClass('form-check')
+                .appendTo($listDiasPrevisao);
+
+        $ckb = $('<input>')
+                .addClass('form-check-input')
+                .attr("type","checkbox")
+                .attr("id",id)
+                .val(moment(dt).format("DD/MM/YYYY")+" (temperatura)")
+                .appendTo($div);
+
+        $label = $('<label>')
+                .addClass('form-check-label')
+                .attr("for", id)
+                .text(moment(dt).format("DD/MM/YYYY"))
+                .appendTo($div);
+
+        $ckb.change(
+          function() {
+            filtrarCurvaPrevisao(this.value, this.checked)
+          })
+
+      }
+
+       temperaturaPrev = {}
+      for (submercado in temperatura){
+
+        curvas['temperatura prevista'][submercado] = {}
+
+        temperaturaPrev[submercado] = {}
+
+        for (dia in temperatura[submercado]){
+
+          dia_aux = moment(dia).format("DD/MM/YYYY")
+
+          temperaturaPrev[submercado][dia_aux] = []
+
+          for(hora in temperatura[submercado][dia]){
+
+            temperaturaPrev[submercado][dia_aux].push({x:moment(hora, 'HH:mm'), y:temperatura[submercado][dia][hora].toFixed(2)})
+
+          }
+          temperaturaPrev[submercado][dia_aux].push({x:moment('23:59', 'HH:mm'), y:temperatura[submercado][dia][hora].toFixed(2)});
+
+           let label, cor_curva;
+
+              label = dia_aux;
+
+
+              if (cores_temperatura[label] == undefined){
+                if (Object.keys(cores).length < cores_temperatura.length){
+                  cores_temperatura[label] = cores_temperatura[Object.keys(cores).length]
+                }
+                else{
+                  cores_temperatura[label] = ramdomColor()
+                }
+              }
+
+
+              cor_curva = cores_temperatura[label];
+
+
+              
+              label = `${label}(prevTemp${dt_prev.format("DD/MM")})`
+
+
+              newDataset = {
+                    label: label,
+                    type: 'line',
+                    yAxisID:'eixo_temperatura',
+                    backgroundColor: cor_curva,
+                    borderColor: cor_curva,
+                    fill: false,
+                    data: temperaturaPrev[submercado][dia_aux],
+                    pointRadius: 1,
+                    borderWidth: 1,
+                    pointStyle: 'circle',
+                    stack: 'Stack 0'
+
+              }
+
+
+              curvas['temperatura prevista'][submercado][dia_aux] = newDataset
+
+        }
+      }
+
+  })
+
+}
+
+
+
+
+ 
+</script>
+
+<script src="{{ url_for('static', filename='js/moment.js') }}"></script>
+<script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+
+
+{% endblock %}

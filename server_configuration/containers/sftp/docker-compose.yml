@@ -1,0 +1,7 @@
+ftp:
+    image: atmoz/sftp
+    volumes:
+        - /ftp/files_sftp:/home/${SFTP_USERNAME}
+    ports:
+        - "2222:22"
+    command: ${SFTP_USERNAME}:${SFTP_PASSWORD}

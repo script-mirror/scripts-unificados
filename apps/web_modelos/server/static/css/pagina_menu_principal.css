@@ -1,0 +1,40 @@
+.item-menu{
+	height:140px; 
+	width:140%;
+}
+
+.item-menu button{
+	width:100%;
+	height:100%;
+	font-weight: 600;
+}
+
+.background-blue {
+	background-color: #5561a1c7;
+	color:  rgb(255, 255, 255);
+}
+
+.background-green {
+	background-color: #6bda6bd7;
+	color:  rgb(255, 255, 255);
+
+}
+
+.background-orange {
+	background-color: #eca64bc7;
+	color:  rgb(255, 255, 255);
+
+}
+
+.background-grey {
+	background-color: #666360c7;
+	color:  rgb(255, 255, 255);
+
+}
+
+/*deixando o texto do botao sempre branco */
+.item-menu button:hover {
+	color: #fff; /* Define a cor do texto como branco ao passar o mouse */
+}
+
+

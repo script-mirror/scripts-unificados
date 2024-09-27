@@ -1,0 +1,5 @@
+<div class="tab-pane fade {% block active %} {% endblock %}" id="{% block id %} {% endblock %}" role="tabpanel" aria-labelledby="{{self.id()}}-tab">
+    <div class="card" style="height: 60vh; width: 100%;">
+        {% block content %} {% endblock %}
+    </div>
+</div>

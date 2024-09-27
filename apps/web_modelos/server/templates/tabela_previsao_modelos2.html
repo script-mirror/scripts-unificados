@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tabela_previsao_modelos.css') }}">
+<link href="{{ url_for('static', filename='css/modal.css') }}" rel="stylesheet">
+
+{% endblock %}
+
+{% block title %}
+<title>Tabela Previsões</title>
+{% endblock %}
+
+
+{% block content %}
+
+<div id='' class="wrapper">
+
+	<nav id="sidebar" class="active visible">
+
+		<div class="sidebar-header ml-1">
+			<h3>Menu</h3>
+		</div>
+
+		<div class="row ml-2 mr-2">
+			<div class="form-group col-sm">
+
+				<label class="mb-2 d-flex ml-1 align-items-center">Data rodada: </label>
+				<input class="mb-2 d-flex ml-1 align-items-center text-center form-control" id="input" type="date" name="dataSelecionada">
+				<!-- <br>
+				<input class="form-check-input ml-1 " type="radio" name="exampleRadios" id="radios" value="subbacia">
+				<label class="form-check-label ml-4 " for="exampleRadios">SubBacia</label>
+				<br>
+				<input class="form-check-input ml-1" type="radio" name="exampleRadios" id="radios" value="bacia" checked>
+				<label class="form-check-label ml-4" for="exampleRadios">Bacia</label>
+				<br> -->
+				<input class="form-check-input ml-1" type="radio" name="exampleRadios" id="radios" value="submercado" checked>
+				<label class="form-check-label ml-4" for="exampleRadios">SubMercado</label>
+				<br>
+				<br>
+				<label class="ml-1" id="etiqueta" for="dias">Selecione o sistema meteorológico:</label>
+
+				<select class="mb-2 d-flex form-control ml-1" name="program" id="program">
+					<option>Selecione</option>
+					<option value="pconjunto">P.Conjunto</option>
+					<option value="pconjunto2">P.Conjunto2</option>
+					<option value="pconjunto-ext">P.Conjunto-EXT</option>
+					<option value="gefs">GEFS</option>
+					<option value="gfs">GFS</option>
+					<option value="ec">EC</option>
+					<option value="pmedia">PMEDIA</option>
+					<option value="eta40">ETA40</option>
+				</select>
+
+				<select class="mb-2 d-flex form-control ml-1" name="escolhaHoraRodada" id="horaRodada">
+					<option value="00">00z</option>
+					<option value="06">06z</option>
+					<option value="12">12z</option>
+					<option value="18">18z</option>
+				</select>
+				<br>
+				<input class="button mb-2 ml-1" id="btn-1" type="button" value="Buscar" onclick="atualizaTabela()">
+				<input class="button mb-2 ml-1" id="btn-2" type="button" value="Limpar"onclick="erase(), window.location.reload()">
+				<br>
+				<br>
+				<button class="button mb-2 ml-1" id="btn-3" type="button">Plotar diferença</button>
+				<br>
+			</div>
+		</div>
+	</nav>
+
+
+
+	<div id="content">
+		
+		<div>
+			<nav class="navbar navbar-expand-lg navbar-light bg-light">
+				<button type="button" id="sidebarCollapse" class="btn bg-wx-original-claro ">
+					<i class="fas fa-align-left"></i>
+					<span>Menu</span>
+				</button>
+			</nav>
+
+			<div class="jumbotron jumbotron-fluid">
+				<div class="container">
+					<h3>Tabela previsão modelos</h3>
+					<p class="lead">P.Conjunto, P.Conjunto2, P.Conjunto-EXT, GEFS, GFS, EC, PMEDIA, ETA40</p>
+				</div>
+			</div>
+		</div>
+
+		<br>
+		<div class="corpo-tabelas">
+			<div id="div-tabelas" class="table-roll d-flex">
+			</div>
+		</div>
+
+		<div id="modalLoading" class="modal">
+			<div class="modal-content">
+			<!-- Incluir a animação de loading do gif aqui -->
+			<img src="https://raw.githubusercontent.com/joaoCalmon/files_gif/main/output-onlinegiftools.gif" alt="Loading" width="400" height="200"/>
+			</div>
+{% endblock %}
+
+
+{% block scripts %}
+
+<!-- Importe seus novos JS aq -->
+
+<script src="{{ url_for('static', filename='js/tabela_previsao_modelos.js') }}"></script>
+
+
+{% endblock %}

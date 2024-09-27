@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/BBCE_cadastroProdutosEmail.css') }}"/>
+{% endblock %}
+
+{% block title %}
+	<title> Cadastro produtos BBCE (email) </title>
+{% endblock %}
+
+
+{% block content %} 
+
+  <div class="container">
+
+    <div class='js-alertaSucesso'></div>
+
+    <h2>Lista de produtos</h2>
+    <div class="input-group">
+        <input placeholder="Adicione um novo produto" type="text" class="js-novo-produto form-control">
+    </div>
+
+  <ul id=listaProdutos class="mt-3"></ul>
+
+  <button  @click="save" class="js-save btn btn-secondary" type="button">Salvar alterações</button>
+
+    <!-- [INICIO] Modal com o spinner de loading-->
+    <div id="modalLoading" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered justify-content-center" role="document">
+            <button id="btn_spinner" class="btn btn-secondary spinner_loading wx_cor" disabled>
+                Carregando
+            </button>
+        </div>
+    </div>
+    <!-- [INICIO] Modal com o spinner de loading -->
+
+    <!-- [INICIO] lista dos produtos (invisivel) -->
+    <datalist id="lista_produtos"/>
+    <!-- [FIM] lista dos produtos (invisivel) -->
+
+</div>
+
+
+{% endblock %}
+
+
+{% block scripts %}
+    <script>
+
+    var listaProdutos = []
+
+
+     $(document).ready(function() {
+         /**
+          * Add evento de click
+          */
+         function onAdd() {
+               var $ul, li, $li, $label, $div, produto;
+               produto = $('.js-novo-produto').val();
+    
+               // valida se “produto” está vazio
+               if (produto === '') {
+                      return;
+               }
+
+               if (listaProdutos.includes(produto)){
+    
+                 $ul = $('#listaProdutos');
+                 $li = $('<li>').appendTo($ul);
+                 $div = $('<div>')
+                      .addClass('checkbox')
+                      .appendTo($li);
+                 
+                 $label = $('<label>').appendTo($div);
+                 $('<input>')
+                        .attr('type', 'checkbox')
+                        .addClass('js-produto')
+                        .addClass('mr-2')
+                        .addClass('mt-1')
+                        .attr('name', 'list')
+                        .click(toggleRemovido)
+                        .appendTo($label);
+      
+                 $label.append(produto);
+
+               }
+               else{
+                alert(`Produto '${produto}' não disponível!`)
+               }
+               $('.js-novo-produto').val('');
+         }
+    
+         /**
+          * Evento de click do checkbox
+          */
+         function toggleRemovido(ev) {
+               var $el;
+               $el = $(ev.currentTarget);
+               $el.closest('li').toggleClass('removido');
+         }
+
+        /**
+          * Salvas as modificações
+          */
+         function save() {
+            var produtosSelecionados = []
+            $("input:checkbox:not(:checked)").each(function(){
+                produtosSelecionados.push((this).closest('label').innerText)
+            });
+
+            $.get("http://35.173.154.94:8090/middle/API/set/listaProdutosBbbceEnvioEmail", { produtos: produtosSelecionados }, function(resposta) {
+                    var $div, $newDiv, $button
+                    $div = $('.js-alertaSucesso')
+                    $newDiv = $('<div>')
+                      .attr('role', 'alert')
+                      .addClass('js-alertaSalvo alert alert-success alert-dismissible fade show')
+                      .append(resposta)
+                      .appendTo($div)
+                    
+                    $button = $('<button>')
+                        .attr('type', 'button')
+                        .attr('data-dismiss', 'alert')
+                        .attr('aria-label', 'Close')
+                        .addClass('close')
+                        .appendTo($newDiv);
+
+                    $('<span>')
+                        .attr('aria-hidden', 'true')
+                        .append("&times;")
+                        .appendTo($button);
+            })
+         }
+
+
+         $('.js-novo-produto').change(onAdd)
+         $('.js-produto').click(toggleRemovido);
+         $('.js-save').click(save);
+
+         $.get("http://35.173.154.94:8090/middle/API/get/listaProdutosBbbceEnvioEmail", function(resposta) {
+            for (let produto of resposta){
+               $ul = $('#listaProdutos');
+               $li = $('<li>').appendTo($ul);
+               $div = $('<div>')
+                      .addClass('checkbox')
+                      .appendTo($li);
+    
+               $label = $('<label>').appendTo($div);
+               $('<input>')
+                      .attr('type', 'checkbox')
+                      .addClass('js-produto')
+                      .addClass('mr-2')
+                      .addClass('mt-1')
+                      .attr('name', 'list')
+                      .click(toggleRemovido)
+                      .appendTo($label);
+    
+               $label.append(produto);
+            }
+         })
+
+        jQuery.ajaxSetup({async:false});
+
+
+
+        // Animacao de loading do contrato
+        btn_spinner = document.getElementById("btn_spinner")
+        if (btn_spinner.getElementsByTagName('span').length == 0){
+            var spinner = document.createElement("span");
+            spinner.classList.add("spinner-grow", "spinner-grow-sm")
+            btn_spinner.appendChild(spinner)
+        }
+        $('#modalLoading').modal('show')
+
+        elm_datalist_produtos = document.getElementById("lista_produtos")
+        $.get("/middle/API/get/listaProdutosBbbce", function(resposta) {
+            for (let produto of resposta['model']){
+
+                listaProdutos.push(produto['descricao'])
+                opt = document.createElement("option")
+                opt.value = produto['descricao']
+                elm_datalist_produtos.appendChild(opt)
+
+                if (produto == resposta['model'][resposta['model'].length-1]){
+                    setTimeout(function(){
+                    btn_spinner.remove()
+                    $('#modalLoading').modal('hide')
+                    },1000);
+                }
+            }
+        })
+
+        $('.js-novo-produto').attr('list', 'lista_produtos')
+
+        });
+
+    </script>
+{% endblock %}

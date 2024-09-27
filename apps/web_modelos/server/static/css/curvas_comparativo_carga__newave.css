@@ -1,0 +1,104 @@
+
+/* especificacao do checkbox do dropdown */
+input[type="checkbox"] {
+    margin-left: 15px;
+    margin-right: 10px; 
+} 
+
+ 
+ /* Esconda os inputs de radio e checkbox dentro de .btn-group */
+ .btn-group .btn-sm input[type="radio"],
+ .btn-group .btn-sm input[type="checkbox"] {
+     display: none;
+ }
+ 
+ /* Estilos para os botões ativos */
+ .btn-group .btn-sm.active {
+     background-color: #7adb7a !important;
+     
+ }
+
+ .bg-cinza {
+    background-color: #dadada;
+    /* border: 1px solid rgba(120, 39, 119, 0.68); */
+ }
+ 
+ 
+ /* Estilos padrão para os botões */
+ .btn-group .btn-sm {
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     text-align: center;
+     border: none; /* Remove a borda */
+     outline: none; /* Remove a borda ao focar */
+     
+
+ }
+ 
+ 
+   .centered {
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     height: 100%;
+ }
+ 
+ .row {
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     
+ }
+ 
+ .button-group {
+     display: flex;
+     flex-wrap: wrap;
+     justify-content: center;
+     border: none; /* Remove a borda */
+     outline: none; /* Remove a borda ao focar */
+     
+ }
+
+ .btn-group{
+    display: flex;
+    justify-content: center;
+    border: none; /* Remove a borda */
+    outline: none; /* Remove a borda ao focar */
+
+ }
+ 
+ .button-group button {
+     margin: 5px;
+     padding: 10px;
+     border: none; /* Remove a borda */
+     outline: none; /* Remove a borda ao focar */
+ }
+
+ 
+ /* Esconda os inputs de radio e checkbox dentro de .btn-group */
+ .btn-group-geracoes .btn-sm input[type="radio"],
+ .btn-group-geracoes .btn-sm input[type="checkbox"] {
+     display: none;
+     
+     
+ }
+ 
+ /* Estilos para os botões ativos */
+ .btn-group-geracoes .btn-sm.active {
+     background-color: #7adb7a !important;
+     
+ }
+ 
+.dropdown-toggle {
+    border: none; /* Remove a borda */
+    outline: none; /* Remove a borda ao focar */
+
+}
+
+.bt-atualizar {
+    border: none; /* Remove a borda */
+    outline: none; /* Remove a borda ao focar */
+    padding: 5px;
+
+}

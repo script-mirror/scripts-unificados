@@ -1,0 +1,54 @@
+input:focus::placeholder {
+  color: transparent;
+}
+
+.botaoRestart,
+.botao1,
+.botao2,
+.botao3,
+.botao4,
+.botao5 {
+  border: #782777;
+  background-color: #782777;
+  color: white;
+}
+
+.botaoRestart:active,
+.botaoRestart:focus,
+.botao1:active,
+.botao1:focus,
+.botao2:active,
+.botao2:focus,
+.botao3:active,
+.botao3:focus,
+.botao4:active,
+.botao4:focus,
+.botao5:active,
+.botao5:focus {
+  background-color: #7adb7a; /* ou qualquer outra cor mais clara que você deseje quando clicado ou em foco */
+  color:#782777; /* cor do texto quando clicado ou em foco */
+}
+
+
+
+
+.btn-outline-secondary:hover,
+.btn-secondary:hover{
+  border-color: #9c339b;
+  background-color: #9c339b;
+
+}
+
+.btn-outline-primary:hover{
+  border-color: #e45d5d;  
+  background-color: #e45d5d;
+}
+
+
+@media (min-width: 768px) { 
+
+  .container-pagina{
+    max-width: 750px;
+  }
+
+}

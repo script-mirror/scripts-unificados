@@ -1,0 +1,53 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#charts-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.chart {
+  box-sizing: border-box;
+  padding: 5px;
+  height: 85vh;
+}
+
+.dropdown-item.selected {
+  background-color: #007bff;
+  color: white;
+  
+}
+
+/* Centraliza a marca da navbar */
+.navbar-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: larger;
+}
+
+.ema::placeholder {
+  color: white;
+  border-radius: 8px; 
+}
+
+
+/* Garante que o navbar toggler permaneça visível */
+@media (max-width: 991.98px) {
+  .navbar-title {
+    position: static;
+    transform: none;
+    margin: auto;
+  }
+}
+

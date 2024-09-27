@@ -1,0 +1,46 @@
+#slider-value {
+    position: absolute;
+    background-color: #ffffff;
+    padding: 5px;
+    border: 1px solid black;
+}
+
+
+.card-mapa-previsao {
+    height: 400px;
+    margin: 1px;
+    padding: 10px;
+}
+
+.circle {
+    /* border: 1px solid red; */
+    border-radius: 100%;
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+}
+
+/* .info-legend{
+    border-radius: 2px;
+    padding: 1px;
+    border: 4px solid #C9CED0;
+    background-color: #F5F6F6;
+} */
+
+
+table, th, td {
+    border: 1px solid black;
+    color: white;
+    text-align: center;
+}
+th, td {
+    background-color: rgb(120, 30, 119);
+}
+caption {
+    background-color: rgb(120, 30, 119);
+    font-size: 20pt;
+    border: 1px solid black;
+    caption-side: top !important;
+    color:#FFFFFF;
+    font-weight: bolder;
+}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+<!-- <link rel="stylesheet" type="text/css" href="/static/css/style.css">
+<link rel="stylesheet" type="text/css" href="/static/css/wx_style.css"> -->
+<!-- <link href="{{ url_for('static', filename='css/ena_diaria_submercado.css') }}" rel="stylesheet"> -->
+<link href="{{ url_for('static', filename='css/modal.css') }}" rel="stylesheet">
+
+{% endblock %}
+
+{% block title %}
+<title>ENA ACOMPH</title>
+{% endblock %}
+
+
+{% block content %}
+
+
+
+<div id="corpoPagina" class="wrapper">
+        
+    
+        <nav id="sidebar" class="bg-wx-original-claro active">
+
+            <div class="sidebar-header ml-3 mb-2">
+                <h3>Menu</h3>
+            </div>  
+             
+            <div >
+                <div class="row  justify-content-md-center">
+                    <label >Inicio do Histórico</label>
+                </div>
+                <div id="btnListAnos" class = 'row justify-content-md-center'>
+                    <select id="Anos" class="btn-list">
+                      </select>
+                </div>
+                
+                <div class="row  justify-content-md-center mt-4">
+                    <label >Selecione os Anos</label>
+                </div>
+
+                <div id = "btnAnos" class="row justify-content-md-center">
+
+                </div>
+
+                <div class="row justify-content-md-center mt-3">
+                    <button type="button" id="btnAtualizar" class="btn btn-light btn-atualizar">
+                        <span>Atualizar</span>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </nav>
+
+    <div id="content" >   
+        <div class="container col-12 col-sm-12 col-md-12 col-lg-12 col-xl-11">
+            <div id="menu-nav-bar">
+                <nav class="navbar navbar-expand-lg navbar-light bg-light" >
+                    <div class="container-fluid">
+                        <button type="button" id="sidebarCollapse" class="btn bg-wx-original-claro">
+                            <span>Menu</span>
+                        </button>
+                    </div> 
+                </nav>
+            </div>
+            <div id="modalLoading" class="modal">
+                <div class="modal-content">
+                <!-- Incluir a animação de loading do gif aqui -->
+                
+                <img src="https://raw.githubusercontent.com/joaoCalmon/files_gif/main/output-onlinegiftools.gif" alt="Loading" width="400" height="200"/>
+                <!-- <img src="https://cdn.dribbble.com/users/87723/screenshots/3516093/media/6a8c2ba3d604b8aea489a801b22bbc5d.gif" alt="Loading" /> -->
+                </div>
+            </div>
+            <div>  
+                <div id = "graphs">
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<!-- Importe seus novos JS aq -->
+
+<script src="{{ url_for('static', filename='js/colors.js') }}"></script>
+<script src="{{ url_for('static', filename='js/curvas_anuais_acomph.js') }}"></script>
+
+
+{% endblock %}

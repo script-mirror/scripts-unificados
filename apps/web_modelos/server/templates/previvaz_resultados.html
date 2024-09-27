@@ -1,0 +1,616 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <link href="{{ url_for('static', filename='css/simply-tag.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/smap_previvaz_results.css') }}" rel="stylesheet">
+    </style>
+{% endblock %}
+
+{% block title %}
+	<title> WX Energy </title>
+{% endblock %}
+
+
+{% block content %} 
+
+    <!-- Container principal -->
+            <div class="container mt-3 mb-3">
+                <div class="row center">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-3 col-xl-2">
+                        <div class="form-group">
+                          <label for="data-rodada">Data da rodada</label>
+                          <div class="center">
+                            <input class="form-control" type="date" id="data-rodada">
+                          </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-12 col-md-10 col-lg-8 col-xl-9">
+                        <div id="filtro_box"></div>
+                    </div>
+
+                    <div class="col-12 col-sm-12 col-md-2 col-lg-1 col-xl-1 mt-2  text-center">
+                        <button type="button" class="btn bg-wx-original-claro" onclick="filtrarModelos()">Atualizar</button>
+                        <button type="button" class="btn bg-wx-original-claro mt-1 d-lg-none" onclick="comutarLegenda()">ON/Off Legenda</button>
+                    </div>
+
+                </div>
+            </div>
+
+<!-- Container principal -->
+    <div class="container-fluid mt-5">
+        <div class="row text-center">
+
+            <!-- <div class="col-12 col-sm-12 col-md-12 col-lg-10 col-xl-8 mt-3 center" style="margin-right:auto;margin-left: auto;"> -->
+            <div class="col-12 col-sm-12 col-md-12 col-lg-10 col-xl-8 mt-3 center">
+                 <canvas id="chart_SUDESTE"></canvas>
+            </div>
+
+
+            <div class="col-12 col-sm-12 col-md-12 col-lg-10 col-xl-8 mt-5 center">
+                 <canvas id="chart_SUL"></canvas>
+            </div>
+
+            <div class="col-12 col-sm-12 col-md-12 col-lg-10 col-xl-8 mt-5 center">
+                 <canvas id="chart_NORDESTE"></canvas>
+            </div>
+
+            <div class="col-12 col-sm-12 col-md-12 col-lg-10 col-xl-8 mt-5 center">
+                 <canvas id="chart_NORTE"></canvas>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+ <script>
+    var resp
+    var charts = {}
+    var curvas = {}
+    var tags = []
+    var dt_rodadas = ''
+
+    var mostrar_legendas = true
+    var subm_aux = {'N':'NORTE', 'NE':'NORDESTE', 'S':'SUL', 'SE':'SUDESTE'}
+    
+    var datasetLocked = {}
+    for (sub in subm_aux){
+        datasetLocked[sub] = []
+    }
+
+    var timeFormat = 'DD/MM/YYYY';
+
+    cores = {}
+    // Cores distintas
+ cores['PRECMEDIA'] = ['rgba(0,0,255,1.0)', 'rgba(0,0,255,0.9)', 'rgba(0,0,255,0.8)', 'rgba(0,0,255,0.7)', 'rgba(0,0,255,0.5)', 'rgba(0,0,255,0.3)']
+    cores['PCONJUNTO'] = ['rgba(0,0,255,1.0)', 'rgba(0,0,255,0.9)', 'rgba(0,0,255,0.8)', 'rgba(0,0,255,0.7)', 'rgba(0,0,255,0.5)', 'rgba(0,0,255,0.3)']
+    cores['GEFS'] = ['rgba(46,139,87,1.0)', 'rgba(46,139,87,0.9)', 'rgba(46,139,87,0.8)', 'rgba(46,139,87,0.7)', 'rgba(46,139,87,0.5)', 'rgba(46,139,87,0.3)']
+    cores['GFS'] = ['rgba(218,165,32,1.0)', 'rgba(218,165,32,0.9)', 'rgba(218,165,32,0.8)', 'rgba(218,165,32,0.7)', 'rgba(218,165,32,0.5)', 'rgba(218,165,32,0.3)'] 
+    cores['PZERADA'] = ['rgba(242,9,9,1.0)', 'rgba(242,9,9,0.9)', 'rgba(242,9,9,0.8)', 'rgba(242,9,9,0.7)', 'rgba(242,9,9,0.5)', 'rgba(242,9,9,0.3)'] 
+    cores['EC'] = ['rgba(0,255,0,1.0)', 'rgba(0,255,0,0.9)', 'rgba(0,255,0,0.8)', 'rgba(0,255,0,0.7)', 'rgba(0,255,0,0.5)', 'rgba(0,255,0,0.3)'] 
+    cores['EC-ensremvies'] = ['rgba(0,174,0,1.0)', 'rgba(0,174,0,0.9)', 'rgba(0,174,0,0.8)', 'rgba(0,174,0,0.7)', 'rgba(0,174,0,0.5)', 'rgba(0,174,0,0.3)'] 
+    cores['ETA40'] = ['rgba(255,0,255,1.0)', 'rgba(255,0,255,0.9)', 'rgba(255,0,255,0.8)', 'rgba(255,0,255,0.7)', 'rgba(255,0,255,0.5)', 'rgba(255,0,255,0.3)'] 
+    cores['ETA40remvies'] = ['rgba(213,0,255,1.0)', 'rgba(213,0,255,0.9)', 'rgba(213,0,255,0.8)', 'rgba(213,0,255,0.7)', 'rgba(213,0,255,0.5)', 'rgba(213,0,255,0.3)'] 
+    cores['ECMWF-tok'] = ['rgba(129,214,0,1)', 'rgba(129,214,0,0.9)', 'rgba(129,214,0,0.8)', 'rgba(129,214,0,0.7)', 'rgba(129,214,0,0.5)', 'rgba(129,214,0,0.3)'] 
+    cores['EC-ens'] = ['rgba(224,107,11.0)', 'rgba(224,107,11,0.9)', 'rgba(224,107,11,0.8)', 'rgba(224,107,11,0.7)', 'rgba(224,107,11,0.5)', 'rgba(224,107,11,0.3)']
+    cores['PDESSEM'] = ['rgba(52, 56, 55, 1)', 'rgba(52, 56, 55, 0.9)', 'rgba(52, 56, 55, 0.8)', 'rgba(52, 56, 55, 0.7)', 'rgba(52, 56, 55, 0.5)', 'rgba(52, 56, 55, 0.3)']
+    cores['PCONJUNTO2'] = ['rgba(93, 33, 208, 1)', 'rgba(93, 33, 208, 0.9)', 'rgba(93, 33, 208, 0.8)', 'rgba(93, 33, 208, 0.7)', 'rgba(93, 33, 208, 0.5)', 'rgba(93, 33, 208, 0.3)']
+    function downloadCanvas(canvas_id) {
+        var url_base64jp = document.getElementById(canvas_id).toDataURL("image/jpg").replace("image/png", "image/octet-stream");
+        var a =  document.getElementById(canvas_id+"_btn_download");
+        a.setAttribute('download', canvas_id+'.png');
+        a.href = url_base64jp;
+        // a.click()
+    }
+
+    function updateRodadas(data) {
+
+        dt_rodadas = data
+
+        // limpeza das tags
+        elmt_tags = document.getElementsByClassName('tag label label-info valid')
+        while (elmt_tags.length>0){
+            elmt_tags[0].remove()
+        }
+        tags = []
+
+        // Limpeza do grafico
+        for (sub in subm_aux){
+            charts[sub].data.datasets = []
+            charts[sub].update();
+        }
+
+        // A data devera vir no seguinte formato YYY-MM-DD
+        $.get("/middle/API/database/get/rodadasDiaPrevivaz", {'data': data}, function(resposta) {
+            console.log(resposta)
+            for (modelo in resposta){
+                console.log(`Modelo: ${resposta[modelo].modelo}; Preliminar: ${resposta[modelo].preliminar}; Rodada: ${resposta[modelo].rodada}; Revisao: ${resposta[modelo].revisao}; Pdp: ${resposta[modelo].pdp}`)
+                if(urlParams.get('modelos') != null){
+                    if(!urlParams.get('modelos').split(',').includes(resposta[modelo].modelo)){
+                        continue
+                    }
+                }
+                if(urlParams.get('rodada') != null){
+                    if(!urlParams.get('rodada').split(',').includes(resposta[modelo].rodada.toString())){
+                        continue
+                    }
+                }
+                if(urlParams.get('preliminar') != null){
+                    if(!urlParams.get('preliminar').split(',').includes(resposta[modelo].preliminar.toString())){
+                        continue
+                    }
+                }
+                if(urlParams.get('rev') != null){
+                    if(!urlParams.get('rev').split(',').includes(resposta[modelo].revisao.toString())){
+                        continue
+                    }
+                }
+                if(urlParams.get('pdp') != null){
+                    if(!urlParams.get('pdp').includes(resposta[modelo].pdp.toString())){
+                        continue
+                    }
+                }
+                num_modelo = resposta[modelo].modelo
+                $.get("/middle/API/database/get/rodadasEspecificaPrevivaz", {'data': data, 'modelo':resposta[modelo].modelo, 'preliminar':resposta[modelo].preliminar, 'rodada':resposta[modelo].rodada, 'revisao':resposta[modelo].revisao, 'pdp':resposta[modelo].pdp }, function(resposta) {
+                    ena = {}
+                    for (data in resposta['ena']){
+                        dt = new Date(data)
+                        for (sub in resposta['ena'][data]){
+
+                            if (ena[sub] == undefined){
+                                ena[sub] = []
+                            }
+
+                            ena[sub].push({t:dt, y:resposta['ena'][data][sub].toFixed(2)})
+                        }
+                    }
+
+                    pos = resposta['modelo'].indexOf('_')
+                    nome_modelo = resposta['modelo'].substring(0,pos)
+                    // Tonalidade da cor das curvas
+                    tom_cor = 0
+                    if ((resposta['modelo'].toLowerCase()).indexOf('preliminar') == -1){
+                        tom_cor += 2
+                    }
+                    tom_cor += Number(resposta['rodada'])/6
+
+                    for (sub in subm_aux){
+
+
+                        if (cores[nome_modelo] == undefined){
+                            cores[nome_modelo] = ramdomColor()
+                            cor_curva = cores[nome_modelo][tom_cor]
+                            console.log(nome_modelo + ' não cadastrada no dicionario de cores, sera sorteado uma cor para este modelo!')
+                        }
+                        else {
+                            cor_curva = cores[nome_modelo][tom_cor]
+                        }
+
+                        curvas[resposta['modelo']] = resposta['tags']
+                        for (i in resposta['tags']){
+                          tag = resposta['tags'][i]
+                          if (! tags.includes(tag)){
+                            tags.push(tag)
+                            $('#filtro_box').simplyTag('additem',JSON.parse('{ "key": "'+tag+'", "value": "'+tag+'" }'));
+                          }
+                        }
+
+
+                        newDataset = {
+                            label: resposta['modelo'],
+                            type: 'line',
+                            backgroundColor: cor_curva,
+                            borderColor: cor_curva,
+                            fill: false,
+                            data: ena[sub],
+                            steppedLine: 'true',
+                            pointRadius: 1,
+                            borderWidth: 2
+                        }
+
+                        charts[sub].data.datasets.push(newDataset);
+                        charts[sub].update();
+                    }
+                })
+            }
+        })
+
+        plotMlt()
+        plotAcomph()
+        plotRevs()
+    
+        // Armazena as curvas para evitar 
+        for (sub in subm_aux){
+            datasetLocked[sub] = charts[sub].data.datasets
+        }
+
+    }
+
+    function plotMlt(){
+       $.get("/middle/API/getmlt", {'divisao':'submerc'}, function(resposta) {
+
+            // Armazena o valor da data em que a rodada foi rodada 
+            let data_analise = document.getElementById('data-rodada').value.replace(/-/g,'/')
+            data_analise = new Date(data_analise)
+
+            let dataProximaRevisao = dataProximaRev(data_analise)
+            let inicioMesEletProxRev = inicioMesEletrico(dataProximaRevisao)
+            let finalPrevsProxRev = inicioMesEletProxRev.setDate(inicioMesEletProxRev.getDate() + 6*7)
+
+            let dataInicioAcomph = new Date(data_analise)
+            dataInicioAcomph.setDate(dataInicioAcomph.getDate() - 30)
+
+            mlt = {}
+            for (sub in subm_aux){
+
+                mlt_aux = resposta[subm_aux[sub]]
+
+                if (mlt[sub] == undefined){
+                    mlt[sub] = []
+                }
+
+                let dt_ref = new Date(dataInicioAcomph)
+                while (dt_ref <= finalPrevsProxRev) {
+                    dt = new Date(dt_ref)
+                     // a funcao getMonth() retorna o mes, comecando com 0 (jan=0, fev=1, mar=3)
+                     let mesRef = dt_ref.getMonth()+1
+                     mlt[sub].push({t:dt, y:mlt_aux[mesRef].toFixed(2)})    
+                     dt_ref.setDate(dt_ref.getDate() + 1)
+                }
+
+                newDataset = {
+                    label: 'MLT',
+                    type: 'line',
+                    backgroundColor: 'rgba(14,0,0)',
+                    borderColor: 'rgba(14,0,0)',
+                    fill: false,
+                    data: mlt[sub],
+                    steppedLine: 'true',
+                    pointRadius: 2,
+                    borderWidth: 1
+
+                }
+
+                charts[sub].data.datasets.push(newDataset);
+                charts[sub].update();
+            }
+        })
+    }
+
+    function plotAcomph(){
+       $.get("/middle/API/getEnaFromLstAcomph", {'divisao':'submercado'}, function(resposta) {
+
+          ena_acomph = {}
+            for (sub in resposta){
+                ena_acomph[sub] = []
+                for (data in resposta[sub]){
+                    dt = new Date(data)
+                    ena_acomph[sub].push({t:dt, y:resposta[sub][data].toFixed(2)})
+                }
+            }
+
+            for (sub in subm_aux){
+
+                newDataset = {
+                    label: 'ACOMPH',
+                    type: 'line',
+                    backgroundColor: 'rgba(6, 187, 199)',
+                    borderColor: 'rgba(6, 187, 199)',
+                    fill: false,
+                    data: ena_acomph[sub],
+                    pointRadius: 2,
+                    borderWidth: 1
+                }
+
+                charts[sub].data.datasets.push(newDataset);
+                charts[sub].update();
+            }
+
+       })
+   }
+
+
+   function plotRev(){
+     $.get("/middle/API/getlstrev", function(resposta) {
+        rev = {}
+        for (sub in subm_aux){
+            // if (data == 'revisao'){
+            //     continue
+            // }
+
+            if (rev[sub] == undefined){
+                rev[sub] = []
+            }
+
+            for (data in resposta[subm_aux[sub]]){
+                dt = new Date(data)
+                rev[sub].push({t:dt, y:resposta[subm_aux[sub]][data].toFixed(2)})
+            }
+
+            // Objeto de data com o valor de 1 semana apos a ultima semana da rodada 'queried' 
+            lst_date = new Date(dt)
+            lst_date.setDate(lst_date.getDate()+7)
+
+            // Adicao de uma semana a mais para mostrar o degrau do grafico 'step' 
+            rev[sub].push({t:new Date(lst_date), y:rev[sub][rev[sub].length-1].y})
+
+            newDataset = {
+                label: 'REV'+resposta['revisao'],
+                type: 'line',
+                backgroundColor: 'rgba(106,90,205)',
+                borderColor: 'rgba(106,90,205)',
+                fill: false,
+                data: rev[sub],
+                steppedLine: 'true'
+            }
+
+            charts[sub].data.datasets.push(newDataset);
+            charts[sub].update();
+        //     dt = new Date(data)
+        //     console.log(resposta[data])
+
+        }
+     })
+
+   }
+
+
+   function plotRevs(){
+       $.get("/middle/API/getallrevs", function(resposta) {
+        rev = {}
+        resp = resposta
+
+
+        borderDashs = [[10,5], [3,6], [1,2], [1,1], []]
+        borderDashs = [[], [1,1], [1,2], [3,6], [10,5]]
+
+        for (rv in resposta){
+            for (sub in subm_aux){
+            
+                if (rev[sub] == undefined){
+                    rev[sub] = {}
+                }
+
+                if (rev[sub][rv] == undefined){
+                    rev[sub][rv] = []
+                }
+
+                for (data in resposta[rv][subm_aux[sub]]){
+                    dt = new Date(data)
+                    rev[sub][rv].push({t:dt, y:resposta[rv][subm_aux[sub]][data].toFixed(2)})
+                }
+
+                newDataset = {
+                    label: 'RV'+rv,
+                    type: 'line',
+                    backgroundColor: 'rgba(106,90,205)',
+                    borderColor: 'rgba(106,90,205)',
+                    fill: false,
+                    data: rev[sub][rv],
+                    borderDash: borderDashs[Object.keys(resposta).length-rv-1],  // ordem reversa, sempre a ultima rev sera uma linha continua
+                    steppedLine: 'true',
+                    pointRadius: 2,
+                    borderWidth: 2
+                }
+
+                charts[sub].data.datasets.push(newDataset);
+                charts[sub].update();
+            }
+        }
+    })
+   }
+
+
+    function lockDatasets(){
+
+        for (sub in subm_aux){
+            datasetLocked[sub] = charts[sub].data.datasets
+        }
+    }
+
+
+    function filtrarModelos(){
+
+        // Mudança na url (retirada dos parametros)
+        window.history.replaceState("object or string", "WX Energy", "/previvaz_resultados");
+        // Remove os parametros armazenados nas variaveis
+        for(var key of urlParams.keys()) { 
+          urlParams.delete(key)
+        }
+        
+        if (document.getElementById("data-rodada").value != dt_rodadas){
+            updateRodadas(document.getElementById("data-rodada").value)
+            return
+        }
+
+        checkbox_filtros = $('#filtro_box').simplyTag('getitems').validTags
+        filtros_ativos = []
+        for (filtro in checkbox_filtros){
+            filtros_ativos.push(checkbox_filtros[filtro].value)
+        }
+
+        // Filtra os resultados desejados
+        for (sub in subm_aux){
+            // Recupera todos as curvas iniciais
+            charts[sub].data.datasets = [...datasetLocked[sub]]
+            datasets_subm = charts[sub].data.datasets
+            // 
+            len_dataset = (datasets_subm.length-1)
+            for (i=len_dataset; i >= 0; i--){
+                for (tag in curvas[datasets_subm[i].label]){
+                    if (!["ACOMPH"].includes(datasets_subm[i].label)){
+                        tag_verificada = curvas[datasets_subm[i].label][tag]
+                        if (!filtros_ativos.includes(tag_verificada)){
+                            charts[sub].data.datasets.splice(i,1)
+                            break
+                        }
+                    }
+                }
+            }
+        charts[sub].update();
+        }
+
+    }
+
+   $(window).on('load', function(){
+
+
+    // var queryString = window.location.search;
+    // queryString = queryString.replace("?", "");
+    // console.log(queryString);
+    // parametros = queryString.split("&");
+    // console.log('Parâmetros(URL): ',parametros);
+
+    parametros = window.location.search;
+    urlParams = new URLSearchParams(parametros);
+
+    // Desabilita a legenda dos graficos de acordo com o tamanho das telas
+    largura_pagina = screen.width
+    if (largura_pagina <= 1000){
+        mostrar_legendas = false
+    }
+
+    // Cria todos os graficos
+    for (sub in subm_aux){
+        var ctx = document.getElementById("chart_"+subm_aux[sub]).getContext("2d");
+
+        charts[sub] = new Chart(ctx, {
+            type: 'line',
+            options: {
+                title: {
+                  display: true,
+                  text: subm_aux[sub],
+                },
+                legend: {
+                  display: mostrar_legendas,
+                  position: 'bottom'
+                },
+                tooltips: {
+                  // mode: 'index',
+                  // axis: 'x'
+                  mode: 'x'
+                },
+
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        time: {
+                            unit: 'week',
+                            parser: timeFormat,
+                            // round: 'day'
+                            // tooltipFormat: 'll HH:mm',
+                            // min: (new Date('2020/05/01')),
+                            // max: (new Date('2020/06/01')),
+                        },
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Data'
+                        }
+                    }],
+                    yAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'ENA'
+                        }
+                    }]
+                },
+
+            }
+        })
+    }
+
+
+    // Verifica se alguma data foi passada em parâmetro
+    if(urlParams.get('data') != null){
+        // formato YYYY-MM-DD
+        str_today = urlParams.get('data')
+    } else{
+        str_today = moment().format("YYYY-MM-DD")
+    }
+    document.getElementById("data-rodada").value = str_today
+
+    // update os graficos para a data de hoje
+    updateRodadas(str_today)
+
+
+    })
+
+    $(document).ready(function(){
+        json_str = '[{ "key": "Rodada 00z", "value": "Rodada 00z" }, '
+        json_str += '{ "key": "Rodada 06z", "value": "Rodada 06z" }, '
+        json_str += '{ "key": "Rodada 12z", "value": "Rodada 12z" }, '
+        json_str += '{ "key": "Rodada 18z", "value": "Rodada 18z" }, '
+        json_str += '{ "key": "RV0", "value": "RV0" }, '
+        json_str += '{ "key": "RV1", "value": "RV1" }, '
+        json_str += '{ "key": "RV2", "value": "RV2" }, '
+        json_str += '{ "key": "RV3", "value": "RV3" }, '
+        json_str += '{ "key": "RV4", "value": "RV4" }, '
+        json_str += '{ "key": "Preliminar", "value": "Preliminar" }, '
+        json_str += '{ "key": "PRECMEDIA", "value": "PRECMEDIA" }, '
+        json_str += '{ "key": "PCONJUNTO", "value": "PCONJUNTO" }, '
+        json_str += '{ "key": "GFS", "value": "GFS" }, '
+        json_str += '{ "key": "GEFS", "value": "GEFS" }, '
+        json_str += '{ "key": "EC", "value": "EC" }, '
+        json_str += '{ "key": "PZERADA", "value": "PZERADA" }, '
+        json_str += '{ "key": "ETA40", "value": "ETA40" }, '
+        json_str += '{ "key": "EC-ens", "value": "EC-ens" }, '
+        json_str += '{ "key": "ECMWF", "value": "ECMWF" }, '
+        json_str += '{ "key": "ECMWF-tok", "value": "ECMWF-tok" }, '
+        json_str += '{ "key": "PLUVIA", "value": "PLUVIA" }]'
+        
+        $('#filtro_box').simplyTag({                  
+            dataSource: JSON.parse(json_str)
+        });
+    });
+
+// chama a funcao windowResize quando muda o tamanho da tela
+// window.onresize = windowResize;
+
+function windowResize() {
+    largura_pagina = screen.width
+    console.log(largura_pagina)
+    if (largura_pagina <= 1000){
+        mostrar_legendas = false;
+    }
+
+    for (subm in charts){
+        charts[subm].options.legend.display = mostrar_legendas;
+        charts[sub].update();
+    }
+}
+
+function comutarLegenda(){
+    for (subm in charts){
+        charts[subm].options.legend.display = !charts[subm].options.legend.display
+        charts[subm].update();
+    }
+}
+
+function ramdomColor(){
+    int1 = Math.floor(255 * Math.random())
+    int2 = Math.floor(255 * Math.random())
+    int3 = Math.floor(255 * Math.random())
+
+    str_defalt = 'rgba(' + int1 + ',' + int2 + ',' + int3 + ','
+
+
+    lst_cores = [str_defalt+'1)', str_defalt+'0.9)', str_defalt+'0.8)', str_defalt+'0.7)', str_defalt+'0.5)', str_defalt+'0.3)']
+
+    return lst_cores
+}
+
+
+
+
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+
+<script src="{{ url_for('static', filename='js/simply-tag.js') }}"></script>
+<script src="{{ url_for('static', filename='js/calculoDatasEletricas.js') }}"></script>
+
+{% endblock %}

@@ -1,0 +1,45 @@
+.marker-pin {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid black;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-shadow: 1px 0 #000, -1px 0 #000, 0 1px #000, 0 -1px #000,
+    1px 1px #000, -1px -1px #000, 1px -1px #000, -1px 1px #000;
+
+}
+
+.leaflet-top.leaflet-left {
+  width: 98%;
+  margin-left: 1%;
+}
+
+th {
+  text-align: center; 
+  vertical-align: middle;
+
+}
+.btn-light{
+  border: 1px solid #00000048 !important;
+}
+.dropdown-menu.show{
+  z-index: 10000;
+}
+.table td, .table th{
+  padding: .2rem !important;
+
+}
+/* .marker-pin::after {
+      content: '';
+      width: 24px;
+      height: 24px;
+      margin: 3px 0 0 3px;
+      background: #fff;
+      position: absolute;
+      border-radius: 50%;
+   }
+   */

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block head %}
+{% endblock %}
+
+{% block title %}
+	<title> WX Energy </title>
+{% endblock %}
+
+
+{% block content %} 
+
+  <!-- <div style="width:75%;"> -->
+<div class="container">
+
+
+  <iframe style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;height:100%;width:100%;position:absolute;top:0px;left:0px;right:0px;bottom:0px;border:none;" src="https://app.powerbi.com/view?r=eyJrIjoiNjNmMzQ5MWItZTNkMy00ZjgwLThhZTYtNmYzZjZiMDZmMjVkIiwidCI6ImUxOGZmMDk0LTMyMzctNGRmOC1iNWZmLTE5ZjNlOWMyNDg3MSJ9&pageName=ReportSection" frameborder="0" allowFullScreen="true"></iframe>
+
+
+</div>
+
+
+
+{% endblock %}
+
+
+{% block scripts %}
+
+ <script>
+  
+   // Executar ao abrir a pagina
+   $(window).on('load', function(){
+
+      // Pegar os parametros passados via url
+      var queryString = window.location.search;
+      queryString = queryString.replace("?", "");
+      console.log(queryString);
+
+      parametros = queryString.split("&");
+
+      console.log(parametros);
+
+    })
+
+
+
+    $(window).on('ready', function(){
+
+    })
+ 
+
+
+
+
+
+</script>
+
+{% endblock %}

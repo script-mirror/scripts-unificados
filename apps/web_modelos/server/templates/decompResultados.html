@@ -1,0 +1,720 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ion.rangeSlider.css') }}"/>
+{% endblock %}
+
+{% block title %}
+<title> {{ title }} </title>
+{% endblock %}
+
+{% block content %} 
+<main role="main">
+<div class="d-flex justify-content-center justify-content-md-end  flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 ">
+
+<div class="btn-group">
+<div class="dropdown">
+  <button class="btn bg-wx-original-claro dropdown-toggle mx-1 dropdownYear" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    {% if year != null %}
+      {{ year }}
+    {% else %}
+      Ano
+    {% endif %}
+  </button>
+  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+    <spaw class="dropdown-item"> Ano </spaw>
+    {% for year in years  %}
+        <a class="dropdown-item" href="?year={{ year }}">{{ year }}</a>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="dropdown">
+  <button class="btn bg-wx-original-claro dropdown-toggle mx-1 dropdownMonth" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    {% if month != null %}
+      {{ month }}
+    {% else %}
+      Mês
+    {% endif %}
+  </button>
+  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+    <spaw class="dropdown-item"> Mês </spaw>
+    {% for month in months  %}
+        <a class="dropdown-item" href="?year={{ year }}&month={{ month }}">{{ month }}</a>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="dropdown">
+  <button class="btn bg-wx-original-claro dropdown-toggle mx-1 dropdownRev" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    {% if rev != null %}
+      {{ rev }}
+    {% else %}
+      Revisão
+    {% endif %}
+  </button>
+  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+    <spaw class="dropdown-item"> Revisão </spaw>
+    {% for rev in revs  %}
+        <a class="dropdown-item" href="?year={{ year }}&month={{ month }}&rev={{ rev }}">{{ rev }}</a>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="dropdown">
+  <button class="btn bg-wx-original-claro dropdown-toggle mx-1 dropdownSmap" href="#" role="button" id="smapDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    {% if smap != 'all' and smap != null%}
+      {% if smap == '1' %}
+        Sim
+      {% else %}
+        Não
+      {% endif %}
+    {% else %}
+      SMAP
+    {% endif %}
+  </button>
+  <div id="smapDropdown-menu" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        <a class="dropdown-item" href="?year={{ year }}&month={{ month }}&rev={{ rev }}&fcf={{ fcf }}&smap=all">Todos</a>
+        <a class="dropdown-item" href="?year={{ year }}&month={{ month }}&rev={{ rev }}&fcf={{ fcf }}&smap=1">Sim</a>
+        <a class="dropdown-item" href="?year={{ year }}&month={{ month }}&rev={{ rev }}&fcf={{ fcf }}&smap=0">Não</a>
+  </div>
+</div>
+</div> 
+</div> 
+
+<div class="d-flex justify-content-center justify-content-md-end  flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+  <div class="dropdown">
+  <button class="btn bg-wx-original-claro dropdown-toggle mx-1  dropdownFcf" href="#" role="button" id="fcfDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    {% if fcf != null and fcf != 'all' %}
+      {{ fcf }}
+    {% else %}
+      FCF
+    {% endif %}
+  </button>
+  <div id="fcfDropdown-menu"class="dropdown-menu " aria-labelledby="dropdownMenuButton">
+        <a id="#fcfDropdown-item" class="dropdown-item" href="?year={{ year }}&month={{ month }}&rev={{ rev }}&fcf=all">FCF</a>
+    {% for fcf in fcfs  %}
+        <a id="#fcfDropdown-item" class="dropdown-item" href="?year={{ year }}&month={{ month }}&rev={{ rev }}&fcf={{ fcf }}">{{ fcf }}</a>
+    {% endfor %}
+  </div>
+</div> 
+</div>
+
+
+
+{% if graphicResults != null %}
+<div class="container">
+  <div class="row" align="center">
+    <div class="col">
+      ENA (Sudeste)
+    </div>
+    <div class="col">
+      ENA (Sul)
+    </div>
+    <div class="col">
+      ENA (Nordeste)
+    </div>
+    <div class="col">
+      ENA (Norte)
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+    <input type="text" id="SE_slider" class="js-range-slider" name="my_range" value="" />
+    </div>
+    <div class="col">
+    <input type="text" id="S_slider" class="js-range-slider" name="my_range" value="" />
+    </div>
+    <div class="col">
+    <input type="text" id="NE_slider" class="js-range-slider" name="my_range" value="" />
+    </div>
+    <div class="col">
+    <input type="text" id="N_slider" class="js-range-slider" name="my_range" value="" />
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if tableResults != null %}
+     <div class="table-responsive" align="center">
+        <table id="tableResults" class="table table-striped table table-bordered table-sm">
+          <thead>
+            <tr>
+              <th></th>
+              <th></th>
+              <th colspan="4">ENA SEM.1 (MWmed)</th>
+              <th colspan="4">ENA (%MLT)</th>
+              <th colspan="4">CMO</th>
+              <th colspan="4">EAR Inicial</th>
+            </tr>
+            <tr>
+              <th>              
+              <div class="input-group-prepend">
+                <div class="input-group-text">
+                  <input id="checkbEnableAll" type="checkbox" data-toggle="toggle" checked onchange="removeLines('all')">
+                </div>
+              </div>
+            </th>
+              <th>Rodada</th>
+
+              <th>SE</th>
+              <th>S</th>
+              <th>NE</th>
+              <th>N</th>
+
+              <th>SE</th>
+              <th>S</th>
+              <th>NE</th>
+              <th>N</th>
+
+              <th>SE</th>
+              <th>S</th>
+              <th>NE</th>
+              <th>N</th>
+
+              <th>SE</th>
+              <th>S</th>
+              <th>NE</th>
+              <th>N</th>  
+
+            </tr>
+          </thead>
+          <tbody align="center">
+              {% for id in tableResults  %}
+            <tr>
+              <td>
+              <div class="input-group-prepend">
+                <div class="input-group-text">
+                  <input id="{{ id }}" type="checkbox" data-toggle="toggle" checked onchange="removeLines('{{ id }}')">
+                </div>
+              </div>
+              </td>
+
+
+              <td><div data-toggle="tooltip" title="{{ tableResults[id]['coment'] }}">
+              <button type="button" class="btn btn-outline-secondary btn-sm" data-toggle="modal" data-target="#modal_{{ id }}">{{ id }}</button> 
+              </div></td>
+              
+
+              <td>{{ tableResults[id]['SUDESTE']['first_week']['ena'][0] }}</td>
+              <td>{{ tableResults[id]['SUL']['first_week']['ena'][0] }}</td>
+              <td>{{ tableResults[id]['NORDESTE']['first_week']['ena'][0] }}</td>
+              <td>{{ tableResults[id]['NORTE']['first_week']['ena'][0] }}</td>
+
+              <td>{{ tableResults[id]['SUDESTE']['ena'] }}%</td>
+              <td>{{ tableResults[id]['SUL']['ena'] }}%</td>
+              <td>{{ tableResults[id]['NORDESTE']['ena'] }}%</td>
+              <td>{{ tableResults[id]['NORTE']['ena'] }}%</td>
+
+              <td>R${{ tableResults[id]['SUDESTE']['cmo'] }}</td>
+              <td>R${{ tableResults[id]['SUL']['cmo'] }}</td>
+              <td>R${{ tableResults[id]['NORDESTE']['cmo'] }}</td>
+              <td>R${{ tableResults[id]['NORTE']['cmo'] }}</td>
+
+              <td>{{ tableResults[id]['SUDESTE']['ear'] }}%</td>
+              <td>{{ tableResults[id]['SUL']['ear'] }}%</td>
+              <td>{{ tableResults[id]['NORDESTE']['ear'] }}%</td>
+              <td>{{ tableResults[id]['NORTE']['ear'] }}%</td>
+
+            </tr>
+              {% endfor %}
+          </tbody>
+
+
+        </table>
+      </div>
+{% endif %}
+
+
+          {% for subMerc in graphicResults %}
+          {% if subMerc != 'xLabel' %}
+          <!-- <div class="chart-container" style="position: relative; height:100vh; width:150vw"> -->
+          <div class="chart-container">
+            <canvas id="{{ subMerc }}_Chart"></canvas>
+          </div>
+          {% endif %}
+          {% endfor %}
+
+
+{% for id in tableResults  %}
+ <div id="modal_{{ id }}"class="modal fade" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="{{ id }}ModalLabel">Rodada {{ id }}</h5>
+                        </div>
+                        <div class="modal-body">
+
+                         <div class="table-responsive">
+                          <table id="tableResults" class="table table-striped table table-bordered table-sm">
+                            <thead class="thead-light">
+                              <tr>
+                                <th></th>
+                                <th colspan="{{ (tableResults[id]['SUDESTE']['first_week']['date']|length) }}">ENA</th>
+                                <th colspan="{{ (tableResults[id]['SUDESTE']['first_week']['date']|length) }}">CMO</th>
+                              </tr>
+                              <tr>
+                                <th>Data</th>
+
+                                {% for i in range(tableResults[id]['SUDESTE']['first_week']['date']|length) %}
+                                <th>{{ tableResults[id]['SUDESTE']['first_week']['date'][i] }}</th>
+                                {% endfor %}
+                                {% for i in range(tableResults[id]['SUDESTE']['first_week']['date']|length) %}
+                                <th>{{ tableResults[id]['SUDESTE']['first_week']['date'][i] }}</th>
+                                {% endfor %}
+                              </tr>
+                            </thead>
+
+                            <tbody align="center">
+                            <tr>
+                              <td>SE</td>
+                              {% for i in range(tableResults[id]['SUDESTE']['first_week']['date']|length) %}
+                              <td>{{ tableResults[id]['SUDESTE']['first_week']['ena'][i] }}</td>
+                              {% endfor %}
+                              {% for i in range(tableResults[id]['SUDESTE']['first_week']['date']|length) %}
+                              <td>R${{ tableResults[id]['SUDESTE']['first_week']['cmo'][i] }}</td>
+                              {% endfor %}
+                            </tr>
+
+                            <tr>
+                              <td>S</td>
+                              {% for i in range(tableResults[id]['SUL']['first_week']['date']|length) %}
+                              <td>{{ tableResults[id]['SUL']['first_week']['ena'][i] }}</td>
+                              {% endfor %}
+                              {% for i in range(tableResults[id]['SUL']['first_week']['date']|length) %}
+                              <td>R${{ tableResults[id]['SUL']['first_week']['cmo'][i] }}</td>
+                              {% endfor %}
+                            </tr>
+
+                            <tr>
+                              <td>NE</td>
+                              {% for i in range(tableResults[id]['NORDESTE']['first_week']['date']|length) %}
+                              <td>{{ tableResults[id]['NORDESTE']['first_week']['ena'][i] }}</td>
+                              {% endfor %}
+                              {% for i in range(tableResults[id]['NORDESTE']['first_week']['date']|length) %}
+                              <td>R${{ tableResults[id]['NORDESTE']['first_week']['cmo'][i] }}</td>
+                              {% endfor %}
+                            </tr>
+
+                            <tr>
+                              <td>N</td>
+                              {% for i in range(tableResults[id]['NORTE']['first_week']['date']|length) %}
+                              <td>{{ tableResults[id]['NORTE']['first_week']['ena'][i] }}</td>
+                              {% endfor %}
+                              {% for i in range(tableResults[id]['NORTE']['first_week']['date']|length) %}
+                              <td>R${{ tableResults[id]['NORTE']['first_week']['cmo'][i] }}</td>
+                              {% endfor %}
+                            </tr>
+                          </tbody>
+                          </table>
+                        </div>
+
+                        </div>
+                        <div class="modal-footer">
+                        <button type="button" class="btn bg-wx-original-claro" data-dismiss="modal">Close</button>
+                        </div>
+                </div>
+            </div>
+ </div>
+{% endfor %}
+
+
+<!--         <div class="btn-toolbar mb-2 mb-md-0">
+          <div class="btn-group mr-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+          </div>
+          </div> -->
+
+</main>
+
+
+{% endblock %}
+
+
+{% block scripts %}
+
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+ <script src="{{ url_for('static', filename='js/ion.rangeSlider.js') }}"></script>
+
+{% if graphicResults != null %}
+  <script>
+  //line
+  {% for subMerc in graphicResults %}
+  {% if subMerc != 'xLabel' %}
+  var ctxL = document.getElementById("{{ subMerc }}_Chart").getContext('2d');
+  var chart{{ subMerc }} = new Chart(ctxL, {
+    type: 'line',
+    data: {
+      labels: 
+      [{% for item in graphicResults['xLabel'] %}
+             "{{item}}",
+      {% endfor %}],
+      datasets:
+      [
+      {
+          label: "MLT",
+          data:
+          [{% for item in graphicResults[subMerc][firstRound]['mlt_complete'] %}
+             "{{item}}",
+          {% endfor %}],
+          // backgroundColor: "rgba({{colorsModel[model]}}, .2)",
+          borderColor: "rgba({{colorsModel['mlt_complete']}}, .7)",
+          fill: false,
+          borderWidth: 2,
+          lineTension: 0
+        },
+      {
+          label: "RDH",
+          data:
+          [{% for item in graphicResults[subMerc][firstRound]['ena_complete'] %}
+             "{{item}}",
+          {% endfor %}],
+          // backgroundColor: "rgba({{colorsModel[model]}}, .2)",
+          borderColor: "rgba({{colorsModel['ena_complete']}}, .7)",
+          fill: false,
+          borderWidth: 2,
+          lineTension: 0
+        },
+      {
+          label: "ENA MÉDIA DA SEMANA",
+          data:
+          [{% for item in graphicResults[subMerc][firstRound]['ena_media_complete'] %}
+             "{{item}}",
+          {% endfor %}],
+          // backgroundColor: "rgba({{colorsModel[model]}}, .2)",
+          borderColor: "rgba({{colorsModel['ena_media_complete']}}, .7)",
+          fill: false,
+          borderWidth: 2,
+          lineTension: 0
+        },
+      {
+          label: "RV{{ roundsInfo['revision'] }}",
+          data:
+          [{% for item in graphicResults[subMerc][firstRound]['ena_revisions_complete'] %}
+             "{{item}}",
+          {% endfor %}],
+          // backgroundColor: "rgba({{colorsModel[model]}}, .2)",
+          borderColor: "rgba({{colorsModel['ena_revisions_complete']}}, .7)",
+          fill: false,
+          borderWidth: 2,
+          lineTension: 0
+        },
+
+      {% for round in graphicResults[subMerc] %}
+      {% for model in graphicResults[subMerc][round] %}
+      {% if model not in ['mlt_complete', 'ena_complete', 'ena_media_complete', 'ena_revisions_complete','ena_estimations_complete'] %}
+      {
+          label: "PREVIVAZ ({{round}})",
+          data:
+          [{% for item in graphicResults[subMerc][round][model] %}
+             "{{item}}",
+          {% endfor %}],
+
+          // backgroundColor: "rgba({{colorsModel[model]}}, .2)",
+          borderColor: "rgba({{colorsModel[model]}}, .7)",
+          fill: false,
+          borderWidth: 2,
+          lineTension: 0
+        },
+        {% endif %}
+        {% endfor %}
+        {% endfor %}]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false, //resize canvas
+     scales: {
+        yAxes: [{
+          stacked: false,
+          ticks: {
+            beginAtZero: true,
+          },
+          scaleLabel: {
+            display: true,
+            labelString: 'ENAS (MWmed)'
+          },
+        }],
+        xAxes: [{
+        //   scaleLabel: {
+        //     display: true,
+        //     labelString: 'ENAS (MWmed)'
+        //   },
+          stacked: true,
+          ticks: {
+              autoSkip: true,
+              maxTicksLimit: 10,
+           }
+        }],
+      },
+      title: {
+          display: true,
+          text: "{{ subMerc }}",
+          fontSize: 18
+      },
+      legend: {
+            position: 'bottom',
+      },
+      tooltips: {
+        mode: 'label'
+      },
+      elements: {
+          point:{
+                radius: 0.2
+            }
+      },
+      layout: {
+            padding: {
+                left: 0,
+                right: 0,
+                top: 20,
+                bottom: 0
+            }
+        }
+    }
+  });
+
+{% endif %}
+{% endfor %}
+
+   table = document.getElementById("tableResults");
+    tr = table.getElementsByTagName("tr");
+    var min = [1000, 1000, 1000, 1000];
+    var max = [0, 0, 0, 0];
+
+    for (subMerc = 0; subMerc < 4; subMerc++) {
+          for (i = 2; i < tr.length; i++) {
+            td = tr[i].getElementsByTagName("td");
+            if(parseInt(td[subMerc+6].innerText)<=min[subMerc]){
+              min[subMerc] = parseInt(td[subMerc+6].innerText)-1;
+            }
+            if(parseInt(td[subMerc+6].innerText)>=max[subMerc]) {
+              max[subMerc] = parseInt(td[subMerc+6].innerText)+1;
+            }
+          }
+    }
+
+
+    console.log(window.chartSUDESTE.options)
+
+    var canvasheight=document.getElementById("SUDESTE_Chart").height;
+    if(canvasheight <=600)
+    {
+        window.chartSUDESTE.options.legend.display=false;
+    }
+
+    var canvasheight=document.getElementById("SUL_Chart").height;
+    if(canvasheight <=600)
+    {
+        window.chartSUL.options.legend.display=false;
+    }
+
+    var canvasheight=document.getElementById("NORTE_Chart").height;
+    if(canvasheight <=600)
+    {
+        window.chartNORTE.options.legend.display=false;
+    }
+   
+    var canvasheight=document.getElementById("NORDESTE_Chart").height;
+    if(canvasheight <=600)
+    {
+        window.chartNORDESTE.options.legend.display=false;
+    }
+
+
+
+  $("#SE_slider").ionRangeSlider({
+        type: "double",
+        grid: true,
+        min: min[0],
+        max: max[0],
+        from: min[0],
+        to: max[0],
+        postfix: "%",
+        onFinish: function (data) {
+            // Called then action is done and mouse is released
+    
+            updateBySlider();
+        }
+    });
+
+  $("#S_slider").ionRangeSlider({
+        type: "double",
+        grid: true,
+        min: min[1],
+        max: max[1],
+        from: min[1],
+        to: max[1],
+        postfix: "%",
+        onFinish: function (data) {
+            // Called then action is done and mouse is released
+    
+            updateBySlider();
+        }
+    });
+
+  $("#NE_slider").ionRangeSlider({
+        type: "double",
+        grid: true,
+        min: min[2],
+        max: max[2],
+        from: min[2],
+        to: max[2],
+        postfix: "%",
+        onFinish: function (data) {
+            // Called then action is done and mouse is released
+    
+            updateBySlider();
+        }
+    });
+
+  $("#N_slider").ionRangeSlider({
+        type: "double",
+        grid: true,
+        min: min[3],
+        max: max[3],
+        from: min[3],
+        to: max[3],
+        postfix: "%",
+        onFinish: function (data) {
+            // Called then action is done and mouse is released
+    
+            updateBySlider();
+        }
+    });
+
+  // $("#smapDropdown-item").click(function(){
+  //   console.log($(this).parent())
+  //   console.log(getElementById("smapDropdown"))
+
+  //     // $(".smapDropdown:first-child").text($(this).text());
+  //     // $(".smapDropdown:first-child").val($(this).text());
+
+  //  });
+
+     $(function(){
+        $("#fcfDropdown-menu").on("click", "a", function(event){
+          $("#fcfDropdown")[0].innerText=event.target.text
+         })
+        
+        $("#smapDropdown-menu").on("click", "a", function(event){
+          $("#smapDropdown")[0].innerText=event.target.text
+          pathname = window.location.pathname
+          console.log(pathname)
+         })
+     })
+
+
+  function updateBySlider(){
+
+    showAllResults();
+
+    let SE_slider = $("#SE_slider").data("ionRangeSlider").result;
+    let S_slider = $("#S_slider").data("ionRangeSlider").result;
+    let NE_slider = $("#NE_slider").data("ionRangeSlider").result;
+    let N_slider = $("#N_slider").data("ionRangeSlider").result;
+
+    var minSlider = [SE_slider.from, S_slider.from, NE_slider.from, N_slider.from];
+    var maxSlider = [SE_slider.to, S_slider.to, NE_slider.to, N_slider.to];
+
+
+    table = document.getElementById("tableResults");
+    tr = table.getElementsByTagName("tr");
+
+
+    for (subMerc = 0; subMerc < minSlider.length; subMerc++) {
+      for (i = 2; i < tr.length; i++) {
+        td = tr[i].getElementsByTagName("td");
+        checkb = tr[i].getElementsByTagName("input");
+        if(checkb[0].checked==true){
+          if((minSlider[subMerc]<parseInt(td[subMerc+6].innerText))&&parseInt(td[subMerc+6].innerText)<maxSlider[subMerc]) {
+            console.log('Do nothing!')
+          }
+          else {
+            tr[i].style.display = "none";
+            checkb = tr[i].getElementsByTagName("input");
+            checkb[0].checked=false;
+            removeLines(checkb[0].id)
+          }
+        }
+
+      }
+    }
+  }
+
+  function showAllResults(){
+    console.log('showAllResults')
+    table = document.getElementById("tableResults");
+    tr = table.getElementsByTagName("tr");
+
+    for (i = 2; i < tr.length; i++) {
+      tr[i].style.display = "";
+      checkb = tr[i].getElementsByTagName("input");
+      checkb[0].checked=true;
+      removeLines(checkb[0].id)
+    }
+  }
+
+  function enableAllRows(){
+    table = document.getElementById("tableResults");
+    tr = table.getElementsByTagName("tr");
+
+    for (i = 2; i < tr.length; i++) {
+      if(tr[i].style.display == "") {
+        checkb = tr[i].getElementsByTagName("input");
+        checkb[0].checked=true;
+        removeLines(checkb[0].id)
+      }
+    }
+  }
+
+  function disableAllRows(){
+    table = document.getElementById("tableResults");
+    tr = table.getElementsByTagName("tr");
+
+    for (i = 2; i < tr.length; i++) {
+      if(tr[i].style.display == "") {
+        checkb = tr[i].getElementsByTagName("input");
+        checkb[0].checked=false;
+        removeLines(checkb[0].id)
+      }
+    }
+}
+
+
+  function removeLines(round){
+    if(round=='all') {
+      if (document.getElementById('checkbEnableAll').checked) {
+        enableAllRows()
+      }
+      else {
+        disableAllRows()
+      }
+    }
+    else{
+      {% for subMerc in graphicResults %}
+      {% if subMerc != 'xLabel' %}
+      for (var i = 0; i < chart{{ subMerc }}.data.datasets.length ; i++) {
+        if (chart{{ subMerc }}.data.datasets[i].label.includes(round)) {
+          if (document.getElementById(round).checked) {
+            chart{{ subMerc }}.data.datasets[i].hidden=false;
+            chart{{ subMerc }}.update();
+          }
+          else {
+            chart{{ subMerc }}.data.datasets[i].hidden=true;
+            chart{{ subMerc }}.update();
+          }
+        }
+      }
+
+      {% endif %}
+      {% endfor %}
+    }
+  }
+
+
+</script>
+
+{% endif %}
+
+{% endblock %}

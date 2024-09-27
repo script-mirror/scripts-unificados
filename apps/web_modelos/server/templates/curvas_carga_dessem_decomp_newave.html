@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+<!-- <link rel="stylesheet" type="text/css" href="/static/css/style.css">
+<link rel="stylesheet" type="text/css" href="/static/css/wx_style.css"> -->
+<!-- <link href="{{ url_for('static', filename='css/ena_diaria_submercado.css') }}" rel="stylesheet"> -->
+<link href="{{ url_for('static', filename='css/curvas_carga_dessem_decomp_newave.css') }}" rel="stylesheet">
+
+
+{% endblock %}
+
+{% block title %}
+<title>CARGAS</title>
+{% endblock %}
+
+
+{% block content %}
+
+
+
+<div id="corpoPagina" class="wrapper">
+        
+    
+        <nav id="sidebar" class="bg-wx-original-claro active">
+
+            <div class="sidebar-header ml-3 mb-2">
+                <h3>Menu</h3>
+            </div>
+
+            <div id="anos" class="text-center">
+                <div class="mb-3 mt-3">
+                    <label for="ano">Selecione um ano:</label>
+                    <br>
+                    <select id="selectAno" name="ano" class="btn btn-light btn-dessem">
+                        <option value="">Ano</option>
+                        <!-- Gere dinamicamente a lista de anos usando JavaScript -->
+                    </select>
+                </div>  
+
+            <div id="modelos">
+                <div class="row  text-center align-items-center justify-content-md-center ml-5 mr-5">
+                    <label >Selecione o modelo</label>
+                </div>
+
+
+
+
+
+
+
+                <div id="newave" class="text-center">
+                    <div class="mb-3">
+                        <button type="button" id="btnNewave" class="btn btn-light btn-newave">
+                            <span>Newave</span>
+                        </button>
+                    </div>
+                 <label for="my-input" class="my-input-label newave" style="display: none;"></label>
+                <div class="selected-options newave" style="display: none;">
+                    
+                </div>
+                <div class="options-container newave" style="display: none;">
+                    <label >Selecione o deck</label>
+                    <ul class="options-list newave">
+                    </ul>
+                    <button id="btnPlotarNewave" class="btn btn-light mb-2">Plotar Newave</button>
+
+                </div>
+                </div>
+
+                <div>
+                    <p>--------------------------------</p>
+                </div>
+
+                <div id="dessem" class="text-center">
+                    <div class="mb-3">
+                        <button type="button" id="btnDessem" class="btn btn-light btn-dessem">
+                            <span>Dessem</span>
+                        </button>
+                    </div>
+
+                    <label for="my-input" id="my-input-label" style="display: none;"></label>
+                    <div class="options-container dessem ml-5 mr-5">
+                        <label >Selecione o deck</label>
+                        <input class="mb-3 align-items-center text-center form-control" id="inputDataRef" type="date" name="dataSelecionada">
+                        <label  id="my-input" class="my-input-label dessem" style="display: none;">
+                        </label>
+                        <div class="selected-options dessem" style="display: none; border: 1px solid #ccc; padding: 5px; background-color: #7adb7a; color: black; margin-left: 15px; margin-right: 15px; margin-bottom: 15px;">
+                        </div>
+    
+                        <div class="row align-items-center justify-content-md-center ml-1 mr-1 mt-1 mb-3">
+                            <button id="btnPlotarDessem" class="btn btn-light mb-3">Plotar Dessem</button>
+                            <button id="btnLimparDessem" class="btn btn-light btn-limparDessem mb-2">Limpar Dessem</button>
+                        </div>
+                    </div>
+                </div>
+                
+
+
+
+                 <div id="decomp" class="text-center">
+                    <div class="mb-3">
+                        <button type="button" id="btnDecomp" class="btn btn-light btn-decomp">
+                            <span>Decomp</span>
+                        </button>
+                    </div>
+                    <label  id="my-input" class="my-input-label decomp" style="display: none;">
+                    </label>
+                    <div class="selected-options decomp" style="display: none;">
+                    </div>
+
+                    <div class="options-container decomp" style="display: none;">
+                        <label >Selecione o deck</label>
+                        <ul class="options-list decomp">
+                        </ul>
+                    <button id="btnPlotarDecomp" class="btn btn-light mb-3">Plotar Decomp</button>
+                    <!-- <button id="btnLimparDecomp" class="btn btn-light btn-limparDecomp mb-2">Limpar Decomp</button> -->
+                    </div>
+                </div>  
+                
+                <div id="comparar" class="text-center">
+                    <div class="mb-3">
+                        <button type="button" id="btnPlotarTudo" class="btn btn-light btn-Comparar">
+                            <span>Plotar Dessem/Decomp</span>
+                        </button>
+                    </div>                
+                </div>
+
+                <div>
+                    <p>--------------------------------</p>
+                </div>
+
+                <!-- <div id="newave" class="text-center">
+                    <div class="mb-3">
+                        <button type="button" id="btnNewave" class="btn btn-light btn-newave">
+                            <span>Newave</span>
+                        </button>
+                    </div>
+                 <label for="my-input" class="my-input-label newave" style="display: none;"></label>
+                <div class="selected-options newave" style="display: none;">
+                    
+                </div>
+                <div class="options-container newave" style="display: none;">
+                    <label >Selecione o deck</label>
+                    <ul class="options-list newave">
+                    </ul>
+                    <button id="btnPlotarNewave" class="btn btn-light mb-2">Plotar Newave</button>
+
+                </div>
+                </div> -->
+                
+                <!-- <div id="comparar" class="text-center">
+                    <div class="mb-3">
+                        <button type="button" id="btnPlotarTudo" class="btn btn-light btn-Comparar">
+                            <span>Plotar Dessem/Decomp</span>
+                        </button>
+                    </div>                
+                </div> -->
+
+                <div id="limpar" class="text-center">
+                    <div class="mb-3">
+                        <button type="button" id="btnLimpar" class="btn btn-light btn-Limpar">
+                            <span>Reiniciar</span>
+                        </button>
+                    </div>                
+                </div>
+            </div>
+        </nav>
+
+    <div id="content" >   
+        <div class="container col-12 col-sm-12 col-md-12 col-lg-12 col-xl-11">
+            <div id="menu-nav-bar">
+                <nav class="navbar navbar-expand-lg navbar-light bg-light" >
+                    <div class="container-fluid">
+                        <button type="button" id="sidebarCollapse" class="btn bg-wx-original-claro">
+                            <span>Menu</span>
+                        </button>
+                    </div> 
+                </nav>
+
+                <div class="jumbotron jumbotron-fluid">
+                    <div class="container">
+                        <h3>Gráfico de cargas dos submercados</h3>
+                        <p class="lead">Dessem, Decomp, Newave</p>
+                    </div>
+                </div>
+
+
+            </div>
+            <div id="modalLoading" class="modal">
+                <div class="modal-content">
+                <!-- Incluir a animação de loading do gif aqui -->
+                
+                <img src="https://raw.githubusercontent.com/joaoCalmon/files_gif/main/output-onlinegiftools.gif" alt="Loading" width="400" height="200"/>
+                <!-- <img src="https://cdn.dribbble.com/users/87723/screenshots/3516093/media/6a8c2ba3d604b8aea489a801b22bbc5d.gif" alt="Loading" /> -->
+                </div>
+            </div>
+            <div>  
+                <div id = "graphs" style="display: none">
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<!-- Importe seus novos JS aq -->
+<script src="{{ url_for('static', filename='js/colors.js') }}"></script>
+<script src="{{ url_for('static', filename='js/curvas_carga_dessem_decomp_newave.js') }}"></script>
+
+
+
+{% endblock %}

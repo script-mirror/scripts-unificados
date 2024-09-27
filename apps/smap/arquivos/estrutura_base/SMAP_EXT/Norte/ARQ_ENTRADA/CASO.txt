@@ -1,0 +1,11 @@
+10                                                'Quantidade de bacias sub-modeladas
+BALBINA                                           'Balbina                                                                                             
+Bandeirant                                        'Bandeirantes                                                                                        
+C.Araguaia                                        'Conceição do Araguaia                                                                               
+CURUAUNA                                          'Curua-Una                                                                                           
+Estreito                                          'Estreito                                                                                            
+FGOMES                                            'Ferreira Gomes                                                                                      
+Lajeado                                           'Lajeado                                                                                             
+Porto Real                                        'Porto Real                                                                                          
+SMesa                                             'Serra da Mesa                                                                                       
+Tucurui                                           'Tucuruí                                                                                             

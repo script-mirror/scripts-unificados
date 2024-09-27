@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+
+{% block head %}
+{% endblock %}
+
+{% block title %}
+	<title> WX Energy </title>
+{% endblock %}
+
+
+{% block content %} 
+
+  <!-- <div style="width:75%;"> -->
+
+
+
+
+  <div style="width:60%;margin-right:auto;margin-left: auto;">
+    <canvas id="SUDESTE"></canvas>
+  </div>
+
+  <div style="width:60%;margin-right:auto;margin-left: auto;">
+    <canvas id="SUL"></canvas>
+  </div>
+
+  <div style="width:60%;margin-right:auto;margin-left: auto;">
+    <canvas id="NORDESTE"></canvas>
+  </div>
+
+  <div style="width:60%;margin-right:auto;margin-left: auto;">
+    <canvas id="NORTE"></canvas>
+  </div>
+
+
+{% endblock %}
+
+
+{% block scripts %}
+
+ <script>
+  
+    var charts = {}
+
+    var lst_revisao_dados
+    var mlt_dados
+    var rdh_dados = {}
+    var resposta_rdh
+    var data_inicial
+
+    var newDataset
+    var subm_aux = {'N':'NORTE', 'NE':'NORDESTE', 'S':'SUL', 'SE':'SUDESTE'}
+
+
+   $(window).on('load', function(){
+
+      var datas_eixo = []
+
+
+      // configure the requesto to be sync
+      jQuery.ajaxSetup({async:false});
+
+      $.get("/middle/API/getlstrev", function(resposta) {
+        lst_revisao_dados = resposta
+          for (var sub in resposta){
+
+            if (sub == "revisao"){
+              continue;
+            }
+
+            var eixo_x = []
+            var eixo_y = []
+            var datas_eixo = []
+
+            // // Adiciona 15 dias nulos
+            var dt = new Date(Object.keys(lst_revisao_dados['NORDESTE'])[0])
+            dt.setDate(dt.getDate() - 14)
+            for (var dia = 0; dia < 14; dia++){
+                eixo_x.push(dt.toLocaleDateString())
+                eixo_y.push(null)
+                datas_eixo.push(dt)
+                dt.setDate(dt.getDate() + 1)
+            }
+
+            for (data in resposta[sub]){
+              var dt = new Date(data)
+              for (var i = 0; i < 7; i++){
+                eixo_x.push(dt.toLocaleDateString())
+                eixo_y.push(resposta[sub][data])
+                datas_eixo.push(dt)
+                dt.setDate( dt.getDate() + 1 );
+              }
+            }
+
+            ctx = document.getElementById(sub).getContext('2d');
+              charts[sub] = new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels: eixo_x,
+                yAxisID: 'eixo_enas',
+                datasets: [{
+                  type: 'line',
+                  label: 'REV'+resposta['revisao'],
+                  data: eixo_y,
+                  borderColor: 'rgba(240, 200, 8, 1)',
+                  backgroundColor: 'rgba(240, 200, 8, 1)',
+                  fill: false,
+                  steppedLine: true
+                }],
+              },
+
+
+              options: {
+
+                title: {
+                  display: true,
+                  text: sub,
+                },
+                scales: {
+                  yAxes: [{
+                    id: 'eixo_enas',
+                    type: 'linear',
+                    position: 'left',
+                  }, {
+                    id: 'eixo_prec',
+                    type: 'linear',
+                    position: 'right',
+                    ticks: {
+                      reverse: true,
+                      max: 100,
+                      min: 0
+                    }
+                  }]
+                },
+                tooltips: {
+                  mode: 'x-axis'
+                },
+              }
+            })
+          }
+
+      })
+
+
+      $.get("/middle/API/getmlt", function(resposta) {
+        mlt_dados = resposta
+
+          for (var sub in resposta){
+            var mlt = [];
+
+            var dt = new Date(Object.keys(lst_revisao_dados['NORDESTE'])[0])
+            dt.setDate(dt.getDate() - 14)
+            for (var dia = 0; dia < 14; dia++){
+                mlt.push(resposta[sub][dt.getMonth()])
+                dt.setDate(dt.getDate() + 1)
+            }
+            // dt.setDate(dt.getDate() - 1)
+
+            for (data in lst_revisao_dados[sub]){
+               var dt = new Date(data)
+                for (var i = 0; i < 7; i++){
+                  mlt.push(resposta[sub][dt.getMonth()])
+                  dt.setDate( dt.getDate() + 1 );
+                }
+            }
+
+
+            newDataset = {
+                label: "MLT",
+                type: 'line',
+                backgroundColor: 'rgba(8, 103, 136, 1)',
+                borderColor: 'rgba(8, 103, 136, 1)',
+                fill: false,
+                // borderWidth: 1,
+                data: mlt,
+                yAxisID: 'eixo_enas',
+                steppedLine: true
+            }
+
+            charts[sub].data.datasets.push(newDataset);
+
+            charts[sub].update();
+
+          }
+
+      })
+
+      // A partir de aqui vai ser ASYNC
+      jQuery.ajaxSetup({async:true});
+
+      data_inicial = new Date(Object.keys(lst_revisao_dados['NORDESTE'])[0])
+      data_inicial.setDate(data_inicial.getDate() - 14)
+      data_inicial_str = data_inicial.toISOString()
+      data_inicial_str = data_inicial_str.substring(8,10)+'/'+data_inicial_str.substring(5,7)+'/'+data_inicial_str.substring(0,4)
+
+      plotAcomph(data_inicial_str)
+
+      for (sub in charts){
+        $.get('/middle/API/getrdh', {'data_inicial': data_inicial_str, 'submercado': sub}, function(resposta) {
+          resposta_rdh = resposta
+          // console.log(resposta_rdh)
+          var rdh = {}
+          var rdh_media = {}
+          var submercado = ""
+
+          for (data in resposta_rdh){
+            var dt = new Date(data)
+            rdh[dt.toLocaleDateString()] = resposta[data][2]
+            // rdh_media[dt.toLocaleDateString()] = resposta[data][2]
+            if (submercado == ""){
+              submercado = resposta[data][3]
+            }
+          }
+
+          rdh_dados[submercado] = resposta_rdh
+
+          // Array com as datas reversas
+          datas = Object.keys(resposta_rdh).reverse()
+          // Ultimo valor do RDH no banco
+          rdh_media_sem = resposta_rdh[datas[0]][0]
+          for (var i = 0; i<datas.length; i++){
+            var dt = new Date(datas[i])
+            // Se for sexta feira, o valor da media e atualizado
+            if (dt.getDay() == 5){
+              rdh_media_sem = resposta_rdh[datas[i]][0]
+            }
+            rdh_media[dt.toLocaleDateString()] = rdh_media_sem
+
+          }
+
+          eixo_x = charts[submercado].data.labels
+          var eixo_y_rdh = []
+          var eixo_y_rdh_media = []
+
+          for (var i=0; i < (eixo_x).length; i++){
+            var dt = new Date(eixo_x[i])
+
+            if (typeof(rdh[eixo_x[i]]) != "undefined"){
+              eixo_y_rdh.push(rdh[eixo_x[i]])
+              eixo_y_rdh_media.push(rdh_media[eixo_x[i]])
+            }
+            else{
+              eixo_y_rdh.push(null)
+              eixo_y_rdh_media.push(null)
+            }
+          }
+
+            newDataset_rdh = {
+                type: 'line',
+                label: "RDH",
+                backgroundColor: 'rgba(128, 143, 133, 1)',
+                borderColor: 'rgba(128, 143, 133, 1)',
+                fill: false,
+                yAxisID: 'eixo_enas',
+                data: eixo_y_rdh,
+                // fill: false,
+                // steppedLine: true
+            }
+
+            charts[submercado].data.datasets.push(newDataset_rdh);
+
+
+            newDataset_rdh_medio = {
+                type: 'line',
+                label: "RDH (média)",
+                backgroundColor: 'rgba(49, 8, 31, 1)',
+                borderColor: 'rgba(49, 8, 31, 1)',
+                borderWidth: 1,
+                fill: false,
+                yAxisID: 'eixo_enas',
+                data: eixo_y_rdh_media,
+            }
+
+            charts[submercado].data.datasets.push(newDataset_rdh_medio);
+            charts[submercado].update();
+
+
+        })
+      }
+
+
+    modelos = {3: 'ETA-ONS', 21: 'ETA_GEFS', 1: 'GFS', 13: 'GEFS', 22: 'ECMWF'}
+    cores_modelos = {3: 'rgba(175, 201, 126, 1)', 21: 'rgba(226, 214, 134, 1)', 1: 'rgba(216, 164, 143, 1)', 13: 'rgba(251, 86, 7, 1)', 22: 'rgba(180, 210, 186, 1)'}
+    for (sub in charts){
+      for (modelo in modelos){
+
+          $.get('/middle/API/getmodelprec', {'codigo_modelo': modelo, 'submercado': sub}, function(resposta) {
+
+            var eixo_y = []
+            var eixo_x = charts[sub].data.labels
+            var model = []
+
+
+            modelo = resposta['modelo']
+            delete resposta.modelo
+
+            sub = resposta['submercado']
+            delete resposta.submercado
+
+            for (data in resposta){
+              var dt = new Date(data)
+              model[dt.toLocaleDateString()] = resposta[data]
+            }
+
+
+            for (var i=0; i < (eixo_x).length; i++){
+              var dt = new Date(eixo_x[i])
+
+              if (typeof(model[eixo_x[i]]) != "undefined"){
+                eixo_y.push(model[eixo_x[i]])
+              }
+              else{
+                eixo_y.push(null)
+              }
+            }
+
+            newDataset = {
+              type: 'bar',
+                label: modelos[modelo],
+                backgroundColor: cores_modelos[modelo],
+                borderColor: cores_modelos[modelo],
+                borderWidth: 1,
+                fill: false,
+                yAxisID: 'eixo_prec',
+                data: eixo_y,
+            }
+
+
+            charts[sub].data.datasets.push(newDataset);
+            charts[sub].update();
+
+          })
+      }
+
+      $.get("/middle/API/getmerge",{'data_inicial': data_inicial_str, 'submercado': sub},  function(resposta) {
+
+
+        sub = resposta['submercado']
+        delete resposta.submercado
+
+        var eixo_y = []
+        var eixo_x = charts[sub].data.labels
+
+        merge = []
+        for (data in resposta){
+          var dt = new Date(data)
+          merge[dt.toLocaleDateString()] = resposta[data]
+        }
+
+        for (var i=0; i < (eixo_x).length; i++){
+          var dt = new Date(eixo_x[i])
+
+          if (typeof(merge[eixo_x[i]]) != "undefined"){
+            eixo_y.push(merge[eixo_x[i]])
+          }
+          else{
+            eixo_y.push(null)
+          }
+        }
+
+
+        newDataset = {
+          type: 'bar',
+            label: 'Merge',
+            backgroundColor: 'rgba(234, 190, 124, 1)',
+            borderColor: 'rgba(234, 190, 124, 1)',
+            borderWidth: 1,
+            fill: false,
+            yAxisID: 'eixo_prec',
+            data: eixo_y,
+            // steppedLine: true
+        }
+
+        charts[sub].data.datasets.push(newDataset);
+        charts[sub].update();
+
+
+      })
+
+
+
+    }
+
+
+
+    })
+
+
+
+    $(window).on('ready', function(){
+
+    })
+ 
+
+    function plotAcomph(data_inicial){
+     $.get("/middle/API/getEnaAcomph",{'divisao':'submercado', 'dataInicial': data_inicial},  function(resposta) {
+      
+      for (let sub in resposta){
+        let acomphSub = []
+        for (let data in resposta[sub]){
+          let dt = new Date(data)
+          acomphSub.push({t:dt, y:resposta[sub][data].toFixed(2)})
+        }
+
+        newDataset = {
+          label: 'ACOMPH',
+          type: 'line',
+          backgroundColor: 'rgba(6, 187, 199)',
+          borderColor: 'rgba(6, 187, 199)',
+          fill: false,
+          data: acomphSub
+        }
+        charts[subm_aux[sub]].data.datasets.push(newDataset);
+        charts[subm_aux[sub]].update();
+      }
+
+      for (data in resposta){
+          dt = new Date(data)
+          for (sub in resposta[data]){
+
+              if (ena_acomph[sub] == undefined){
+                  ena_acomph[sub] = []
+              }
+              ena_acomph[sub].push({t:dt, y:resposta[data][sub].toFixed(2)})
+          }
+      }
+    })
+   }
+
+
+
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+{% endblock %}

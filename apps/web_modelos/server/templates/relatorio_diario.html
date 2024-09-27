@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" crossorigin="" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js" crossorigin=""></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" crossorigin="" />
+
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/relatorio_diario.css') }}">
+
+{% endblock %}
+
+{% block title %}
+<title> Relatório diário </title>
+{% endblock %}
+
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center" id="rodadas-ena">
+        <div class="col-12 col-sm-4">
+            <div class="col-sm-8">
+                <form>
+
+                    <div class="form-group">
+                        <label for="selectModelo">Modelo</label>
+                        <select class="custom-select" id="selectModelo">
+                            <option selected value="PCONJUNTO">PCONJUNTO</option>
+                            <option value="EC">EC</option>
+                            <option value="GEFS">GEFS</option>
+                            <option value="GFS">GFS</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="selectQtdDias">Dias</label>
+                        <select class="custom-select" id="selectQtdDias">
+                            <option value="1">N</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="selectHrRodada">Horário</label>
+                        <select class="custom-select" id="selectHrRodada">
+                            <option selected value="0">0</option>
+                            <option value="6">6</option>
+                            <option value="12">12</option>
+                            <option value="18">18</option>
+                        </select>
+                    </div>
+
+                    <div class="col-sm-12 mt-2">
+                        <div class="row justify-content-between">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="radioRegiao" id="radioSE" value="SE"
+                                    checked>
+                                <label class="form-check-label" for="radioSE">
+                                    Sudeste
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="radioRegiao" id="radioS" value="S">
+                                <label class="form-check-label" for="radioS">
+                                    Sul
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="radioRegiao" id="radioNE" value="NE">
+                                <label class="form-check-label" for="radioNE">
+                                    Nordeste
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input " type="radio" name="radioRegiao" id="radioN" value="N">
+                                <label class="form-check-label" for="radioN">
+                                    Norte
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+        <div class="col-sm-2 d-flex align-items-end">
+            <button type="button" class="btn bg-wx-original-claro col-12 m-1"
+                id="buttonBuscar"><span>Buscar</span></button>
+        </div>
+
+        <div class="col-12 justify-content-center card m-auto ">
+            <div class=" col-12 text-center card-body" style="height:70vh; width:100%">
+                <canvas id="grafico"></canvas>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row justify-content-center" id="ena-diaria">
+
+    </div>
+
+
+    <div class="row justify-content-center" id="carga-horaria">
+        <input type="date" id="data-previsao">
+        <form id="selectTipoPlot">
+
+            <div class="form-check form-check-inline  ml-2 mr-2">
+                <input class="form-check-input" type="radio" name="radioTipoPlot" id="radioCarga" value="carga" checked>
+                <label class="form-check-label" for="radioCarga">
+                    Carga
+                </label>
+            </div>
+            <div class="form-check form-check-inline  ml-2 mr-2">
+                <input class="form-check-input" type="radio" name="radioTipoPlot" id="radioTemp" value="temp">
+                <label class="form-check-label" for="radioTemp">
+                    Temperatura
+                </label>
+            </div>
+        </form>
+
+        <div class="col-12 justify-content-center card m-auto">
+            <div class=" col-12 text-center card-body" style="height: auto; width: 100%;">
+                <div id='graphs_carga' class="row justify-content-around" style="width: 100%;">
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center" id="geracao-eolica">
+        <div class="row ml-2 mr-2">
+            <div class="form-group col-sm">
+                <label for="semana-verificado">Semana Verificada:</label>
+                <input class="form-control mb-3" type="date" id="semana-verificado">
+
+                <label for="qtd-dias-prev-eolica">Qtd Dias Atrás</label>
+                <input class="form-control" type="number" id="qtd-dias-prev-eolica">
+                <button type="button" class="btn bg-wx-original-claro mt-1"
+                    id="buscar-prev-eolica-n-dias"><span>Buscar</span></button>
+            </div>
+        </div>
+        <div class="col-12 mt-5 card">
+            <div class="card-body">
+                <canvas id="chart_eolica_NORDESTE" height="120"></canvas>
+            </div>
+        </div>
+
+        <div class="col-12 mt-5 card">
+            <div class="card-body">
+                <canvas id="chart_eolica_SUL" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div id="mapas" class="row justify-content-center" style=" margin-top: 20px;">
+        <div class="col-12">
+            <form style="margin-bottom: 20px;">
+                <div class="row justify-content-between">
+                    <div class="row col-10 justify-content-between">
+
+                        <div class="form-group">
+                            <input class=" mb-1 " id="slider-inicio" type="date" name="dataInicial">
+                            <label for="slider-inicio">Início</label>
+                        </div>
+                        <div class="form-group">
+                            <input class=" mb-1 " id="slider-final" type="date" name="dataFinal">
+                            <label for="slider-final">Final </label>
+                        </div>
+                    </div>
+                    <!-- <span id="slider-inicio">0000-00-00</span>
+                    <span id="slider-final">0000-00-00</span> -->
+                    <button type="button" class="btn bg-wx-original-claro col-2 m-1 h-50" id="buttonBuscarChuva"
+                        onclick="mapaObs.buscarChuva()"><span>Buscar</span>
+                    </button>
+                </div>
+
+
+                <!-- <input type="range" class="custom-range" min="0" max="30" id="formControlRange" value="0"> -->
+            </form>
+
+
+            <div class="row justify-content-center">
+
+                <div class="col-sm-12 col-md-12 col-lg-10">
+                    <div id="slider-span" class="col-12" style="margin-bottom: 10px;">
+                        <div id="flat-slider" class="col-12"></div>
+                    </div>
+
+                    <div class="card" style="height: 100vh;padding: 5px 0;">
+                        <div class="card-body">
+                            <div id="mapa-observado" class="col-12" style="height: 90%;"></div>
+
+                            <div style="border: 1px solid; height: 20px; margin-top: 2px;" id="cores-mapa-obs" class="row"></div>
+                            <div  id="parametros-mapa-obs" class="row"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row justify-content-around" style="margin: 10px 0;">
+                <div class="card col-sm-12 col-md-9 col-lg-5 card-mapa-previsao" id="card-mapa-pconjunto"></div>
+                <div class="card col-sm-12 col-md-9 col-lg-5 card-mapa-previsao" id="card-mapa-gefs"></div>
+                <div class="card col-sm-12 col-md-9 col-lg-5 card-mapa-previsao" id="card-mapa-gfs"></div>
+                <div class="card col-sm-12 col-md-9 col-lg-5 card-mapa-previsao" id="card-mapa-eta40"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="" id="tabelas-diferenca-previsao">
+
+
+    </div>
+
+    <div class="" id="grafico-diferenca-previsao">
+
+        <div class="card">
+            <div class="card-body" style="height:fit-content" id="card-diferenca-pconjunto"></div>
+        </div>
+        <div class="card">
+            <div class="card-body" style="height:fit-content" id="card-diferenca-gefs"></div>
+        </div>
+        <div class="card">
+            <div class="card-body" style="height:fit-content" id="card-diferenca-gfs"></div>
+        </div>
+        <div class="card">
+            <div class="card-body" style="height:fit-content" id="card-diferenca-eta40"></div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+
+
+<script src="https://code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
+
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+
+
+<script src="{{ url_for('static', filename='js/moment.js') }}"></script>
+<script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
+
+<script src="{{ url_for('static', filename='js/relatorio_diario/relatorio_diario.js') }}"></script>
+
+<script src="{{ url_for('static', filename='js/relatorio_diario/carga_horaria.js') }}"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment-with-locales.min.js"></script>
+
+
+<script src="{{ url_for('static', filename='js/relatorio_diario/geracao_eolica.js') }}"></script>
+<script src="{{ url_for('static', filename='js/colors.js') }}"></script>
+
+<script src="{{ url_for('static', filename='js/relatorio_diario/mapa_subbacias.js') }}"></script>
+
+<script src="{{ url_for('static', filename='components/relatorio_diario/CardMapa.js') }}"></script>
+<script src="{{ url_for('static', filename='components/relatorio_diario/TabelaComparacao.js') }}"></script>
+<script src="{{ url_for('static', filename='components/relatorio_diario/GraficoComparacao.js') }}"></script>
+<script src="{{ url_for('static', filename='js/relatorio_diario/comparacao_chuva.js') }}"></script>
+
+<script src="{{ url_for('static', filename='js/relatorio_diario/listeners.js') }}"></script>
+
+{% endblock %}

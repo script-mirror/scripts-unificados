@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/vnc_kill_session.css') }}">
+{% endblock %}
+
+{% block title %}
+<title>VNC RESTART</title>
+{% endblock %}
+
+
+{% block content %}
+
+<div id="corpoPagina" class="d-flex justify-content-center mt-5">
+  <div class="m-4">
+    <h5>Selecione o número da sessão desejada para dar o restart.</h5>
+    <br>
+    <br>
+    <div class="col-12 col-sm-12 d-flex">
+      <button class="mt-3 mt-sm-0 btn btn-outline-secondary btn-block botao1 mr-2" type="button" id="btn-1" value="1">1</button>
+      <button class="mt-3 mt-sm-0 btn btn-outline-secondary btn-block botao2 mr-2" type="button" id="btn-2" value="2">2</button>
+      <button class="mt-3 mt-sm-0 btn btn-outline-secondary btn-block botao3 mr-2" type="button" id="btn-3" value="3">3</button>
+      <!-- <button class="mt-3 mt-sm-0 btn btn-outline-secondary btn-block botao4 mr-2" type="button" id="btn-4" value="4">4</button> -->
+      <button class="mt-3 mt-sm-0 btn btn-outline-secondary btn-block botao5" type="button" id="btn-5" value="5">5</button>
+    </div>
+    <br>
+    <br>
+
+    <div class="text-center mt-3">
+      <button type="button" class="btn btn-secondary btn-lg botaoRestart" id="btn-Restart">Restart</button>
+    </div>
+  </div>
+</div>
+
+
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<!-- Importe seus novos JS aq -->
+
+<script src="{{ url_for('static', filename='js/vnc_kill_session.js') }}"></script>
+
+{% endblock %}

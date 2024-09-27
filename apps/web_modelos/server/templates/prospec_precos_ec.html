@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+    <!-- Importe aqui os css -->
+    <link href="{{ url_for('static', filename='css/ena_diaria_bacia.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block title %}
+	<title> Preços membros EC </title>
+{% endblock %}
+
+
+{% block content %}
+<div id='enaDiariaBacia' class="wrapper">
+
+  <nav id="sidebar" class="bg-wx-original-claro active">
+
+      <div class="sidebar-header">
+          <h3>Menu</h3>
+      </div>
+
+      <div class="row ml-2 mr-2">
+          <div class="form-group col-sm">
+              <label for="data-rodada">Resultados CV</label>
+              <input class="form-control" type="date" id="data-rodada">
+          </div>
+      </div>
+
+      <div class="row justify-content-md-center">
+          <button type="button" id="btn-atualizar-data" class="btn btn-light btn-atualizar">
+              <span>Atualizar</span>
+          </button>
+
+      </div>
+
+      <!-- git commit -m "fix() Correcao na funcao que faz o sort das linhas no " -->
+
+  </nav>
+
+    <div id="content">
+
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+          <div class="container-fluid">
+
+              <button type="button" id="sidebarCollapse" class="btn bg-wx-original-claro">
+                  <i class="fas fa-align-left"></i>
+                  <span>Menu</span>
+              </button>
+
+          </div>
+      </nav>
+
+      <div id="data-ec"></div>
+      <div id="tabela-ec">
+      </div>
+    </div>
+
+
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+
+ <script>
+
+    // Configuracoes para abortar todas as requisiçoes quando o usuario pedir para atualizar
+    $.xhrPool = [];
+    $.xhrPool.abortAll = function() {
+        $(this).each(function(idx, jqXHR) {
+            jqXHR.abort();
+        });
+        $(this).each(function(idx, jqXHR) {
+            var index = $.inArray(jqXHR, $.xhrPool);
+            if (index > -1) {
+                $.xhrPool.splice(index, 1);
+            }
+        });
+    };
+
+    $.ajaxSetup({
+        beforeSend: function(jqXHR) {
+            $.xhrPool.push(jqXHR);
+        },
+        complete: function(jqXHR) {
+            var index = $.inArray(jqXHR, $.xhrPool);
+            if (index > -1) {
+                $.xhrPool.splice(index, 1);
+            }
+        }
+    });
+
+    
+    parametros = window.location.search;
+    urlParams = new URLSearchParams(parametros);
+
+    dtRodada = moment()
+
+    if(urlParams.get('data') != null){
+        dtRodada = moment(urlParams.get('data'), "DD-MM-YYYY")
+    }
+
+    str_dtRodada = dtRodada.format("YYYY-MM-DD")
+    document.getElementById("data-rodada").value = str_dtRodada
+    atualizarTabela()
+    
+    // Acoes que serão executadas apos o carregamento da pagina completo da pagina
+    $(document).ready(function() {
+      iniciar_listeners();
+    } );
+        
+  // Crie suas funções aqui
+
+  function iniciar_listeners(){
+    // Iniciar listeners
+    $('#sidebarCollapse').on('click', function () {
+        $('#sidebar').toggleClass('active');
+    });
+    $('#btn-atualizar-data').on('click',atualizarTabela);
+  }
+
+  function atualizarTabela(){
+    dtRodada = moment(document.getElementById("data-rodada").value, "YYYY-MM-DD").add(1, 'days')
+    get_rodada_ec(dtRodada.format("YYYY-MM-DD"))
+  }
+
+  function get_rodada_ec(data){
+
+    data_fig = moment(data).add(-1, 'days');
+    
+    $.ajax({
+        url: "/middle/API/prospec/get-rodada-ec",
+        type : 'get',
+        data: {'data': data},
+        success: function(resposta){
+            if( resposta.message == 'Nenhuma rodada encontrada'){
+                $('#tabela-ec').html('Nenhuma rodada encontrada');
+                return
+            }
+
+            tabela = '<table id="tabela-valores-ec" style="width:194pt;border-collapse:collapse" width="259" cellspacing="0" cellpadding="0" border="0">'
+
+            tabela += '<thead><tr style="height: 15pt;">'
+            
+            // Primeira coluna vazia onde ficarao os nomes dos membros
+            tabela += '<th style="width: 70pt; border: 1pt solid windowtext; background: rgb(120, 30, 119) none repeat scroll 0% 0%; padding: 0cm 3.5pt; height: 15pt;" width="81" valign="bottom" nowrap="nowrap">'
+            tabela += `<p class="MsoNormal" style="margin: 0cm 0cm 0.0001pt; text-align: center; line-height: normal; font-size: 11pt; font-family: &quot;Calibri&quot;, sans-serif;" align="center"><span style="color: white;">Membros<span></span></span></p>`
+            tabela += '</th>'
+
+            // Os nomes das revisoes
+            resposta.header.forEach((head, idx) => {
+                tabela += '<th style="width: 70pt; border: 1pt solid windowtext; background: rgb(120, 30, 119) none repeat scroll 0% 0%; padding: 0cm 3.5pt; height: 15pt;" width="81" valign="bottom" nowrap="nowrap">'
+                tabela += `<p class="MsoNormal" style="margin: 0cm 0cm 0.0001pt; text-align: center; line-height: normal; font-size: 11pt; font-family: &quot;Calibri&quot;, sans-serif;" align="center"><span style="color: white;">${head}<span></span></span></p>`
+                tabela += '</th>'
+            });
+            tabela += '</tr></thead><tbody>'
+
+            Object.keys(resposta.tabela).forEach(function(key) {
+                tabela += '<tr style="height: 15pt;">'
+                
+                var regex_numero_membro = new RegExp("ecmwf_ens_ext-([0-9]{2})_pluvia", "g");
+                var match = regex_numero_membro.exec(key);
+                membro = match[1]
+                flag_ext = ''
+                if(membro == '00'){
+                    membro = 'CTRL'
+                }
+
+                tabela += '<td style="width:49pt;border-color:currentcolor windowtext windowtext;border-style:none solid solid;border-width:medium 1pt 1pt;background:white none repeat scroll 0% 0%;padding:0cm 3.5pt;height:15pt" width="65" valign="bottom" nowrap="">'
+                tabela += `<a href="#" onClick="MyWindow=window.open('/mapas_ec?data=${data_fig.format("YYYY-MM-DD")}&membro=${membro}','MyWindow','width=600,height=300'); return false;">`
+                tabela += `<p class="MsoNormal" style="margin:0cm 0cm 0.0001pt;text-align:center;line-height:normal;font-size:11pt;font-family:&quot;Calibri&quot;,sans-serif" align="center"><span style="color:black"><span>&nbsp;</span>${key}<span></span></span></p>`
+                tabela += `</a></td>`
+                
+
+                resposta.tabela[key].forEach((celula, semana) => {
+                    // if (semana >= 3){
+                    //     flag_ext = '-ext'
+                    // }
+                    tabela += '<td style="width:49pt;border-color:currentcolor windowtext windowtext;border-style:none solid solid;border-width:medium 1pt 1pt;background:white none repeat scroll 0% 0%;padding:0cm 3.5pt;height:15pt" width="65" valign="bottom" nowrap="">'
+                    tabela += `<a href="#" onClick="MyWindow=window.open('mapas_ec?data=${data_fig.format("YYYY-MM-DD")}&membro=${membro}&semanas=[${semana+2},${semana+3}]','MyWindow','width=600,height=300'); return false;">`
+                    tabela += `<p class="MsoNormal" style="margin:0cm 0cm 0.0001pt;text-align:center;line-height:normal;font-size:11pt;font-family:&quot;Calibri&quot;,sans-serif" align="center"><span style="color:black"><span>&nbsp;</span>${celula}<span></span></span></p>`
+                    tabela += `</a></td>`
+                })
+                tabela += '</tr>'
+
+            })
+
+            tabela += '</tbody></table>'
+
+            $('#tabela-ec').html(tabela);
+        }
+    }).done(function(){
+
+        document.querySelectorAll('th').forEach(th => th.addEventListener('click', (() => {
+        const table = th.closest('table');
+        const tbody = table.querySelector('tbody');
+        Array.from(tbody.querySelectorAll('tr'))
+            .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
+            .forEach(tr => tbody.appendChild(tr) );
+        })));
+
+        
+        $('#data-ec').html('<h3 style="padding:20px">Rodada do EC (' + data_fig.format('DD/MM/YYYY') + ')</h3>');
+                
+    })
+  }
+
+
+    const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
+
+    const comparer = (idx, asc) => (a, b) => ((v1, v2) => 
+        v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.split(/\n/g)[3].split(/-/g)[0].toString().localeCompare(v2.split(/\n/g)[3].split(/-/g)[0],'en-US',{numeric:true})
+        // console.log(v2)
+        )(getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx));
+
+</script>
+
+<!-- Importe seus novos JS aq -->
+
+{% endblock %}

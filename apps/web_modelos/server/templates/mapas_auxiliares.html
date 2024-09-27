@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
+
+<style>
+  .mapa {
+    height: 50vh;
+    border: 1px solid;
+  }
+</style>
+{% endblock %}
+
+{% block title %}
+<title> Mapas Auxiliares </title>
+{% endblock %}
+
+{% block content %}
+<div class="row d-flex justify-content-center mt-5 mb-5 col-12">
+
+  <div class="col-6">
+
+    <div class="row justify-content-center">
+
+      <select class="selectpicker" id="select-submercado" data-live-search="true">
+        <option data-tokens="Todas">Todas</option>
+        <option data-tokens="Norte">Norte</option>
+        <option data-tokens="Nordeste">Nordeste</option>
+        <option data-tokens="Sul">Sul</option>
+        <option data-tokens="Sudeste">Sudeste</option>
+      </select>
+
+      <div class="col-12">
+        <div class="card">
+          <div class="mapa card-body" id="por-submercado"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row justify-content-center">
+
+      <select class="selectpicker" id="select-bacia" data-live-search="true">
+        <option data-tokens="Todas">Todas</option>
+        <option data-tokens="Grande">Grande</option>
+        <option data-tokens="Iguaçu">Iguaçu</option>
+        <option data-tokens="Itaipu">Itaipu</option>
+        <option data-tokens="Madeira">Madeira</option>
+        <option data-tokens="Capivari">Capivari</option>
+        <option data-tokens="Itajaí-Aç">Itajaí-Açu</option>
+        <option data-tokens="Antas">Antas</option>
+        <option data-tokens="Jacuí">Jacuí</option>
+        <option data-tokens="Uatumã">Uatumã</option>
+        <option data-tokens="Curuá-Un">Curuá-Una</option>
+        <option data-tokens="Araguari">Araguari</option>
+        <option data-tokens="Jequitinho">Jequitinho</option>
+        <option data-tokens="Jari">Jari</option>
+        <option data-tokens="Parnaíba">Parnaíba</option>
+        <option data-tokens="Itabapoana">Itabapoana</option>
+        <option data-tokens="Mucuri">Mucuri</option>
+        <option data-tokens="Itiquira">Itiquira</option>
+        <option data-tokens="Jauru">Jauru</option>
+        <option data-tokens="Manso">Manso</option>
+        <option data-tokens="Correntes">Correntes</option>
+        <option data-tokens="Paranaíba">Paranaíba</option>
+        <option data-tokens="Paraná">Paraná</option>
+        <option data-tokens="Paranapanema">Paranapanema</option>
+        <option data-tokens="São Franc">São Franci</option>
+        <option data-tokens="Tapajós">Tapajós</option>
+        <option data-tokens="Tietê">Tietê</option>
+        <option data-tokens="Tocantins">Tocantins</option>
+        <option data-tokens="Uruguai">Uruguai</option>
+        <option data-tokens="Xingu">Xingu</option>
+        <option data-tokens="Paraguaçu">Paraguaçu</option>
+        <option data-tokens="Paraíba do Sul">Paraíba do Sul</option>
+        <option data-tokens="Sta. Maria da Vitória">Sta. Maria da Vitória</option>
+      </select>
+
+      <div class="col-12">
+        <div class="card">
+          <div class="mapa card-body" id="por-bacia"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="tabela" class="col-2">
+    <table>
+      <tr>
+        <th>Company</th>
+        <th>Contact</th>
+        <th>Country</th>
+      </tr>
+      <tr>
+        <td>Alfreds Futterkiste</td>
+        <td>Maria Anders</td>
+        <td>Germany</td>
+      </tr>
+      <tr>
+        <td>Centro comercial Moctezuma</td>
+        <td>Francisco Chang</td>
+        <td>Mexico</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+
+{% endblock %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.0/jquery.min.js"></script>
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/mapas_auxiliares.js') }}"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
+{% endblock %}

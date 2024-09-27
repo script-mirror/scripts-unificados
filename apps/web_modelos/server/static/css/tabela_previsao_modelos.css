@@ -1,0 +1,259 @@
+
+body {
+  background-color: rgb(238, 237, 237);
+} 
+thead{
+  position: sticky;
+  top: 50px;
+  background-color: rgb(156,51,155);
+
+} 
+
+
+.tabela-fixalargura {
+  width: 40%; /* Largura fixa em 50% da largura do contêiner pai */
+ } 
+
+.container{
+  display: inline-block;
+  padding-left: 35px;
+  
+  }
+
+.button:hover{
+  opacity: 70%;
+}
+
+#btn-1 {
+  margin-left: 10px;
+  background-color: #fff;
+  border-width: 0.5px;
+  height: 30px;
+  border-radius: 0.25rem;
+  border: 1px solid transparent;
+  color: black;
+
+}
+
+#btn-2 {
+  margin-left: 10px;
+  background-color: #fff;
+  border: 1px solid transparent;
+  border-width: 0.5px;
+  height: 30px;
+  border-radius: 0.25rem;
+  color: black;
+}
+
+#btn-3 {
+  margin-left: 10px;
+  border: 1px solid transparent;
+  border-width: 0.5px;
+  height: 30px;
+  background-color: #fff;
+  border-radius: 0.25rem;
+  color: black;
+}
+
+.disabled {
+  opacity: 0.1;
+  background-color: rgb(185, 185, 185);
+}
+
+.js-limpaTabela {
+  background-color: rgb(120,39,119);
+  /* position: relative; */
+  outline: none;
+  border-width: 0.1px;
+  text-align: center;
+}
+
+.diferenca {
+  /* position: relative; */
+  outline: none;
+  left: 190px;
+ }
+
+.js-limpaTabela:hover {
+  background-color: rgb(156,51,155);
+  color:black;
+  border-color: black;
+
+}
+.js-limpaTabela {
+  background-color: rgb(156,51,155);
+  color: rgb(255, 255, 255);
+  border-color: #fff;
+} 
+
+.tabelas-precipitacao {
+  font-size: 0.68rem;
+  color: rgb(255, 255, 255);
+  margin: 2px;
+  background-color: rgb(156,51,155);
+  text-align: center;
+} 
+
+caption {
+  font-size: 14px;  
+  text-align: left;
+  padding-left: 15px;
+  color:  rgb(255, 255, 255);
+  background-color: rgb(156,51,155);
+  position: sticky;
+  top: 0;
+} 
+
+.table-roll {
+  max-height: 80vh;
+  
+  overflow:auto;
+  font-size: 0.55rem;
+  margin-left: 0px;
+}
+
+table caption{
+  caption-side: top;
+}
+
+.table td, .table th{
+  padding: 0.25rem;
+}  
+
+
+@import "https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700";
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #fafafa;
+    
+}
+
+/* ---------------------------------------------------
+    SIDEBAR STYLE
+----------------------------------------------------- */
+
+.wrapper {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+}
+
+#sidebar {
+    min-width: 250px;
+    max-width: 250px;
+    background: #9c339b;    
+    color: #fff;
+}
+
+#sidebar.active {
+    margin-left: -250px;
+}
+
+#sidebar .sidebar-header {
+    padding: 20px;
+    background: #9c339b;    
+}
+
+#sidebar ul.components {
+    padding: 20px 0;
+    border-bottom: 1px solid #474E54;
+}
+
+
+
+#sidebar ul p {
+    color: #fff;
+    padding: 10px;
+}
+
+#sidebar ul li a {
+    padding: 10px;
+    font-size: 1.1em;
+    display: block;
+}
+
+#sidebar ul li a:hover {
+    color: #9c339b;
+    background: #fff;
+}
+
+
+.dropdown-toggle::after {
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+}
+
+.btn-atualizar{
+	max-width: 100px
+}
+
+
+/* ---------------------------------------------------
+    CONTENT STYLE
+----------------------------------------------------- */
+#content {
+    width: 100%;
+    padding: 20px;
+    min-height: 100vh;
+    transition: all 0.3s;
+    text-align: center; 
+
+  } 
+
+
+  #botao-flutuante {
+    position: fixed;
+    left: 6px;
+
+    bottom: 20px; /* Ajuste a posição vertical conforme necessário */
+    right: 20px; /* Ajuste a posição horizontal conforme necessário */
+    width: 35px;
+    height: 35px;
+    background-color: #9c339b;
+    color: #fff;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    font-size: 24px;
+  }
+
+  #botao-flutuante:focus {
+    outline: none;
+  }
+
+
+
+
+
+/* ---------------------------------------------------
+    MEDIAQUERIES
+----------------------------------------------------- */
+
+@media (max-width: 768px) {
+    #sidebar {
+        margin-left: -250px;
+    }
+    #sidebar.active {
+        margin-left: 0;
+    }
+    #sidebarCollapse span {
+        display: none;
+    }
+}
+
+
+/* ---------------------------------------------------
+    INPUTS
+----------------------------------------------------- */
+.input-extra-small {
+    width: 90px;
+}
+
+.input-small {
+    width: 110px;
+}
+
+
+

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pauta_Aneel.css') }}">
+{% endblock %}
+
+{% block title %}
+<title>Processos Aneel</title>
+{% endblock %}
+
+
+{% block content %}
+
+<div id="corpoPagina" class="d-flex justify-content-center mt-5 ml-5 mr-5 mb-5" >
+  <div  class="pagina m-6 mt-5 ml-5 mr-5">
+    <div class="row" id="inputInicial">
+      <div class="col-12 mb-4 col-sm-2 input">
+        <input id="inputProcesso" type="text" class="form-control text-center" placeholder="Processo">
+      </div>
+      <div div class="col-12 mb-4 col-sm-2 input">
+        <input id="inputEfeito" type="text" class="form-control text-center" placeholder="Efeito">
+      </div>
+      <div div class="col-12 mb-4 col-sm-6 input">
+        <input id="inputAssunto" type="text" class="form-control text-center" placeholder="Assunto">
+      </div>
+      <br>
+      <div class="col-12 mb-4 col-sm-2">
+        <button class=" mt-3 mt-sm-0 btn btn-outline-secondary btn-block botaoAdicionar" type="button"
+          id="btn-Adicionar">Adicionar</button>
+      </div>
+      <div div class="col-12 mb-4 col-sm-2 input">
+        <input id="inputRelator" type="text" class="form-control text-center" placeholder="Relator">
+      </div>
+      <div div class="col-12 mb-4 col-sm-3 input">
+        <input id="inputSuperintendencia" type="text" class="form-control text-center" placeholder="Superintendência">
+      </div>
+      <br>
+      <div class="container-tabela col-12 justify-content-center">
+       
+        <div class="nav nav-tabs nav-fill" id="nav-tab" role="tablist">
+          <a class="nav-item nav-link col-1" id="nav-processos" data-toggle="tab" href="/middle/config-assuntos-Aneel" role="tab" aria-controls="nav-home" aria-selected="false" onclick=" relocate_assuntos()">Pesquisar por Assunto</a>
+          <a class="nav-item nav-link active col-1" id="nav-documentos" data-toggle="tab" href="/middle/config-processos-Aneel" role="tab" aria-controls="nav-profile" aria-selected="true">Pesquisar por Processo</a>
+        </div>
+        <table id= 'myTable' class="table table-bordered table-hover ">
+          <thead>
+            <tr>
+              <th scope="col " class = 'hidden d-none'>#</th>
+              <th scope="col">Processos</th>
+              <th scope="col">Efeito</th>
+              <th scope="col" class = 'assunto'>Assunto</th>
+              <th scope="col">Relator</th>
+              <th scope="col">Superintendência</th>
+              <th scope="col">Ultimo documento enviado</th>
+              <th scope="col">Remover da lista</th>
+            </tr>
+          </thead>
+          <tbody id="corpoTabela">
+          </tbody>
+        </table>
+        <br>
+        <button type="button" class="col-12 btn btn-secondary btn-lg btn-block botaoSalvar"
+              id="btn-Salvar">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<!-- Importe seus novos JS aq -->
+
+<script src="{{ url_for('static', filename='js/config_por_processoAneel.js') }}"></script>
+
+{% endblock %}

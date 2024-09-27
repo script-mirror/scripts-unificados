@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+    <!-- Importe aqui os css -->
+    <link href="{{ url_for('static', filename='css/menu_lateral_esquerdo.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block title %}
+	<title> Titulo da pagina </title>
+{% endblock %}
+
+
+{% block content %}
+<div id='enaDiariaBacia' class="wrapper">
+
+  <nav id="sidebar" class="bg-wx-original-claro active">
+
+      <div class="sidebar-header">
+          <h3>Menu</h3>
+      </div>
+
+      <div class="row ml-2 mr-2">
+          <div class="form-group col-sm">
+              <label for="data-rodada">Resultados CV</label>
+              <input class="form-control" type="date" id="data-rodada">
+          </div>
+      </div>
+
+      <div class="row justify-content-md-center">
+          <button type="button" id="" class="btn btn-light btn-atualizar">
+              <span>Atualizar</span>
+          </button>
+
+      </div>
+
+      <ul id="listaFiltros" class="list-unstyled components ml-2">
+
+          <div id='horariosRodadas'>
+              <li class='texto-centro'>Modelos (Prec)</li>
+          </div>
+
+          <li class='texto-centro'>Mapas</li>
+          <li v-for="(valor, filtro) in tagsMapas">
+               <div class="checkbox">
+                  <label><input type="checkbox" class="checkbox-filtros-pluvia mr-2" onchange='filtrarModelos(this)' v-bind:value="filtro" data-filtro-tipo='mapa' checked=true>[[filtro]] ([[valor]])</label>
+              </div>
+          </li>
+
+          <li class='texto-centro'>PDP</li>
+          <li v-for="(valor, filtro) in tagsPdp">
+               <div class="checkbox">
+                  <label><input type="checkbox" class="checkbox-filtros-pluvia mr-2" onchange='filtrarModelos(this)' v-bind:value="filtro" data-filtro-tipo='pdp' checked=true>[[filtro]] ([[valor]])</label>
+              </div>
+          </li>
+
+          <li class='texto-centro'>Rodada</li>
+          <li v-for="(valor, filtro) in tagsRodadas">
+               <div class="checkbox">
+                  <label><input type="checkbox" class="checkbox-filtros-pluvia mr-2" onchange='filtrarModelos(this)' v-bind:value="filtro" data-filtro-tipo='rodada' checked=true>[[filtro]] ([[valor]])</label>
+              </div>
+          </li>
+
+          <li class='texto-centro'>Preliminar</li>
+          <li v-for="(valor, filtro) in tagsPreliminar">
+               <div class="checkbox">
+                  <label><input type="checkbox" class="checkbox-filtros-pluvia mr-2" onchange='filtrarModelos(this)' v-bind:value="filtro" data-filtro-tipo='preliminar' checked=true>[[filtro]] ([[valor]])</label>
+              </div>
+          </li>
+
+          <hr>
+
+          <li class='texto-centro'>Início do historico</li>
+          <div class="row ml-2 mr-2">
+              <div class="form-group col-sm">
+                  <label for="data-inicio-historico"></label>
+                  <input class="form-control" type="date" id="data-inicio-historico">
+              </div>
+          </div>
+
+          <li>
+              <div class="row justify-content-md-center">
+                  <button type="button" id="" class="btn btn-light btn-atualizar">
+                      <span>Atualizar</span>
+                  </button>
+
+              </div>
+          </li>
+
+          <hr>
+
+          <div class="row justify-content-md-center">
+              <button type="button" class="btn btn-light" data-toggle="modal" data-target="#modalMapaAcumulados">
+                Mapa acumulados
+              </button>
+          </div>
+
+
+      </ul>
+
+  </nav>
+
+  <div id="content">
+
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+          <div class="container-fluid">
+
+              <button type="button" id="sidebarCollapse" class="btn bg-wx-original-claro">
+                  <i class="fas fa-align-left"></i>
+                  <span>Menu</span>
+              </button>
+
+              <button type="button" class="btn bg-wx-original-claro" id='btn_comutarLegenda'>ON/Off Legenda</button>
+
+          </div>
+      </nav>
+
+      <div class="jumbotron jumbotron-fluid">
+        <div class="container">
+          <h3>Previsão de ENA diária subdividida por bacias</h3>
+          <p class="lead">Os resultados são compostos apenas por SMAP WX.</p>
+        </div>
+      </div>
+
+      <div class="text-center" id='graphs_bacia_smap'>
+      </div>
+
+      <!-- Botao para oo topo da pagina -->
+      <a id="back-to-top" href="#" class="btn bg-wx-original-medio btn-lg back-to-top" role="button" title="Click aqui para retornar no topo da pagina" data-toggle="tooltip" data-placement="left"><span class="material-icons">keyboard_arrow_up</span></a>
+
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+<script>
+
+    // Configuracoes para abortar todas as requisiçoes quando o usuario pedir para atualizar
+    $.xhrPool = [];
+    $.xhrPool.abortAll = function() {
+        $(this).each(function(idx, jqXHR) {
+            jqXHR.abort();
+        });
+        $(this).each(function(idx, jqXHR) {
+            var index = $.inArray(jqXHR, $.xhrPool);
+            if (index > -1) {
+                $.xhrPool.splice(index, 1);
+            }
+        });
+    };
+
+    $.ajaxSetup({
+        beforeSend: function(jqXHR) {
+            $.xhrPool.push(jqXHR);
+        },
+        complete: function(jqXHR) {
+            var index = $.inArray(jqXHR, $.xhrPool);
+            if (index > -1) {
+                $.xhrPool.splice(index, 1);
+            }
+        }
+    });
+
+
+    parametros = window.location.search;
+    urlParams = new URLSearchParams(parametros);
+
+    dtSemana= moment()
+
+    if(urlParams.get('data') != null){
+        dtSemana = moment(urlParams.get('data'), "DD-MM-YYYY")
+    }
+
+    str_dtSemana= dtSemana.format("YYYY-MM-DD")
+    document.getElementById("data-rodada").value = str_dtSemana
+
+
+    // Acoes que serão executadas apos o carregamento da pagina completo da pagina
+    $(document).ready(function() {
+      iniciar_listeners();
+    } );
+        
+  // Crie suas funções aqui
+
+  function iniciar_listeners(){
+    // Iniciar listeners
+    $('#sidebarCollapse').on('click', function () {
+        $('#sidebar').toggleClass('active');
+    });
+    $('#btn-atualizar-data').on('click',atualizarTabela);
+  }
+
+  function get_rodada_ec(data){
+    $.ajax({
+        url: "/API/database/get/rodadasDiaSmap",
+        type : 'get',
+        data: {'data': data},
+        success: function(resposta){
+
+        }
+    })
+    .done(function(resposta){
+        console.log(resposta)
+    })
+  }
+
+</script>
+
+<!-- Importe seus novos JS aq -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+<script src="{{ url_for('static', filename='js/calculoDatasEletricas.js') }}"></script>
+
+{% endblock %}
