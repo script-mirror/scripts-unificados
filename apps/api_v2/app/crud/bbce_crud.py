@@ -11,7 +11,6 @@ from app.schemas import ProdutoInteresseSchema, CategoriaNegociacaoEnum
 
 path.insert(2,"/WX2TB/Documentos/fontes/PMO/scripts_unificados")
 from bibliotecas.wx_dbClass import db_mysql_master
-from bibliotecas.wx_emailSender import WxEmail
 
 __DB__ = db_mysql_master('bbce')
 
@@ -20,6 +19,7 @@ class Produto:
     
     @staticmethod
     def get_ids_produtos_by_str_produtos(str_produtos:List[str]):
+        __DB__.connect()
         query = db.select(
             Produto.tb.c["id_produto"],
             Produto.tb.c["str_produto"]
@@ -35,6 +35,7 @@ class ProdutoInteresse:
     
     @staticmethod
     def get_all():
+        __DB__.connect()
         select = db.select(
             ProdutoInteresse.tb.c['id_produto'],
             ProdutoInteresse.tb.c['ordem'],
@@ -48,6 +49,7 @@ class ProdutoInteresse:
     
     @staticmethod
     def post(produtos_interesse: List[ProdutoInteresseSchema]):
+        __DB__.connect()
         records:List[dict] = [obj.model_dump() for obj in produtos_interesse]
         df_produtos_ordem = pd.DataFrame(records)
         df_produtos_interesse = pd.DataFrame(Produto.get_ids_produtos_by_str_produtos([prod["str_produto"] for prod in records]))
@@ -64,6 +66,7 @@ class Negociacoes:
     
     @staticmethod
     def get_datahora_ultima_negociacao(categoria_negociacao:Optional[CategoriaNegociacaoEnum] = None):
+        __DB__.connect()
         query = db.select(
           db.func.max(
             Negociacoes.tb.c['dt_criacao']
@@ -89,6 +92,7 @@ class NegociacoesResumo:
     tb:db.Table = __DB__.getSchema('tb_negociacoes_resumo')
     @staticmethod
     def get_negociacao_bbce(produto:str, categoria_negociacao:Optional[CategoriaNegociacaoEnum]):
+        __DB__.connect()
         query = db.select(
             NegociacoesResumo.tb.c['data'],
             NegociacoesResumo.tb.c['preco_abertura'],
@@ -121,6 +125,7 @@ class NegociacoesResumo:
 
     @staticmethod
     def spread_preco_medio_negociacoes(produto1:str, produto2:str, categoria_negociacao:Optional[CategoriaNegociacaoEnum]):
+        __DB__.connect()
         resposta1 = NegociacoesResumo.get_negociacao_bbce(produto1, categoria_negociacao)
         resposta2 = NegociacoesResumo.get_negociacao_bbce(produto2, categoria_negociacao)
 
@@ -156,6 +161,7 @@ class NegociacoesResumo:
 
     @staticmethod
     def get_negociacoes_fechamento_interesse_por_data(data:datetime.date, categoria_negociacao:Optional[CategoriaNegociacaoEnum] = None):
+        __DB__.connect()
         df_produtos_interesse = pd.DataFrame(ProdutoInteresse.get_all())[["str_produto", "id"]]
         df_produtos_interesse = df_produtos_interesse.rename(columns={'str_produto':'produto'}) 
                 
@@ -213,6 +219,7 @@ class NegociacoesResumo:
 
     @staticmethod
     def get_negociacoes_interesse_por_data(data:datetime.date, categoria_negociacao:Optional[CategoriaNegociacaoEnum] = None):
+        __DB__.connect()
         df_produtos_interesse = pd.DataFrame(ProdutoInteresse.get_all())
         df_produtos_interesse = df_produtos_interesse.rename(columns={'str_produto':'produto'})
         
@@ -269,6 +276,7 @@ class NegociacoesResumo:
 
     @staticmethod
     def get_html_table_negociacoes_bbce(data:datetime.date, categoria_negociacao:Optional[CategoriaNegociacaoEnum] = None):
+        __DB__.connect()
         style = '''
 <style>
 .verde {
@@ -386,6 +394,7 @@ class CategoriaNegociacao:
     tb:db.Table = __DB__.getSchema('tb_categoria_negociacao')
     @staticmethod
     def get_all():
+        __DB__.connect()
         query = db.select(
             CategoriaNegociacao.tb.c['id'],
             CategoriaNegociacao.tb.c['nome']
