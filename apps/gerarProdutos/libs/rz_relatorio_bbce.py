@@ -5,15 +5,20 @@ import pdb
 import locale 
 import datetime
 import pandas as pd
+import requests as r
 import sqlalchemy as db
 import mplfinance as fplt
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
+__HOST_SERVER = os.getenv('HOST_SERVIDOR') 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.bibliotecas import wx_dbClass
 
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+
 def save():
     fplt.screenshot(open('screenshot.png', 'wb'))
-    
 
 def plot_using_finplot(dados_plot, titulo, path_arquivo_saida):
 
@@ -35,13 +40,9 @@ def plot_using_finplot(dados_plot, titulo, path_arquivo_saida):
     fplt.show(True)
     
     # time.sleep(2)
-    pdb.set_trace()
     
     # shutil.move('screenshot.png', path_arquivo_saida)
     print(path_arquivo_saida)
-
-
-
 
 def plot_using_mplfinance(dados_plot, titulo, path_arquivo_saida):
         
@@ -63,8 +64,7 @@ def plot_using_mplfinance(dados_plot, titulo, path_arquivo_saida):
     
     print(path_arquivo_saida)
         
-
-def gerar_grafico(produtosOrdenados, df_negociacoes, produtosBbce):
+def gerar_grafico(produtosOrdenados, df_negociacoes, produtos_bbce):
 	numero_dias_historico = 31*4
 	hoje = datetime.datetime.now()
 	dt_inicio_grafico = hoje - datetime.timedelta(days=numero_dias_historico)
@@ -90,53 +90,58 @@ def gerar_grafico(produtosOrdenados, df_negociacoes, produtosBbce):
 		# https://coderzcolumn.com/tutorials/data-science/candlestick-chart-in-python-mplfinance-plotly-bokeh
 		
 		path_saida = os.path.abspath(r'/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/gerarProdutos/arquivos/tmp')
-		nome_imagem = ('{}.png'.format(produtosBbce[prod])).replace('/', '')
+		nome_imagem = ('{}.png'.format(produtos_bbce[prod])).replace('/', '')
 		
 		path_arquivo_saida = os.path.join(path_saida, nome_imagem)
 		
-		# plot_using_finplot(dados_plot=dados_plot, titulo=produtosBbce[prod], path_arquivo_saida=path_arquivo_saida)
-		plot_using_mplfinance(dados_plot=dados_plot, titulo=produtosBbce[prod], path_arquivo_saida=path_arquivo_saida)
+		# plot_using_finplot(dados_plot=dados_plot, titulo=produtos_bbce[prod], path_arquivo_saida=path_arquivo_saida)
+		plot_using_mplfinance(dados_plot=dados_plot, titulo=produtos_bbce[prod], path_arquivo_saida=path_arquivo_saida)
   
 		path_plots.append(path_arquivo_saida)
   
 	return path_plots
-
-
-def get_tabela_bbce(data, produtosInteressesBbce):
-
-	locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-
+def get_tabela_bbce(data:datetime.datetime):
 	database = wx_dbClass.db_mysql_master('bbce')
 
-	database.connect()
 	tb_produtos = database.getSchema('tb_produtos')
 	tb_negociacoes = database.getSchema('tb_negociacoes')
+	produtos_bbce = tuple(pd.DataFrame(	r.get(f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse").json())["str_produto"].to_list())
 	
-	produtosBbce = ''
-	for prod in produtosInteressesBbce:
-		produtosBbce += '\'{}\', '.format(prod)
-	produtosBbce = produtosBbce[:-2]
+	query_prod = db.select(
+		tb_produtos.c["id_produto"],
+  		tb_produtos.c["str_produto"]
+	).where(
+      	tb_produtos.c['str_produto'].in_(produtos_bbce)
+    )
+	answer = database.db_execute(query_prod).fetchall()
 
-	produtosBbce = eval(produtosBbce)
-
-	try:
-		query_prod = db.select([tb_produtos.c.id_produto,tb_produtos.c.str_produto]).where(tb_produtos.c['str_produto'].in_(produtosBbce))
-		answer = database.conn.execute(query_prod).fetchall()
-	except:
-		print('nao encontrado')
-
-
-	produtosBbce = {}
+ 
+	produtos_bbce = {}
 	for prod in answer: 
-		produtosBbce[prod[0]] = prod[1]
+		produtos_bbce[prod[0]] = prod[1]
 
-	produtosId = ''
-	for prod in produtosBbce: 
-		produtosId += '{}, '.format(prod)
-	produtosId = produtosId[:-2]
+	produtos_id = ''
+	for prod in produtos_bbce: 
+		produtos_id += '{}, '.format(prod)
+	produtos_id = produtos_id[:-2]
+ 
 	try:
-		query_master = db.select([tb_negociacoes,tb_produtos]).join(tb_negociacoes, tb_negociacoes.c.id_produto == tb_produtos.c.id_produto).where(tb_produtos.c.id_produto.in_(eval(produtosId)))
-		answer = database.conn.execute(query_master).fetchall()
+		query_master = db.select(
+			tb_negociacoes.c["id_negociacao"],
+			tb_negociacoes.c["id_produto"],
+			tb_negociacoes.c["vl_quantidade"],
+			tb_negociacoes.c["vl_preco"],
+			tb_negociacoes.c["dt_criacao"],
+    		tb_produtos.c["id_produto"],
+    		tb_produtos.c["str_produto"],
+    		tb_produtos.c["dt_cria"],
+      
+		).join(
+      	tb_negociacoes, tb_negociacoes.c["id_produto"] == tb_produtos.c["id_produto"]
+       	).where(
+            tb_produtos.c["id_produto"].in_(eval(produtos_id))
+            )
+		answer = database.db_execute(query_master)
 	except:
 		print('nao encontrado')
 
@@ -159,7 +164,6 @@ def get_tabela_bbce(data, produtosInteressesBbce):
 		except: 
 			print(f"Erro no produto: {prod_str}")
 			quit()
-
 	df = pd.DataFrame(list_complete, columns=['id','id_produto','quantidade_media','preco','data_alteracao','id_prod','produto','dt_cria','days','unidade_valor'])
 	df['days'] = df['days'].dt.days.astype('int')*24
 	df['quantidade'] = df['days']  * df['quantidade_media']
@@ -171,9 +175,8 @@ def get_tabela_bbce(data, produtosInteressesBbce):
 	ordemPeriodo = {'MEN':1, 'TRI':2, 'SEM':3, 'ANU':4}
 	ordemSubmercados = {'SE':1, 'SU':2, 'NE':3, 'NO':4}
 	produtosOrdenados = {}
-
 	
-	for prod in produtosBbce.items():
+	for prod in produtos_bbce.items():
 		try:
 			regex = "^(.{1,2}) (.{1,3}) (.{3}) (.{1,13}) - (.{1,})(.*)"
 			infosProduto = re.split(regex, prod[1])
@@ -183,8 +186,6 @@ def get_tabela_bbce(data, produtosInteressesBbce):
 			infosProduto = re.split(regex, prod[1])
 			periodoFornecimento = infosProduto[3].strip()
 		
-		
-
 		submercado = infosProduto[1].strip()
 		tipo = infosProduto[2].strip()
 		inicio = infosProduto[4].strip().split()[0]
@@ -211,106 +212,10 @@ def get_tabela_bbce(data, produtosInteressesBbce):
   
 	path_graficos = []
 	if data.weekday() == 4:
-		path_graficos = gerar_grafico(produtosOrdenados, df_negociacoes, produtosBbce)
+		path_graficos = gerar_grafico(produtosOrdenados, df_negociacoes, produtos_bbce)
+	html = r.get(f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse/html?data={data.strftime('%Y-%m-%d')}").json()["html"]
+	return html, path_graficos
 
-	body = []
-	
-	for prod in sorted(produtosOrdenados):
-		prod = produtosOrdenados[prod]
-		df_negociacoesProduto = df_negociacoes[df_negociacoes['id_produto'] == prod]
-		row = [produtosBbce[prod]]
-
-		precoMedio_f ='-'
-		quantidadeMedia_f = '-'
-		precoAbertura_f = '-'
-		precoFechamento_f = '-'
-		precoMaximo_f = '-'
-		precoMinimo_f = '-'
-		precoFechamentoAnterior_f = '-'
-
-
-		if len(df_negociacoesProduto) > 0:
-
-			try:
-				ultimoDiaNegociacao = max(df_negociacoesProduto[:(data-datetime.timedelta(days=1)).strftime('%Y-%m-%d')].index)
-				negociacoesDiaAnterior = df_negociacoesProduto.sort_index().loc[ultimoDiaNegociacao.strftime('%Y-%m-%d'):ultimoDiaNegociacao.strftime('%Y-%m-%d'),:]
-				if negociacoesDiaAnterior.shape[0] > 0:
-
-					ultimaNegociacaoDiaAnterior = negociacoesDiaAnterior.loc[max(negociacoesDiaAnterior.index)]
-					
-					if type(ultimaNegociacaoDiaAnterior) == type(pd.DataFrame()) and len(ultimaNegociacaoDiaAnterior)>0:
-						precoFechamentoAnterior = ultimaNegociacaoDiaAnterior.iloc[-1]['preco']
-					
-					elif type(ultimaNegociacaoDiaAnterior) == type(pd.Series([],dtype=pd.StringDtype())):
-						precoFechamentoAnterior = ultimaNegociacaoDiaAnterior['preco']
-
-					precoFechamentoAnterior_f = ''
-					# if (data.date()-ultimoDiaNegociacao.date()).days > 1:
-					cor = 'black'
-					precoFechamentoAnterior_f = '<small style="color:{}">({})</small><br>'.format(cor, ultimoDiaNegociacao.strftime('%d/%m/%y'))
-					precoFechamentoAnterior_f = '{}R$ {:.2f}'.format(precoFechamentoAnterior_f, precoFechamentoAnterior)
-			except:
-				pass
-
-			negociacoesDia = df_negociacoesProduto.sort_index().loc[data.strftime('%Y-%m-%d'):(data+datetime.timedelta(hours=23, seconds=59)).strftime('%Y-%m-%d'),:]
-
-			if len(negociacoesDia) > 0:
-
-				precoMedio = ((negociacoesDia['preco']*negociacoesDia['quantidade_media'])/negociacoesDia['quantidade_media'].sum()).sum()
-				precoMedio_f = 'R$ {:.2f}'.format(precoMedio)
-
-				quantidadeMedia = negociacoesDia['quantidade_media'].sum()
-				quantidadeMedia_f = '{:.2f}'.format(quantidadeMedia)
-
-				precoMaximo = negociacoesDia['preco'].max()
-				precoMaximo_f = 'R$ {:.2f}'.format(precoMaximo)
-
-				precoMinimo = negociacoesDia['preco'].min()
-				precoMinimo_f = 'R$ {:.2f}'.format(precoMinimo)
-				
-				primeirraNegociacao = negociacoesDia.loc[min(negociacoesDia.index)]
-				if type(primeirraNegociacao) == type(pd.DataFrame()):
-					precoAbertura = primeirraNegociacao.iloc[0]['preco']
-				else:
-					precoAbertura = primeirraNegociacao['preco']
-				precoAbertura_f = 'R$ {:.2f}'.format(precoAbertura)
-				if precoFechamentoAnterior_f != '-':
-					percent = ((precoAbertura/precoFechamentoAnterior)-1)*100
-					cor = 'blue'
-					if percent < 0:
-						cor = 'red'
-					precoAbertura_f = '<span style="color:{}"> {:.1f}% </span><br>{}'.format(cor, percent, precoAbertura_f)
-
-				ultimaNegociacao = negociacoesDia.loc[max(negociacoesDia.index)]
-				if type(ultimaNegociacao) == type(pd.DataFrame()):
-					precoFechamento = ultimaNegociacao.iloc[-1]['preco']
-				else:
-					precoFechamento =ultimaNegociacao['preco']
-				precoFechamento_f = 'R$ {:.2f}'.format(precoFechamento)
-				if precoFechamentoAnterior_f != '-':
-					percent = ((precoFechamento/precoFechamentoAnterior)-1)*100
-					cor = 'blue'
-					if percent < 0:
-						cor = 'red'
-					precoFechamento_f = '<span style="color:{}"> {:.1f}% </span><br>{}'.format(cor, percent, precoFechamento_f)
-
-			row.append( precoMedio_f.replace('.', ',') )
-			row.append( quantidadeMedia_f.replace('.', ',') )
-			row.append( precoFechamentoAnterior_f.replace('.', ',') )
-			row.append( precoAbertura_f.replace('.', ',') )
-			row.append( precoFechamento_f.replace('.', ',') )
-			row.append( precoMaximo_f.replace('.', ',') )
-			row.append( precoMinimo_f.replace('.', ',') )
-
-		else:
-			row = [produtosBbce[prod], '-', '-', '-', '-', '-', '-', '-']
-
-		body.append(row)
-	
-	return body, path_graficos
-
-def get_tabela_teste_bbce(data, produtosInteressesBbce):
-	pass
 if __name__ == '__main__':
-    teste = get_tabela_bbce(datetime.datetime.now(), ['SE CON MEN JUL/24 - Preço Fixo', 'SE CON MEN AGO/24 - Preço Fixo', 'SE CON MEN SET/24 - Preço Fixo', 'SE CON MEN OUT/24 - Preço Fixo', 'SE CON MEN NOV/24 - Preço Fixo', 'SE CON MEN DEZ/24 - Preço Fixo', 'SE CON TRI JUL/24 SET/24 - Preço Fixo', 'SE CON TRI OUT/24 DEZ/24 - Preço Fixo', 'SE CON TRI JAN/25 MAR/25 - Preço Fixo', 'SE CON TRI ABR/25 JUN/25 - Preço Fixo', 'SE CON SEM JAN/25 JUN/25 - Preço Fixo', 'SE CON SEM JUL/25 DEZ/25 - Preço Fixo', 'SE CON SEM JAN/26 JUN/26 - Preço Fixo', 'SE CON SEM JUL/26 DEZ/26 - Preço Fixo', 'SE CON ANU JAN/25 DEZ/25 - Preço Fixo', 'SE CON ANU JAN/26 DEZ/26 - Preço Fixo', 'SE CON ANU JAN/27 DEZ/27 - Preço Fixo', 'SE CON ANU JAN/28 DEZ/28 - Preço Fixo', 'SE CON ANU JAN/29 DEZ/29 - Preço Fixo', 'SE CON ANU JAN/30 DEZ/30 - Preço Fixo'])
+    teste = get_tabela_bbce(datetime.datetime.now())
     pass

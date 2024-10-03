@@ -32,7 +32,8 @@ headers = {
 __db_bbce = wx_dbClass.db_mysql_master('bbce')
 tb_produtos = __db_bbce.getSchema('tb_produtos')
 tb_negociacoes = __db_bbce.getSchema('tb_negociacoes')
-def inserir(
+
+def inserir_resumo(
         db: wx_dbClass.db_mysql_master,
         tabela:str,
         df: pd.DataFrame
@@ -46,7 +47,6 @@ def inserir(
     result = db.db_execute(insert)
     print(f'{result.rowcount} linha(s) inserida(s)')
     return None
-
 
 def get_auth_token():
     json_data = {
@@ -120,9 +120,10 @@ def inserir_negociacoes(negociacoes:pd.DataFrame):
     if negociacoes.empty:
         return None
     negociacoes = negociacoes[negociacoes['status']=='Ativo']
-    
     # Match = mesa; Registro = Boleta Eletronica
-    negociacoes = negociacoes[negociacoes['originOperationType']=='Match']
+    negociacoes["originOperationType"] = negociacoes["originOperationType"].replace("Registro", "Boleta Eletronica").replace("Match", "Mesa")
+    
+
     negociacoes = negociacoes.reset_index()
     negociacoes['createdAt'] = pd.to_datetime(negociacoes['createdAt']).apply(lambda x: datetime.datetime.strftime(x,'%Y-%m-%d %H:%M:%S'))
 
@@ -156,19 +157,23 @@ def inserir_negociacoes(negociacoes:pd.DataFrame):
 
     print('INSERINDO NEGOCIACOES!')
     ids_df = negociacoes['id'].values
-
     sql_delete_negociacoes = tb_negociacoes.delete().where(tb_negociacoes.c.id_negociacao.in_(ids_df))
     num_negociacoes_deletadas = __db_bbce.db_execute(sql_delete_negociacoes).rowcount
     print(f'{num_negociacoes_deletadas} Negociaçoes deletadas')
 
-    values_list = list(negociacoes[['id','productId','quantity','unitPrice','createdAt']].values.tolist())
-    sql_insert_negociacoes = tb_negociacoes.insert().values(values_list)
+
+    negociacoes = negociacoes[['id','productId','quantity','unitPrice','createdAt', 'originOperationType']].rename(columns={"id":"id_negociacao", "productId":"id_produto", "quantity":"vl_quantidade", "unitPrice":"vl_preco", "createdAt":"dt_criacao", "originOperationType":"categoria"})
+    
+    df_categorias = get_categorias().rename(columns={"id":"id_categoria_negociacao"})
+    negociacoes = negociacoes.merge(df_categorias)
+    negociacoes = negociacoes[["id_negociacao", "id_produto", "vl_quantidade", "vl_preco", "dt_criacao", "id_categoria_negociacao"]]
+    sql_insert_negociacoes = tb_negociacoes.insert().values(negociacoes.to_dict("records"))
     num_negociacoes_inseridas = __db_bbce.db_execute(sql_insert_negociacoes).rowcount
     print(f'{num_negociacoes_inseridas} Negociaçoes inseridas')
-    return values_list
+    return negociacoes.to_dict("records")
         
 def resumo_negociacoes(negociacoes):
-    df_negociacoes = pd.DataFrame(negociacoes, columns=['id_negociacao', 'id_produto', 'vl_quantidade', 'vl_preco','dt_criacao'])
+    df_negociacoes = pd.DataFrame(negociacoes)
     df_negociacoes.drop(columns=['id_negociacao'])
     df_negociacoes['dt_criacao'] = pd.to_datetime(df_negociacoes['dt_criacao'])
   
@@ -176,13 +181,13 @@ def resumo_negociacoes(negociacoes):
     df_negociacoes['hora_fechamento'] = df_negociacoes['dt_criacao']
 
     df_negociacoes['preco_total'] = df_negociacoes['vl_preco'] * df_negociacoes['vl_quantidade']
-    df_preco_medio = df_negociacoes.groupby(['id_produto','data']).agg({'preco_total':'sum', 'vl_quantidade':'sum'})
+    df_preco_medio = df_negociacoes.groupby(['id_produto','data', 'id_categoria_negociacao']).agg({'preco_total':'sum', 'vl_quantidade':'sum'})
     df_preco_medio['preco_medio'] = df_preco_medio['preco_total'] / df_preco_medio['vl_quantidade']
-    grouped = df_negociacoes.groupby(['id_produto', 'data'])
+    grouped = df_negociacoes.groupby(['id_produto', 'data', 'id_categoria_negociacao'])
 
     ohlc = grouped['vl_preco'].agg(['first', 'max', 'min', 'last']).rename(
         columns={'first': 'preco_fechamento', 'max': 'preco_maximo', 'min': 'preco_minimo', 'last': 'preco_abertura'}
-    )    
+    )
   
     df_result = pd.concat([ohlc,
                            grouped['vl_quantidade'].sum().rename('volume'),
@@ -195,7 +200,7 @@ def resumo_negociacoes(negociacoes):
     
     return df_result
 
-def deletar(
+def deletar_resumo(
         db: wx_dbClass.db_mysql_master,
         tabela:str,
         df: pd.DataFrame
@@ -207,6 +212,17 @@ def deletar(
     result = db.db_execute(delete)
     print(f'{result.rowcount} linha(s) deletada(s)')
     return None
+
+def get_categorias() -> pd.DataFrame:
+    db = wx_dbClass.db_mysql_master('bbce')
+    table_id = db.getSchema("tb_categoria_negociacao")
+    select_fks = sa.select(
+        table_id.c['id'],
+        table_id.c['nome']
+        )
+    result_fk = db.db_execute(select_fks)
+    return pd.DataFrame(result_fk, columns=['id', 'categoria'])
+   
     
 def importar_operacoes_bbce(data:datetime.datetime = datetime.datetime.now()):
     data = data.strftime('%Y-%m-%d')
@@ -217,11 +233,11 @@ def importar_operacoes_bbce(data:datetime.datetime = datetime.datetime.now()):
         print(f'Nenhuma negociacao na {data}')
     else:
         df_resumo_negociacoes = resumo_negociacoes(negociacoes)
-        deletar(__db_bbce, 'tb_negociacoes_resumo', df_resumo_negociacoes)
-        inserir(__db_bbce, 'tb_negociacoes_resumo', df_resumo_negociacoes)
+        deletar_resumo(__db_bbce, 'tb_negociacoes_resumo', df_resumo_negociacoes)
+        inserir_resumo(__db_bbce, 'tb_negociacoes_resumo', df_resumo_negociacoes)
 
 def main():
-    importar_operacoes_bbce(datetime.datetime.now())
+    importar_operacoes_bbce(datetime.datetime(2024, 9, 26))
     return None
 
 if __name__ == '__main__':

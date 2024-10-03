@@ -1,7 +1,7 @@
 function fetchApi(url, params){
     params = new URLSearchParams(params)
     return $.ajax({
-        url: `/middle/API/get/${url}?${params}`,
+        url: `/api/v2/${url}?${params}`,
         type: 'GET',
         dataType: 'json',
         success: function (data) {
@@ -19,6 +19,9 @@ function exibirResumo(dados){
     tbody.empty();
 
     for(let i = 0; i < dados.length; i++){
+        for(key in dados[i]){
+            dados[i][key] = dados[i][key] == null ? "-" : dados[i][key]
+        }
         let row = $('<tr>');
         let classeTipo = dados[i]['produto'].includes('MEN') ? 'table-success' : dados[i]['produto'].includes('TRI') ? 'table-warning' : dados[i]['produto'].includes('SEM') ? 'table-danger' : 'table-primary';
         let classeVariacao = isNaN(Number(dados[i]['change_percent'])) ? '' : dados[i]['change_percent'] > 0 ? 'verde' : 'vermelho';
@@ -47,8 +50,8 @@ function exibirResumo(dados){
 async function atualizarDados(){
     const searchParams = new URL(document.URL);
     const datas = searchParams.searchParams.get('datas') == null ? moment().format('yyyy-MM-DD') : searchParams.searchParams.get('datas');
-    let dados = await fetchApi('bbce/resumos-negociacoes/negociacoes-de-interesse', {'datas':datas});
-    let ultimoUpdate = await fetchApi('bbce/resumos-negociacoes/negociacoes-de-interesse/ultima-atualizacao')
+    let dados = await fetchApi('bbce/resumos-negociacoes/negociacoes-de-interesse', {'datas':datas, 'categoria_negociacao':'Mesa'});
+    let ultimoUpdate = await fetchApi('bbce/resumos-negociacoes/negociacoes-de-interesse/ultima-atualizacao', {'categoria_negociacao':'Mesa'})
     $('#momento-atualizacao').text(moment(ultimoUpdate['ultimo_update']).format('DD/MM/yyyy HH:mm:ss'));
     exibirResumo(dados);
 }
@@ -63,7 +66,7 @@ function formatFloat(x){
 }
 
 function financial(x) {
-    return Number.parseFloat(x) < 0 ? `-R$${formatFloat(x)}` : `R$${formatFloat(x)}`;
+    return Number.parseFloat(x) < 0 ? `-R$${formatFloat(Math.abs(x))}` : `R$${formatFloat(x)}`;
   }
 function percent(x){
     return formatFloat(x)+'%';

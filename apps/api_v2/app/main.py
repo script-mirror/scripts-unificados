@@ -4,7 +4,7 @@ import os
 path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2")
 
 from fastapi import FastAPI, Depends
-from app.routers import rodadas_controller, testes_controller, ons_controller
+from app.routers import rodadas_controller, testes_controller, ons_controller, bbce_controller
 from app.utils.cache import cache
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
@@ -40,6 +40,7 @@ app.add_middleware(
 
 app.include_router(rodadas_controller.router, prefix="/api/v2")
 app.include_router(ons_controller.router, prefix="/api/v2")
+app.include_router(bbce_controller.router, prefix="/api/v2")
 # app.include_router(testes_controller.router, prefix='/api')
 
 @app.on_event("shutdown")

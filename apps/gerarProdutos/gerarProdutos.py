@@ -30,6 +30,10 @@ from pandas.plotting import register_matplotlib_converters
 from matplotlib import gridspec
 register_matplotlib_converters()
 
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+__HOST_SERVER = os.getenv('HOST_SERVIDOR') 
+
 try:
 	locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 except:
@@ -244,79 +248,64 @@ def is_first_bussines_day(data:datetime.date):
     return (data.day == 1 and (data.weekday() != 5 and data.weekday() != 6)) or ((data.day == 2 or data.day == 3) and data.weekday() == 0)
 
 
-def geraRelatorioBbce(data:datetime.datetime):
-	
-	corpoEmail = '<h3>Relatório das negociações referentes ao dia {}</h3>'.format(data.strftime('%d/%m/%Y'))
-
-	database = wx_dbClass.db_mysql_master('db_config')
-	database.connect()
-	tb_produtos_bbce = database.getSchema('tb_produtos_bbce')
-	# verificacao se a variavel data é o primeiro dia util do mes
-	if is_first_bussines_day(data):
-		quantidade_produtos = {}
-		quantidade_produtos['mensal'] = 6
-		quantidade_produtos['trimestral'] = 4
-		quantidade_produtos['semestral'] = 4
-		quantidade_produtos['anual'] = 4
-		lista_produtos = []
-		for graniularidade in quantidade_produtos:
-			for i_produtos in range(quantidade_produtos[graniularidade]):
-				if graniularidade == 'mensal':
-					dt_referente = data + relativedelta.relativedelta(months=i_produtos)
-					produto = f"SE CON MEN {dt_referente.strftime('%B').upper()[:3]}/{dt_referente.strftime('%y')} - Preço Fixo"
-
-				elif graniularidade == 'trimestral':
-					dt_inicial = data
-					while dt_inicial.month%3 != 0:
-						dt_inicial = dt_inicial + relativedelta.relativedelta(months=1)
-					dt_inicial = dt_inicial + relativedelta.relativedelta(months=1+i_produtos*3)
-					dt_final = dt_inicial + relativedelta.relativedelta(months=2)
-					produto = f"SE CON TRI {dt_inicial.strftime('%B').upper()[:3]}/{dt_inicial.strftime('%y')} {dt_final.strftime('%B').upper()[:3]}/{dt_final.strftime('%y')} - Preço Fixo"
-				elif graniularidade == 'semestral':
-					dt_inicial = data
-					while dt_inicial.month%6 != 0:
-						dt_inicial = dt_inicial + relativedelta.relativedelta(months=1)
-					dt_inicial = dt_inicial + relativedelta.relativedelta(months=1+i_produtos*6)
-					dt_final = dt_inicial + relativedelta.relativedelta(months=5)
-					produto = f"SE CON SEM {dt_inicial.strftime('%B').upper()[:3]}/{dt_inicial.strftime('%y')} {dt_final.strftime('%B').upper()[:3]}/{dt_final.strftime('%y')} - Preço Fixo"
-				elif graniularidade == 'anual':
-					dt_inicial = data
-					while dt_inicial.month%12 != 0:
-						dt_inicial = dt_inicial + relativedelta.relativedelta(months=1)
-					dt_inicial = dt_inicial + relativedelta.relativedelta(months=1+i_produtos*12)
-					dt_final = dt_inicial + relativedelta.relativedelta(months=11)
-					produto = f"SE CON ANU {dt_inicial.strftime('%B').upper()[:3]}/{dt_inicial.strftime('%y')} {dt_final.strftime('%B').upper()[:3]}/{dt_final.strftime('%y')} - Preço Fixo"
-
-				lista_produtos.append(produto)
+def geraRelatorioBbce(data = datetime.datetime.now()):
     
-		delete_produtosBBCE = tb_produtos_bbce.delete()
-		resultadoDelete = database.conn.execute(delete_produtosBBCE)
-		num_produtosBBCE_deletados = resultadoDelete.rowcount
-		print(f'Foi deletado ao total de {num_produtosBBCE_deletados} produtos de interesse da BBCE.')
+    corpoEmail = '<h3>Relatório das negociações referentes ao dia {}</h3>'.format(data.strftime('%d/%m/%Y'))
 
-		dados_a_inserir = [{'str_produto': produto} for produto in lista_produtos]
-		sql_produtosbbce_inseridos = tb_produtos_bbce.insert().values(dados_a_inserir)
-		resultado = database.conn.execute(sql_produtosbbce_inseridos)
-		num_produtosBBCE_inseridos = resultado.rowcount
-		print(f'Foi inserido ao total de {num_produtosBBCE_inseridos} linhas com os novos produtos.')
-  
-		query_select = db.select([tb_produtos_bbce.c.str_produto])
-		produtosInteressesBbce = database.conn.execute(query_select).fetchall()
-		produtosInteressesBbce = [(''.join(map(str, idx))) for idx in produtosInteressesBbce]
-  
-	else:
-		query_select = db.select([tb_produtos_bbce.c.str_produto])
-		produtosInteressesBbce = database.conn.execute(query_select).fetchall()
-		produtosInteressesBbce = [(''.join(map(str, idx))) for idx in produtosInteressesBbce]
-  
-	body, path_graficos = rz_relatorio_bbce.get_tabela_bbce(data, produtosInteressesBbce)
-	header = [data.strftime('%d/%m/%Y'), 'Preço médio', 'Volume (MWm)', 'Fechamento<br>(Anterior)', 'Abertura', 'Fechamento', 'Máximo', 'Mínimo']
-	corpoEmail += wx_emailSender.gerarTabela(body, header, [115,61,80,61,61,61,61,61])
-	
 
-	corpoEmail += '<br>Obs: Os valores percentuais são referentes a variação do preço de abertura/fechamento do dia atual com o fechamento do ultimo dia negociado'
-	corpoEmail += '<br><a href="http://35.173.154.94:8090/config-produtos-bbce">Click aqui para atualizar os produtos</a>'
-	return corpoEmail, path_graficos
+    if is_first_bussines_day(data.date()):
+        
+        quantidade_produtos = {}
+        quantidade_produtos['mensal'] = 6
+        quantidade_produtos['trimestral'] = 4
+        quantidade_produtos['semestral'] = 4
+        quantidade_produtos['anual'] = 6
+        
+        lista_produtos = []
+        for graniularidade in quantidade_produtos:
+            for i_produtos in range(quantidade_produtos[graniularidade]):
+                if graniularidade == 'mensal':
+                    dt_referente = data + relativedelta.relativedelta(months=i_produtos)
+                    produto = f"SE CON MEN {dt_referente.strftime('%B').upper()[:3]}/{dt_referente.strftime('%y')} - Preço Fixo"
+
+                elif graniularidade == 'trimestral':
+                    dt_inicial = data
+                    while dt_inicial.month%3 != 1:
+                        dt_inicial = dt_inicial + relativedelta.relativedelta(months=1)
+                    dt_inicial = dt_inicial + relativedelta.relativedelta(months=i_produtos*3)
+                    dt_final = dt_inicial + relativedelta.relativedelta(months=2)
+                    produto = f"SE CON TRI {dt_inicial.strftime('%B').upper()[:3]}/{dt_inicial.strftime('%y')} {dt_final.strftime('%B').upper()[:3]}/{dt_final.strftime('%y')} - Preço Fixo"
+                elif graniularidade == 'semestral':
+                    dt_inicial = data
+                    while dt_inicial.month%6 != 0:
+                        dt_inicial = dt_inicial + relativedelta.relativedelta(months=1)
+                    dt_inicial = dt_inicial + relativedelta.relativedelta(months=1+i_produtos*6)
+                    dt_final = dt_inicial + relativedelta.relativedelta(months=5)
+                    produto = f"SE CON SEM {dt_inicial.strftime('%B').upper()[:3]}/{dt_inicial.strftime('%y')} {dt_final.strftime('%B').upper()[:3]}/{dt_final.strftime('%y')} - Preço Fixo"
+                elif graniularidade == 'anual':
+                    dt_inicial = data
+                    while dt_inicial.month%12 != 0:
+                        dt_inicial = dt_inicial + relativedelta.relativedelta(months=1)
+                    dt_inicial = dt_inicial + relativedelta.relativedelta(months=1+i_produtos*12)
+                    dt_final = dt_inicial + relativedelta.relativedelta(months=11)
+                    produto = f"SE CON ANU {dt_inicial.strftime('%B').upper()[:3]}/{dt_inicial.strftime('%y')} {dt_final.strftime('%B').upper()[:3]}/{dt_final.strftime('%y')} - Preço Fixo"
+
+                lista_produtos.append(produto)
+
+        dados_a_inserir = [{'str_produto': produto} for produto in lista_produtos]
+
+        requests.post(f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse", json=dados_a_inserir)
+
+        # insert_prod_interesse = 
+        
+  
+
+    body, path_graficos = rz_relatorio_bbce.get_tabela_bbce(data)
+    header = [data.strftime('%d/%m/%Y'), 'Preço médio', 'Volume (MWm)', 'Fechamento<br>(Anterior)', 'Abertura', 'Fechamento', 'Máximo', 'Mínimo']
+    
+
+    body += '<br>Obs: Os valores percentuais são referentes a variação do preço de abertura/fechamento do dia atual com o fechamento do ultimo dia negociado'
+    return body, path_graficos
 
 def autolabelMediaPld(ax, linhas, pontoInicio=0, size=6, cor='black'):
 	"""Attach a text label above each bar in *rects*, displaying its height."""
@@ -1904,8 +1893,8 @@ def runWithParams():
 
 
 if __name__ == '__main__':
-	# geraRelatorioBbce(datetime.datetime.now())	
- 	runWithParams()
+	geraRelatorioBbce(datetime.datetime.now())	
+	runWithParams()
 
 	# url = 'http://wxclima.ddns-intelbras.com.br:5000/ena_diaria_submercado'
 	# url = 'http://wxclima.ddns-intelbras.com.br:5000/ena_diaria_bacia'
