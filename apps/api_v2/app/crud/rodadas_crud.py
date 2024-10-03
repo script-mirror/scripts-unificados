@@ -25,6 +25,7 @@ class CadastroRodadas:
 
     @staticmethod
     def get_rodadas_por_dt(dt:datetime.date) -> List[dict]:
+        __DB__.connect()
         dt = datetime.date.today() if dt == None else dt
 
         query = db.select(
@@ -56,6 +57,7 @@ class CadastroRodadas:
 
     @staticmethod
     def get_rodadas_por_dt_hr_nome(dt:datetime.datetime, nome:str) -> List[dict]:
+        __DB__.connect()
         dt = datetime.datetime(datetime.date.today().year, datetime.date.today().month, datetime.date.today().day, 0) if dt == None else dt
 
         query = db.select(
@@ -93,7 +95,7 @@ class CadastroRodadas:
 
     @staticmethod
     def info_rodadas(modelos:list, columns_data:list=[]): 
-
+        __DB__.connect()
         if not columns_data: selected_columns = [column_name for column_name in CadastroRodadas.tb.columns] 
         else:
             conditional_columns = [
@@ -133,14 +135,14 @@ class CadastroRodadas:
     
     @staticmethod
     def get_last_column_id(column_name:str):
-
+        __DB__.connect()
         query_get_max_id_column = db.select(db.func.max(CadastroRodadas.tb.c[column_name]))
         max_id = __DB__.db_execute(query_get_max_id_column).scalar()
         return max_id
     
     @staticmethod
     def inserir_cadastro_rodadas(rodadas_values:list):
-        
+        __DB__.connect()
         query_update = CadastroRodadas.tb.insert().values(rodadas_values)
         n_value = __DB__.db_execute(query_update).rowcount
 
@@ -150,7 +152,7 @@ class Chuva:
 
     @staticmethod
     def get_chuva_por_id_subbacia(id_chuva:int):
-        
+        __DB__.connect()
         query = db.select(
             CadastroRodadas.tb.c['str_modelo'],
             CadastroRodadas.tb.c['dt_rodada'],
@@ -187,6 +189,7 @@ class Chuva:
         granularidade:str,
         no_cache: Optional[bool] = False,
         atualizar:Optional[bool] = False):
+        __DB__.connect()
         
         if no_cache:
             df = pd.DataFrame(Chuva.get_chuva_por_id_subbacia(id_chuva))
@@ -226,6 +229,8 @@ class Chuva:
         granularidade:str,
         no_cache: Optional[bool] = False,
         atualizar:Optional[bool] = False):
+        __DB__.connect()
+        
         df = pd.DataFrame()
         for q in query_obj:
             df = pd.concat([df, pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(q.id, q.dt_inicio, q.dt_fim, granularidade, no_cache, atualizar))])
@@ -233,7 +238,7 @@ class Chuva:
     
     @staticmethod
     def post_chuva_modelo_combinados(chuva_prev:List[ChuvaPrevisaoCriacao]) -> None:
-        
+        __DB__.connect()
         prevs:List[dict] = []
         for prev in chuva_prev:
             prevs.append(prev.model_dump())
@@ -245,13 +250,11 @@ class Chuva:
     
         return None
     
-    @staticmethod
-    def delete_chuva_modelo_combinado():
-        pass
     
     @staticmethod
     def inserir_prev_chuva(df_prev_vazao_out:pd.DataFrame):
-        
+        __DB__.connect()
+
         values_chuva = df_prev_vazao_out[['id_chuva','cd_subbacia','dt_prevista','vl_chuva']].values.tolist()
         ids_chuva = df_prev_vazao_out['id_chuva'].unique() 
         query_delete = Chuva.tb.delete().where(Chuva.tb.c['id'].in_(ids_chuva))
@@ -264,6 +267,7 @@ class Chuva:
         
     @staticmethod
     def inserir_chuva_modelos(modelos:list,df_prev_chuva_out:pd.DataFrame):
+        __DB__.connect()
         df_info_subbacias = Subbacia.info_subbacias()
         df_chuva_final = pd.merge(df_info_subbacias[['cd_subbacia' ,'vl_lon'  ,'vl_lat']], df_prev_chuva_out)
         df_prev_chuva = df_chuva_final.drop(['vl_lat','vl_lon'],axis=1)
@@ -308,6 +312,7 @@ class ChuvaMembro:
     tb:db.Table = __DB__.getSchema('tb_chuva_membro')
     @staticmethod
     def post_chuva_membro(chuva_prev:List[ChuvaPrevisaoCriacaoMembro]) -> None:
+        __DB__.connect()
         records = [obj.model_dump() for obj in chuva_prev]
         df = pd.DataFrame(records)
         dt_hr_rodada:datetime.datetime = df[["dt_hr_rodada"]].drop_duplicates().to_dict("records")[0]["dt_hr_rodada"].to_pydatetime()
@@ -323,6 +328,7 @@ class ChuvaMembro:
     
     @staticmethod
     def inserir(body:List[dict]):
+        __DB__.connect()
         id_membro_modelo = []
         cd_subbacia = []
         dt_prevista = []
@@ -349,7 +355,7 @@ class Subbacia:
     tb:db.Table = __DB__.getSchema('tb_subbacia')
     @staticmethod
     def get_subbacia():
-        
+        __DB__.connect()
         query = db.select(
             Subbacia.tb.c['cd_subbacia'],
             Subbacia.tb.c['txt_nome_subbacia'],
@@ -369,7 +375,7 @@ class Subbacia:
     
     @staticmethod
     def get_bacias():
-        
+        __DB__.connect()
         query = db.select(
             db.distinct(Subbacia.tb.c['txt_bacia'])
         )
@@ -378,7 +384,7 @@ class Subbacia:
         
     @staticmethod
     def info_subbacias():
-        
+        __DB__.connect()
         query = db.select(Subbacia.tb.c['cd_subbacia'],Subbacia.tb.c['vl_lon'],Subbacia.tb.c['vl_lat'],Subbacia.tb.c['txt_nome_subbacia'])
         answer_tb_subbacia = __DB__.db_execute(query)
         
@@ -390,7 +396,7 @@ class Subbacia:
 class Smap:
     @staticmethod
     def post_rodada_smap(rodada:RodadaSmap):
-        
+        __DB__.connect()
         momento_req:datetime.datetime = datetime.datetime.now()
         
         trigger_dag_SMAP(rodada.dt_rodada, [rodada.str_modelo], rodada.hr_rodada, momento_req)
@@ -405,6 +411,7 @@ class Smap:
     
     @staticmethod
     def email_smap(sucesso: bool, momento:datetime.datetime, dag_url:str):
+        __DB__.connect()
         email = WxEmail()
         
         status, cor_status = ("Concluido", "#88B04B") if sucesso else ("Falha", "#b04b4b")
@@ -419,6 +426,7 @@ class MembrosModelo:
     
     @staticmethod
     def inserir(body:List[dict]) -> List[dict]:
+        __DB__.connect()
         dt_hr_rodada = []
         nome = []
         id_rodada = []

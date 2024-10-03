@@ -25,16 +25,16 @@ $(document).ready(function () {
   // adicionando de forma automatica todos os produtos existente no banco de dados no menu dropdown
   $.ajax({
     method: "GET",
-    url: "/middle/API/get/produtos-bbce",
+    url: "/api/v2/bbce/produtos-interesse",
     data: {},
   }).done(function (objeto) {
     const dropdownMenu = $("#dynamicDropdown");
     const dropdownMenu2 = $("#dynamicDropdown2");
     objeto.forEach(row => {
       const produtoBBCE = $("<option>", {
-        value: row["palavra"],
+        value: row["str_produto"],
         href: "#",
-        text: row["palavra"]
+        text: row["str_produto"]
       });
       dropdownMenu.append(produtoBBCE);
       dropdownMenu2.append(produtoBBCE.clone(true));
@@ -64,7 +64,7 @@ $(document).ready(function () {
         $.ajax({
           method: "GET",
           dataType: "json",
-          url: `/middle/API/get/bbce/resumos-negociacoes?produto=${produto}`,
+          url: `/api/v2/bbce/resumos-negociacoes?produto=${produto}&categoria_negociacao=Mesa`,
         }).done(function (response) {
           if (Array.isArray(response)) {
             processamentoDadosGrafico(produto, response);
@@ -91,7 +91,7 @@ $(document).ready(function () {
 
   }
   async function getSpread(produto1, produto2){
-    const promise = await fetch(`/middle/API/get/bbce/resumos-negociacoes/spread/preco-medio?produto1=${produto1}&produto2=${produto2}`);
+    const promise = await fetch(`/api/v2/bbce/resumos-negociacoes/spread/preco-medio?produto1=${produto1}&produto2=${produto2}&categoria_negociacao=Mesa`);
     return await promise.json();
   }
 

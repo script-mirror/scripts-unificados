@@ -6,13 +6,16 @@ import numpy as np
 import datetime
 
 path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2")
-from app.database.database import DbMiddle
+
+path.insert(2,"/WX2TB/Documentos/fontes/PMO/scripts_unificados")
+from bibliotecas.wx_dbClass import db_mysql_master
+
 
 
 class tb_bacias:
     @staticmethod
     def get_bacias(divisao:str):
-        __DB__ = DbMiddle('db_ons')
+        __DB__ = db_mysql_master('db_ons')
         bacias = __DB__.get_schema('tb_bacias')
 
         query = sa.select(
@@ -31,7 +34,7 @@ class tb_bacias:
 class tb_submercado:
     @staticmethod
     def get_submercados():
-        __DB__ = DbMiddle('db_ons')
+        __DB__ = db_mysql_master('db_ons')
         submercado = __DB__.get_schema('tb_submercado')
 
         query = sa.select(

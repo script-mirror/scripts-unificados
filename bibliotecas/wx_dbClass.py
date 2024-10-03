@@ -211,6 +211,7 @@ class db_mysql_master():
                 db.Column('vl_quantidade', db.Integer),
                 db.Column('vl_preco', db.Float),
                 db.Column('dt_criacao', db.DATETIME),
+                db.Column('id_categoria_negociacao', db.ForeignKey('bbce.tb_categoria_negociacao.id'))
             )
 
         elif table_name.lower() == 'tb_produtos_bbce':
@@ -829,6 +830,7 @@ class db_mysql_master():
                 db.Column('volume', db.Float),
                 db.Column('total_negociacoes', db.Integer),            
                 db.Column('hora_fechamento', db.Time),
+                db.Column('id_categoria_negociacao', db.ForeignKey('bbce.tb_categoria_negociacao.id')),
                 extend_existing=True
             )
             
@@ -1000,13 +1002,17 @@ class db_mysql_master():
                 extend_existing=True            
             )
             
-        elif table_name.lower() == 'tb_cmo_horario':
-            
-            table_schema = db.Table('tb_cmo_horario', self.meta,
-                db.Column('id_subsistema', db.ForeignKey('db_ons.tb_submercado.cd_submercado'), primary_key=True),
-                db.Column('dt_data_hora', db.DateTime, primary_key=True),
-                db.Column('vl_cmo', db.Float, nullable = True),
+        elif table_name.lower() == 'tb_produtos_interesse':
+            table_schema = db.Table('tb_produtos_interesse', self.meta,
+                db.Column('id_produto', db.ForeignKey('bbce.tb_produtos_interesse.id_produto'), primary_key=True),
+                db.Column('ordem', db.Integer),
                 extend_existing=True            
+            )
+        elif table_name.lower() == 'tb_categoria_negociacao':
+            table_schema = db.Table('tb_categoria_negociacao', self.meta,
+                db.Column('id', db.Integer, primary_key=True),
+                db.Column('nome', db.String(20)),
+                extend_existing=True
             )
 
 

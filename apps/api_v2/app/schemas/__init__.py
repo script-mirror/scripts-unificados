@@ -5,3 +5,5 @@ from .RodadaCriacao import RodadaCriacao
 from .RodadaSmap import RodadaSmap
 from .TipoRodadaEnum import TipoRodadaEnum
 from .MembrosModeloSchema import MembrosModeloSchema
+from .ProdutoInteresseSchema import ProdutoInteresseSchema
+from .CategoriaNegociacaoEnum import CategoriaNegociacaoEnum
