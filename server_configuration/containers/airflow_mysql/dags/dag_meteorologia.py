@@ -9,9 +9,21 @@ from airflow.operators.dummy_operator import DummyOperator
 
 import datetime
 
+import os
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+
+import datetime
+
 def create_ec2_client(region):
     return boto3.client('ec2',
-        region_name=region)
+           aws_access_key_id=AWS_ACCESS_KEY_ID,
+           aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+           region_name=region)
+
 
 def check_instance_state(instance_id, region):
     """Verifica o estado atual da instância na região especificada."""
