@@ -10,7 +10,7 @@ load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 __USER_SINTEGRE = os.getenv('USER_SINTEGRE') 
 __PASSWORD_SINTEGRE = os.getenv('PASSWORD_SINTEGRE')
 
-nomeUser='thiago alves scher'
+nomeUser='arthur rafael franco de moraes'
 
 
 def check_login_ONS(driver):
