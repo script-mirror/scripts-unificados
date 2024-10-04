@@ -9,10 +9,17 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+from dotenv import load_dotenv
+import os
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+
+__USER_SINTEGRE = os.getenv('USER_SINTEGRE') 
+__PASSWORD_SINTEGRE = os.getenv('PASSWORD_SINTEGRE')
+
 def abrir_selenium():
 
-	user_ = 'thiago.scher@raizen.com'
-	pass_ = '3sEMfm*a'
+	user_ = __USER_SINTEGRE
+	pass_ = __PASSWORD_SINTEGRE
 	pdb.set_trace()
 	driver = webdriver.Chrome()
 
