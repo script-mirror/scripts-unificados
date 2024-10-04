@@ -13,10 +13,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 
 
-sys.path.insert(1, r"/WX2TB/Documentos/fontes/bibliotecas")
-sys.path.insert(1, sys.path[0]+"/libs/")
-import rz_ons
-
 sys.path.insert(1,"/WX2TB/Documentos/fontes")
 from PMO.scripts_unificados.bibliotecas import wx_dbClass,wx_emailSender,rz_dir_tools
 from PMO.scripts_unificados.apps.verificadores.ons import rz_ons

@@ -33,11 +33,12 @@ def check_target_file(driver ,dt_rodada):
     
     driver.get("https://sintegre.ons.org.br/sites/9/38/paginas/servicos/historico-de-produtos.aspx?produto=Previs%C3%A3o%20Estendida%20de%20Precipita%C3%A7%C3%A3o%20do%20ECMWF%20com%20remo%C3%A7%C3%A3o%20de%20vi%C3%A9s%20(EST_rv)")
     
-    WebDriverWait(driver, 30).until(
+    WebDriverWait(driver, 60).until(
     EC.visibility_of_element_located((By.ID, "produtos"))
     )
 
     dt_file_ons = (dt_rodada + datetime.timedelta(days=1)).strftime('%Y%m%d')
+
 
     script = """
     for (var div of document.getElementById("produtos").children) {{
@@ -48,9 +49,8 @@ def check_target_file(driver ,dt_rodada):
     }}
     """.format(dt_file_ons)
     file_link = driver.execute_script(script)
-    
+
     if not file_link: return None
-    
     driver.get(file_link)
     path_filename = os.path.join(PATH_TMP_DOWNLOAD,os.path.basename(file_link))
     
@@ -132,6 +132,7 @@ def rotina_ecmwf_ons(dt_rodada:datetime.datetime):
     while 1:
 
         rz_ons.login_ons(driver)
+
         path = check_target_file(driver,dt_rodada)
         driver.close()
         driver.quit()
