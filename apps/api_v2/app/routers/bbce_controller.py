@@ -47,7 +47,7 @@ def get_negociacoes_bbce(
 
 @router.get('/resumos-negociacoes/negociacoes-de-interesse', tags=['BBCE'])
 def get_negociacoes_interesse_bbce_por_data(
-    datas:datetime.datetime,
+    datas:datetime.date,
     categoria_negociacao:Optional[CategoriaNegociacaoEnum] = None,
     no_cache:bool = True,
     atualizar:bool = False
@@ -60,7 +60,7 @@ def get_negociacoes_interesse_bbce_por_data(
 
 @router.get('/resumos-negociacoes/negociacoes-de-interesse/fechamento', tags=['BBCE'])
 def get_negociacoes_fechamento_interesse_por_data(
-    datas:datetime.datetime,
+    datas:datetime.date,
     categoria_negociacao:Optional[CategoriaNegociacaoEnum] = None,
     no_cache:bool = True,
     atualizar:bool = False
