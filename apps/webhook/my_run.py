@@ -1,6 +1,8 @@
 import os
 import pdb
 import sys
+import json
+import requests
 
 from datetime import timedelta
 from flask import Flask, request, jsonify
@@ -162,11 +164,51 @@ def webhook():
 
     return jsonify(success=True)
 
+
+
+def correct_encoding_in_dict(d):
+    for k, v in d.items():
+        if isinstance(v, str):
+            d[k] = fix_double_encoding(v)
+        elif isinstance(v, dict):
+            correct_encoding_in_dict(v)
+        elif isinstance(v, list):
+            for item in v:
+                if isinstance(item, dict):
+                    correct_encoding_in_dict(item)
+
+def fix_double_encoding(text):
+    try:
+        return text.encode('latin1').decode('utf-8')
+    except UnicodeDecodeError:
+        return text
+
 @app.route("/webhook/glorian", methods=["GET", "POST"])
 @jwt_required()
 def webhookGlorian():
     
     logger.info(f'Glorian: {request.data}')
+    dados = request.data
+    
+    url = 'http://ec2-54-89-214-53.compute-1.amazonaws.com:5001/static/glorian/webhook/notification'
+
+    try:
+        json_data = json.loads(dados.decode('utf-8'))
+        correct_encoding_in_dict(json_data)
+    
+        new_url = "http://172.31.55.249:5001/glorian/webhook/notification"
+        headers = {"Content-Type": "application/json"} 
+        response = requests.post(new_url, json=json_data, headers=headers)
+
+        if response.status_code == 200:
+            print("Dados enviados com sucesso!")
+            logger.info("Dados enviados com sucesso!")
+        else:
+            print(f"Falha ao enviar dados. Status code: {response.status_code}")
+            logger.info(f"Falha ao enviar dados. Status code: {response.status_code}")
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+        logger.info(f"Ocorreu um erro: {e}")
     
     return jsonify({'message': 'Success'}), 200
 

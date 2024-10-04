@@ -816,7 +816,7 @@ def API_getEnaAcomph():
     return jsonify({"message": "Adicione os parametros dataInicial e dataFinal, no seguinte formato (%d/%m/%Y), e granularidade (submercado/bacia)"})
   
   dataInicial = datetime.datetime.strptime(dataInicial, "%d/%m/%Y")
-  dataFinal = datetime.datetime.strptime(dataFinal, "%d/%m/%Y")
+  if dataFinal: dataFinal = datetime.datetime.strptime(dataFinal, "%d/%m/%Y")
   prefixo = "ACOMPH"
 
   if no_cache == '1':

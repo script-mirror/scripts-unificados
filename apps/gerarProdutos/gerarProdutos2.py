@@ -80,13 +80,12 @@ class GerardorProdutos():
             resultado = execute_function(parametros)
 
             #TESTES
-            if parametros.get("teste_user") == 'thiago':
-                resultado.destinatarioWhats='19987688230'
-                resultado.destinatarioEmail = ['thiago.scher@raizen.com']
-            elif parametros.get("teste_user") == 'joao':
+            if parametros.get("teste_user") == 'joao':
                 resultado.destinatarioWhats='11999029326'
                 resultado.destinatarioEmail = ['joao.filho4@raizen.com']
-
+            elif parametros.get("teste_user") == 'jose':
+                resultado.destinatarioWhats='11968606707'
+                resultado.destinatarioEmail = ['jose.flores@raizen.com']
 
             if resultado.flagEmail:
 

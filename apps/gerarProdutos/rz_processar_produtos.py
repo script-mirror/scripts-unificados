@@ -344,14 +344,13 @@ def processar_produto_REVISAO_CARGA(parametros):
         resultado.corpoEmail = '<div>'+html+'</div>'
         resultado.assuntoEmail = f'Revisão carga - DC (RV{dataRvAtual.atualRevisao})'
         
-        
-        path_file = os.path.join("/WX2TB/Documentos/fontes/outros/webhook/arquivos/tmp/","Carga por patamar - DECOMP")
-        
-        path_fig = wx_emailSender.api_html_to_image(html,path_save=os.path.join(path_file,f'revisaoCarga_{dataRvAtual.atualRevisao}.png'))
+        # path_file = os.path.join("/WX2TB/Documentos/fontes/outros/webhook/arquivos/tmp/","Carga por patamar - DECOMP")
+        path_saida = os.path.join(PATH_WEBHOOK_TMP,f'revisaoCarga_{dataRvAtual.atualRevisao}.png')
+        path_fig = wx_emailSender.api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'revisaoCarga_{dataRvAtual.atualRevisao}.png'))
     
-        print(path_fig)
+        print(path_saida)
         
-        resultado.fileWhats = f'/WX2TB/Documentos/fontes/outros/webhook/arquivos/tmp/Carga por patamar - DECOMP/revisaoCarga_{dataRvAtual.atualRevisao}.png'
+        resultado.fileWhats = path_saida
 
     else:
         print("Email e whats não enviado. DataFrame vazio.")

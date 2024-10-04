@@ -402,9 +402,12 @@ def process_planilha_vazoes_obs(spreadsheet_path):
                         vaz_out += (tempoViagem/(diasViagem*24))*vazComp.shift(periods=diasViagem) + ((diasViagem*24 - tempoViagem)/(diasViagem*24))*vazComp
                 else:
                     vaz_out += vazComp
+        if nomeArquivoSaida == 'GOV. JAYME CANET':
+            nomeArquivoSaida = 'MAUA'
+
         for dt, vaz in vaz_out.items():
             vazoes_values += [nomeArquivoSaida, codigoEstacao, tipoVazao, dt.strftime('%Y-%m-%d 00:00:00'),round(vaz,2)],
-    
+
     importar_vazoes_obs_smap(vazoes_values)
     return vazoes_values
 
