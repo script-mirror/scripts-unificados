@@ -36,10 +36,17 @@ try:
 except:
 	from wx_log import logging
 	
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 
 class WxAws:
 
 	def __init__(self):
+		self.accessKey = AWS_ACCESS_KEY_ID
+		self.secretKey = AWS_SECRET_ACCESS_KEY
 		self.region_name = 'us-east-1'
 		self.bucketName = 'wx-prospec'
 
