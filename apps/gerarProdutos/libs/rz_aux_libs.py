@@ -1,3 +1,6 @@
+
+
+
 import os
 import re
 import pdb
@@ -22,6 +25,10 @@ from pandas.plotting import register_matplotlib_converters
 from matplotlib import gridspec
 register_matplotlib_converters()
 
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+__HOST_SERVER = os.getenv('HOST_SERVIDOR') 
+
 try:
 	locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 except:
@@ -38,6 +45,7 @@ sys.path.insert(1,path_fontes)
 from PMO.scripts_unificados.bibliotecas import wx_dbLib,wx_emailSender,wx_verificaCorImg,wx_opweek,wx_dbClass
 from PMO.scripts_unificados.apps.gerarProdutos.libs import rz_relatorio_bbce,configs
 from PMO.scripts_unificados.apps.web_modelos.server.libs import wx_calcEna 
+
 
 
 def baixarProduto(data, produto):
@@ -196,22 +204,12 @@ def gerarCompiladoPrevPrecipt(data, modelo, rodada):
     print('Arquivo salvo em :\n{}'.format(arquivoSaida))
 
     return arquivoSaida
+def is_first_bussines_day(data:datetime.date):
+    return (data.day == 1 and (data.weekday() != 5 and data.weekday() != 6)) or ((data.day == 2 or data.day == 3) and data.weekday() == 0)
 
-def geraRelatorioBbce(data):
-    
-    corpoEmail = '<h3>Relatório das negociações referentes ao dia {}</h3>'.format(data.strftime('%d/%m/%Y'))
+def geraRelatorioBbce(data = datetime.datetime.now()):
 
-    database = wx_dbClass.db_mysql_master('db_config')
-    database.connect()
-    tb_produtos_bbce = database.getSchema('tb_produtos_bbce')
-    
-    data = datetime.datetime.now()
-    dataString = data.strftime('%Y-%m-%d')
-    diaAtual = data.day
-    mesAtual = data.month
-    anoAtual = data.year
-    
-    if diaAtual == 1:
+    if is_first_bussines_day(data.date()):
         
         quantidade_produtos = {}
         quantidade_produtos['mensal'] = 6
@@ -249,35 +247,18 @@ def geraRelatorioBbce(data):
                     produto = f"SE CON ANU {dt_inicial.strftime('%B').upper()[:3]}/{dt_inicial.strftime('%y')} {dt_final.strftime('%B').upper()[:3]}/{dt_final.strftime('%y')} - Preço Fixo"
 
                 lista_produtos.append(produto)
-    
-        delete_produtosBBCE = tb_produtos_bbce.delete()
-        resultadoDelete = database.conn.execute(delete_produtosBBCE)
-        num_produtosBBCE_deletados = resultadoDelete.rowcount
-        print(f'Foi deletado ao total de {num_produtosBBCE_deletados} produtos de interesse da BBCE.')
 
-        dados_a_inserir = [{'str_produto': produto} for produto in lista_produtos]
-        sql_produtosbbce_inseridos = tb_produtos_bbce.insert().values(dados_a_inserir)
-        resultado = database.conn.execute(sql_produtosbbce_inseridos)
-        num_produtosBBCE_inseridos = resultado.rowcount
-        print(f'Foi inserido ao total de {num_produtosBBCE_inseridos} linhas com os novos produtos.')
+        dados_a_inserir = [{"str_produto": produto, "ordem":i} for i, produto in enumerate(lista_produtos)]
+        
+        requests.post(f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse", json=dados_a_inserir)
+        # insert_prod_interesse = 
+        
   
-        query_select = db.select([tb_produtos_bbce.c.str_produto])
-        produtosInteressesBbce = database.conn.execute(query_select).fetchall()
-        produtosInteressesBbce = [(''.join(map(str, idx))) for idx in produtosInteressesBbce]
-  
-    else:
-        query_select = db.select([tb_produtos_bbce.c.str_produto])
-        produtosInteressesBbce = database.conn.execute(query_select).fetchall()
-        produtosInteressesBbce = [(''.join(map(str, idx))) for idx in produtosInteressesBbce]
-  
-    body, path_graficos = rz_relatorio_bbce.get_tabela_bbce(data, produtosInteressesBbce)
-    header = [data.strftime('%d/%m/%Y'), 'Preço médio', 'Volume (MWm)', 'Fechamento<br>(Anterior)', 'Abertura', 'Fechamento', 'Máximo', 'Mínimo']
-    corpoEmail += wx_emailSender.gerarTabela(body, header, [115,61,80,61,61,61,61,61])
-    
 
-    corpoEmail += '<br>Obs: Os valores percentuais são referentes a variação do preço de abertura/fechamento do dia atual com o fechamento do ultimo dia negociado'
-    corpoEmail += '<br><a href="http://35.173.154.94:8090/config-produtos-bbce">Click aqui para atualizar os produtos</a>'
-    return corpoEmail, path_graficos
+    body, path_graficos = rz_relatorio_bbce.get_tabela_bbce(data)
+
+    
+    return body, path_graficos
 
 def autolabelMediaPld(ax, linhas, pontoInicio=0, size=6, cor='black'):
     """Attach a text label above each bar in *rects*, displaying its height."""
@@ -326,7 +307,7 @@ def gerarResultadoDessem(data):
             tb_ds_pdo_cmosist.c.id_deck == tb_cadastro_dessem.c.id,
         )
     
-    answer = db_decks.conn.execute(query_dessem).fetchall()
+    answer = db_decks.db_execute(query_dessem).fetchall()
     precos = pd.DataFrame(answer,columns=['SUBMERCADO', 'HORARIO', 'CMO','FONTE'])
 
     db_ons = wx_dbClass.db_mysql_master('db_ons')
@@ -342,7 +323,7 @@ def gerarResultadoDessem(data):
       ).where(
           tb_pld.c.str_ano == data.strftime('%Y'))
 
-    answer = db_ons.conn.execute(query_pld).fetchall()
+    answer = db_ons.db_execute(query_pld).fetchall()
     pld_min = answer[0][1]
     pld_max = answer[0][2]
     
@@ -455,7 +436,7 @@ def gerarPrevisaoEnaSubmercado(data:datetime):
     db_ons.connect()
     tb_prev_ena_submercado = db_ons.getSchema('tb_prev_ena_submercado')
     query_ena = tb_prev_ena_submercado.select().where(tb_prev_ena_submercado.c.dt_previsao == data)
-    answer_ena = db_ons.conn.execute(query_ena).fetchall()
+    answer_ena = db_ons.db_execute(query_ena).fetchall()
 
     previsaoVazao = pd.DataFrame(answer_ena, columns=['CD_SUBMERCADO', 'DT_PREVISAO', 'DT_REFERENTE', 'VL_VAZAO', 'VL_PERC_MLT'])
     previsaoVazao['SUBMERCADO'] = previsaoVazao['CD_SUBMERCADO'].replace(idSubmercados)
@@ -1100,3 +1081,5 @@ def gerarTabelasEmailAcomph(data):
 
     return html
 
+if __name__ == "__main__":
+    geraRelatorioBbce(datetime.datetime(2024, 9, 2))
