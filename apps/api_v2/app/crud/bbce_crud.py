@@ -199,7 +199,7 @@ class NegociacoesResumo:
             )
         
         query = (
-                db.select([cte])
+                db.select(cte)
                 .where(cte.c['row_num'] == 1)
                 .order_by(cte.c['id_produto'])
         )
