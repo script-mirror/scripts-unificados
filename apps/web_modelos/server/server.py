@@ -9,8 +9,23 @@ from flask_caching import Cache
 
 from flask_sqlalchemy import SQLAlchemy
 
+import logging
+from logging.handlers import RotatingFileHandler
+
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler = RotatingFileHandler('web_modelos.log')
+handler.setLevel(logging.INFO)
+handler.setFormatter(formatter)
+
+
 app = Flask ( __name__ )
 app.config.from_pyfile('config.py')
+
+app.logger.addHandler(handler)
+
+@app.before_request
+def log_request():
+  app.logger.info(f'{{"url":"{request.url}, "metodo":"{request.method}", "ip":"{request.remote_addr}"}}')
 
 Bootstrap(app)
 
