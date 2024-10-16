@@ -25,7 +25,7 @@ app.logger.addHandler(handler)
 
 @app.before_request
 def log_request():
-  app.logger.info(f'{{"url":"{request.url}, "metodo":"{request.method}", "ip":"{request.remote_addr}"}}')
+  app.logger.info(f'{{"url":"{(request.url).replace('{', '|').replace('}', '|').replace('"', '')}", "metodo":"{request.method}", "ip":"{request.remote_addr}"}}')
 
 Bootstrap(app)
 
