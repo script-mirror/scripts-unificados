@@ -16,13 +16,13 @@ class tb_bacias:
     @staticmethod
     def get_bacias(divisao:str):
         __DB__ = db_mysql_master('db_ons')
-        bacias = __DB__.get_schema('tb_bacias')
+        bacias = __DB__.getSchema('tb_bacias')
 
         query = sa.select(
           bacias.c['id_bacia'],
           bacias.c['str_bacia'],
         )
-        result = __DB__.db_execute(query).fetchall()
+        result = __DB__.db_execute(query, commit=True).fetchall()
         df = pd.DataFrame(result, columns=['id','nome'])
         df = df.sort_values('id')
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
@@ -35,14 +35,14 @@ class tb_submercado:
     @staticmethod
     def get_submercados():
         __DB__ = db_mysql_master('db_ons')
-        submercado = __DB__.get_schema('tb_submercado')
+        submercado = __DB__.getSchema('tb_submercado')
 
         query = sa.select(
             submercado.c['cd_submercado'],
             submercado.c['str_submercado'],
             submercado.c['str_sigla']
         )
-        result = __DB__.db_execute(query).fetchall()
+        result = __DB__.db_execute(query, commit=True).fetchall()
         df = pd.DataFrame(result, columns=['id', 'nome', 'str_sigla'])
         df = df.sort_values('id')
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})

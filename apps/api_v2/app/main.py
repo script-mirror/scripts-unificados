@@ -7,11 +7,6 @@ from fastapi import FastAPI, Depends
 from app.routers import rodadas_controller, testes_controller, ons_controller, bbce_controller
 from app.utils.cache import cache
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer
-
-
-import sys
-
 
 
 SECRET_KEY= os.getenv('FLASK_SECRET_KEY')
