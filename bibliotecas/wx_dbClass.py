@@ -8,34 +8,6 @@ dropbox_middle_path = os.path.join(home_path, 'Dropbox', 'WX - Middle')
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
-
-class db_localhost:
-
-    def __init__(self, dbase):
-        self.meta = db.MetaData()
-        self.user = 'root'
-        self.password = ''
-        self.host = 'localhost'
-        self.port = 3306
-        self.dbase = dbase
-        self.engine=None
-        self.conn = None
-
-    def connect(self):
-        self.engine = db.create_engine(f"mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.dbase}")
-        self.conn = self.engine.connect()
-
-    def create_table(self, table_name):
-        self.getSchema(table_name)
-        self.meta.create_all(self.engine)
-
-
-    def getSchema(self, table_name):
-
-
-        pass
-
-
 DB_MAPPING = {
 
     "db_decks":[
@@ -102,22 +74,23 @@ class db_mysql_master():
         self.host = __HOST_MYSQL
         self.port = __PORT_DB_MYSQL
         self.dbase = dbase
-        self.engine= db.create_engine(f"mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.dbase}") if connect else None
+        self.engine= db.create_engine(f"mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.dbase}", pool_pre_ping=True) if connect else None
         self.db_schemas = self.get_db_schemas() if connect else None
 
 
     def connect(self):
         # o engine cria o pool de conexoes, por default são 5, as novas conexoes nao sao conectas ao banco ate que a primeira seja requisitada
-        self.engine = db.create_engine(f"mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.dbase}") if not self.engine else self.engine
+        self.engine = db.create_engine(f"mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.dbase}", pool_pre_ping=True) if not self.engine else self.engine
         
         #resgata uma conexao do pool 
         self.conn = self.engine.connect()
 
-    def db_execute(self,query):
+    def db_execute(self,query, commit=False):
 
         self.connect()
         result = self.conn.execute(query)
-        
+        if commit:
+            self.conn.commit()
         #devolve a conexao ao pool 
         self.conn.close()
         self.conn = None

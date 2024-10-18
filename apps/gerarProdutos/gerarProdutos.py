@@ -250,16 +250,13 @@ def is_first_bussines_day(data:datetime.date):
 
 def geraRelatorioBbce(data = datetime.datetime.now()):
     
-    corpoEmail = '<h3>Relatório das negociações referentes ao dia {}</h3>'.format(data.strftime('%d/%m/%Y'))
-
-
     if is_first_bussines_day(data.date()):
         
         quantidade_produtos = {}
         quantidade_produtos['mensal'] = 6
-        quantidade_produtos['trimestral'] = 4
+        quantidade_produtos['trimestral'] = 5
         quantidade_produtos['semestral'] = 4
-        quantidade_produtos['anual'] = 6
+        quantidade_produtos['anual'] = 5
         
         lista_produtos = []
         for graniularidade in quantidade_produtos:
@@ -293,18 +290,13 @@ def geraRelatorioBbce(data = datetime.datetime.now()):
                 lista_produtos.append(produto)
 
         dados_a_inserir = [{'str_produto': produto} for produto in lista_produtos]
-
+        dados_a_inserir = pd.DataFrame(dados_a_inserir).reset_index().rename(columns={'index':'ordem'}).to_dict('records')
         requests.post(f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse", json=dados_a_inserir)
-
-        # insert_prod_interesse = 
         
   
 
     body, path_graficos = rz_relatorio_bbce.get_tabela_bbce(data)
-    header = [data.strftime('%d/%m/%Y'), 'Preço médio', 'Volume (MWm)', 'Fechamento<br>(Anterior)', 'Abertura', 'Fechamento', 'Máximo', 'Mínimo']
     
-
-    body += '<br>Obs: Os valores percentuais são referentes a variação do preço de abertura/fechamento do dia atual com o fechamento do ultimo dia negociado'
     return body, path_graficos
 
 def autolabelMediaPld(ax, linhas, pontoInicio=0, size=6, cor='black'):

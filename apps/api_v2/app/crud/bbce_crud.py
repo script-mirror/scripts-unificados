@@ -26,7 +26,7 @@ class Produto:
         ).where(
             Produto.tb.c["str_produto"].in_(str_produtos)
         )
-        result = __DB__.db_execute(query)
+        result = __DB__.db_execute(query, commit=False)
         df = pd.DataFrame(result, columns=["id_produto", "str_produto"])
         return df.to_dict("records")
 
@@ -43,7 +43,7 @@ class ProdutoInteresse:
         ).join(
             Produto.tb, Produto.tb.c['id_produto'] == ProdutoInteresse.tb.c['id_produto']
         )
-        result = __DB__.db_execute(select).fetchall()
+        result = __DB__.db_execute(select, commit=False).fetchall()
         df = pd.DataFrame(result, columns=["id", "ordem", "str_produto"])
         return df.to_dict("records")
     
@@ -56,9 +56,9 @@ class ProdutoInteresse:
         
         df = df_produtos_interesse.merge(df_produtos_ordem)[["id_produto", "ordem"]]
         
-        __DB__.db_execute(ProdutoInteresse.tb.delete())
+        __DB__.db_execute(ProdutoInteresse.tb.delete(), commit=False)
         
-        __DB__.db_execute(ProdutoInteresse.tb.insert(df.to_dict("records")))
+        __DB__.db_execute(ProdutoInteresse.tb.insert(df.to_dict("records")), commit=False)
         return df.to_dict("records")
     
 class Negociacoes:
@@ -80,7 +80,7 @@ class Negociacoes:
             )
             
             
-        result = __DB__.db_execute(query).fetchall()
+        result = __DB__.db_execute(query, commit=False).fetchall()
         df = pd.DataFrame(result, columns=['ultimo_update'])
         df['ultimo_update'] = df['ultimo_update'].dt.strftime('%Y-%m-%d %H:%M')
         return df.to_dict('records')[0]
@@ -118,7 +118,7 @@ class NegociacoesResumo:
                     Produto.tb.c['str_produto'] == produto,
                     )
         print(query)
-        result = __DB__.db_execute(query).fetchall()
+        result = __DB__.db_execute(query, commit=False).fetchall()
         df = pd.DataFrame(result, columns=['date', 'open', 'high', 'low', 'close', 'volume', 'preco_medio'])
         df['date'] = df['date'].astype('datetime64[ns]').dt.strftime('%Y-%m-%d')
         return df.to_dict('records')
@@ -204,7 +204,7 @@ class NegociacoesResumo:
                 .order_by(cte.c['id_produto'])
         )
         
-        result = __DB__.db_execute(query)
+        result = __DB__.db_execute(query, commit=False)
         df = pd.DataFrame(result, columns=['produto','id_produto','datetime_fechamento','preco_fechamento', 'rn'])
         df['datetime_fechamento'] = pd.to_datetime(df['datetime_fechamento']).dt.strftime('%Y-%m-%d %H:%M')
         
@@ -252,7 +252,7 @@ class NegociacoesResumo:
                 NegociacoesResumo.tb.c['data'] == data,
                 Produto.tb.c['str_produto'].in_(df_produtos_interesse['produto'].tolist())
                 ))
-        result = __DB__.db_execute(query).all()
+        result = __DB__.db_execute(query, commit=False).all()
         df = pd.DataFrame(result, columns=['produto', 'date', 'open', 'high', 'low', 'close', 'volume', 'preco_medio', 'total', 'hora_fechamento'])
         df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
 
@@ -399,7 +399,7 @@ class CategoriaNegociacao:
             CategoriaNegociacao.tb.c['id'],
             CategoriaNegociacao.tb.c['nome']
         )
-        result = __DB__.db_execute(query)
+        result = __DB__.db_execute(query, commit=False)
         df = pd.DataFrame(result, columns=['id', 'nome'])
         return df.to_dict("records")
     
