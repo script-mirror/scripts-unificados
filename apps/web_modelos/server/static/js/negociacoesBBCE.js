@@ -64,7 +64,7 @@ $(document).ready(function () {
         $.ajax({
           method: "GET",
           dataType: "json",
-          url: `/api/v2/bbce/resumos-negociacoes?produto=${produto}&categoria_negociacao=Mesa`,
+          url: `/API/get/bbce/resumos-negociacoes?produto=${produto}&categoria_negociacao=Mesa`,
         }).done(function (response) {
           if (Array.isArray(response)) {
             processamentoDadosGrafico(produto, response);
@@ -91,7 +91,7 @@ $(document).ready(function () {
 
   }
   async function getSpread(produto1, produto2){
-    const promise = await fetch(`/api/v2/bbce/resumos-negociacoes/spread/preco-medio?produto1=${produto1}&produto2=${produto2}&categoria_negociacao=Mesa`);
+    const promise = await fetch(`/API/get/bbce/resumos-negociacoes/spread/preco-medio?produto1=${produto1}&produto2=${produto2}&categoria_negociacao=Mesa`);
     return await promise.json();
   }
 

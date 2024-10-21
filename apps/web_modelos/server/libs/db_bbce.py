@@ -33,6 +33,7 @@ class tb_negociacoes_resumo:
   def get_negociacao_bbce(produto:str):
     __DB_BBCE = db_mysql_master('bbce')
     negociacoes_resumo = __DB_BBCE.getSchema('tb_negociacoes_resumo')
+    categoria_negociacao = __DB_BBCE.getSchema('tb_categoria_negociacao')
     produtos = __DB_BBCE.getSchema('tb_produtos')
     query = db.select(
       negociacoes_resumo.c['data'],
@@ -43,9 +44,13 @@ class tb_negociacoes_resumo:
       negociacoes_resumo.c['volume'],
       negociacoes_resumo.c['preco_medio']
       ).join(
-        produtos, produtos.c['id_produto'] == negociacoes_resumo.c['id_produto']
-        ).where(
+        produtos, produtos.c['id_produto'] == negociacoes_resumo.c['id_produto'],
+        ).join(
+          categoria_negociacao, categoria_negociacao.c['id'] == negociacoes_resumo.c['id_categoria_negociacao'],
+          ).where(db.and_(
+          categoria_negociacao.c['nome'] == "Mesa",
           produtos.c['str_produto'] == produto
+        )
           )
     result = __DB_BBCE.db_execute(query).fetchall()
     df = pd.DataFrame(result, columns=['date', 'open', 'high', 'low', 'close', 'volume', 'preco_medio'])
