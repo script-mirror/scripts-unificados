@@ -235,7 +235,7 @@ class Chuva:
         prevs:List[dict] = []
         for prev in chuva_prev:
             prevs.append(prev.model_dump())
-        modelo = (prevs[0]['modelo'], datetime.datetime(prevs[0]['dt_rodada']).hour , prevs[0]['dt_rodada'])
+        modelo = (prevs[0]['modelo'], prevs[0]['dt_rodada'].hour , prevs[0]['dt_rodada'])
         df = pd.DataFrame(prevs)
         df['cenario'] = f'{modelo[0]}_{modelo[1]}_{modelo[2]}'
         
