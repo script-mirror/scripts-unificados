@@ -104,7 +104,7 @@ with DAG(
 ) as dag:
     
     
-    start_ec2_task = BranchPythonOperator(
+    start_ec2_task = PythonOperator(
         task_id='start_ec2',
         python_callable=start_instance,
         # provide_context=True,
@@ -211,7 +211,7 @@ with DAG(
     tags=['Metereologia']
 ) as dag:
         
-    start_ec2_task = BranchPythonOperator(
+    start_ec2_task = PythonOperator(
         task_id='start_ec2',
         python_callable=start_instance,
         # provide_context=True,
@@ -255,7 +255,7 @@ with DAG(
     tags=['Metereologia']
 ) as dag:
         
-    start_ec2_task = BranchPythonOperator(
+    start_ec2_task = PythonOperator(
         task_id='start_ec2',
         python_callable=start_instance,
         # provide_context=True,
@@ -299,7 +299,7 @@ with DAG(
     tags=['Metereologia']
 ) as dag:
         
-    start_ec2_task = BranchPythonOperator(
+    start_ec2_task = PythonOperator(
         task_id='start_ec2',
         python_callable=start_instance,
         # provide_context=True,
@@ -344,7 +344,7 @@ with DAG(
     tags=['Metereologia']
 ) as dag:
         
-    start_ec2_task = BranchPythonOperator(
+    start_ec2_task = PythonOperator(
         task_id='start_ec2',
         python_callable=start_instance,
         # provide_context=True,
@@ -389,7 +389,7 @@ with DAG(
     tags=['Metereologia']
 ) as dag:
         
-    start_ec2_task = BranchPythonOperator(
+    start_ec2_task = PythonOperator(
         task_id='start_ec2',
         python_callable=start_instance,
         # provide_context=True,
@@ -420,13 +420,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
     )
 
-    state = check_instance_state('i-0edbeb5435710d5f3', 'us-east-1')
-
-    if state == 'running':
-        [run_forecast] >> stop_ec2_task >> fim
-
-    else:
-        start_ec2_task >> [run_forecast]  >> stop_ec2_task >> fim
+    start_ec2_task >> run_forecast  >> stop_ec2_task >> fim
 
 with DAG(
     'C3S',
@@ -440,7 +434,7 @@ with DAG(
 ) as dag:
 
 
-    start_ec2_task = BranchPythonOperator(
+    start_ec2_task = PythonOperator(
         task_id='start_ec2',
         python_callable=start_instance,
         # provide_context=True,

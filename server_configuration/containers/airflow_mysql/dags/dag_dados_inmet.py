@@ -8,7 +8,8 @@ with DAG(
     tags=["Verificador","INMET","Chuva Observada"],
     start_date=datetime(2024, 4, 28), 
     schedule_interval= "5 * * * * ", 
-    catchup=False
+    catchup=False,
+    tags=["Metereologia"]
     ) as dag:
     
     run_decomp_on_host = SSHOperator(
@@ -27,7 +28,8 @@ with DAG(
     tags=["Verificador","SIMEPAR","Chuva Observada"],
     start_date=datetime(2024, 4, 28), 
     schedule_interval= "30 * * * * ", 
-    catchup=False
+    catchup=False,
+    tags=["Metereologia"]
     ) as dag:
     
     run_decomp_on_host = SSHOperator(
