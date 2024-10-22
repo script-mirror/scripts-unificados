@@ -6,9 +6,9 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.providers.ssh.operators.ssh import SSHOperator
 from airflow.providers.ssh.hooks.ssh import SSHHook
 from airflow.operators.dummy_operator import DummyOperator
+from airflow.exceptions import AirflowSkipException
 
 import datetime
-
 import os
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
@@ -24,7 +24,6 @@ def create_ec2_client(region):
            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
            region_name=region)
 
-
 def check_instance_state(instance_id, region):
     """Verifica o estado atual da instância na região especificada."""
     ec2 = create_ec2_client(region)
@@ -38,34 +37,35 @@ def check_instance_state(instance_id, region):
 
 def start_instance(**kwargs):
     """Inicia uma instância na região especificada se ela estiver parada."""
-    instance_id = 'i-0edbeb5435710d5f3'
-    region = 'us-east-1'
+    
+    # instance_id = 'i-0edbeb5435710d5f3'
+    # region = 'us-east-1'
 
-    ec2 = create_ec2_client(region)
-    state = check_instance_state(instance_id, region)
+    # ec2 = create_ec2_client(region)
+    # state = check_instance_state(instance_id, region)
 
-    if state is None:
-        return
-    if state == 'running':
-        print("A instância já está rodando.")
-        public_ip = ec2.describe_instances(InstanceIds=[instance_id])['Reservations'][0]['Instances'][0].get('PublicIpAddress')
-        print(public_ip)
-        kwargs['ti'].xcom_push(key='public_ip', value=public_ip)
+    # if state is None:
+    #     return
+    # if state == 'running':
+    #     print("A instância já está rodando.")
+    #     public_ip = ec2.describe_instances(InstanceIds=[instance_id])['Reservations'][0]['Instances'][0].get('PublicIpAddress')
+    #     print(public_ip)
+    #     kwargs['ti'].xcom_push(key='public_ip', value=public_ip)
         
-    elif state == 'stopped':
-        print("Iniciando a instância...")
-        ec2.start_instances(InstanceIds=[instance_id])
-        print("Aguardando a instância ficar disponível...")
-        waiter = ec2.get_waiter('instance_running')
-        waiter.wait(InstanceIds=[instance_id])
+    # elif state == 'stopped':
+    #     print("Iniciando a instância...")
+    #     ec2.start_instances(InstanceIds=[instance_id])
+    #     print("Aguardando a instância ficar disponível...")
+    #     waiter = ec2.get_waiter('instance_running')
+    #     waiter.wait(InstanceIds=[instance_id])
 
-        public_ip = ec2.describe_instances(InstanceIds=[instance_id])['Reservations'][0]['Instances'][0].get('PublicIpAddress')
-        print(public_ip)
-        kwargs['ti'].xcom_push(key='public_ip', value=public_ip)
+    #     public_ip = ec2.describe_instances(InstanceIds=[instance_id])['Reservations'][0]['Instances'][0].get('PublicIpAddress')
+    #     print(public_ip)
+    #     kwargs['ti'].xcom_push(key='public_ip', value=public_ip)
         
-        print("Instância está rodando.")
-    else:
-        print(f"A instância está em um estado não manipulável: {state}")
+    #     print("Instância está rodando.")
+    # else:
+    #     print(f"A instância está em um estado não manipulável: {state}")
 
     params = kwargs.get('dag_run').conf
     flag = params.get('flag')
@@ -75,6 +75,7 @@ def start_instance(**kwargs):
 
 def stop_instance(instance_id, region):
     """Para uma instância na região especificada se ela estiver rodando."""
+    raise AirflowSkipException("SKIP STOP INSTANCE")
     ec2 = create_ec2_client(region)
     state = check_instance_state(instance_id, region)
     if state is None:
@@ -99,6 +100,7 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
+    tags=['Metereologia']
 ) as dag:
     
     
@@ -152,6 +154,7 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
+    tags=['Metereologia']
 ) as dag:
         
     start_ec2_task = BranchPythonOperator(
@@ -197,6 +200,284 @@ with DAG(
     )
     start_ec2_task >> [run_forecast,run_hindcast]  >> stop_ec2_task >> fim
 
-
-
+with DAG(
+    'PREV_CHUVA_DB_ECMWF-ENS',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 7,19 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia']
+) as dag:
+        
+    start_ec2_task = BranchPythonOperator(
+        task_id='start_ec2',
+        python_callable=start_instance,
+        # provide_context=True,
+    )
     
+     # Task to run a command on the remote server
+    
+    run_forecast = SSHOperator(
+        task_id='vl_chuva_to_db',
+        remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
+        ssh_conn_id='ssh_ecmwf',
+        command="{{ '/home/admin/rotinas//home/admin/enviMetereologia/bin/python gera_forecast_to_db.py ecmwf-ens-membros' }}",
+        conn_timeout = None,
+        cmd_timeout = None,
+        get_pty=True,
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    stop_ec2_task = PythonOperator(
+        task_id='stop_ec2',
+        python_callable=stop_instance,
+        op_kwargs={'instance_id': 'i-0edbeb5435710d5f3', 'region': 'us-east-1'},
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    fim = DummyOperator(
+        task_id='fim',
+        trigger_rule="none_failed_min_one_success",
+    )
+    
+    start_ec2_task >> [run_forecast]  >> stop_ec2_task >> fim
+
+with DAG(
+    'PREV_CHUVA_DB_ECMWF',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 7,19 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia']
+) as dag:
+        
+    start_ec2_task = BranchPythonOperator(
+        task_id='start_ec2',
+        python_callable=start_instance,
+        # provide_context=True,
+    )
+    
+     # Task to run a command on the remote server
+    
+    run_forecast = SSHOperator(
+        task_id='vl_chuva_to_db',
+        remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
+        ssh_conn_id='ssh_ecmwf',
+        command="{{ '/home/admin/rotinas//home/admin/enviMetereologia/bin/python gera_forecast_to_db.py ecmwf' }}",
+        conn_timeout = None,
+        cmd_timeout = None,
+        get_pty=True,
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    stop_ec2_task = PythonOperator(
+        task_id='stop_ec2',
+        python_callable=stop_instance,
+        op_kwargs={'instance_id': 'i-0edbeb5435710d5f3', 'region': 'us-east-1'},
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    fim = DummyOperator(
+        task_id='fim',
+        trigger_rule="none_failed_min_one_success",
+    )
+    
+    start_ec2_task >> [run_forecast]  >> stop_ec2_task >> fim    
+
+with DAG(
+    'PREV_CHUVA_DB_GEFS-EST',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 5 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia']
+) as dag:
+        
+    start_ec2_task = BranchPythonOperator(
+        task_id='start_ec2',
+        python_callable=start_instance,
+        # provide_context=True,
+    )
+    
+     # Task to run a command on the remote server
+    
+    run_forecast = SSHOperator(
+        task_id='vl_chuva_to_db',
+        remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
+        ssh_conn_id='ssh_ecmwf',
+        command="{{ '/home/admin/rotinas//home/admin/enviMetereologia/bin/python gera_forecast_to_db.py gefs-membros-estendido' }}",
+        conn_timeout = None,
+        cmd_timeout = None,
+        get_pty=True,
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    stop_ec2_task = PythonOperator(
+        task_id='stop_ec2',
+        python_callable=stop_instance,
+        op_kwargs={'instance_id': 'i-0edbeb5435710d5f3', 'region': 'us-east-1'},
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    fim = DummyOperator(
+        task_id='fim',
+        trigger_rule="none_failed_min_one_success",
+    )
+    
+    start_ec2_task >> [run_forecast]  >> stop_ec2_task >> fim
+
+
+with DAG(
+    'PREV_CHUVA_DB_GEFS',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 5,10,17,22 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia']
+) as dag:
+        
+    start_ec2_task = BranchPythonOperator(
+        task_id='start_ec2',
+        python_callable=start_instance,
+        # provide_context=True,
+    )
+    
+     # Task to run a command on the remote server
+    
+    run_forecast = SSHOperator(
+        task_id='vl_chuva_to_db',
+        remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
+        ssh_conn_id='ssh_ecmwf',
+        command="{{ '/home/admin/rotinas//home/admin/enviMetereologia/bin/python gera_forecast_to_db.py gefs-membros' }}",
+        conn_timeout = None,
+        cmd_timeout = None,
+        get_pty=True,
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    stop_ec2_task = PythonOperator(
+        task_id='stop_ec2',
+        python_callable=stop_instance,
+        op_kwargs={'instance_id': 'i-0edbeb5435710d5f3', 'region': 'us-east-1'},
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    fim = DummyOperator(
+        task_id='fim',
+        trigger_rule="none_failed_min_one_success",
+    )
+    
+    start_ec2_task >> [run_forecast]  >> stop_ec2_task >> fim
+
+
+with DAG(
+    'PREV_CHUVA_DB_GFS',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 5,10,17,22 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia']
+) as dag:
+        
+    start_ec2_task = BranchPythonOperator(
+        task_id='start_ec2',
+        python_callable=start_instance,
+        # provide_context=True,
+    )
+    
+     # Task to run a command on the remote server
+    
+    run_forecast = SSHOperator(
+        task_id='vl_chuva_to_db',
+        remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
+        ssh_conn_id='ssh_ecmwf',
+        command="{{ '/home/admin/rotinas//home/admin/enviMetereologia/bin/python /home/admin/rotinas/gera_forecast_to_db.py gfs' }}",
+        conn_timeout = None,
+        cmd_timeout = None,
+        get_pty=True,
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    stop_ec2_task = PythonOperator(
+        task_id='stop_ec2',
+        python_callable=stop_instance,
+        op_kwargs={'instance_id': 'i-0edbeb5435710d5f3', 'region': 'us-east-1'},
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    fim = DummyOperator(
+        task_id='fim',
+        trigger_rule="none_failed_min_one_success",
+    )
+
+    state = check_instance_state('i-0edbeb5435710d5f3', 'us-east-1')
+
+    if state == 'running':
+        [run_forecast] >> stop_ec2_task >> fim
+
+    else:
+        start_ec2_task >> [run_forecast]  >> stop_ec2_task >> fim
+
+with DAG(
+    'C3S',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='30 13 10 * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia']
+) as dag:
+
+
+    start_ec2_task = BranchPythonOperator(
+        task_id='start_ec2',
+        python_callable=start_instance,
+        # provide_context=True,
+    )
+
+     # Task to run a command on the remote server
+    run_cpc = SSHOperator(
+        task_id='run_c3s',
+        remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
+        ssh_conn_id='ssh_ecmwf',
+        command="{{ 's3fs wx-chuva-vazao ~/s3-drive -o allow_other,umask=0007,uid=1000,gid=1000 -d && /home/admin/rotinas/c3s/produtos.sh' }}",
+        conn_timeout = None,
+        cmd_timeout = None,
+        get_pty=True,
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    run_shell_script = SSHOperator(
+        task_id='gera_produtos_c3s',
+        command="{{'/home/admin/jose/c3s/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = None,
+        cmd_timeout = None,
+        get_pty=True,
+    )
+
+    stop_ec2_task = PythonOperator(
+        task_id='stop_ec2',
+        python_callable=stop_instance,
+        op_kwargs={'instance_id': 'i-0edbeb5435710d5f3', 'region': 'us-east-1'},
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    fim = DummyOperator(
+        task_id='fim',
+        trigger_rule="none_failed_min_one_success",
+    )
+
+    start_ec2_task >> run_cpc >> run_shell_script >> stop_ec2_task >> fim
