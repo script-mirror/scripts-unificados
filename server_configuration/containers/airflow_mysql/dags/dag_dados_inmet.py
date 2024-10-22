@@ -5,11 +5,10 @@ from airflow.providers.ssh.operators.ssh import SSHOperator
 
 with DAG(
     dag_id = 'INMET', 
-    tags=["Verificador","INMET","Chuva Observada"],
+    tags=["Verificador","INMET","Chuva Observada", "Metereologia"],
     start_date=datetime(2024, 4, 28), 
     schedule_interval= "5 * * * * ", 
     catchup=False,
-    tags=["Metereologia"]
     ) as dag:
     
     run_decomp_on_host = SSHOperator(
@@ -25,11 +24,10 @@ with DAG(
 
 with DAG(
     dag_id = 'SIMEPAR', 
-    tags=["Verificador","SIMEPAR","Chuva Observada"],
+    tags=["Verificador","SIMEPAR","Chuva Observada", "Metereologia"],
     start_date=datetime(2024, 4, 28), 
     schedule_interval= "30 * * * * ", 
     catchup=False,
-    tags=["Metereologia"]
     ) as dag:
     
     run_decomp_on_host = SSHOperator(
