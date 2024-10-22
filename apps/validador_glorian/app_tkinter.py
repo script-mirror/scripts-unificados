@@ -26,8 +26,7 @@ import pdb
 import unicodedata
 
 from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
-
+load_dotenv(os.path.join(os.path.dirname(__file__),'.env'))
 
 __PASSWORD_CARTEIRA_OFICIAL = os.getenv('PASSWORD_CARTEIRA_OFICIAL')
 
@@ -84,15 +83,31 @@ relacao_submercado['SUL'] = 'S'
 relacao_submercado['NORDESTE'] = 'NE'
 relacao_submercado['NORTE'] = 'N' 
 
+
+# relacao_perfil = {}
+# relacao_perfil['WXE'] = ['RAIZEN POWER']
+# # relacao_perfil['WXE INE'] = ['CQ5']
+# relacao_perfil['WXE CQ5'] = ['RAIZEN POWER CQ5']
+# relacao_perfil['WXE I5'] = ['RAIZEN POWER I5']
+# relacao_perfil['WXE I5 2'] = ['RAIZEN POWER I5 2']
+# relacao_perfil['WXE I0'] = ['RAIZEN POWER I0']
+# relacao_perfil['WXE I1 3'] = ['RAIZEN POWER I1 3']
+# relacao_perfil['WXE I1'] = ['RAIZEN POWER I1']
+# relacao_perfil['WXE I1 2'] = ['RAIZEN POWER I1 2']
+
+
 relacao_perfil = {}
-relacao_perfil['WXE'] = ['CONV']
-relacao_perfil['WXE INE'] = ['CQ5']
-relacao_perfil['WXE I5'] = ['INC_50']
-relacao_perfil['WXE I5 2'] = ['INC_50_2']
-relacao_perfil['WXE I0'] = ['INC_0']
-relacao_perfil['WXE I1 3'] = ['INC_100_3']
-relacao_perfil['WXE I1'] = ['INC_100']
-relacao_perfil['WXE I1 2'] = ['INC_100_2']
+relacao_perfil['RAIZEN POWER'] = ['CONV']
+
+relacao_perfil['RAIZEN POWER CQ5'] = ['CQ5']
+relacao_perfil['RAIZEN POWER INE'] = ['CQ5']
+
+relacao_perfil['RAIZEN POWER I5'] = ['INC_50']
+relacao_perfil['RAIZEN POWER I5 2'] = ['INC_50_2']
+relacao_perfil['RAIZEN POWER I0'] = ['INC_0']
+relacao_perfil['RAIZEN POWER I1 3'] = ['INC_100_3']
+relacao_perfil['RAIZEN POWER I1'] = ['INC_100']
+relacao_perfil['RAIZEN POWER I1 2'] = ['INC_100_2']
 
 relacao_modulacao = {}
 relacao_modulacao['CARGA'] = ['C - Perfil de Carga']
@@ -212,6 +227,9 @@ df_mensagens = ""
 
 
 def verificar_arquivos_entrada_aba_1e3():
+    global path_carteira_oficial
+    global path_carteira_glorian
+
     path_home =  os.path.expanduser("~")
     
     patterns_path_carteira = os.path.join(path_home, 'Desktop', 'carteira wxe*')
@@ -275,6 +293,7 @@ def mostrar_dados_carteira_glorian():
         global path_carteira_oficial
         global path_carteira_glorian
 
+
         df_diferencas = pd.DataFrame(columns = colunas_planilha_saida)
         df_mensagens = pd.DataFrame()
 
@@ -287,13 +306,13 @@ def mostrar_dados_carteira_glorian():
         new_path_carteira_oficial = entrada_caminho1.get()
         new_path_carteira_glorian = entrada_caminho2.get()
         
-        if new_path_carteira_glorian != '' and new_path_carteira_oficial != '' and new_path_carteira_oficial != path_carteira_oficial and new_path_carteira_glorian != path_carteira_glorian:
+        if new_path_carteira_glorian != '' and new_path_carteira_oficial != '': 
             
             _, extensao = os.path.splitext(new_path_carteira_oficial)
             if extensao != '.xlsb':
                 rotulo_status.configure(text=f"Erro ",image=icone_vermelho, compound="right")
                 messagebox.showerror("Erro ", "Ocorreu um erro: Carteira no formato diferente de xlsb")
-                return
+                returnnew_path_carteira_oficial
                 
             path_carteira_oficial = new_path_carteira_oficial
             path_carteira_glorian = new_path_carteira_glorian
@@ -527,15 +546,21 @@ def tratar_colunas_oficial(recorte_carteira_oficial):
     recorte_carteira_oficial['R$/MWh'] = \
     recorte_carteira_oficial['R$/MWh'].round(2)
 
-    recorte_carteira_oficial['Valor Nota sem ICMS']=\
-    recorte_carteira_oficial['Valor Nota sem ICMS'].abs().astype(float).round(2)
-    
+
+    try:
+        recorte_carteira_oficial['Valor Nota sem ICMS']=\
+        recorte_carteira_oficial['Valor Nota sem ICMS'].abs().astype(float).round(2)
+    except:
+        pdb.set_trace()
+
     prefixoa_codigos_desiconsiderados = ['Ajuste','Carga','COGEN','GERENCIAL','Gerencial']
     for prefixo in prefixoa_codigos_desiconsiderados:
         filtro = recorte_carteira_oficial['Código'].astype(str).str.startswith(prefixo)
         recorte_carteira_oficial = recorte_carteira_oficial[~filtro].copy()
-        
-    recorte_carteira_oficial['Código'] = pd.to_numeric(recorte_carteira_oficial['Código'], errors='coerce').astype('Int64')
+    
+    recorte_carteira_oficial['Código'] = recorte_carteira_oficial['Código'].astype(str)
+
+    # recorte_carteira_oficial['Código'] = pd.to_numeric(recorte_carteira_oficial['Código'], errors='coerce').astype('Int64')
 
     # recorte_carteira_oficial['Código'] = recorte_carteira_oficial['Código'].fillna('')
     # recorte_carteira_oficial['Código'] = recorte_carteira_oficial['Código'].astype(str)
@@ -549,8 +574,8 @@ def tratar_colunas_oficial(recorte_carteira_oficial):
 
     
     # recorte_carteira_oficial['Código'] = recorte_carteira_oficial['Código'].apply(lambda x: re.search(r'\d{5}', str(x)).group() if re.search(r'\d{5}', str(x)) else '')
-    recorte_carteira_oficial['Código'].fillna(9999999,inplace=True)
-    recorte_carteira_oficial['Código'] = recorte_carteira_oficial['Código'].apply(Decimal)
+    # recorte_carteira_oficial['Código'].fillna(9999999,inplace=True)
+    # recorte_carteira_oficial['Código'] = recorte_carteira_oficial['Código'].apply(Decimal)
 
     return recorte_carteira_oficial
 
@@ -558,6 +583,8 @@ def tratar_colunas_oficial(recorte_carteira_oficial):
 def tratar_colunas_glorian(recorte_carteira_glorian):
     
     global selected_tab
+
+
        
     recorte_carteira_glorian['inicio_fornecimento'] = pd.to_datetime(
                                                                     recorte_carteira_glorian['Ano'].astype(str) + 
@@ -623,8 +650,10 @@ def tratar_colunas_glorian(recorte_carteira_glorian):
     
     recorte_carteira_glorian['Código'] = \
     recorte_carteira_glorian['Código'].replace('', '0', regex=True)  # Substitui strings vazias por '0'
-    recorte_carteira_glorian['Código'] = \
-    recorte_carteira_glorian['Código'].str.replace(r'[^0-9]', '', regex=True).apply(Decimal)
+    
+    # recorte_carteira_glorian['Código'] = \
+    # recorte_carteira_glorian['Código'].str.replace(r'[^0-9]', '', regex=True).apply(Decimal)
+    
     
     filtro_pld_ou_preco_fixo = recorte_carteira_glorian['Preço Original'].str.lower().str.contains('pld')
     recorte_carteira_glorian['TipoPreco'] = np.nan
@@ -813,7 +842,6 @@ def compara_carteira_glorian(df_carteira_oficial,df_carteira_glorian, data_inici
             g_codigos = set(recorte_carteira_glorian['Código'].unique())
             r_codigos = set(recorte_carteira_oficial['Código'].unique())
 
-            # pdb.set_trace()
             t_codigos =  g_codigos | r_codigos
             
 
@@ -859,7 +887,7 @@ def compara_carteira_glorian(df_carteira_oficial,df_carteira_glorian, data_inici
                         diff = comparar_linhas(operacao_glorian2.iloc[i], operacao_oficial2.iloc[i])
 
                         if len(diff):
-                            codigo = int(operacao_oficial2.iloc[i]["Código"])
+                            codigo = str(operacao_oficial2.iloc[i]["Código"])
                             diferencas[f'{codigo}'] = diff
                             df_diferencas.loc[f"{codigo}_{operacao_oficial2.iloc[i].name+2}_r", 'Código | Código'] = codigo
                             df_diferencas.loc[f"{codigo}_{operacao_glorian2.iloc[i].name+2}_g", 'Código | Código'] = codigo
@@ -945,7 +973,7 @@ def compara_carteira_glorian_peloMes_Ano(df_carteira_oficial,df_carteira_glorian
                         diff = comparar_linhas(operacao_glorian2.iloc[i], operacao_oficial2.iloc[i])
 
                         if len(diff):
-                            codigo = int(operacao_oficial2.iloc[i]["Código"])
+                            codigo = str(operacao_oficial2.iloc[i]["Código"])
                             diferencas[f'{codigo}'] = diff
                             df_diferencas.loc[f"{codigo}_{operacao_oficial2.iloc[i].name+2}_r", 'Código | Código'] = codigo
                             df_diferencas.loc[f"{codigo}_{operacao_glorian2.iloc[i].name+2}_g", 'Código | Código'] = codigo
@@ -1189,6 +1217,8 @@ def on_tab_selected(event):
     global selected_tab
     selected_tab = notebook.index(notebook.select())  # Obtém o índice da aba selecionada
     if selected_tab == 0:
+
+        print("to aqui")
         
         botao_selecionar_arquivo1 = ctk.CTkButton(frame1, text="Selecionar Arquivo", command=lambda:selecionar_arquivo(entrada_caminho1,'oficial'))
         botao_selecionar_arquivo1.grid(row=0, column=2, padx=2, pady=2)
@@ -1242,7 +1272,7 @@ if __name__ == "__main__":
 
         # 
         janela = tk.Tk()
-        janela.wm_iconbitmap("./faviIconraizenPower.ico")
+        # janela.wm_iconbitmap("./faviIconraizenPower.ico")
         janela.title("Validador da carteira")
         janela.geometry(f"{app_width}x{app_height}")
 
