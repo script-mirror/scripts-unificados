@@ -1,6 +1,7 @@
 import os
 import pdb
 import sqlalchemy as db
+from sqlalchemy.engine import Connection
 
 home_path =  os.path.expanduser("~")
 dropbox_middle_path = os.path.join(home_path, 'Dropbox', 'WX - Middle')
@@ -106,6 +107,14 @@ class db_mysql_master():
     def create_table(self, table_name):
         self.getSchema(table_name)
         self.meta.create_all(self.engine)
+    
+    
+    def get_conn(self):
+        conn: Connection = self.engine.connect()
+        try:
+            yield conn
+        finally:
+            conn.close()        
 
     def getSchema(self, table_name:str) -> db.Table:
         
@@ -925,8 +934,8 @@ class db_mysql_master():
             table_schema = db.Table('tb_membro_modelo', self.meta,
                 db.Column('id', db.INTEGER, primary_key=True),
                 db.Column('dt_hr_rodada', db.DateTime, index=True),
-                db.Column('nome', db.String(250)),
-                db.Column('id_rodada', db.INTEGER, db.ForeignKey('db_rodadas.tb_cadastro_rodadas.id'))
+                db.Column('nome', db.String(100)),
+                db.Column('modelo', db.String(100))
             )
         
         elif table_name.lower() == 'tb_chuva_membro':

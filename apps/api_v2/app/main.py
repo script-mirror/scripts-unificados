@@ -4,7 +4,7 @@ import os
 path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2")
 
 from fastapi import FastAPI, Depends
-from app.routers import rodadas_controller, testes_controller, ons_controller, bbce_controller
+from app.routers import rodadas_controller, ons_controller, bbce_controller
 from app.utils.cache import cache
 from fastapi.middleware.cors import CORSMiddleware
 
