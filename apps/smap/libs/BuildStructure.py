@@ -49,7 +49,8 @@ class StructureSMAP(VazaoObservada,ChuvaObservada,Rodadas):
 
         self.ndia_prev = 44
         self.dias_aquec = 31   # numero de dias para o aquecimento do modelo
-        self.dt_exec = dt_exec
+        self.dt_exec = dt_exec 
+        self.ec_probs = None # somente para o PCONJUNTO + ECMWF clusters
 
         os.makedirs(os.path.join(PATH_EXECUCAO_SMAP,'Arq_entrada'), exist_ok=True)
         os.makedirs(os.path.join(PATH_EXECUCAO_SMAP,'Arq_saida'), exist_ok=True)
@@ -78,7 +79,6 @@ class StructureSMAP(VazaoObservada,ChuvaObservada,Rodadas):
             print("[ERROR] Nao ha historico de vazao disponivel!")
             quit()
         ultimo_dt_historico_vazao = max(pd.to_datetime(df_vazao_obs.index)).date()
-        print('[INICIALIZAÇÂO] Histórico de vazao, OK!')
         return df_vazao_obs,ultimo_dt_historico_vazao
     
     def historico_psat(self,dt_ini:datetime.datetime,dt_fim:datetime.datetime):
@@ -120,7 +120,7 @@ class StructureSMAP(VazaoObservada,ChuvaObservada,Rodadas):
         print(f'O modelo será considerado como preliminar, rodando com a data anterior mas com a previsao chuva atual.')
         
         df_preliminares = df_chuva_prevista[df_chuva_prevista['data_rodada'] == (ultimo_dt_historico_vazao + datetime.timedelta(days=2))]
-        df_preliminares.loc[:,'cenario'] = df_preliminares['cenario'] + '.PRELIMINAR'
+        df_preliminares.loc[:,'modelo'] = df_preliminares['modelo'] + '.PRELIMINAR'
         df_preliminares.loc[:,'data_rodada'] = df_preliminares['data_rodada'] - datetime.timedelta(days=1)
 
         dt_rodada_preliminar = df_preliminares['data_rodada'].unique()[0]
@@ -132,7 +132,7 @@ class StructureSMAP(VazaoObservada,ChuvaObservada,Rodadas):
 
         chuva_faltante = chuva_faltante.reset_index().melt(id_vars=['data'], var_name='nome', value_name='valor')
 
-        df = df_preliminares.drop_duplicates(subset=['cenario', 'hr_rodada','nome']).drop(['valor','data_previsao'],axis=1)
+        df = df_preliminares.drop_duplicates(subset=['modelo', 'hr_rodada','nome']).drop(['valor','data_previsao'],axis=1)
         df_primeiro_dia_previsao = df.merge(chuva_faltante,on='nome').rename({'data':'data_previsao'},axis=1)
         df_chuva_preliminar = pd.concat([df_preliminares,df_primeiro_dia_previsao])
 
@@ -162,45 +162,6 @@ class StructureSMAP(VazaoObservada,ChuvaObservada,Rodadas):
         print('[INICIALIZAÇÂO] Histórico de vazao, OK!')
         return df_chuva_prevista_smap
     
-    def add_chuva_clust(self,df_chuva_prevista_smap:pd.DataFrame):
-        #padrao para diferenciar os modelos
-        df_chuva_prevista_smap['cenario'] = (
-                df_chuva_prevista_smap['cenario']
-                + '_' 
-                + df_chuva_prevista_smap['data_rodada'].astype(str)
-                +'_'
-                +  df_chuva_prevista_smap['hr_rodada'].astype(str)#.str.zfill(2)
-        )
-        df_chuva_prevista_smap = df_chuva_prevista_smap.drop(columns= ['hr_rodada'])
-
-        print('[INICIALIZAÇÂO] Modelos:')
-        
-        chuva={}
-        for cenario in df_chuva_prevista_smap['cenario'].unique():
-
-            df_cenario = df_chuva_prevista_smap[df_chuva_prevista_smap['cenario']==cenario]
-            max_dt_previsao_cenario = df_cenario['data_previsao'].max()
-            dt_rodada_cenario = df_cenario['data_rodada'].unique()[0]
-
-            chuva[dt_rodada_cenario] = self.get_chuva_modelos(
-                modelos_list=[('ECMWF-CLUST', 18, dt_rodada_cenario - datetime.timedelta(days=1))]
-                ) if chuva.get(dt_rodada_cenario,pd.DataFrame()).empty else chuva[dt_rodada_cenario]
-
-            df_chuva_ec_clust = chuva[dt_rodada_cenario]
-            df_ec_to_concat = df_chuva_ec_clust[df_chuva_ec_clust['data_previsao'] > max_dt_previsao_cenario].copy()
-            df_ec_to_concat['cenario'] = df_ec_to_concat['cenario'].replace('ECMWF-CLUST',cenario) 
-            df_ec_to_concat = df_ec_to_concat.drop("hr_rodada",axis=1)
-            df_ec_to_concat['data_rodada'] = dt_rodada_cenario
-            
-            #caso falte dias para completar, repetir valores do ultimo dia da previsao
-            last_date_rows = df_ec_to_concat[df_ec_to_concat['data_previsao']==df_ec_to_concat['data_previsao'].max()].copy()
-            last_date_rows['data_previsao'] += datetime.timedelta(days=1)
-            df_chuva_prevista_smap = pd.concat([df_chuva_prevista_smap, df_ec_to_concat,last_date_rows]) 
-
-            print(f"    -> cenario:{cenario}")
-    
-        return df_chuva_prevista_smap
-    
     def write_arquivos_names(self):
         pd.DataFrame(self.arquivos.items(), columns=['arquivo','nome_arquivo']).to_csv(
             os.path.join(PATH_EXECUCAO_SMAP,'Arq_entrada','arquivos.csv'),sep=';',index=False
@@ -213,7 +174,7 @@ class StructureSMAP(VazaoObservada,ChuvaObservada,Rodadas):
                 os.path.join(PATH_EXECUCAO_SMAP,'Arq_entrada',self.arquivos['DATAS_RODADAS']),sep=';',index=False
                 )
     
-    def write_time_series_datasets(self, modelos_list:list):
+    def write_time_series_datasets(self, modelos_list:list,chuva_ext:bool):
 
         #chuva obs é armazenada com a data de inicio do acumulado e no smap é com a data final do acumulado (12z:12z UTC) == (9h:9h UTC-3 Brasilia)
         #considerando que acumulado das 12z as 12z é 9h as 9h aqui no brasil, maior parte do acumulado está na data inicial, por isso armazenamos assim
@@ -221,21 +182,27 @@ class StructureSMAP(VazaoObservada,ChuvaObservada,Rodadas):
         '''Se algum modelo, para uma mesma data da rodada, não tiver o mesmo
         numero de dias de previsao em relacao aos demais, acontece um erro no R. 
         '''
-        df_chuva_prevista = self.get_chuva_modelos(modelos_list=modelos_list)
+
+        if chuva_ext:
+            df_chuva_prevista, self.ec_probs = self.get_chuva_extendida(modelos_list=modelos_list)
+        else:
+            df_chuva_prevista = self.get_chuva_modelos(modelos_list=modelos_list)
+
 
         if df_chuva_prevista.empty:
-            print("Não há chuva prevista para os modelos! Não será rodado!")
+            print("Não há chuva prevista para os modelos! Não será possivel rodar!")
             quit()
         
         max_dt_rodada = max(df_chuva_prevista['data_rodada'])
         dt_inicial = min(df_chuva_prevista['data_rodada']) - datetime.timedelta(days=120)
         df_vazao_obs,ultimo_dt_historico_vazao = self.historico_vazao(dt_ini=dt_inicial,dt_fim=max_dt_rodada)
-        
+
         #muda os modelos para .preliminar se necessario
         df_chuva_prevista_smap = self.check_if_preliminar(
             ultimo_dt_historico_vazao=ultimo_dt_historico_vazao,
             df_chuva_prevista=df_chuva_prevista
             )
+        df_chuva_prevista_smap.reset_index(drop=True, inplace=True)
         
         #se for preliminar altera data_rodada, portanto pegamos novamente as datas
         max_dt_rodada = max(df_chuva_prevista_smap['data_rodada'])
@@ -243,17 +210,27 @@ class StructureSMAP(VazaoObservada,ChuvaObservada,Rodadas):
         df_chuva_obs,ultima_dt_historico_chuva = self.historico_psat(dt_ini=dt_inicial,dt_fim=max_dt_rodada)
 
         #adiciona tipo de chuva .GPM ou .PSAT ao nome do modelo, por default todos sao .PSAT
-        df_chuva_prevista_smap['cenario'] = df_chuva_prevista_smap['cenario'] + ".PSAT"
-        df_chuva_prevista_smap.loc[df_chuva_prevista_smap['data_rodada'] > ultima_dt_historico_chuva, 'cenario'] = df_chuva_prevista_smap['cenario'].str.replace(".PSAT", ".GPM")
+        df_chuva_prevista_smap['modelo'] = df_chuva_prevista_smap['modelo'] + ".PSAT"
+        df_chuva_prevista_smap.loc[df_chuva_prevista_smap['data_rodada'] > ultima_dt_historico_chuva, 'modelo'] = df_chuva_prevista_smap['modelo'].str.replace(".PSAT", ".GPM")
 
         #ultima data dos arquivos de ajuste do pdp, coloca .pdp apenas nas rodadas que tem a mesma data do pdp (dt_ult_pdp_disponivel)
         # .pdp significa que o historico de vazao e a inicializacao de ajuste sao os mesmos do arquivo pdp mas a chuva ainda é psat (rever isso) 
         dt_max, dt_min = self.last_pdp_dt_ajuste()
         dt_ult_pdp_disponivel = (dt_max + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-        df_chuva_prevista_smap.loc[pd.to_datetime(df_chuva_prevista_smap['data_rodada']).dt.strftime('%Y-%m-%d') == dt_ult_pdp_disponivel ,'cenario'] += '.PDP'
+        df_chuva_prevista_smap.loc[pd.to_datetime(df_chuva_prevista_smap['data_rodada']).dt.strftime('%Y-%m-%d') == dt_ult_pdp_disponivel ,'modelo'] += '.PDP'
 
-        #completa a chuva do modelo com a media dos clusters do ecmwf  
-        df_chuva_prevista_smap = self.add_chuva_clust(df_chuva_prevista_smap)
+        #ciarndo cenario unico
+        df_chuva_prevista_smap['cenario'] = (
+                df_chuva_prevista_smap['modelo']
+                + '_' 
+                + df_chuva_prevista_smap['data_rodada'].astype(str)
+                +'_'
+                +  df_chuva_prevista_smap['hr_rodada'].astype(str)
+        )
+
+        print('[INICIALIZAÇÂO] Modelos:')
+        for cenario in df_chuva_prevista_smap['cenario'].unique():
+            print(f"    -> cenario:{cenario}")
 
         #formatando valores de entrada
         df_chuva_prevista_smap = df_chuva_prevista_smap[["data_rodada","data_previsao","cenario","nome","valor"]].copy()
@@ -360,14 +337,14 @@ class StructureSMAP(VazaoObservada,ChuvaObservada,Rodadas):
         subbacias = [item.lower() for sublist in self.bacias.values() for item in sublist]
         pd.DataFrame(subbacias,columns=['nome']).to_csv(os.path.join(PATH_EXECUCAO_SMAP,'Arq_entrada',self.arquivos['SUB_BACIAS']),sep=';',index=False)
 
-    def build(self,modelos_list:list):
-        df_vazao_obs,df_chuva_obs,df_chuva_prevista_smap = self.write_time_series_datasets(modelos_list)
+    def build(self,modelos_list:list, chuva_ext:bool):
+        df_vazao_obs,df_chuva_obs,df_chuva_prevista_smap = self.write_time_series_datasets(modelos_list,chuva_ext)
         self.info_bacias()
         self.write_dt_rodada_file(df_chuva_prevista_smap['data_rodada'].unique())
         self.write_arquivos_names()
         self.write_subbacias_file()
         self.write_init_files()
-        
+
         print(f"[INICIALIZAÇÂO] ARQUIVOS DE ENTRADA GERADOS CORRETAMENTE!")
 
     def info_postos_pos_processamento(self): 

@@ -18,6 +18,7 @@ PATH_CPINS = os.path.join(PATH_S3_BUCKET,'Chuva-vazão')
 path_diretorio_app_smap = os.path.dirname(os.path.abspath(__file__))
 PATH_EXECUCAO_SMAP = os.path.join(path_diretorio_app_smap,'arquivos','opera-smap', 'smap_novo')
 
+MODELOS_EXT = ['PCONJUNTO'] 
 
 class SMAP(StructureSMAP):
 
@@ -29,7 +30,6 @@ class SMAP(StructureSMAP):
                  ) -> None:
         
         self.modelos = modelos
-        self.leitura_nova = True
         self.write_out_files = write_out_files
         self.importar_resultados = importar_resultados
         
@@ -48,9 +48,9 @@ class SMAP(StructureSMAP):
 
     def agrega_vazao_saida(self,df_prev_postos):
 
-        #naturais e incrementais 
+        #naturais e incrementais {266: 1, 62: 1,63: 1,154: 1,246: 1, 245: 1}
         subBaciasIncrementais = [160, 239, 242] + [34, 154, 243, 245, 246, 266] + [191, 253, 257, 271, 273, 275] + [89]
-        df_nat_teste = df_prev_postos[~df_prev_postos['posto'].isin(subBaciasIncrementais)][['cenario','posto','data_previsao','data_rodada','previsao_total']]
+        df_nat_teste = df_prev_postos[['cenario','posto','data_previsao','data_rodada','previsao_total']]
         df_inc_teste = df_prev_postos[df_prev_postos['posto'].isin(subBaciasIncrementais)][['cenario','posto','data_previsao','data_rodada','previsao_incremental']]
 
         df_nat_teste.columns = ['cenario','cd_posto','dt_prevista','data_rodada','vl_vazao']
@@ -88,16 +88,50 @@ class SMAP(StructureSMAP):
         df['data_rodada'] = pd.to_datetime(df['data_rodada']).dt.strftime('%Y-%m-%d')
         df['dt_prevista'] = pd.to_datetime(df['dt_prevista']).dt.strftime('%Y-%m-%d')
         return df
+
+    def vazao_unica_ponderada_clust(self,df_prev_vazao_out):
+        for dt in self.ec_probs:
+            for clust in self.ec_probs[dt][0].keys():
+                df_prev_vazao_out.loc[
+                    (df_prev_vazao_out['data_rodada'] == dt.strftime("%Y-%m-%d")) & 
+                    (df_prev_vazao_out['cenario'].str.contains(clust)), 
+                    'vl_vazao'] *= self.ec_probs[dt][0][clust]
+
+        df_prev_vazao_out['cenario'] = df_prev_vazao_out['cenario'].replace(r'-ECMWF-G\d+', '', regex=True)
+        df_prev_vazao_out = df_prev_vazao_out.groupby(['cenario','data_rodada','cd_posto','dt_prevista'])[['vl_vazao']].sum().reset_index()
+        return df_prev_vazao_out
     
-    
-    def leitura_saida(self):
+    def separa_modelos_ext(self):
+        
+        grupo_de_modelos = []
+        df_modelos = pd.DataFrame(self.modelos,columns=['modelo','hr_rodada','dt_rodada'])
+
+        #modelos nao ext
+        if not df_modelos[~df_modelos['modelo'].isin(MODELOS_EXT)].empty:
+            grupo_de_modelos += {
+                "chuva_ext":False,
+                "modelos":df_modelos[~df_modelos['modelo'].isin(MODELOS_EXT)].values.tolist()
+                },
+
+        #modelos ext
+        if not df_modelos[df_modelos['modelo'].isin(MODELOS_EXT)].empty:
+            
+            grupo_de_modelos += {
+                "chuva_ext":True,
+                "modelos":df_modelos[df_modelos['modelo'].isin(MODELOS_EXT)].values.tolist()
+                },
+
+        return grupo_de_modelos
+
+    def leitura_saida(self,chuva_ext):
+
         path_vaz_smap_out = os.path.join(PATH_EXECUCAO_SMAP,'Arq_saida',"vazoes_prevista_totais_propagadas.csv")
         df_prev_vazoes_propagadas = pd.read_csv(path_vaz_smap_out, sep=';')
         df_prev_vazoes_propagadas['nome'] = df_prev_vazoes_propagadas['nome'].str.lower() 
         
         df_configuracoes = pd.read_csv(os.path.join(PATH_EXECUCAO_SMAP,"configuracao.csv"),sep=';')
-        df_configuracoes['nome_real'] = df_configuracoes['nome_real'].str.lower().str.strip()
-        df_prev_postos =  pd.merge(df_prev_vazoes_propagadas,df_configuracoes[['posto','nome_real']].rename({'nome_real':'nome'},axis=1), on=['nome']) 
+        df_configuracoes['nome'] = df_configuracoes['nome_real'].str.lower().str.strip()
+        df_prev_postos =  pd.merge(df_prev_vazoes_propagadas,df_configuracoes[['posto','nome']], on=['nome']) 
         self.info_postos_pos_processamento()
         
         df_info_postos = pd.DataFrame(self.postos)
@@ -106,52 +140,54 @@ class SMAP(StructureSMAP):
         
         df_prev_postos = pd.merge(df_prev_postos,df_info_postos_smap, on='posto')
 
-        if self.write_out_files:
-            for cenario in df_prev_postos['cenario'].unique():
-                df_prev_postos_cenario = df_prev_postos[df_prev_postos['cenario']==cenario]
-                self.write_file_pos_processamento(
-                    modelo=cenario,
-                    df_prev_postos=df_prev_postos_cenario,
-                    df_info_postos=df_info_postos,
-                    path_out=os.path.join(PATH_EXECUCAO_SMAP,'Arq_saida')
-                    )
+        # if self.write_out_files:
+        # for cenario in df_prev_postos['cenario'].unique():
+        #     df_prev_postos_cenario = df_prev_postos[df_prev_postos['cenario']==cenario]
+        #     self.write_file_pos_processamento(
+        #         modelo=cenario,
+        #         df_prev_postos=df_prev_postos_cenario,
+        #         df_info_postos=df_info_postos,
+        #         path_out=os.path.join(PATH_EXECUCAO_SMAP,'Arq_saida')
+        #         )
         
-        
+
         df_prev_vazao_out = self.agrega_vazao_saida(df_prev_postos)
+
+        if chuva_ext:
+            df_prev_vazao_out = self.vazao_unica_ponderada_clust(df_prev_vazao_out)
 
         if self.importar_resultados:
             print('[IMPORT]: ')
             self.importar_resultados_smap(self.modelos,df_prev_vazao_out)
             self.DB_RODADAS.db_dispose()
             
-        # df_ena = self.get_ena_modelos(df_prev_vazao_out)
-        
         return df_prev_vazoes_propagadas
     
 
     def init(self):
+
         print(f"Iniciado previsão SMAP! {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}")
-        if self.leitura_nova:
-            self.build(self.modelos)
+        grupo_de_modelos = self.separa_modelos_ext()
+        for grupo in grupo_de_modelos:
+            
+            self.modelos = grupo['modelos']
+            chuva_ext = grupo['chuva_ext']
+
+
+            self.build(self.modelos, chuva_ext)
+        
             comando = ["Rscript", os.path.join(PATH_EXECUCAO_SMAP,"roda_smapOnsR_paralelo.R"), os.path.join(PATH_EXECUCAO_SMAP,'Arq_entrada')]
-        else:
-            comando = ["Rscript", "roda_smapOnsR_paralelo.R", self.path_testes]
         
-        start_time_total = time.time()
-        process = subprocess.run(comando, capture_output=True, text=True)
-        print(process.stdout)
-        print('\nFinalizado para todas as bacias em {:.2f} segundos!'.format(time.time() - start_time_total))
-        
-        if process.returncode != 0:
-            print("Erro no script R:")
-            print(process.stderr)
+            start_time_total = time.time()
+            process = subprocess.run(comando, capture_output=True, text=True)
+            print(process.stdout)
+            print('\nFinalizado para todas as bacias em {:.2f} segundos!'.format(time.time() - start_time_total))
+            
+            if process.returncode != 0:
+                print("Erro no script R:")
+            else:
+                self.leitura_saida(chuva_ext)
 
-        else:
-            self.leitura_saida()
-
-def trigar_dag_roda_smap(dt:datetime.datetime, modelos_names:list, rodada:int):
-    trigger_dag_SMAP(dt_rodada=dt,modelos_names=modelos,rodada=hr)
-    
 
 def helper():
     dt = datetime.datetime.now()

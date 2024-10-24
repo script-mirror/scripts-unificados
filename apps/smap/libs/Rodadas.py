@@ -14,6 +14,8 @@ class tb_cadastro_rodada():
     def __init__(self,db_rodadas=None) -> None:
         self.DB_RODADAS=db_rodadas if db_rodadas else db_mysql_master('db_rodadas',connect=True)
         self.tb_cadastro_rodadas = self.DB_RODADAS.db_schemas['tb_cadastro_rodadas']
+        self.tb_smap = self.DB_RODADAS.db_schemas['tb_smap']
+        self.tb_chuva = self.DB_RODADAS.db_schemas['tb_chuva']
 
     def flags_priority(self):
         priority_order = db.case(
@@ -48,27 +50,48 @@ class tb_cadastro_rodada():
             ]
         return conditional_columns
         
-    def info_rodadas(self, modelos_list:list, columns_data:list=[]): 
-
-        if not columns_data: selected_columns = [column_name for column_name in self.tb_cadastro_rodadas.columns] 
-        else:
-            conditional_columns = self.conditional_data_columns(columns_data)
-            base_columns = self.base_columns()
-            selected_columns = base_columns + [col for col in conditional_columns if col is not None]
+    def info_rodadas(self, modelos_list:list=[], column_data:str='id_chuva',ids_rodadas:list=[]): 
 
         priority_order = self.flags_priority()
+        columns = [column.name if column.name !='id' else 'id_rodada' for column in self.tb_cadastro_rodadas.columns] 
         
-        subquery_cadastro_rodadas = db.select(selected_columns+ [priority_order]).where(
-            db.tuple_(
-                self.tb_cadastro_rodadas.c.str_modelo,
-                self.tb_cadastro_rodadas.c.hr_rodada,
-                self.tb_cadastro_rodadas.c.dt_rodada
-            ).in_(modelos_list)\
-            )\
-            .order_by(db.desc(self.tb_cadastro_rodadas.c.dt_rodada),db.asc(priority_order))
+        if modelos_list:
+            subquery_cadastro_rodadas = db.select(self.tb_cadastro_rodadas,priority_order).where(
+                db.tuple_(
+                    self.tb_cadastro_rodadas.c.str_modelo,
+                    self.tb_cadastro_rodadas.c.hr_rodada,
+                    self.tb_cadastro_rodadas.c.dt_rodada
+                    
+                ).in_(modelos_list)
+            )
+            rodadas_values = self.DB_RODADAS.db_execute(subquery_cadastro_rodadas).fetchall()
+            ids_rodadas = [id_rodada[0] for id_rodada in rodadas_values]
+        
+        if ids_rodadas and column_data == 'id_smap' :
+            subquery_cadastro_rodadas = db.select(self.tb_cadastro_rodadas,self.tb_smap,priority_order
+            ).join(
+                self.tb_cadastro_rodadas, self.tb_cadastro_rodadas.c.id_smap == self.tb_smap.c.id
+            ).where(
+                self.tb_cadastro_rodadas.c.id.in_(ids_rodadas)
+            )
+            columns +=  [column.name for column in self.tb_smap.columns]
+            rodadas_values = self.DB_RODADAS.db_execute(subquery_cadastro_rodadas).fetchall()
 
-        rodadas_values = self.DB_RODADAS.db_execute(subquery_cadastro_rodadas).fetchall()
-        return pd.DataFrame(rodadas_values, columns=[column_name.name for column_name in selected_columns]+['priority'])
+
+        elif ids_rodadas  and column_data=='id_chuva':
+            subquery_cadastro_rodadas = db.select(self.tb_cadastro_rodadas,self.tb_chuva,priority_order
+            ).join(
+                self.tb_cadastro_rodadas, self.tb_cadastro_rodadas.c.id_chuva == self.tb_chuva.c.id
+            ).where(
+                self.tb_cadastro_rodadas.c.id.in_(ids_rodadas)
+            )
+            columns +=  [column.name if column.name !='id' else 'id_chuva2' for column in self.tb_chuva.columns]
+
+        
+            rodadas_values = self.DB_RODADAS.db_execute(subquery_cadastro_rodadas).fetchall()
+            
+        return pd.DataFrame(rodadas_values,columns=columns+["order_priority"] )
+    # pd.DataFrame(rodadas_values, columns=[column_name.name for column_name in selected_columns]+['priority'])
 
     def get_rodadas_do_dia(self, dt_rodada):
 
@@ -114,26 +137,11 @@ class tb_smap(tb_cadastro_rodada):
         tb_cadastro_rodada.__init__(self,self.DB_RODADAS)
 
 
-    def get_vazao_modelos(self, modelos_list:list=[], priority:bool=False):
+    def get_vazao_modelos(self, modelos_list:list=[],ids_rodadas:list=[], priority:bool=False):
 
-        df_rodadas_vazao_unica = self.info_rodadas(modelos_list=modelos_list)
-        
-        if priority:
-            df_rodadas_vazao_unica = df_rodadas_vazao_unica.drop_duplicates(subset=['dt_rodada','str_modelo','hr_rodada'],keep='first') 
-        
-        base_columns = [
-            self.tb_smap.c.id,
-            self.tb_smap.c.cd_posto,
-            self.tb_smap.c.dt_prevista,
-            self.tb_smap.c.vl_vazao
-        ]
-        query_combined = db.select(base_columns).where(
-            self.tb_smap.c.id.in_(df_rodadas_vazao_unica['id_smap'].unique())
-        )
-        rodadas_values = self.DB_RODADAS.db_execute(query_combined).fetchall()
-        df_prev_vazao = pd.DataFrame(rodadas_values, columns=[column_name.name for column_name in base_columns])
-
-        return pd.merge(df_rodadas_vazao_unica,df_prev_vazao.rename({'id':'id_smap'},axis=1), on=['id_smap']) 
+        df_rodadas_vazao_unica = self.info_rodadas(modelos_list=modelos_list,ids_rodadas=ids_rodadas,column_data='id_smap')
+        return df_rodadas_vazao_unica
+        # pd.merge(df_rodadas_vazao_unica,df_prev_vazao.rename({'id':'id_smap'},axis=1), on=['id_smap']) 
 
     def importar_prev_vazoes_smap(self, df_prev_vazao_out:pd.DataFrame):
         
@@ -171,57 +179,118 @@ class tb_chuva(tb_cadastro_rodada,tb_subbacia):
         tb_cadastro_rodada.__init__(self,self.DB_RODADAS)
         tb_subbacia.__init__(self,self.DB_RODADAS)
 
-    def get_chuva_modelos(self, modelos_list:list):
+    def get_chuva_modelos(self, modelos_list:list, unique=True):
 
-        df_rodadas_chuva_unica = self.info_rodadas(modelos_list = modelos_list,columns_data=['id_chuva']).drop_duplicates(subset=['id_chuva'])
-        df_rodadas_chuva_unica = df_rodadas_chuva_unica.drop('priority',axis=1)
+        df_rodadas_chuva_unica = self.info_rodadas(modelos_list = modelos_list,column_data='id_chuva')
+        if df_rodadas_chuva_unica.empty: return df_rodadas_chuva_unica
 
-        base_columns = [
-            self.tb_chuva.c.id,
-            self.tb_chuva.c.cd_subbacia,
-            self.tb_chuva.c.dt_prevista,
-            self.tb_chuva.c.vl_chuva
-        ]
-        query_combined = db.select(base_columns).where(
-            self.tb_chuva.c.id.in_(df_rodadas_chuva_unica['id_chuva'].unique())
-        )
-        rodadas_values = self.DB_RODADAS.db_execute(query_combined).fetchall()
-        df_chuva_subbac = pd.DataFrame()
+        if unique: df_rodadas_chuva_unica = df_rodadas_chuva_unica.drop_duplicates(subset=['id_chuva','dt_prevista','cd_subbacia'],keep='first')
+
+        df_chuva_prevista = df_rodadas_chuva_unica[['str_modelo','hr_rodada','dt_rodada','cd_subbacia','dt_prevista','vl_chuva']].copy()
+        df_chuva_prevista.columns=['modelo','hr_rodada','data_rodada','cd_subbacia','data_previsao','valor']
+
+        df_chuva_prevista_modelos = df_chuva_prevista[df_chuva_prevista['modelo'] != 'PZERADA']
+        test_pzerada= df_chuva_prevista[df_chuva_prevista['modelo'] == 'PZERADA']
+
+        df_subbac = self.info_subbacias()
+
+        #add chuva pzerada ao dataframe
+        if not test_pzerada.empty:
+            pzerada_values = test_pzerada[["modelo","hr_rodada","data_rodada"]].values.tolist()
+            for modelo_pzerada,hr_rodada,dt_rodada in pzerada_values:
+                df_pzerada = df_subbac[['cd_subbacia','nome']].copy()
+                df_pzerada['modelo'] = modelo_pzerada
+                df_pzerada['hr_rodada'] = hr_rodada
+                df_pzerada['data_rodada'] = dt_rodada
+                df_pzerada['data_previsao'] = dt_rodada + datetime.timedelta(days=1)
+                df_pzerada['valor'] = 0
+                df_pzerada = df_pzerada[['modelo','hr_rodada','data_rodada','cd_subbacia','data_previsao','valor']]
+
+                df_chuva_prevista_modelos = pd.concat([df_chuva_prevista_modelos,df_pzerada])
         
-        if rodadas_values:
-            df_prev_chuva = pd.DataFrame(rodadas_values, columns=[column_name.name for column_name in base_columns])
-            df_rodadas_values = pd.merge(
-                df_rodadas_chuva_unica,
-                df_prev_chuva.rename({"id":"id_chuva"},axis=1), 
-                on=['id_chuva']
-                )
-            rodadas_values = df_rodadas_values.drop(['id_chuva','id'],axis=1).values.tolist()
-
-            df_chuva_prevista = pd.DataFrame(rodadas_values, 
-                                             columns=['cenario','hr_rodada','data_rodada','cd_subbacia','data_previsao','valor'])
-            
-            df_chuva_prevista_modelos = df_chuva_prevista[df_chuva_prevista['cenario'] != 'PZERADA']
-            test_pzerada= df_chuva_prevista[df_chuva_prevista['cenario'] == 'PZERADA']
-
-            df_subbac = self.info_subbacias()
-
-            #add chuva pzerada ao dataframe
-            if not test_pzerada.empty:
-                pzerada_values = test_pzerada[["cenario","hr_rodada","data_rodada"]].values.tolist()
-                for cenario_pzerada,hr_rodada,dt_rodada in pzerada_values:
-                    df_pzerada = df_subbac[['cd_subbacia','nome']].copy()
-                    df_pzerada['cenario'] = cenario_pzerada
-                    df_pzerada['hr_rodada'] = hr_rodada
-                    df_pzerada['data_rodada'] = dt_rodada
-                    df_pzerada['data_previsao'] = dt_rodada + datetime.timedelta(days=1)
-                    df_pzerada['valor'] = 0
-                    df_pzerada = df_pzerada[['cenario','hr_rodada','data_rodada','cd_subbacia','data_previsao','valor']]
-
-                    df_chuva_prevista_modelos = pd.concat([df_chuva_prevista_modelos,df_pzerada])
-            
-            df_chuva_subbac = pd.merge(df_chuva_prevista_modelos,df_subbac[['cd_subbacia','nome']], on=['cd_subbacia'])
+        df_chuva_subbac = pd.merge(df_chuva_prevista_modelos,df_subbac[['cd_subbacia','nome']], on=['cd_subbacia'])
         
         return df_chuva_subbac
+
+    def get_prob_grup_ec(self,modelo_EC_list):
+
+        query = db.select(self.tb_cadastro_rodadas.c.id).where(
+                db.tuple_(
+                    self.tb_cadastro_rodadas.c.str_modelo,
+                    self.tb_cadastro_rodadas.c.hr_rodada,
+                    self.tb_cadastro_rodadas.c.dt_rodada
+                    
+                ).in_(modelo_EC_list)
+            )
+        id_cadastro_ecmwf = self.DB_RODADAS.db_execute(query).scalar()
+        tb_pesos_grupos_ecmwf = self.DB_RODADAS.db_schemas['tb_pesos_grupos_ecmwf']
+        query = tb_pesos_grupos_ecmwf.select().where(tb_pesos_grupos_ecmwf.c.id_deck == id_cadastro_ecmwf)
+        teste = pd.DataFrame(self.DB_RODADAS.db_execute(query).fetchall())
+        teste.columns = ['id'] + [f'ECMWF-G{i}' for i in range(1,11)]
+        return teste.drop('id',axis=1).to_dict('records')
+
+    def get_chuva_extendida(self,modelos_list):
+
+        df_chuva_prevista = self.get_chuva_modelos(modelos_list)
+        if df_chuva_prevista.empty: return df_chuva_prevista,None
+
+        #padrao para diferenciar os modelos
+        df_chuva_prevista['cenario'] = (
+                df_chuva_prevista['modelo']
+                + '_' 
+                + df_chuva_prevista['data_rodada'].astype(str)
+                +'_'
+                +  df_chuva_prevista['hr_rodada'].astype(str)
+        )
+
+        chuva= {}
+        ec_probs = {}
+        
+
+        df_chuva_modelo_cluster = pd.DataFrame()
+        for cenario in df_chuva_prevista['cenario'].unique():
+
+            df_cenario = df_chuva_prevista[df_chuva_prevista['cenario']==cenario]
+
+            modelo,dt_rodada_cenario,hr_rodada = cenario.split("_")
+            dt_rodada_cenario = pd.to_datetime(dt_rodada_cenario).date()
+            max_dt_previsao_cenario = df_cenario['data_previsao'].max()
+
+            ec_probs[dt_rodada_cenario] = self.get_prob_grup_ec(
+                modelo_EC_list=[('ECMWF-CLUST', 18, dt_rodada_cenario - datetime.timedelta(days=1))]
+                ) if not ec_probs.get(dt_rodada_cenario,[]) else ec_probs[dt_rodada_cenario]
+
+            modelos_list= [(f'ECMWF-G{i}', 18, dt_rodada_cenario - datetime.timedelta(days=1)) for i in range(1,11)]
+
+            chuva[dt_rodada_cenario] = self.get_chuva_modelos(
+                modelos_list=modelos_list
+
+                ) if chuva.get(dt_rodada_cenario,pd.DataFrame()).empty else chuva[dt_rodada_cenario]
+
+            if not chuva[dt_rodada_cenario].empty:
+                chuva_grupos = chuva[dt_rodada_cenario]
+
+                for modelo_ec_clust in chuva[dt_rodada_cenario]['modelo'].unique():
+                    chuva_grupo_especifico = chuva_grupos[chuva_grupos['modelo']==modelo_ec_clust]
+
+                    df_ec_to_concat = chuva_grupo_especifico[chuva_grupo_especifico['data_previsao'] > max_dt_previsao_cenario].copy()
+                    df_ec_to_concat['modelo'] = df_ec_to_concat['modelo'].replace(modelo_ec_clust,modelo)
+                    df_ec_to_concat['hr_rodada'] = hr_rodada
+                    df_ec_to_concat['data_rodada'] = dt_rodada_cenario
+
+                
+                    #caso falte dias para completar, repetir valores do ultimo dia da previsao
+                    last_date_rows = df_ec_to_concat[df_ec_to_concat['data_previsao']==df_ec_to_concat['data_previsao'].max()].copy()
+                    last_date_rows['data_previsao'] += datetime.timedelta(days=1)
+
+
+                    df_junta_modelo_clust = pd.concat([df_cenario,df_ec_to_concat,last_date_rows]) 
+                    df_junta_modelo_clust['modelo'] = df_junta_modelo_clust['modelo'].replace(modelo,f"{modelo}-{modelo_ec_clust}")
+
+                    if df_chuva_modelo_cluster.empty: df_chuva_modelo_cluster = df_junta_modelo_clust
+                    else:
+                        df_chuva_modelo_cluster = pd.concat([df_chuva_modelo_cluster, df_junta_modelo_clust]) 
+        return df_chuva_modelo_cluster.drop("cenario",axis=1), ec_probs
 
     def importar_prev_chuva(self, df_prev_vazao_out:pd.DataFrame):
         
@@ -240,8 +309,8 @@ class tb_chuva(tb_cadastro_rodada,tb_subbacia):
         
         tb_pesos_grupos_ecmwf = self.DB_RODADAS.db_schemas['tb_pesos_grupos_ecmwf']
         
-        values_probabilidades = df_probabilidade_grupos[['id','grupo_1','grupo_2','grupo_3','grupo_4','grupo_5','grupo_6','grupo_7','grupo_8','grupo_9','grupo_10']].values.tolist()
-        id_ = df_probabilidade_grupos['id'].unique() 
+        values_probabilidades = df_probabilidade_grupos[['id_rodada','grupo_1','grupo_2','grupo_3','grupo_4','grupo_5','grupo_6','grupo_7','grupo_8','grupo_9','grupo_10']].values.tolist()
+        id_ = df_probabilidade_grupos['id_rodada'].unique() 
 
         query_delete = tb_pesos_grupos_ecmwf.delete().where(tb_pesos_grupos_ecmwf.c.id_deck.in_(id_))
         n_value = self.DB_RODADAS.db_execute(query_delete).rowcount
@@ -295,10 +364,10 @@ class Rodadas(tb_smap,tb_chuva,tb_cadastro_rodada):
             
 
             if df_info_rodadas[mask_id_chuva & mask_flags].empty:
-                
+
                 #se existir o cadastro mas as flags estao nulas, update no id_smap e flags
                 if not df_info_rodadas[mask_id_chuva & mask_flags_null].empty:
-                    id_rodada = df_info_rodadas[mask_id_chuva & mask_flags_null]['id'].unique()[0]
+                    id_rodada = df_info_rodadas[mask_id_chuva & mask_flags_null]['id_rodada'].unique()[0]
                     df_prev_vazao_out.loc[df_prev_vazao_out['cenario']== cenario,'id_smap'] = new_smap_id
                     self.update_cadastro_rodadas(
                         id_rodada=id_rodada,
@@ -343,11 +412,11 @@ class Rodadas(tb_smap,tb_chuva,tb_cadastro_rodada):
             (df_info_rodadas['hr_rodada'] == int(hr_rodada))
             
         if mask_id_chuva.sum() == 1:
-            id_ = df_info_rodadas[mask_id_chuva]['id'].unique()[0]
+            id_ = df_info_rodadas[mask_id_chuva]['id_rodada'].unique()[0]
             df_probabilidade_grupos = df_probabilidade_grupos.T
-            df_probabilidade_grupos['id'] = id_
-            df_probabilidade_grupos.columns = ['grupo_1','grupo_2','grupo_3','grupo_4','grupo_5','grupo_6','grupo_7','grupo_8','grupo_9','grupo_10','id']
-            df_probabilidade_grupos = df_probabilidade_grupos[['id','grupo_1','grupo_2','grupo_3','grupo_4','grupo_5','grupo_6','grupo_7','grupo_8','grupo_9','grupo_10']]
+            df_probabilidade_grupos['id_rodada'] = id_
+            df_probabilidade_grupos.columns = ['grupo_1','grupo_2','grupo_3','grupo_4','grupo_5','grupo_6','grupo_7','grupo_8','grupo_9','grupo_10','id_rodada']
+            df_probabilidade_grupos = df_probabilidade_grupos[['id_rodada','grupo_1','grupo_2','grupo_3','grupo_4','grupo_5','grupo_6','grupo_7','grupo_8','grupo_9','grupo_10']]
             self.importar_prob_grup_ec(df_probabilidade_grupos)
         
     def importar_chuva_modelos(self,modelos_list,df_prev_chuva_out:pd.DataFrame):
