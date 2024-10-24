@@ -9,7 +9,7 @@ from fastapi import HTTPException
 path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2")
 
 from app.schemas.chuvaprevisao import ChuvaPrevisaoCriacao, ChuvaPrevisaoCriacaoMembro
-from app.schemas import PesquisaPrevisaoChuva, RodadaSmap, RodadaCriacao, TipoRodadaEnum, MembrosModeloSchema
+from app.schemas import PesquisaPrevisaoChuva, RodadaSmap
 
 from app.utils import cache
 from app.crud import ons_crud
@@ -43,7 +43,7 @@ class CadastroRodadas:
         ).where(
             CadastroRodadas.tb.c['dt_rodada'] == dt
         )
-        result = __DB__.db_execute(query, commit=False).fetchall()
+        result = __DB__.db_execute(query, commit=True).fetchall()
         df = pd.DataFrame(result, columns=['id','id_chuva','id_smap','id_previvaz','id_prospec','dt_rodada','hr_rodada','str_modelo','fl_preliminar','fl_pdp','fl_psat','fl_estudo','dt_revisao'])
         df['dt_rodada'] = df['dt_rodada'].astype('datetime64[ns]').dt.strftime('%Y-%m-%d')
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
@@ -52,7 +52,6 @@ class CadastroRodadas:
         df['id_prospec'] = df['id_prospec'].astype(pd.Int64Dtype())
         return df.to_dict('records')
     
-
     @staticmethod
     def get_rodadas_por_dt_hr_nome(dt:datetime.datetime, nome:str) -> List[dict]:
         dt = datetime.datetime(datetime.date.today().year, datetime.date.today().month, datetime.date.today().day, 0) if dt == None else dt
@@ -78,7 +77,7 @@ class CadastroRodadas:
         
         )).order_by(CadastroRodadas.tb.c['fl_preliminar'], CadastroRodadas.tb.c['fl_pdp'].desc(),CadastroRodadas.tb.c['fl_psat'].desc())
         
-        result = __DB__.db_execute(query, commit=False).fetchall()
+        result = __DB__.db_execute(query, commit=True).fetchall()
         df = pd.DataFrame(result, columns=['id','id_chuva','id_smap','id_previvaz','id_prospec','dt_rodada','hr_rodada','str_modelo','fl_preliminar','fl_pdp','fl_psat','fl_estudo','dt_revisao'])
         if df.empty:
             raise HTTPException(404, {"erro":f"Nenhum modelo encontrado com nome {nome} e data de rodada {dt}"})
@@ -126,20 +125,20 @@ class CadastroRodadas:
             )\
             .order_by(db.desc(CadastroRodadas.tb.c['dt_rodada']),db.asc(order_priority))
 
-        rodadas_values = __DB__.db_execute(subquery_cadastro_rodadas, commit=False).fetchall()
+        rodadas_values = __DB__.db_execute(subquery_cadastro_rodadas, commit=True).fetchall()
         return pd.DataFrame(rodadas_values, columns=[column_name.name for column_name in selected_columns]+['priority'])
     
     @staticmethod
     def get_last_column_id(column_name:str):
         query_get_max_id_column = db.select(db.func.max(CadastroRodadas.tb.c[column_name]))
-        max_id = __DB__.db_execute(query_get_max_id_column, commit=False).scalar()
+        max_id = __DB__.db_execute(query_get_max_id_column, commit=True).scalar()
         return max_id
     
     @staticmethod
     def inserir_cadastro_rodadas(rodadas_values:list):
         query_update = CadastroRodadas.tb.insert().values(rodadas_values)
         
-        n_value = __DB__.db_execute(query_update, commit=False).rowcount
+        n_value = __DB__.db_execute(query_update, commit=True).rowcount
 
         print(f"{n_value} Linhas inseridas na tb_cadastro_rodadas")
 class Chuva:
@@ -160,7 +159,7 @@ class Chuva:
             ).join(
                 CadastroRodadas.tb, CadastroRodadas.tb.c['id_chuva'] == Chuva.tb.c['id']
         )
-        result = __DB__.db_execute(query, commit=False).fetchall()
+        result = __DB__.db_execute(query, commit=True).fetchall()
         df = pd.DataFrame(result, columns=['modelo', 'dt_rodada', 'hr_rodada', 'id', 'dt_prevista', 'vl_chuva'])
         df['dia_semana'] = df['dt_prevista'].astype('datetime64[ns]').dt.strftime('%A')
         df['dt_prevista'] = df['dt_prevista'].astype('datetime64[ns]').dt.strftime('%Y-%m-%d')
@@ -238,12 +237,11 @@ class Chuva:
         
         for i in range(len(prevs)):
             prevs[i]['dt_rodada'] = prevs[i]['dt_rodada'].date()
-        print(prevs)
             
         df = pd.DataFrame(prevs)
         df['cenario'] = f'{modelo[0]}_{modelo[1]}_{modelo[2]}'
         
-        Chuva.inserir_chuva_modelos([modelo], df)
+        Chuva.inserir_chuva_modelos(df)
     
         return None
     
@@ -253,15 +251,20 @@ class Chuva:
         values_chuva = df_prev_vazao_out[['id_chuva','cd_subbacia','dt_prevista','vl_chuva']].values.tolist()
         ids_chuva = df_prev_vazao_out['id_chuva'].unique() 
         query_delete = Chuva.tb.delete().where(Chuva.tb.c['id'].in_(ids_chuva))
-        n_value = __DB__.db_execute(query_delete, commit=False).rowcount
+        n_value = __DB__.db_execute(query_delete, commit=True).rowcount
         print(f"{n_value} Linhas deletadas na Chuva")
 
         query_insert = Chuva.tb.insert().values(values_chuva)
-        n_value = __DB__.db_execute(query_insert, commit=False).rowcount
+        n_value = __DB__.db_execute(query_insert, commit=True).rowcount
         print(f"{n_value} Linhas inseridas na Chuva")
+
+    #         dt_rodada: datetime.date
+    # hr_rodada: int
+    # str_modelo: str
+        
         
     @staticmethod
-    def inserir_chuva_modelos(modelos:list,df_prev_chuva_out:pd.DataFrame):
+    def inserir_chuva_modelos(df_prev_chuva_out:pd.DataFrame, rodar_smap:bool = False):
         df_info_subbacias = Subbacia.info_subbacias()
         df_chuva_final = pd.merge(df_info_subbacias[['cd_subbacia' ,'vl_lon'  ,'vl_lat']], df_prev_chuva_out)
         df_prev_chuva = df_chuva_final.drop(['vl_lat','vl_lon'],axis=1)
@@ -303,44 +306,13 @@ class Chuva:
 
             if insert_cadastro_values: CadastroRodadas.inserir_cadastro_rodadas(insert_cadastro_values)
             Chuva.inserir_prev_chuva(df_prev_chuva.round(2))
-
-    @staticmethod
-    def post_chuva_membro(chuva_prev:List[ChuvaPrevisaoCriacaoMembro]) -> None:
-        records = [obj.model_dump() for obj in chuva_prev]
-        df = pd.DataFrame(records)
-        dt_hr_rodada:datetime.datetime = df[["dt_hr_rodada"]].drop_duplicates().to_dict("records")[0]["dt_hr_rodada"].to_pydatetime()
-        modelo:str = df[["modelo"]].drop_duplicates().to_dict("records")[0]["modelo"]
-        df = df.rename(columns={"membro":"nome"})
-        df_membro_modelo = df[["nome", "dt_hr_rodada"]].drop_duplicates()
-        df_membro_modelo["id_rodada"] = CadastroRodadas.get_rodadas_por_dt_hr_nome(dt_hr_rodada, modelo)[0]["id"]
-        df_membro_modelo = pd.DataFrame(MembrosModelo.inserir(df_membro_modelo.to_dict("records")))
-        
-        df = df.merge(df_membro_modelo).rename(columns={"id":"id_membro_modelo"})[["id_membro_modelo", "vl_chuva", "cd_subbacia", "dt_prevista"]]
-        ChuvaMembro.inserir(df.to_dict("records"))
-        return None
+            if rodar_smap:
+                ### WIP 
+                Smap.post_rodada_smap(RodadaSmap.model_validate())
+    #                 dt_rodada: datetime.date
+    # hr_rodada: int
+    # str_modelo: str
     
-    @staticmethod
-    def inserir(body:List[dict]):
-        id_membro_modelo = []
-        cd_subbacia = []
-        dt_prevista = []
-        for membro in body:
-            id_membro_modelo.append(membro["id_membro_modelo"])
-            cd_subbacia.append(membro["cd_subbacia"])
-            dt_prevista.append(membro["dt_prevista"])
-            
-        search_params = (ChuvaMembro.tb.c["id_membro_modelo"].in_(id_membro_modelo),
-                ChuvaMembro.tb.c["cd_subbacia"].in_(cd_subbacia),
-                ChuvaMembro.tb.c["dt_prevista"].in_(dt_prevista))
-        
-        q_delete = ChuvaMembro.tb.delete().where(db.and_(
-            *search_params
-        ))
-        __DB__.db_execute(q_delete, commit=False)
-        
-        query = ChuvaMembro.tb.insert(body)
-        linhas = __DB__.db_execute(query, commit=False).rowcount
-        print(f"{linhas} linhas inseridas")
     
     
 class ChuvaMembro:
@@ -351,18 +323,17 @@ class ChuvaMembro:
         df = pd.DataFrame(records)
         # dt_hr_rodada:datetime.datetime = df[["dt_hr_rodada"]].drop_duplicates().to_dict("records")[0]["dt_hr_rodada"].to_pydatetime()
         # modelo:str = df[["modelo"]].drop_duplicates().to_dict("records")[0]["modelo"]
-        df = df.rename(columns={"membro":"nome"})
-        
-        # df_membro_modelo = df[["nome", "dt_hr_rodada"]].drop_duplicates()
-        pdb.set_trace()
-        df_membro_modelo = df[["nome", "dt_hr_rodada", "modelo"]].drop_duplicates()
-        
         # df_membro_modelo["id_rodada"] = CadastroRodadas.get_rodadas_por_dt_hr_nome(dt_hr_rodada, modelo)[0]["id"]
+        df['dt_hr_rodada'] = df['dt_hr_rodada'].apply(lambda x: x.replace(minute=0, second=0, microsecond=0))
+        df = df.rename(columns={"membro":"nome"})
+        df_membro_modelo = df[["nome", "dt_hr_rodada", "modelo", "peso"]].drop_duplicates(['nome', 'dt_hr_rodada'])
+
         df_membro_modelo = pd.DataFrame(MembrosModelo.inserir(df_membro_modelo.to_dict("records")))
-        
         df = df.merge(df_membro_modelo, on="nome").rename(columns={"id":"id_membro_modelo"})[["id_membro_modelo", "vl_chuva", "cd_subbacia", "dt_prevista"]]
         
-        ChuvaMembro.inserir(df.to_dict("records"))
+        body = df.to_dict("records")
+        ChuvaMembro.inserir(body)
+        ChuvaMembro.media_membros(chuva_prev[0].dt_hr_rodada.replace(minute=0, second=0, microsecond=0), chuva_prev[0].modelo, inserir=False)
         return None
     
     @staticmethod
@@ -382,11 +353,35 @@ class ChuvaMembro:
         q_delete = ChuvaMembro.tb.delete().where(db.and_(
             *search_params
         ))
-        __DB__.db_execute(q_delete, commit=False)
-        
+        linhas_delete = __DB__.db_execute(q_delete, commit=True).rowcount
+        print(f"{linhas_delete} linhas inseridas chuva membro")
+
         query = ChuvaMembro.tb.insert(body)
-        linhas = __DB__.db_execute(query, commit=False).rowcount
-        print(f"{linhas} linhas inseridas")
+        linhas_insert = __DB__.db_execute(query, commit=True).rowcount
+        print(f"{linhas_insert} linhas inseridas chuva membro")
+
+    @staticmethod
+    def media_membros(dt_hr_rodada:datetime.datetime, modelo:str, inserir:bool = False) -> None:
+        q_select = db.select(
+            ChuvaMembro.tb.c['cd_subbacia'],
+            ChuvaMembro.tb.c['dt_prevista'],
+            ChuvaMembro.tb.c['vl_chuva']
+        ).join(
+            MembrosModelo.tb, MembrosModelo.tb.c['id'] == ChuvaMembro.tb.c['id_membro_modelo']
+        ).where(
+            db.and_(
+                MembrosModelo.tb.c['dt_hr_rodada'] == dt_hr_rodada,
+                MembrosModelo.tb.c['modelo'] == modelo
+            )
+        )
+        result = __DB__.db_execute(q_select, commit=True)
+        df = pd.DataFrame(result, columns=['cd_subbacia', 'dt_prevista', 'vl_chuva'])
+        df = df.groupby(['cd_subbacia', 'dt_prevista']).mean().reset_index()
+        df['modelo'] = modelo
+        df['dt_rodada'] = dt_hr_rodada
+        df['dt_rodada'] = pd.Series(df['dt_rodada'].dt.to_pydatetime(), dtype = object)
+        if inserir:
+            Chuva.post_chuva_modelo_combinados([ChuvaPrevisaoCriacao.model_validate(x) for x in df.to_dict('records')])
 
 class Subbacia:
     tb:db.Table = __DB__.getSchema('tb_subbacia')
@@ -403,7 +398,7 @@ class Subbacia:
             Subbacia.tb.c['txt_pasta_contorno'],
             Subbacia.tb.c['cd_bacia_mlt'],
         )
-        result = __DB__.db_execute(query, commit=False)
+        result = __DB__.db_execute(query, commit=True)
         df = pd.DataFrame(result, columns=['id', 'nome', 'nome_submercado', 'nome_bacia', 'vl_lat', 'vl_lon', 'nome_smap', 'pasta_contorno', 'cd_bacia_mlt'])
         df = df.sort_values('id')
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
@@ -414,13 +409,13 @@ class Subbacia:
         query = db.select(
             db.distinct(Subbacia.tb.c['txt_bacia'])
         )
-        result = __DB__.db_execute(query, commit=False)
+        result = __DB__.db_execute(query, commit=True)
         df = pd.DataFrame(result, '')
         
     @staticmethod
     def info_subbacias():
         query = db.select(Subbacia.tb.c['cd_subbacia'],Subbacia.tb.c['vl_lon'],Subbacia.tb.c['vl_lat'],Subbacia.tb.c['txt_nome_subbacia'])
-        answer_tb_subbacia = __DB__.db_execute(query, commit=False)
+        answer_tb_subbacia = __DB__.db_execute(query, commit=True)
         
         df_subbac = pd.DataFrame(answer_tb_subbacia, columns=['cd_subbacia','vl_lon','vl_lat','nome'])
         df_subbac['nome'] = df_subbac['nome'].str.lower()
@@ -436,13 +431,13 @@ class Smap:
         
         falhou = response['state'] == 'failed'
         
-        Smap.email_smap(falhou, response['end_datetime'], response["url"])
+        Smap.enviar_email_status_smap(falhou, response['end_datetime'], response["url"])
         if falhou:
             raise HTTPException(400, f'{response}')
         return response
     
     @staticmethod
-    def email_smap(sucesso: bool, momento:datetime.datetime, dag_url:str):
+    def enviar_email_status_smap(sucesso: bool, momento:datetime.datetime, dag_url:str):
         email = WxEmail()
         
         status, cor_status = ("Concluido", "#88B04B") if sucesso else ("Falha", "#b04b4b")
@@ -468,14 +463,14 @@ class MembrosModelo:
         search_params = (MembrosModelo.tb.c["dt_hr_rodada"].in_(dt_hr_rodada),
                 MembrosModelo.tb.c["nome"].in_(nome),
                 MembrosModelo.tb.c["modelo"].in_(modelo))
-        
         q_delete = MembrosModelo.tb.delete().where(db.and_(
             *search_params
         ))
-        __DB__.db_execute(q_delete, commit=False)
+        linhas_delete = __DB__.db_execute(q_delete, commit=True).rowcount
+        print(f'{linhas_delete} linha(s) deletada(s) tb membro modelo')
         q_insert = MembrosModelo.tb.insert(body)
-        pdb.set_trace()
-        __DB__.db_execute(q_insert, commit=False)
+        linhas_insert =  __DB__.db_execute(q_insert, commit=True).rowcount
+        print(f'{linhas_insert} linha(s) inserida(s) tb membro modelo')
         q_select = db.select(
             MembrosModelo.tb.c["id"],
             MembrosModelo.tb.c["dt_hr_rodada"],
@@ -485,13 +480,14 @@ class MembrosModelo:
                 *search_params
             )
                     )
-        result = __DB__.db_execute(q_select, commit=False).fetchall()
+        result = __DB__.db_execute(q_select, commit=True).fetchall()
         df = pd.DataFrame(result, columns=["id", "dt_hr_rodada", "nome", "modelo"])
         return df.to_dict("records")
         
+    
 if __name__ == '__main__':
-    pdb.set_trace()
-    # Smap.email_smap(False, datetime.datetime.now(), "https://tradingenergiarz.com/airflow/dags/ONS_DADOS_ABERTOS/grid?tab=graph&dag_run_id=scheduled__2024-09-17T20%3A00%3A00%2B00%3A00")
+    ChuvaMembro.media_membros(datetime.datetime(2024,10,24,12,0,0), 'string')
+    # Smap.enviar_email_status_smap(False, datetime.datetime.now(), "https://tradingenergiarz.com/airflow/dags/ONS_DADOS_ABERTOS/grid?tab=graph&dag_run_id=scheduled__2024-09-17T20%3A00%3A00%2B00%3A00")
     # CadastroRodadas.get_rodadas_por_dt(datetime.date.today())
     # teste = MembrosModeloSchema()
     
