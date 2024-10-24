@@ -16,7 +16,8 @@ load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 
-import datetime
+TIME_OUT = 60*60*8
+
 
 def create_ec2_client(region):
     return boto3.client('ec2',
@@ -38,34 +39,34 @@ def check_instance_state(instance_id, region):
 def start_instance(**kwargs):
     """Inicia uma instância na região especificada se ela estiver parada."""
     
-    # instance_id = 'i-0edbeb5435710d5f3'
-    # region = 'us-east-1'
+    instance_id = 'i-0edbeb5435710d5f3'
+    region = 'us-east-1'
 
-    # ec2 = create_ec2_client(region)
-    # state = check_instance_state(instance_id, region)
+    ec2 = create_ec2_client(region)
+    state = check_instance_state(instance_id, region)
 
-    # if state is None:
-    #     return
-    # if state == 'running':
-    #     print("A instância já está rodando.")
-    #     public_ip = ec2.describe_instances(InstanceIds=[instance_id])['Reservations'][0]['Instances'][0].get('PublicIpAddress')
-    #     print(public_ip)
-    #     kwargs['ti'].xcom_push(key='public_ip', value=public_ip)
+    if state is None:
+        return
+    if state == 'running':
+        print("A instância já está rodando.")
+        public_ip = ec2.describe_instances(InstanceIds=[instance_id])['Reservations'][0]['Instances'][0].get('PublicIpAddress')
+        print(public_ip)
+        kwargs['ti'].xcom_push(key='public_ip', value=public_ip)
         
-    # elif state == 'stopped':
-    #     print("Iniciando a instância...")
-    #     ec2.start_instances(InstanceIds=[instance_id])
-    #     print("Aguardando a instância ficar disponível...")
-    #     waiter = ec2.get_waiter('instance_running')
-    #     waiter.wait(InstanceIds=[instance_id])
+    elif state == 'stopped':
+        print("Iniciando a instância...")
+        ec2.start_instances(InstanceIds=[instance_id])
+        print("Aguardando a instância ficar disponível...")
+        waiter = ec2.get_waiter('instance_running')
+        waiter.wait(InstanceIds=[instance_id])
 
-    #     public_ip = ec2.describe_instances(InstanceIds=[instance_id])['Reservations'][0]['Instances'][0].get('PublicIpAddress')
-    #     print(public_ip)
-    #     kwargs['ti'].xcom_push(key='public_ip', value=public_ip)
+        public_ip = ec2.describe_instances(InstanceIds=[instance_id])['Reservations'][0]['Instances'][0].get('PublicIpAddress')
+        print(public_ip)
+        kwargs['ti'].xcom_push(key='public_ip', value=public_ip)
         
-    #     print("Instância está rodando.")
-    # else:
-    #     print(f"A instância está em um estado não manipulável: {state}")
+        print("Instância está rodando.")
+    else:
+        print(f"A instância está em um estado não manipulável: {state}")
 
     params = kwargs.get('dag_run').conf
     flag = params.get('flag')
@@ -115,11 +116,12 @@ with DAG(
         task_id='run_cpc',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
-        command="{{ 's3fs wx-chuva-vazao ~/s3-drive -o allow_other,umask=0007,uid=1000,gid=1000 -d && /home/admin/rotinas/cpc_to_dat.sh' }}",
-        conn_timeout = None,
-        cmd_timeout = None,
+        command="{{ '/home/admin/rotinas/cpc_to_dat.sh' }}",
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
+        do_xcom_push=False,
     )
 
     run_shell_script = SSHOperator(
@@ -127,9 +129,11 @@ with DAG(
         command="{{'/home/admin/jose/cpc/produtos_banco.sh'}}",
         dag=dag,
         ssh_conn_id='ssh_master',
-        conn_timeout = None,
-        cmd_timeout = None,
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
         get_pty=True,
+        do_xcom_push=False,
+        
     )
 
     stop_ec2_task = PythonOperator(
@@ -168,11 +172,13 @@ with DAG(
         task_id='run_forecast',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
-        command="{{ 's3fs wx-chuva-vazao ~/s3-drive -o allow_other,umask=0007,uid=1000,gid=1000 -d && /home/admin/rotinas/forecast_to_dat.sh' }}",
-        conn_timeout = None,
-        cmd_timeout = None,
+        command="{{ '/home/admin/rotinas/forecast_to_dat.sh' }}",
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
+        do_xcom_push=False,
+        
     )
 
      # Task to run a command on the remote server
@@ -180,11 +186,12 @@ with DAG(
         task_id='run_hindcast',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
-        command="{{ 's3fs wx-chuva-vazao ~/s3-drive -o allow_other,umask=0007,uid=1000,gid=1000 -d && /home/admin/rotinas/hindcast_to_dat.sh' }}",
-        conn_timeout = None,
-        cmd_timeout = None,
+        command="{{ '/home/admin/rotinas/hindcast_to_dat.sh' }}",
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
+        do_xcom_push=False,
     )
 
     stop_ec2_task = PythonOperator(
@@ -204,7 +211,7 @@ with DAG(
     'PREV_CHUVA_DB_ECMWF-ENS',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='0 7,19 * * *',
+    schedule='0 4,17 * * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -223,11 +230,12 @@ with DAG(
         task_id='vl_chuva_to_db',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
-        command="{{ '/home/admin/rotinas//home/admin/enviMetereologia/bin/python gera_forecast_to_db.py ecmwf-ens-membros' }}",
-        conn_timeout = None,
-        cmd_timeout = None,
+        command="{{ '/home/admin/enviMetereologia/bin/python /home/admin/rotinas/gera_forecast_to_db.py ecmwf-ens-membros' }}",
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
+        do_xcom_push=False,
     )
 
     stop_ec2_task = PythonOperator(
@@ -248,7 +256,7 @@ with DAG(
     'PREV_CHUVA_DB_ECMWF',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='0 7,19 * * *',
+    schedule='0 4,16 * * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -267,11 +275,12 @@ with DAG(
         task_id='vl_chuva_to_db',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
-        command="{{ '/home/admin/rotinas//home/admin/enviMetereologia/bin/python gera_forecast_to_db.py ecmwf' }}",
-        conn_timeout = None,
-        cmd_timeout = None,
+        command="{{ '/home/admin/enviMetereologia/bin/python /home/admin/rotinas/gera_forecast_to_db.py ecmwf' }}",
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
+        do_xcom_push=False,
     )
 
     stop_ec2_task = PythonOperator(
@@ -292,7 +301,7 @@ with DAG(
     'PREV_CHUVA_DB_GEFS-EST',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='0 5 * * *',
+    schedule='30 23 * * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -311,11 +320,12 @@ with DAG(
         task_id='vl_chuva_to_db',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
-        command="{{ '/home/admin/rotinas//home/admin/enviMetereologia/bin/python gera_forecast_to_db.py gefs-membros-estendido' }}",
-        conn_timeout = None,
-        cmd_timeout = None,
+        command="{{ '/home/admin/enviMetereologia/bin/python /home/admin/rotinas/gera_forecast_to_db.py gefs-membros-estendido' }}",
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
+        do_xcom_push=False,
     )
 
     stop_ec2_task = PythonOperator(
@@ -337,7 +347,7 @@ with DAG(
     'PREV_CHUVA_DB_GEFS',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='0 5,10,17,22 * * *',
+    schedule='0 2,7,14,19 * * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -356,11 +366,12 @@ with DAG(
         task_id='vl_chuva_to_db',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
-        command="{{ '/home/admin/rotinas//home/admin/enviMetereologia/bin/python gera_forecast_to_db.py gefs-membros' }}",
-        conn_timeout = None,
-        cmd_timeout = None,
+        command="{{ '/home/admin/enviMetereologia/bin/python /home/admin/rotinas/gera_forecast_to_db.py gefs-membros' }}",
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
+        do_xcom_push=False,
     )
 
     stop_ec2_task = PythonOperator(
@@ -382,7 +393,7 @@ with DAG(
     'PREV_CHUVA_DB_GFS',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='0 5,10,17,22 * * *',
+    schedule='0 2,7,14,19 * * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -401,11 +412,12 @@ with DAG(
         task_id='vl_chuva_to_db',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
-        command="{{ '/home/admin/rotinas//home/admin/enviMetereologia/bin/python /home/admin/rotinas/gera_forecast_to_db.py gfs' }}",
-        conn_timeout = None,
-        cmd_timeout = None,
+        command="{{ '/home/admin/enviMetereologia/bin/python /home/admin/rotinas/gera_forecast_to_db.py gfs' }}",
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
+        do_xcom_push=False,
     )
 
     stop_ec2_task = PythonOperator(
@@ -445,11 +457,12 @@ with DAG(
         task_id='run_c3s',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
-        command="{{ 's3fs wx-chuva-vazao ~/s3-drive -o allow_other,umask=0007,uid=1000,gid=1000 -d && /home/admin/rotinas/c3s/produtos.sh' }}",
-        conn_timeout = None,
-        cmd_timeout = None,
+        command="{{ '/home/admin/rotinas/c3s/produtos.sh' }}",
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
+        do_xcom_push=False,
     )
 
     run_shell_script = SSHOperator(
@@ -457,9 +470,10 @@ with DAG(
         command="{{'/home/admin/jose/c3s/produtos.sh'}}",
         dag=dag,
         ssh_conn_id='ssh_master',
-        conn_timeout = None,
-        cmd_timeout = None,
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
         get_pty=True,
+        do_xcom_push=False,
     )
 
     stop_ec2_task = PythonOperator(

@@ -935,7 +935,9 @@ class db_mysql_master():
                 db.Column('id', db.INTEGER, primary_key=True),
                 db.Column('dt_hr_rodada', db.DateTime, index=True),
                 db.Column('nome', db.String(100)),
-                db.Column('modelo', db.String(100))
+                db.Column('modelo', db.String(100)),
+                db.Column('peso', db.Float),
+                
             )
         
         elif table_name.lower() == 'tb_chuva_membro':
