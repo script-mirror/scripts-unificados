@@ -10,7 +10,7 @@ path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2")
 path.insert(2,"/WX2TB/Documentos/fontes/PMO/scripts_unificados")
 from bibliotecas.wx_dbClass import db_mysql_master
 
-
+prod = True
 
 class tb_bacias:
     @staticmethod
@@ -22,7 +22,7 @@ class tb_bacias:
           bacias.c['id_bacia'],
           bacias.c['str_bacia'],
         )
-        result = __DB__.db_execute(query, commit=True).fetchall()
+        result = __DB__.db_execute(query, commit=prod).fetchall()
         df = pd.DataFrame(result, columns=['id','nome'])
         df = df.sort_values('id')
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
@@ -42,7 +42,7 @@ class tb_submercado:
             submercado.c['str_submercado'],
             submercado.c['str_sigla']
         )
-        result = __DB__.db_execute(query, commit=True).fetchall()
+        result = __DB__.db_execute(query, commit=prod).fetchall()
         df = pd.DataFrame(result, columns=['id', 'nome', 'str_sigla'])
         df = df.sort_values('id')
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})

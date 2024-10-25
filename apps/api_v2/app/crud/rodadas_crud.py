@@ -18,6 +18,8 @@ from apps.smap.libs.SmapTools import trigger_dag_SMAP, get_dag_smap_run_status
 from bibliotecas.wx_dbClass import db_mysql_master
 from bibliotecas.wx_emailSender import WxEmail
 
+prod = True
+
 __DB__ = db_mysql_master('db_rodadas')
 class CadastroRodadas:
     tb:db.Table = __DB__.getSchema('tb_cadastro_rodadas')
@@ -43,7 +45,7 @@ class CadastroRodadas:
         ).where(
             CadastroRodadas.tb.c['dt_rodada'] == dt
         )
-        result = __DB__.db_execute(query, commit=True).fetchall()
+        result = __DB__.db_execute(query, commit=prod).fetchall()
         df = pd.DataFrame(result, columns=['id','id_chuva','id_smap','id_previvaz','id_prospec','dt_rodada','hr_rodada','str_modelo','fl_preliminar','fl_pdp','fl_psat','fl_estudo','dt_revisao'])
         df['dt_rodada'] = df['dt_rodada'].astype('datetime64[ns]').dt.strftime('%Y-%m-%d')
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
@@ -77,7 +79,7 @@ class CadastroRodadas:
         
         )).order_by(CadastroRodadas.tb.c['fl_preliminar'], CadastroRodadas.tb.c['fl_pdp'].desc(),CadastroRodadas.tb.c['fl_psat'].desc())
         
-        result = __DB__.db_execute(query, commit=True).fetchall()
+        result = __DB__.db_execute(query, commit=prod).fetchall()
         df = pd.DataFrame(result, columns=['id','id_chuva','id_smap','id_previvaz','id_prospec','dt_rodada','hr_rodada','str_modelo','fl_preliminar','fl_pdp','fl_psat','fl_estudo','dt_revisao'])
         if df.empty:
             raise HTTPException(404, {"erro":f"Nenhum modelo encontrado com nome {nome} e data de rodada {dt}"})
@@ -125,22 +127,39 @@ class CadastroRodadas:
             )\
             .order_by(db.desc(CadastroRodadas.tb.c['dt_rodada']),db.asc(order_priority))
 
-        rodadas_values = __DB__.db_execute(subquery_cadastro_rodadas, commit=True).fetchall()
+        rodadas_values = __DB__.db_execute(subquery_cadastro_rodadas, commit=prod).fetchall()
         return pd.DataFrame(rodadas_values, columns=[column_name.name for column_name in selected_columns]+['priority'])
     
     @staticmethod
     def get_last_column_id(column_name:str):
         query_get_max_id_column = db.select(db.func.max(CadastroRodadas.tb.c[column_name]))
-        max_id = __DB__.db_execute(query_get_max_id_column, commit=True).scalar()
+        max_id = __DB__.db_execute(query_get_max_id_column, commit=prod).scalar()
         return max_id
     
     @staticmethod
     def inserir_cadastro_rodadas(rodadas_values:list):
         query_update = CadastroRodadas.tb.insert().values(rodadas_values)
         
-        n_value = __DB__.db_execute(query_update, commit=True).rowcount
+        n_value = __DB__.db_execute(query_update, commit=prod).rowcount
 
         print(f"{n_value} Linhas inseridas na tb_cadastro_rodadas")
+        
+    @staticmethod
+    def delete_rodada_chuva_smap(id_rodada:int):
+        q_select = db.select(
+            CadastroRodadas.tb.c['id_chuva'],
+            CadastroRodadas.tb.c['id_smap'],
+            CadastroRodadas.tb.c['id_prospec'],
+            CadastroRodadas.tb.c['id_previvaz']
+        ).where(
+            CadastroRodadas.tb.c['id'] == id_rodada
+        )
+        
+        result = __DB__.db_execute(q_select)
+        df_ids = pd.DataFrame(result, columns=['id_chuva', 'id_smap', 'id_prospec', 'id_previvaz'])
+        
+        
+        pass
 class Chuva:
     tb:db.Table = __DB__.getSchema('tb_chuva')
 
@@ -159,7 +178,7 @@ class Chuva:
             ).join(
                 CadastroRodadas.tb, CadastroRodadas.tb.c['id_chuva'] == Chuva.tb.c['id']
         )
-        result = __DB__.db_execute(query, commit=True).fetchall()
+        result = __DB__.db_execute(query, commit=prod).fetchall()
         df = pd.DataFrame(result, columns=['modelo', 'dt_rodada', 'hr_rodada', 'id', 'dt_prevista', 'vl_chuva'])
         df['dia_semana'] = df['dt_prevista'].astype('datetime64[ns]').dt.strftime('%A')
         df['dt_prevista'] = df['dt_prevista'].astype('datetime64[ns]').dt.strftime('%Y-%m-%d')
@@ -251,20 +270,17 @@ class Chuva:
         values_chuva = df_prev_vazao_out[['id_chuva','cd_subbacia','dt_prevista','vl_chuva']].values.tolist()
         ids_chuva = df_prev_vazao_out['id_chuva'].unique() 
         query_delete = Chuva.tb.delete().where(Chuva.tb.c['id'].in_(ids_chuva))
-        n_value = __DB__.db_execute(query_delete, commit=True).rowcount
+        n_value = __DB__.db_execute(query_delete, commit=prod).rowcount
         print(f"{n_value} Linhas deletadas na Chuva")
 
         query_insert = Chuva.tb.insert().values(values_chuva)
-        n_value = __DB__.db_execute(query_insert, commit=True).rowcount
+        n_value = __DB__.db_execute(query_insert, commit=prod).rowcount
         print(f"{n_value} Linhas inseridas na Chuva")
 
-    #         dt_rodada: datetime.date
-    # hr_rodada: int
-    # str_modelo: str
         
         
     @staticmethod
-    def inserir_chuva_modelos(df_prev_chuva_out:pd.DataFrame, rodar_smap:bool = False):
+    def inserir_chuva_modelos(df_prev_chuva_out:pd.DataFrame, rodar_smap:bool = True):
         df_info_subbacias = Subbacia.info_subbacias()
         df_chuva_final = pd.merge(df_info_subbacias[['cd_subbacia' ,'vl_lon'  ,'vl_lat']], df_prev_chuva_out)
         df_prev_chuva = df_chuva_final.drop(['vl_lat','vl_lon'],axis=1)
@@ -282,7 +298,7 @@ class Chuva:
         for cenario in df_prev_chuva['cenario'].unique():
 
             str_modelo ,hr_rodada, dt_rodada = cenario.split('_')
-
+            
             mask_id_chuva = \
             (df_info_rodadas['str_modelo'].str.upper() == str_modelo.upper()) & \
             (pd.to_datetime(df_info_rodadas['dt_rodada']).dt.strftime('%Y-%m-%d') == dt_rodada) & \
@@ -306,9 +322,9 @@ class Chuva:
 
             if insert_cadastro_values: CadastroRodadas.inserir_cadastro_rodadas(insert_cadastro_values)
             Chuva.inserir_prev_chuva(df_prev_chuva.round(2))
+            
             if rodar_smap:
-                ### WIP 
-                Smap.post_rodada_smap(RodadaSmap.model_validate())
+                Smap.post_rodada_smap(RodadaSmap.model_validate({'dt_rodada':datetime.datetime.strptime(dt_rodada, '%Y-%m-%d'),'hr_rodada':hr_rodada,'str_modelo':str_modelo}))
     #                 dt_rodada: datetime.date
     # hr_rodada: int
     # str_modelo: str
@@ -353,11 +369,11 @@ class ChuvaMembro:
         q_delete = ChuvaMembro.tb.delete().where(db.and_(
             *search_params
         ))
-        linhas_delete = __DB__.db_execute(q_delete, commit=True).rowcount
+        linhas_delete = __DB__.db_execute(q_delete, commit=prod).rowcount
         print(f"{linhas_delete} linhas inseridas chuva membro")
 
         query = ChuvaMembro.tb.insert(body)
-        linhas_insert = __DB__.db_execute(query, commit=True).rowcount
+        linhas_insert = __DB__.db_execute(query, commit=prod).rowcount
         print(f"{linhas_insert} linhas inseridas chuva membro")
 
     @staticmethod
@@ -374,7 +390,7 @@ class ChuvaMembro:
                 MembrosModelo.tb.c['modelo'] == modelo
             )
         )
-        result = __DB__.db_execute(q_select, commit=True)
+        result = __DB__.db_execute(q_select, commit=prod)
         df = pd.DataFrame(result, columns=['cd_subbacia', 'dt_prevista', 'vl_chuva'])
         df = df.groupby(['cd_subbacia', 'dt_prevista']).mean().reset_index()
         df['modelo'] = modelo
@@ -398,7 +414,7 @@ class Subbacia:
             Subbacia.tb.c['txt_pasta_contorno'],
             Subbacia.tb.c['cd_bacia_mlt'],
         )
-        result = __DB__.db_execute(query, commit=True)
+        result = __DB__.db_execute(query, commit=prod)
         df = pd.DataFrame(result, columns=['id', 'nome', 'nome_submercado', 'nome_bacia', 'vl_lat', 'vl_lon', 'nome_smap', 'pasta_contorno', 'cd_bacia_mlt'])
         df = df.sort_values('id')
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
@@ -409,13 +425,13 @@ class Subbacia:
         query = db.select(
             db.distinct(Subbacia.tb.c['txt_bacia'])
         )
-        result = __DB__.db_execute(query, commit=True)
+        result = __DB__.db_execute(query, commit=prod)
         df = pd.DataFrame(result, '')
         
     @staticmethod
     def info_subbacias():
         query = db.select(Subbacia.tb.c['cd_subbacia'],Subbacia.tb.c['vl_lon'],Subbacia.tb.c['vl_lat'],Subbacia.tb.c['txt_nome_subbacia'])
-        answer_tb_subbacia = __DB__.db_execute(query, commit=True)
+        answer_tb_subbacia = __DB__.db_execute(query, commit=prod)
         
         df_subbac = pd.DataFrame(answer_tb_subbacia, columns=['cd_subbacia','vl_lon','vl_lat','nome'])
         df_subbac['nome'] = df_subbac['nome'].str.lower()
@@ -425,8 +441,8 @@ class Smap:
     @staticmethod
     def post_rodada_smap(rodada:RodadaSmap):
         momento_req:datetime.datetime = datetime.datetime.now()
-        
         trigger_dag_SMAP(rodada.dt_rodada, [rodada.str_modelo], rodada.hr_rodada, momento_req)
+        return None
         response:dict = get_dag_smap_run_status(rodada.str_modelo, momento_req)
         
         falhou = response['state'] == 'failed'
@@ -466,10 +482,10 @@ class MembrosModelo:
         q_delete = MembrosModelo.tb.delete().where(db.and_(
             *search_params
         ))
-        linhas_delete = __DB__.db_execute(q_delete, commit=True).rowcount
+        linhas_delete = __DB__.db_execute(q_delete, commit=prod).rowcount
         print(f'{linhas_delete} linha(s) deletada(s) tb membro modelo')
         q_insert = MembrosModelo.tb.insert(body)
-        linhas_insert =  __DB__.db_execute(q_insert, commit=True).rowcount
+        linhas_insert =  __DB__.db_execute(q_insert, commit=prod).rowcount
         print(f'{linhas_insert} linha(s) inserida(s) tb membro modelo')
         q_select = db.select(
             MembrosModelo.tb.c["id"],
@@ -480,7 +496,7 @@ class MembrosModelo:
                 *search_params
             )
                     )
-        result = __DB__.db_execute(q_select, commit=True).fetchall()
+        result = __DB__.db_execute(q_select, commit=prod).fetchall()
         df = pd.DataFrame(result, columns=["id", "dt_hr_rodada", "nome", "modelo"])
         return df.to_dict("records")
         

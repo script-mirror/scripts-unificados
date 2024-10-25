@@ -73,7 +73,6 @@ def start_instance(**kwargs):
 
     return flag
 
-
 def stop_instance(instance_id, region):
     """Para uma instância na região especificada se ela estiver rodando."""
     raise AirflowSkipException("SKIP STOP INSTANCE")
@@ -192,6 +191,7 @@ with DAG(
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
+        
     )
 
     stop_ec2_task = PythonOperator(
@@ -236,6 +236,7 @@ with DAG(
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
+        
     )
 
     stop_ec2_task = PythonOperator(
@@ -281,6 +282,7 @@ with DAG(
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
+        
     )
 
     stop_ec2_task = PythonOperator(
@@ -326,6 +328,7 @@ with DAG(
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
+        
     )
 
     stop_ec2_task = PythonOperator(
@@ -372,6 +375,7 @@ with DAG(
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
+        
     )
 
     stop_ec2_task = PythonOperator(
@@ -418,6 +422,7 @@ with DAG(
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
+        
     )
 
     stop_ec2_task = PythonOperator(
@@ -463,6 +468,7 @@ with DAG(
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
+        
     )
 
     run_shell_script = SSHOperator(
@@ -474,6 +480,7 @@ with DAG(
         cmd_timeout = TIME_OUT,
         get_pty=True,
         do_xcom_push=False,
+        
     )
 
     stop_ec2_task = PythonOperator(
