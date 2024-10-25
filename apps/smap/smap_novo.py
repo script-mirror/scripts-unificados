@@ -50,7 +50,7 @@ class SMAP(StructureSMAP):
 
         #naturais e incrementais {266: 1, 62: 1,63: 1,154: 1,246: 1, 245: 1}
         subBaciasIncrementais = [160, 239, 242] + [34, 154, 243, 245, 246, 266] + [191, 253, 257, 271, 273, 275] + [89]
-        df_nat_teste = df_prev_postos[['cenario','posto','data_previsao','data_rodada','previsao_total']]
+        df_nat_teste = df_prev_postos[~df_prev_postos['posto'].isin(subBaciasIncrementais)][['cenario','posto','data_previsao','data_rodada','previsao_total']]
         df_inc_teste = df_prev_postos[df_prev_postos['posto'].isin(subBaciasIncrementais)][['cenario','posto','data_previsao','data_rodada','previsao_incremental']]
 
         df_nat_teste.columns = ['cenario','cd_posto','dt_prevista','data_rodada','vl_vazao']
