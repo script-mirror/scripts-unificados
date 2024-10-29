@@ -6,6 +6,8 @@ import locale
 import argparse
 import datetime
 from pandas.plotting import register_matplotlib_converters
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
 register_matplotlib_converters()
 
@@ -18,6 +20,8 @@ except:
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.gerarProdutos import rz_processar_produtos
 from PMO.scripts_unificados.bibliotecas import wx_emailSender,wx_opweek
+from PMO.scripts_unificados.apps.bot_whatsapp.whatsapp_bot import WhatsappBot
+
 
 
 PATH_BOT_WHATS = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/bot_whatsapp"
@@ -48,10 +52,12 @@ PRODUTCS_MAPPING = {
         'REVISAO_CARGA_NW_PRELIMINAR': "processar_produto_REVISAO_CARGA_NW_preliminar",
     } 
 
-class GerardorProdutos():
+class GerardorProdutos(WhatsappBot):
 
     def __init__(self) -> None:
-        pass
+        self.num_whatsapp = os.getenv('NUM_GILSEU')
+        WhatsappBot.__init__(self)
+        # pass
 
     def enviar(self,parametros):
 
@@ -86,7 +92,10 @@ class GerardorProdutos():
             elif parametros.get("teste_user") == 'jose':
                 resultado.destinatarioWhats='11968606707'
                 resultado.destinatarioEmail = ['jose.flores@raizen.com']
-
+            elif parametros.get("teste_user") == 'arthur':
+                resultado.destinatarioWhats='11945892210'
+                resultado.destinatarioEmail = ['arthur.moraes@raizen.com']
+                
             if resultado.flagEmail:
 
                 if resultado.file and type(resultado.file) == str:
@@ -103,7 +112,14 @@ class GerardorProdutos():
                     assunto=resultado.assuntoEmail if resultado.assuntoEmail else '',
                     anexos= resultado.file if resultado.file else [] 
                     )
-
+                
+            if parametros['produto'] == 'REVISAO_CARGA_NW':
+                for file in resultado.file:
+                    self.inserirMsgFila(self.num_whatsapp, "", file)
+            elif parametros['produto'] == 'REVISAO_CARGA_NW_PRELIMINAR':
+                for file in resultado.file:
+                    self.inserirMsgFila(self.num_whatsapp, "PRELIMINAR", file)
+                    
             if resultado.flagWhats:
 
                 if not resultado.destinatarioWhats:
@@ -111,9 +127,15 @@ class GerardorProdutos():
 
                 if not resultado.msgWhats:
                     resultado.msgWhats = f'{produto} ({data_str})'
+                    
+                self.inserirMsgFila(resultado.destinatarioWhats, resultado.msgWhats, resultado.fileWhats)
 
-                cmd = f'cd {PATH_BOT_WHATS} && python whatsapp_bot.py inserirMsgFila dst "{resultado.destinatarioWhats}" msg "{resultado.msgWhats}" file "{resultado.fileWhats}"'
-                os.system(cmd)
+
+
+                
+                
+                # cmd = f'cd {PATH_BOT_WHATS} && python whatsapp_bot.py inserirMsgFila dst "{resultado.destinatarioWhats}" msg "{resultado.msgWhats}" file "{resultado.fileWhats}"'
+                # os.system(cmd)
         else:
             print(
                 '''
@@ -150,7 +172,7 @@ class GerardorProdutos():
         print(f'python {sys.argv[0]} --produto PREVISAO_CARGA_DESSEM --data {(data + datetime.timedelta(days=1)).strftime("%d/%m/%Y")}')
         print(f'python {sys.argv[0]} --produto DIFERENCA_CV --data {data.strftime("%d/%m/%Y")}')
         print(f'python {sys.argv[0]} --produto RESULTADO_PREVS --data {data.strftime("%d/%m/%Y")} modelo PCONJUNTO rodada 0 dtrev {dt_proxRv} preliminar 0 pdp 0 psat 0')
-        print(f'python {sys.argv[0]} --produto GRAFICO_ACOMPH --data {data.strftime("%d/%m/%Y")}')
+        print(f'python {sys.argv[0]} --produto ACOMPH --data {data.strftime("%d/%m/%Y")}')
         print(f'python {sys.argv[0]} --produto RESULTADOS_PROSPEC --nomeRodadaOriginal \'["ecmwf_ens-wx1","ecmwf_ens-wx2"]\' --path \'{filesProspec}\' --destinatarioEmail \'["thiago@wxe.com.br","middle@wxe.com.br"]\' --assuntoEmail \'Assunto do email\' --corpoEmail \'<a1>Coloque aqui o corpo do email</a1>\' --considerarPrevs \'[0]\' --fazer_media 0 --enviar_whats 0')
         print(f'python {sys.argv[0]} --produto PREVISAO_GEADA --data {data.strftime("%d/%m/%Y")}')
         print(f'python {sys.argv[0]} --produto REVISAO_CARGA --path {os.path.join(path_plan_acomph_rdh, file_revisaoCargas)}')

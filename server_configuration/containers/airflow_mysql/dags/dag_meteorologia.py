@@ -16,7 +16,7 @@ load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 
-TIME_OUT = 60*60*8
+TIME_OUT = 60*60*30
 
 
 def create_ec2_client(region):
@@ -118,6 +118,7 @@ with DAG(
         command="{{ '/home/admin/rotinas/cpc_to_dat.sh' }}",
         conn_timeout = TIME_OUT,
         cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
@@ -130,6 +131,7 @@ with DAG(
         ssh_conn_id='ssh_master',
         conn_timeout = TIME_OUT,
         cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         do_xcom_push=False,
         
@@ -174,6 +176,7 @@ with DAG(
         command="{{ '/home/admin/rotinas/forecast_to_dat.sh' }}",
         conn_timeout = TIME_OUT,
         cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
@@ -188,6 +191,7 @@ with DAG(
         command="{{ '/home/admin/rotinas/hindcast_to_dat.sh' }}",
         conn_timeout = TIME_OUT,
         cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
@@ -233,6 +237,7 @@ with DAG(
         command="{{ '/home/admin/enviMetereologia/bin/python /home/admin/rotinas/gera_forecast_to_db.py ecmwf-ens-membros' }}",
         conn_timeout = TIME_OUT,
         cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
@@ -279,6 +284,7 @@ with DAG(
         command="{{ '/home/admin/enviMetereologia/bin/python /home/admin/rotinas/gera_forecast_to_db.py ecmwf' }}",
         conn_timeout = TIME_OUT,
         cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
@@ -325,6 +331,7 @@ with DAG(
         command="{{ '/home/admin/enviMetereologia/bin/python /home/admin/rotinas/gera_forecast_to_db.py gefs-membros-estendido' }}",
         conn_timeout = TIME_OUT,
         cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
@@ -372,6 +379,7 @@ with DAG(
         command="{{ '/home/admin/enviMetereologia/bin/python /home/admin/rotinas/gera_forecast_to_db.py gefs-membros' }}",
         conn_timeout = TIME_OUT,
         cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
@@ -419,6 +427,7 @@ with DAG(
         command="{{ '/home/admin/enviMetereologia/bin/python /home/admin/rotinas/gera_forecast_to_db.py gfs' }}",
         conn_timeout = TIME_OUT,
         cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
@@ -465,6 +474,7 @@ with DAG(
         command="{{ '/home/admin/rotinas/c3s/produtos.sh' }}",
         conn_timeout = TIME_OUT,
         cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
         do_xcom_push=False,
@@ -478,6 +488,7 @@ with DAG(
         ssh_conn_id='ssh_master',
         conn_timeout = TIME_OUT,
         cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         do_xcom_push=False,
         
