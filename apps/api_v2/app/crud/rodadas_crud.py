@@ -143,23 +143,36 @@ class CadastroRodadas:
         n_value = __DB__.db_execute(query_update, commit=prod).rowcount
 
         print(f"{n_value} Linhas inseridas na tb_cadastro_rodadas")
+
+    @staticmethod
+    def delete_por_id(id:int):
+        query = CadastroRodadas.tb.delete(
+        ).where(
+         CadastroRodadas.tb.c['id'] == id           
+                )
+        n_value = __DB__.db_execute(query, commit=prod).rowcount
+        print(f"{n_value} Linhas deletadas na cadastro rodadas")
+        return None
         
     @staticmethod
-    def delete_rodada_chuva_smap(id_rodada:int):
+    def delete_rodada_chuva_smap_por_id_rodada(id_rodada:int):
         q_select = db.select(
+            CadastroRodadas.tb.c['id'],
             CadastroRodadas.tb.c['id_chuva'],
-            CadastroRodadas.tb.c['id_smap'],
-            CadastroRodadas.tb.c['id_prospec'],
-            CadastroRodadas.tb.c['id_previvaz']
+            CadastroRodadas.tb.c['id_smap']
         ).where(
             CadastroRodadas.tb.c['id'] == id_rodada
         )
         
         result = __DB__.db_execute(q_select)
-        df_ids = pd.DataFrame(result, columns=['id_chuva', 'id_smap', 'id_prospec', 'id_previvaz'])
+        try:
+            ids = pd.DataFrame(result, columns=['id_rodada', 'id_chuva', 'id_smap']).to_dict('records')[0]
+            Chuva.delete_por_id(ids['id_chuva'])
+            Smap.delete_por_id(ids['id_smap'])
+            CadastroRodadas.delete_por_id(ids['id_rodada'])
+        except IndexError:
+            print(f'id rodada {id_rodada} nao existe.')
         
-        
-        pass
 class Chuva:
     tb:db.Table = __DB__.getSchema('tb_chuva')
 
@@ -251,6 +264,12 @@ class Chuva:
         prevs:List[dict] = []
         for prev in chuva_prev:
             prevs.append(prev.model_dump())
+
+        try:
+            id_rodada = CadastroRodadas.get_rodadas_por_dt_hr_nome(prevs[0]['dt_rodada'], prevs[0]['modelo'])[0]['id']
+            CadastroRodadas.delete_rodada_chuva_smap_por_id_rodada(id_rodada)
+        except HTTPException:
+            print("Modelo nao encontrado.")
         
         modelo = (prevs[0]['modelo'], prevs[0]['dt_rodada'].hour , prevs[0]['dt_rodada'].date())
         
@@ -259,25 +278,16 @@ class Chuva:
             
         df = pd.DataFrame(prevs)
         df['cenario'] = f'{modelo[0]}_{modelo[1]}_{modelo[2]}'
-        
-        Chuva.inserir_chuva_modelos(df)
+        Chuva.inserir_chuva_modelos(df, False)
     
         return None
     
     @staticmethod
     def inserir_prev_chuva(df_prev_vazao_out:pd.DataFrame):
-
         values_chuva = df_prev_vazao_out[['id_chuva','cd_subbacia','dt_prevista','vl_chuva']].values.tolist()
-        ids_chuva = df_prev_vazao_out['id_chuva'].unique() 
-        query_delete = Chuva.tb.delete().where(Chuva.tb.c['id'].in_(ids_chuva))
-        n_value = __DB__.db_execute(query_delete, commit=prod).rowcount
-        print(f"{n_value} Linhas deletadas na Chuva")
-
         query_insert = Chuva.tb.insert().values(values_chuva)
         n_value = __DB__.db_execute(query_insert, commit=prod).rowcount
-        print(f"{n_value} Linhas inseridas na Chuva")
-
-        
+        print(f"{n_value} Linhas inseridas na Chuva") 
         
     @staticmethod
     def inserir_chuva_modelos(df_prev_chuva_out:pd.DataFrame, rodar_smap:bool = True):
@@ -325,9 +335,16 @@ class Chuva:
             
             if rodar_smap:
                 Smap.post_rodada_smap(RodadaSmap.model_validate({'dt_rodada':datetime.datetime.strptime(dt_rodada, '%Y-%m-%d'),'hr_rodada':hr_rodada,'str_modelo':str_modelo}))
-    #                 dt_rodada: datetime.date
-    # hr_rodada: int
-    # str_modelo: str
+
+    @staticmethod
+    def delete_por_id(id:int):
+        query = Chuva.tb.delete(
+        ).where(
+         Chuva.tb.c['id'] == id           
+                )
+        n_value = __DB__.db_execute(query, commit=prod).rowcount
+        print(f"{n_value} Linhas deletadas na Chuva")
+        return None
     
     
     
@@ -438,6 +455,7 @@ class Subbacia:
         return df_subbac
          
 class Smap:
+    tb:db.Table = __DB__.getSchema('tb_smap')
     @staticmethod
     def post_rodada_smap(rodada:RodadaSmap):
         momento_req:datetime.datetime = datetime.datetime.now()
@@ -462,6 +480,16 @@ class Smap:
         html = f"""<html><head></head>{style}<body> <div class="card"> <h1>{status}</h1> <p>Fim da execução do Airflow {momento.strftime("%d/%m/%Y %H:%M:%S")}<br /><a href="{dag_url}">DAG Airflow</a></p> </div></body></html>"""
         
         email.sendEmail(texto=html, assunto="SMAP - Gera Chuva", send_to=["arthur.moraes@raizen.com"])
+
+    @staticmethod
+    def delete_por_id(id:int):
+        query = Smap.tb.delete(
+        ).where(
+         Smap.tb.c['id'] == id           
+                )
+        n_value = __DB__.db_execute(query, commit=prod).rowcount
+        print(f"{n_value} Linhas deletadas tb smap")
+        return None
 
 class MembrosModelo:
     tb:db.Table = __DB__.getSchema('tb_membro_modelo')
