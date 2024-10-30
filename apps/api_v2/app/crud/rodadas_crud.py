@@ -278,7 +278,7 @@ class Chuva:
             
         df = pd.DataFrame(prevs)
         df['cenario'] = f'{modelo[0]}_{modelo[1]}_{modelo[2]}'
-        Chuva.inserir_chuva_modelos(df, False)
+        Chuva.inserir_chuva_modelos(df, True)
     
         return None
     
@@ -366,7 +366,7 @@ class ChuvaMembro:
         
         body = df.to_dict("records")
         ChuvaMembro.inserir(body)
-        ChuvaMembro.media_membros(chuva_prev[0].dt_hr_rodada.replace(minute=0, second=0, microsecond=0), chuva_prev[0].modelo, inserir=False)
+        ChuvaMembro.media_membros(chuva_prev[0].dt_hr_rodada.replace(minute=0, second=0, microsecond=0), chuva_prev[0].modelo, inserir=True)
         return None
     
     @staticmethod
@@ -389,7 +389,7 @@ class ChuvaMembro:
         linhas_delete = __DB__.db_execute(q_delete, commit=prod).rowcount
         print(f"{linhas_delete} linhas inseridas chuva membro")
 
-        query = ChuvaMembro.tb.insert(body)
+        query = ChuvaMembro.tb.insert().value(body)
         linhas_insert = __DB__.db_execute(query, commit=prod).rowcount
         print(f"{linhas_insert} linhas inseridas chuva membro")
 
@@ -512,7 +512,7 @@ class MembrosModelo:
         ))
         linhas_delete = __DB__.db_execute(q_delete, commit=prod).rowcount
         print(f'{linhas_delete} linha(s) deletada(s) tb membro modelo')
-        q_insert = MembrosModelo.tb.insert(body)
+        q_insert = MembrosModelo.tb.insert().values(body)
         linhas_insert =  __DB__.db_execute(q_insert, commit=prod).rowcount
         print(f'{linhas_insert} linha(s) inserida(s) tb membro modelo')
         q_select = db.select(
