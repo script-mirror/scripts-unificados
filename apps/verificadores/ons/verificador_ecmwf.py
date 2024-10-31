@@ -157,7 +157,7 @@ def rotina_ecmwf_ons(dt_rodada:datetime.datetime):
             modelos_list=[
                 ('ECMWF-CLUST',18,dt_rodada),
             ],
-            df_prev_chuva_out=df_clusts_ponderado[filtro]
+            df_prev_chuva_out=df_clusts_ponderado[filtro].drop_duplicates(subset=['vl_lat','vl_lon'])
         )
         
         for i_grupo in range(1,11):
@@ -166,7 +166,7 @@ def rotina_ecmwf_ons(dt_rodada:datetime.datetime):
                 modelos_list=[
                     (f'ECMWF-G{i_grupo}',18,dt_rodada),
                 ],
-                df_prev_chuva_out=df_clusts_ponderado[filtro]
+                df_prev_chuva_out=df_clusts_ponderado[filtro].drop_duplicates(subset=['vl_lat','vl_lon'])
             )
         
         RODADAS.importar_probabilidade_grupos_ecmwf(
@@ -178,7 +178,7 @@ def rotina_ecmwf_ons(dt_rodada:datetime.datetime):
     
 if __name__ == "__main__":
 
-    dt = datetime.datetime.now().replace(hour=0,minute=0,second=0)
+    dt = datetime.datetime.now().replace(hour=0,minute=0,second=0) - datetime.timedelta(days=1)
     if len(sys.argv) > 1:
 
         fl_run = False
