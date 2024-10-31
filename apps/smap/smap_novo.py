@@ -18,7 +18,7 @@ PATH_CPINS = os.path.join(PATH_S3_BUCKET,'Chuva-vazão')
 path_diretorio_app_smap = os.path.dirname(os.path.abspath(__file__))
 PATH_EXECUCAO_SMAP = os.path.join(path_diretorio_app_smap,'arquivos','opera-smap', 'smap_novo')
 
-MODELOS_EXT = ['PCONJUNTO'] 
+MODELOS_EXT = ['PCONJUNTO','PMEDIA','PCONJUNTO2'] 
 
 class SMAP(StructureSMAP):
 
@@ -166,13 +166,15 @@ class SMAP(StructureSMAP):
 
     def init(self):
 
-        print(f"Iniciado previsão SMAP! {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}")
         grupo_de_modelos = self.separa_modelos_ext()
         for grupo in grupo_de_modelos:
-            
+
+
             self.modelos = grupo['modelos']
             chuva_ext = grupo['chuva_ext']
 
+            if chuva_ext:print(f"Iniciado previsão SMAP EXTENDIDO! {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}")
+            else:  print(f"\n\nIniciado previsão SMAP! {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}")
 
             self.build(self.modelos, chuva_ext)
         

@@ -188,13 +188,15 @@ class StructureSMAP(VazaoObservada,ChuvaObservada,Rodadas):
         else:
             df_chuva_prevista = self.get_chuva_modelos(modelos_list=modelos_list)
 
+        subbacias_smap = pd.read_csv((os.path.join(PATH_EXECUCAO_SMAP,'Arq_entrada',self.arquivos['POSTOS_PLUVIOMETRICOS'])),sep=';')['posto'].unique()
+        df_chuva_prevista = df_chuva_prevista[df_chuva_prevista['nome'].isin(subbacias_smap)].copy()
 
         if df_chuva_prevista.empty:
             print("Não há chuva prevista para os modelos! Não será possivel rodar!")
             quit()
         
         max_dt_rodada = max(df_chuva_prevista['data_rodada'])
-        dt_inicial = min(df_chuva_prevista['data_rodada']) - datetime.timedelta(days=120)
+        dt_inicial = min(df_chuva_prevista['data_rodada']) - datetime.timedelta(days=95)
         df_vazao_obs,ultimo_dt_historico_vazao = self.historico_vazao(dt_ini=dt_inicial,dt_fim=max_dt_rodada)
 
         #muda os modelos para .preliminar se necessario
