@@ -6,8 +6,8 @@
 1.00                                                                                                                                              'Ai                                             
 10.00                                                                                                                                             'Capc                                           
 587                                                                                                                                               'Kkt                                            
-150.0                                                                                                                                             'K2t2                                           
-2.80                                                                                                                                              'H1 Altura para o segundo escoamento superficial
+10.0                                                                                                                                              'K2t2                                           
+200.00                                                                                                                                            'H1 Altura para o segundo escoamento superficial
 1.58                                                                                                                                              'H quarto reservatorio                          
 22.4                                                                                                                                              'K3t                                            
 8.5                                                                                                                                               'K1t                                            

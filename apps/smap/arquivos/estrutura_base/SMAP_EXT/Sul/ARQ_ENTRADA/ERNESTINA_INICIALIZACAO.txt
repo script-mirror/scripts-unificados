@@ -1,6 +1,6 @@
-25/01/2024 ' data da rodada                               
+24/10/2024 ' data da rodada                               
 32         ' dia de inicialização do aquecimento do modelo
 47         ' número de dias de previsão                   
-37.97      ' ebin                                         
-10.79      ' supin                                        
-27.20      ' tuin                                         
+24.01      ' ebin                                         
+6.86       ' supin                                        
+27.53      ' tuin                                         
