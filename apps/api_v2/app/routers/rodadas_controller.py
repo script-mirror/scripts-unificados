@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 
 from app.crud import rodadas_crud
 from app.utils import cache
-from app.schemas import GranularidadeEnum, PesquisaPrevisaoChuva, RodadaCriacao, RodadaSmap, TipoRodadaEnum
+from app.schemas import GranularidadeEnum, PesquisaPrevisaoChuva, RodadaCriacao, RodadaSmap, TipoRodadaEnum, ChuvaObsReq
 from app.schemas.chuvaprevisao import ChuvaPrevisaoCriacao, ChuvaPrevisaoResposta, ChuvaPrevisaoCriacaoMembro
 
 from app.auth import auth_dependency 
@@ -70,6 +70,12 @@ async def post_smap(
     rodada:RodadaSmap
 ):  
     return rodadas_crud.Smap.post_rodada_smap(rodada)
+
+@router.post('/chuva/observada', tags=['Rodadas'])
+async def post_chuva_observada(
+    chuva_obs:List[ChuvaObsReq]
+):
+    return rodadas_crud.ChuvaObs.post_chuva_obs(chuva_obs)
 
 # @router.get("/protected-endpoint")
 # async def protected_endpoint(session_data: dict = Depends(auth_dependency)):

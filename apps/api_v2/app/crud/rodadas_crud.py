@@ -9,7 +9,7 @@ from fastapi import HTTPException
 path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2")
 
 from app.schemas.chuvaprevisao import ChuvaPrevisaoCriacao, ChuvaPrevisaoCriacaoMembro
-from app.schemas import PesquisaPrevisaoChuva, RodadaSmap
+from app.schemas import PesquisaPrevisaoChuva, RodadaSmap, ChuvaObsReq
 
 from app.utils import cache
 from app.crud import ons_crud
@@ -346,8 +346,6 @@ class Chuva:
         print(f"{n_value} Linhas deletadas na Chuva")
         return None
     
-    
-    
 class ChuvaMembro:
     tb:db.Table = __DB__.getSchema('tb_chuva_membro')
     @staticmethod
@@ -389,7 +387,7 @@ class ChuvaMembro:
         linhas_delete = __DB__.db_execute(q_delete, commit=prod).rowcount
         print(f"{linhas_delete} linhas inseridas chuva membro")
 
-        query = ChuvaMembro.tb.insert().value(body)
+        query = ChuvaMembro.tb.insert().values(body)
         linhas_insert = __DB__.db_execute(query, commit=prod).rowcount
         print(f"{linhas_insert} linhas inseridas chuva membro")
 
@@ -527,6 +525,30 @@ class MembrosModelo:
         result = __DB__.db_execute(q_select, commit=prod).fetchall()
         df = pd.DataFrame(result, columns=["id", "dt_hr_rodada", "nome", "modelo"])
         return df.to_dict("records")
+        
+class ChuvaObs:
+    tb:db.Table = __DB__.getSchema('tb_chuva_obs')
+    
+    @staticmethod
+    def post_chuva_obs(
+        chuva_obs:List[ChuvaObsReq]
+    ):
+        chuva_obs = [c.model_dump() for c in chuva_obs]
+        df = pd.DataFrame(chuva_obs)
+        df['dt_observado'].to_list()
+        
+        query_delete = ChuvaObs.tb.delete(
+            ).where(db.and_(
+                   ChuvaObs.tb.c['dt_observado'] == chuva_obs[0]['dt_observado']
+            ))
+        rows_delete = __DB__.db_execute(query_delete, prod).rowcount
+        print(f'{rows_delete} linha(s) deletada(s)')
+        query_insert = ChuvaObs.tb.insert(
+            ).values(
+            df.to_dict('records')
+        )
+        rows_insert = __DB__.db_execute(query_insert, prod).rowcount
+        print(f'{rows_insert} linha(s) inserida(s)')
         
     
 if __name__ == '__main__':
