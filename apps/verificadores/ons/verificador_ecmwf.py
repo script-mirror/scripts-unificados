@@ -128,7 +128,7 @@ def rotina_ecmwf_ons(dt_rodada:datetime.datetime):
 
     os.makedirs(PATH_TMP_DOWNLOAD, exist_ok=True)
 
-    dt_rodada = dt_rodada.replace(hour=0,minute=0,second=0)
+    dt_rodada = dt_rodada.date()
     while 1:
 
         rz_ons.login_ons(driver)
@@ -168,7 +168,6 @@ def rotina_ecmwf_ons(dt_rodada:datetime.datetime):
                 ],
                 df_prev_chuva_out=df_clusts_ponderado[filtro].drop_duplicates(subset=['vl_lat','vl_lon'])
             )
-        
         RODADAS.importar_probabilidade_grupos_ecmwf(
             modelos_list=[('ECMWF-CLUST',18,dt_rodada)],
             df_probabilidade_grupos=df_prob

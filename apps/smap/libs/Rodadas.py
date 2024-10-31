@@ -314,11 +314,11 @@ class tb_chuva(tb_cadastro_rodada,tb_subbacia):
 
         query_delete = tb_pesos_grupos_ecmwf.delete().where(tb_pesos_grupos_ecmwf.c.id_deck.in_(id_))
         n_value = self.DB_RODADAS.db_execute(query_delete).rowcount
-        print(f"{n_value} Linhas deletadas na tb_chuva.")
+        print(f"{n_value} Linhas deletadas na tb_pesos_grupo_ecmwf.")
 
         query_insert = tb_pesos_grupos_ecmwf.insert().values(values_probabilidades)
         n_value = self.DB_RODADAS.db_execute(query_insert).rowcount
-        print(f"{n_value} Linhas inseridas na tb_chuva.")
+        print(f"{n_value} Linhas inseridas na tb_pesos_grupo_ecmwf.")
 
 
 # MAIN CLASS
@@ -411,7 +411,7 @@ class Rodadas(tb_smap,tb_chuva,tb_cadastro_rodada):
             (pd.to_datetime(df_info_rodadas['dt_rodada']).dt.strftime('%Y-%m-%d') == dt_rodada) & \
             (df_info_rodadas['hr_rodada'] == int(hr_rodada))
             
-        if mask_id_chuva.sum() == 1:
+        if not df_info_rodadas[mask_id_chuva].empty:
             id_ = df_info_rodadas[mask_id_chuva]['id_rodada'].unique()[0]
             df_probabilidade_grupos = df_probabilidade_grupos.T
             df_probabilidade_grupos['id_rodada'] = id_
