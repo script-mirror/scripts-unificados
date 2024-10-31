@@ -415,7 +415,7 @@
         "bacia": "Paranazao",
         "quantidadeDias": 50,
         "composicao": {
-            "MAUÁ": {
+            "GOV. JAYME CANET": {
                 "tipoVazao": "VNM"
             }
         }
@@ -1378,5 +1378,19 @@
                 "tipoVazao": "VNA"
             }
         }
+    },
+    
+    "AMARU_MAYU": {
+        "sheet": "Dados_Fluviometricos",
+        "iniciais": "VMD",
+        "codigoEstacao": "15299999",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "AMARU MAYU": {
+                "tipoVazao": "VMD"
+            }
+        }
     }
+    
 }
