@@ -7,3 +7,4 @@ from .TipoRodadaEnum import TipoRodadaEnum
 from .MembrosModeloSchema import MembrosModeloSchema
 from .ProdutoInteresseSchema import ProdutoInteresseSchema
 from .CategoriaNegociacaoEnum import CategoriaNegociacaoEnum
+from .ChuvaObsReq import ChuvaObsReq
