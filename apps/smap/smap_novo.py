@@ -98,7 +98,7 @@ class SMAP(StructureSMAP):
                     'vl_vazao'] *= self.ec_probs[dt][0][clust]
 
         df_prev_vazao_out['cenario'] = df_prev_vazao_out['cenario'].replace(r'-ECMWF-G\d+', '', regex=True)
-        df_prev_vazao_out = df_prev_vazao_out.groupby(['cenario','data_rodada','cd_posto','dt_prevista'])[['vl_vazao']].sum().reset_index()
+        df_prev_vazao_out = df_prev_vazao_out.groupby(['cenario','data_rodada','cd_posto','dt_prevista'])[['vl_vazao']].mean().reset_index()
         return df_prev_vazao_out
     
     def separa_modelos_ext(self):
