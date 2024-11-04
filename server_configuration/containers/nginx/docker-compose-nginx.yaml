@@ -1,0 +1,12 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx:/etc/nginx
+      - ./${SSL_KEY}:/etc/ssl/private/ssl.key
+      - ./${SSL_CRT}:/etc/ssl/certs/ssl.crt
+    restart: always
