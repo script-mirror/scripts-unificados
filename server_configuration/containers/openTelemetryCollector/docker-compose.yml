@@ -18,3 +18,7 @@ services:
       - 55679:55679 # zpages extension
     networks:
       - containers-internal
+
+networks:
+  containers-internal:
+    driver: bridge
