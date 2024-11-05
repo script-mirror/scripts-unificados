@@ -2,6 +2,9 @@
 # Use the official Apache Airflow image as the base image
 FROM apache/airflow:2.8.2
 
+#install otel collector for newrelic
+RUN pip install --no-cache-dir "apache-airflow[otel]==$AIRFLOW_VERSION"
+
 # Switch to root user for installing packages
 USER root
 
