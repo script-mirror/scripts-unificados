@@ -55,14 +55,16 @@ async def get_previsao_chuva_modelos_combinados(
 @router.post('/chuva/previsao/modelos', tags=['Rodadas'])
 async def post_chuva_modelo_combinados(
     chuva_prev: List[ChuvaPrevisaoCriacao],
+    rodar_smap:bool = True
 ):  
-    return rodadas_crud.Chuva.post_chuva_modelo_combinados(chuva_prev)
+    return rodadas_crud.Chuva.post_chuva_modelo_combinados(chuva_prev, rodar_smap)
 
 @router.post('/chuva/previsao/membros', tags=['Rodadas'])
 async def post_chuva_membros(
     chuva_prev: List[ChuvaPrevisaoCriacaoMembro],
+    rodar_smap:bool = True
 ):  
-    return rodadas_crud.ChuvaMembro.post_chuva_membro(chuva_prev)
+    return rodadas_crud.ChuvaMembro.post_chuva_membro(chuva_prev, rodar_smap)
 
 
 @router.post('/smap', tags=['Rodadas'])
@@ -76,6 +78,12 @@ async def post_chuva_observada(
     chuva_obs:List[ChuvaObsReq]
 ):
     return rodadas_crud.ChuvaObs.post_chuva_obs(chuva_obs)
+
+@router.delete('/chuva/previsao', tags=['Rodadas'])
+async def delete_rodada_chuva_smap_por_id_rodada(
+    id_rodada:int
+):
+    return rodadas_crud.CadastroRodadas.delete_rodada_chuva_smap_por_id_rodada(id_rodada)
 
 # @router.get("/protected-endpoint")
 # async def protected_endpoint(session_data: dict = Depends(auth_dependency)):
