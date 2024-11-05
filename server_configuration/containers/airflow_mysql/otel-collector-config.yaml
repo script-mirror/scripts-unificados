@@ -14,6 +14,11 @@ exporters:
     endpoint: https://otlp.nr-data.net
     headers:
       api-key: 7fbf1e391a7b4ca633fb6d9d176b810dFFFFNRAL
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
   debug:
     verbosity: detailed
 
