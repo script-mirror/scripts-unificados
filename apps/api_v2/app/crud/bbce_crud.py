@@ -59,7 +59,7 @@ class ProdutoInteresse:
         
         __DB__.db_execute(ProdutoInteresse.tb.delete(), commit=prod)
         
-        __DB__.db_execute(ProdutoInteresse.tb.insert(df.to_dict("records")), commit=prod)
+        __DB__.db_execute(ProdutoInteresse.tb.insert().values(df.to_dict("records")), commit=prod)
         return df.to_dict("records")
     
 class Negociacoes:
