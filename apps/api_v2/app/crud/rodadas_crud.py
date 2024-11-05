@@ -260,7 +260,7 @@ class Chuva:
         return df.to_dict('records')
     
     @staticmethod
-    def post_chuva_modelo_combinados(chuva_prev:List[ChuvaPrevisaoCriacao]) -> None:
+    def post_chuva_modelo_combinados(chuva_prev:List[ChuvaPrevisaoCriacao], rodar_smap:bool) -> None:
         prevs:List[dict] = []
         for prev in chuva_prev:
             prevs.append(prev.model_dump())
@@ -278,7 +278,7 @@ class Chuva:
             
         df = pd.DataFrame(prevs)
         df['cenario'] = f'{modelo[0]}_{modelo[1]}_{modelo[2]}'
-        Chuva.inserir_chuva_modelos(df, True)
+        Chuva.inserir_chuva_modelos(df, rodar_smap)
     
         return None
     
@@ -349,7 +349,7 @@ class Chuva:
 class ChuvaMembro:
     tb:db.Table = __DB__.getSchema('tb_chuva_membro')
     @staticmethod
-    def post_chuva_membro(chuva_prev:List[ChuvaPrevisaoCriacaoMembro]) -> None:
+    def post_chuva_membro(chuva_prev:List[ChuvaPrevisaoCriacaoMembro], rodar_smap:bool) -> None:
         records = [obj.model_dump() for obj in chuva_prev]
         df = pd.DataFrame(records)
         # dt_hr_rodada:datetime.datetime = df[["dt_hr_rodada"]].drop_duplicates().to_dict("records")[0]["dt_hr_rodada"].to_pydatetime()
@@ -364,7 +364,7 @@ class ChuvaMembro:
         
         body = df.to_dict("records")
         ChuvaMembro.inserir(body)
-        ChuvaMembro.media_membros(chuva_prev[0].dt_hr_rodada.replace(minute=0, second=0, microsecond=0), chuva_prev[0].modelo, inserir=True)
+        ChuvaMembro.media_membros(chuva_prev[0].dt_hr_rodada.replace(minute=0, second=0, microsecond=0), chuva_prev[0].modelo, inserir=rodar_smap)
         return None
     
     @staticmethod
