@@ -76,7 +76,7 @@ with DAG(
     default_args = default_args,
     dag_id = 'PROSPEC_PCONJUNTO_PREL', 
     start_date=datetime(2024, 4, 28), 
-    schedule_interval='30 07 * * 1-5', 
+    schedule_interval='00 07 * * *', 
     catchup=False
     ) as dag:
     

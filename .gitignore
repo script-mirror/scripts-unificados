@@ -23,7 +23,7 @@ Thumbs.db
 .env
 
 #NGINX
-server_configuration/containers/nginx
+server_configuration/containers/nginx/tradingenergiarz*
 
 # Bot Whatsapp
 apps/bot_whatsapp/.wwebjs_auth/

@@ -55,6 +55,9 @@ DB_MAPPING = {
         "tb_chuva_prevista_estacao_chuvosa",
         "tb_cadastro_estacao_chuvosa",
         'tb_chuva_observada_estacao_chuvosa',
+        'tb_cadastro_teleconexoes_rodadas',
+        'tb_cadastro_teleconexoes_modelos',
+        'tb_cadastro_teleconexoes_indice',
     ]
 
 }
@@ -999,6 +1002,25 @@ class db_mysql_master():
                 extend_existing=True
             )
 
+        elif table_name.lower() == 'tb_cadastro_teleconexoes_rodadas':
+            table_schema = db.Table('tb_cadastro_teleconexoes_rodadas', self.meta,
+                db.Column('id', db.Integer, primary_key=True, autoincrement=True),
+                db.Column('dt_rodada', db.String(20)),
+            )
+
+        elif table_name.lower() == 'tb_cadastro_teleconexoes_modelos':
+            table_schema = db.Table('tb_cadastro_teleconexoes_modelos', self.meta,
+                db.Column('id', db.Integer, primary_key=True, autoincrement=True),
+                db.Column('str_modelo', db.String(20)),
+            )
+
+        elif table_name.lower() == 'tb_cadastro_teleconexoes_indice':
+            table_schema = db.Table('tb_cadastro_teleconexoes_indice', self.meta,
+                db.Column('id', db.Integer),
+                db.Column('dt_prevista', db.Date),
+                db.Column('vl_indice', db.Float),
+                db.Column('indice', db.String(20)),
+            )
 
         return table_schema
 
@@ -1014,8 +1036,8 @@ if __name__ == '__main__':
     
     pass
     # database = db_localhost('db_config')
-    # database = db_mysql_master('db_rodadas')
-    # database.connect()
+    database = db_mysql_master('db_meteorologia')
+    database.connect()
     
     # # Descomente para criar a tabela
     # # database.create_table('tb_chuva')
@@ -1026,7 +1048,9 @@ if __name__ == '__main__':
     # database.create_table('tb_cadastro_pld')
     # database.create_table('tb_intercambio_dessem')
     # database.create_table('tb_produtos_bbce')
-    
+    database.create_table('tb_cadastro_teleconexoes_rodadas')
+    database.create_table('tb_cadastro_teleconexoes_modelos')
+    database.create_table('tb_cadastro_teleconexoes_indice')
     
     # tb_cadastro_rodadas = database.getSchema('tb_cadastro_rodadas')
     # database.connect()
