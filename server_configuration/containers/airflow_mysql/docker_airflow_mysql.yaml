@@ -86,6 +86,8 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    networks:
+      - containers-internal
 
   airflow-init:
     <<: *airflow-common
@@ -108,3 +110,7 @@ services:
       - ${AIRFLOW_PROJ_DIR:-.}:/sources
 
       
+networks:
+  containers-internal:
+    driver: bridge
+    external: true

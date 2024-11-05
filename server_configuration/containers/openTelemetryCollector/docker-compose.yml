@@ -2,6 +2,10 @@ version: '3'
 services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib
+    environment:
+      - OTEL_LOG_LEVEL=DEBUG
+      - OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp.nr-data.net
+      - OTEL_EXPORTER_OTLP_HEADERS=${API_KEY}
     volumes:
       - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
     ports:
@@ -12,3 +16,9 @@ services:
       - 4317:4317 # OTLP gRPC receiver
       - 4318:4318 # OTLP http receiver
       - 55679:55679 # zpages extension
+    networks:
+      - containers-internal
+
+networks:
+  containers-internal:
+    external: true
