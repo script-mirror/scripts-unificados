@@ -86,8 +86,7 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
-    depends_on:
-      - otel-collector
+      otel-collector:
 
   airflow-init:
     <<: *airflow-common
