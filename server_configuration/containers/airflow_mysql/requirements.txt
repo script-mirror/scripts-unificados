@@ -257,6 +257,8 @@ urllib3
 # wurlitzer==3.0.2
 xarray==0.19.0
 xlrd==2.0.1
+Flask-Bcrypt
+loguru
 # yapf==0.31.0
 # yarl==1.7.2
 # zipp==3.5.0
