@@ -86,8 +86,8 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
-    networks:
-      - containers-internal
+    depends_on:
+      - otel-collector
 
   airflow-init:
     <<: *airflow-common
@@ -109,8 +109,21 @@ services:
     volumes:
       - ${AIRFLOW_PROJ_DIR:-.}:/sources
 
-      
-networks:
-  containers-internal:
-    driver: bridge
-    external: true
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib
+    environment:
+      - OTEL_LOG_LEVEL=DEBUG
+      - OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp.nr-data.net
+      - OTEL_EXPORTER_OTLP_HEADERS=${API_KEY}
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - 1888:1888 # pprof extension
+      - 8888:8888 # Prometheus metrics exposed by the Collector
+      - 8889:8889 # Prometheus exporter metrics
+      - 13133:13133 # health_check extension
+      - 4317:4317 # OTLP gRPC receiver
+      - 4318:4318 # OTLP http receiver
+      - 55679:55679 # zpages extension
+    depends_on:
+      - airflow-scheduler
