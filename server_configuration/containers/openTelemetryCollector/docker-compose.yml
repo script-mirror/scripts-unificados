@@ -2,7 +2,7 @@ version: '3'
 services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib
-  environment:
+    environment:
       - OTEL_LOG_LEVEL=DEBUG
       - OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp.nr-data.net
       - OTEL_EXPORTER_OTLP_HEADERS=${API_KEY}
