@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    volumes:
+      # - /home/admin/jose/app:/home/admin/jose/app 
+      - /WX2TB/Documentos/saidas-modelos/NOVAS_FIGURAS:/WX2TB/Documentos/saidas-modelos/NOVAS_FIGURAS'
+    ports:
+      - "80:80"
+    environment:
+      - PYTHONUNBUFFERED=1
