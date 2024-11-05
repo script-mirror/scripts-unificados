@@ -21,4 +21,4 @@ services:
 
 networks:
   containers-internal:
-    driver: bridge
+    external: true
