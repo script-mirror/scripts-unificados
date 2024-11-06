@@ -3,7 +3,7 @@
 FROM apache/airflow:2.8.2
 
 #install otel collector for newrelic
-RUN pip install newrelic-airflow-plugin
+# RUN pip install newrelic-airflow-plugin
 
 # Switch to root user for installing packages
 USER root
