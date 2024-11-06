@@ -72,8 +72,6 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
-      otel-collector:
-        condition: service_started
 
   airflow-scheduler:
     <<: *airflow-common
@@ -89,8 +87,6 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
-      otel-collector:
-        condition: service_started
 
   airflow-init:
     <<: *airflow-common
