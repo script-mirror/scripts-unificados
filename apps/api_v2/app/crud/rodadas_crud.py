@@ -6,17 +6,12 @@ import numpy as np
 import datetime
 from typing import Optional, List
 from fastapi import HTTPException
-path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2")
-
 from app.schemas.chuvaprevisao import ChuvaPrevisaoCriacao, ChuvaPrevisaoCriacaoMembro
 from app.schemas import PesquisaPrevisaoChuva, RodadaSmap, ChuvaObsReq
-
 from app.utils import cache
 from app.crud import ons_crud
-path.insert(2,"/WX2TB/Documentos/fontes/PMO/scripts_unificados")
-from apps.smap.libs.SmapTools import trigger_dag_SMAP, get_dag_smap_run_status
-from bibliotecas.wx_dbClass import db_mysql_master
-from bibliotecas.wx_emailSender import WxEmail
+from app.utils.airflow.airflow_tools import trigger_dag_SMAP
+from app.database.wx_dbClass import db_mysql_master
 
 prod = True
 
@@ -459,25 +454,25 @@ class Smap:
         momento_req:datetime.datetime = datetime.datetime.now()
         trigger_dag_SMAP(rodada.dt_rodada, [rodada.str_modelo], rodada.hr_rodada, momento_req)
         return None
-        response:dict = get_dag_smap_run_status(rodada.str_modelo, momento_req)
+        # response:dict = get_dag_smap_run_status(rodada.str_modelo, momento_req)
         
-        falhou = response['state'] == 'failed'
+        # falhou = response['state'] == 'failed'
         
-        Smap.enviar_email_status_smap(falhou, response['end_datetime'], response["url"])
-        if falhou:
-            raise HTTPException(400, f'{response}')
-        return response
+        # Smap.enviar_email_status_smap(falhou, response['end_datetime'], response["url"])
+        # if falhou:
+        #     raise HTTPException(400, f'{response}')
+        # return response
     
-    @staticmethod
-    def enviar_email_status_smap(sucesso: bool, momento:datetime.datetime, dag_url:str):
-        email = WxEmail()
+    # @staticmethod
+    # def enviar_email_status_smap(sucesso: bool, momento:datetime.datetime, dag_url:str):
+    #     email = WxEmail()
         
-        status, cor_status = ("Concluido", "#88B04B") if sucesso else ("Falha", "#b04b4b")
+    #     status, cor_status = ("Concluido", "#88B04B") if sucesso else ("Falha", "#b04b4b")
         
-        style = f"""<style> body {{ font-family: Arial, Helvetica, sans-serif; text-align: center; padding: 40px 0; margin: 0; background: #EBF0F5; }} h1 {{ color: {cor_status}; font-weight: 900; font-size: 40px; margin-bottom: 10px; }} p {{ color: #404F5E; font-size: 20px; margin: 0; }} .card {{ background: white; padding: 30px; border-radius: 4px; box-shadow: 0 2px 3px #C8D0D8; display: inline-block; margin: 0 auto; }}</style>"""
-        html = f"""<html><head></head>{style}<body> <div class="card"> <h1>{status}</h1> <p>Fim da execução do Airflow {momento.strftime("%d/%m/%Y %H:%M:%S")}<br /><a href="{dag_url}">DAG Airflow</a></p> </div></body></html>"""
+    #     style = f"""<style> body {{ font-family: Arial, Helvetica, sans-serif; text-align: center; padding: 40px 0; margin: 0; background: #EBF0F5; }} h1 {{ color: {cor_status}; font-weight: 900; font-size: 40px; margin-bottom: 10px; }} p {{ color: #404F5E; font-size: 20px; margin: 0; }} .card {{ background: white; padding: 30px; border-radius: 4px; box-shadow: 0 2px 3px #C8D0D8; display: inline-block; margin: 0 auto; }}</style>"""
+    #     html = f"""<html><head></head>{style}<body> <div class="card"> <h1>{status}</h1> <p>Fim da execução do Airflow {momento.strftime("%d/%m/%Y %H:%M:%S")}<br /><a href="{dag_url}">DAG Airflow</a></p> </div></body></html>"""
         
-        email.sendEmail(texto=html, assunto="SMAP - Gera Chuva", send_to=["arthur.moraes@raizen.com"])
+    #     email.sendEmail(texto=html, assunto="SMAP - Gera Chuva", send_to=["arthur.moraes@raizen.com"])
 
     @staticmethod
     def delete_por_id(id:int):

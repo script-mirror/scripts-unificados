@@ -5,10 +5,8 @@ import pandas as pd
 import numpy as np
 import datetime
 
-path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2")
 
-path.insert(2,"/WX2TB/Documentos/fontes/PMO/scripts_unificados")
-from bibliotecas.wx_dbClass import db_mysql_master
+from app.database.wx_dbClass import db_mysql_master
 
 prod = True
 

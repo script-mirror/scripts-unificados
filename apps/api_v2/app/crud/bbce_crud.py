@@ -6,11 +6,9 @@ import numpy as np
 from typing import List, Optional
 import datetime
 
-path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2")
 from app.schemas import ProdutoInteresseSchema, CategoriaNegociacaoEnum
 
-path.insert(2,"/WX2TB/Documentos/fontes/PMO/scripts_unificados")
-from bibliotecas.wx_dbClass import db_mysql_master
+from app.database.wx_dbClass import db_mysql_master
 
 __DB__ = db_mysql_master('bbce')
 prod = True

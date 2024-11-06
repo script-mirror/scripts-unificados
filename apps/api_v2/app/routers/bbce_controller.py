@@ -1,5 +1,4 @@
 from sys import path
-path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2")
 
 from fastapi import APIRouter
 from typing import List, Optional
