@@ -1,7 +1,6 @@
 import uvicorn
 from sys import path
 import os
-path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2")
 
 from fastapi import FastAPI, Depends
 from app.routers import rodadas_controller, ons_controller, bbce_controller
