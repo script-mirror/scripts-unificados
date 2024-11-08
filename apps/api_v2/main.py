@@ -8,9 +8,6 @@ from app.utils.cache import cache
 from fastapi.middleware.cors import CORSMiddleware
 
 
-SECRET_KEY= os.getenv('FLASK_SECRET_KEY')
-HOST = os.getenv('HOST_SERVIDOR')
-
 app = FastAPI(
     title="API Trading - Middle",
     version="2.0.0",
@@ -42,7 +39,7 @@ def shutdown():
     cache.close()
     
 def main() -> None:
-    uvicorn.run(app, port=8000, host=HOST)
+    uvicorn.run(app, port=8000, host='0.0.0.0')
         
     
 if __name__ == "__main__":
