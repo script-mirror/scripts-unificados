@@ -4,9 +4,11 @@ services:
   app:
     build: .
     volumes:
-      # - /home/admin/jose/app:/home/admin/jose/app 
-      - /WX2TB/Documentos/saidas-modelos/NOVAS_FIGURAS:/WX2TB/Documentos/saidas-modelos/NOVAS_FIGURAS'
+      - /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env:/WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env
+      - /WX2TB/Documentos/saidas-modelos/NOVAS_FIGURAS:/WX2TB/Documentos/saidas-modelos/NOVAS_FIGURAS
+      - /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/pconjunto/pconjunto-ONS/Arq_Entrada/Observado:/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/pconjunto/pconjunto-ONS/Arq_Entrada/Observado
+      - /WX2TB/Documentos/saidas-modelos-novo/psat/json_files:/WX2TB/Documentos/saidas-modelos-novo/psat/json_files
     ports:
-      - "80:80"
+      - "8150:8150"
     environment:
       - PYTHONUNBUFFERED=1
