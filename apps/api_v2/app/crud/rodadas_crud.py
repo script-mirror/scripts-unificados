@@ -407,7 +407,7 @@ class ChuvaMembro:
         df['dt_rodada'] = dt_hr_rodada
         df['dt_rodada'] = pd.Series(df['dt_rodada'].dt.to_pydatetime(), dtype = object)
         if inserir:
-            Chuva.post_chuva_modelo_combinados([ChuvaPrevisaoCriacao.model_validate(x) for x in df.to_dict('records')])
+            Chuva.post_chuva_modelo_combinados([ChuvaPrevisaoCriacao.model_validate(x) for x in df.to_dict('records')], True)
 
 class Subbacia:
     tb:db.Table = __DB__.getSchema('tb_subbacia')
