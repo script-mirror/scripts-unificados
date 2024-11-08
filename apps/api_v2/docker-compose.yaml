@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    volumes:
+      - /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2:/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1

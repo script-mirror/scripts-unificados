@@ -14,3 +14,6 @@ docker-compose -f /WX2TB/Documentos/fontes/PMO/scripts_unificados/server_configu
 
 echo "Iniciando container do aplicativo personalizado..."
 docker-compose -f /home/admin/jose/app/docker-compose.yaml up -d
+
+echo "Iniciando container API v2..."
+docker-compose -f /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2/docker-compose.yaml up -d
