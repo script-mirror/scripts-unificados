@@ -1,6 +1,8 @@
 import os
 import sqlalchemy as db
 from sqlalchemy.engine import Connection
+from sqlalchemy.orm import sessionmaker
+
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -9,7 +11,7 @@ load_dotenv()
 class db_mysql_master():
 
 
-    def __init__(self, dbase, connect=False):
+    def __init__(self, dbase):
         __HOST_MYSQL = os.getenv('HOST_MYSQL')
         __PORT_DB_MYSQL = os.getenv('PORT_DB_MYSQL')
 
@@ -22,24 +24,20 @@ class db_mysql_master():
         self.host = __HOST_MYSQL
         self.port = __PORT_DB_MYSQL
         self.dbase = dbase
-        self.engine= db.create_engine(f"mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.dbase}", pool_pre_ping=True) if connect else None
-        self.db_schemas = self.get_db_schemas() if connect else None
 
+        
+        self.engine= db.create_engine(f"mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{dbase}", pool_pre_ping=True)
+        self.Session = sessionmaker(bind=self.engine)
 
     def connect(self):
-        self.engine = db.create_engine(f"mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.dbase}", pool_pre_ping=True) if not self.engine else self.engine
-        self.conn = self.engine.connect()
+        return self.Session()
 
     def db_execute(self,query, commit=False):
-
-        self.connect()
-        result = self.conn.execute(query)
-        if commit:
-            self.conn.commit()
-        #devolve a conexao ao pool 
-        self.conn.close()
-        self.conn = None
-        return result 
+        with self.connect() as session:
+            result = session.execute(query)
+            if commit:
+                session.commit()
+            return result
     
     def db_dispose(self):
         # o dispose recria o pool de conexoes, fechando as antigas que nao estão sendo usadas
