@@ -1100,15 +1100,13 @@ def comparar_linhas(linha_glorian, linha_oficial):
             elif col_ofic == 'Data Base':
 
                 if (valor_glorian != valor_oficial.strftime('%b/%Y')) and str(valor_glorian) != 'nan':
-                    
                     ano = valor_oficial.date().year
                     mes_anterior = valor_oficial.date().month -1
                     if mes_anterior == 0:
                         mes_anterior = 12
                         ano = ano - 1
-                    dia = valor_oficial.date().day
-                
-                    valor_mes_anterior = datetime(ano,mes_anterior,dia)
+
+                    valor_mes_anterior = datetime(ano,mes_anterior,1)
 
                     if valor_glorian == valor_mes_anterior.strftime('%b/%Y'):
                         valor_oficial = valor_mes_anterior 
