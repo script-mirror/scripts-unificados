@@ -7,16 +7,17 @@ import glob
 import time
 import shutil
 import datetime
+import requests
 import subprocess
 import pandas as pd
-import sqlalchemy as db
+# import sqlalchemy as db
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.dbUpdater.libs import rodadas
-from PMO.scripts_unificados.bibliotecas import wx_dbClass
-from PMO.scripts_unificados.apps.tempo.libs import conversorArquivos
+# from PMO.scripts_unificados.apps.dbUpdater.libs import rodadas
+# from PMO.scripts_unificados.bibliotecas import wx_dbClass
+# from PMO.scripts_unificados.apps.tempo.libs import conversorArquivos
 from PMO.scripts_unificados.apps.smap.libs import SmapTools
-from PMO.scripts_unificados.apps.pconjunto import wx_plota_pconjunto
+# from PMO.scripts_unificados.apps.pconjunto import wx_plota_pconjunto
 
 PATH_HOME = os.path.expanduser('~')
 PATH_CV = os.path.abspath("/WX2TB/Documentos/chuva-vazao")
@@ -29,6 +30,7 @@ PATH_PREVISAO_MODELOS_RZ = os.path.abspath('/WX4TB/Documentos/saidas-modelos')
 
 
 MODELOS_COMPOSICAO_PCONJUNTO = ['ETA','GEFS', 'ECMWF']
+MODELOS_DERIVADOS = ['PCONJUNTO','PCONJUNTO2']
 
 def previsao_conjunto_ONS(param):
 
@@ -40,156 +42,154 @@ def previsao_conjunto_ONS(param):
 
     print("\nRODANDO PCONJUNTO -",data.strftime('%d/%m/%Y'))
 
-    cria_diretorio(path_dropbox_working_date)
-    cria_diretorio(path_cv_working_date + '/CONJUNTO_ONS_ORIG')
-    cria_diretorio(path_cv_working_date + '/CONJUNTO_ONS_WX')
-    cria_diretorio(path_cv_working_date + '/ETA40')
+    # cria_diretorio(path_dropbox_working_date)
+    # cria_diretorio(path_cv_working_date + '/CONJUNTO_ONS_ORIG')
+    # cria_diretorio(path_cv_working_date + '/CONJUNTO_ONS_WX')
+    # cria_diretorio(path_cv_working_date + '/ETA40')
 
     task_conjunto_ons(data, f_forcarRodar)
-    if not run_conjunto_RZ(data, f_forcarRodar):
-        raise
+    
+    #precisa ser refatorado pois nao tem mais os netcdf
+    # if not run_conjunto_RZ(data, f_forcarRodar):
+    #     raise
 
     print("Rotina Finalizada!")
 
     return True
 
-def run_conjunto_RZ(data, forcar_rodar=False):
+# def run_conjunto_RZ(data, forcar_rodar=False):
     
-    models_structure = []
-    dt_anterior = data - datetime.timedelta(days=1)
+#     models_structure = []
+#     dt_anterior = data - datetime.timedelta(days=1)
 
     
-    if 'GEFS' in MODELOS_COMPOSICAO_PCONJUNTO:
-        path_ncGefs = os.path.join(PATH_PREVISAO_MODELOS_RZ, "gefs",f"{data.strftime('%Y%m%d')}00","data","gefs.acumul12z-12z.pgrb2a.0p50f15.nc")
-        models_structure+= ("GEFS", path_ncGefs),
+#     if 'GEFS' in MODELOS_COMPOSICAO_PCONJUNTO:
+#         path_ncGefs = os.path.join(PATH_PREVISAO_MODELOS_RZ, "gefs",f"{data.strftime('%Y%m%d')}00","data","gefs.acumul12z-12z.pgrb2a.0p50f15.nc")
+#         models_structure+= ("GEFS", path_ncGefs),
     
-    if 'ECMWF' in MODELOS_COMPOSICAO_PCONJUNTO:
-        path_ncEcmwf = os.path.join(PATH_PREVISAO_MODELOS_RZ, "ecmwf-ens-orig",f"{dt_anterior.strftime('%Y%m%d')}00","data","A1F*0000_101.nc")
-        models_structure+= ("ECMWF", path_ncEcmwf),
+#     if 'ECMWF' in MODELOS_COMPOSICAO_PCONJUNTO:
+#         path_ncEcmwf = os.path.join(PATH_PREVISAO_MODELOS_RZ, "ecmwf-ens-orig",f"{dt_anterior.strftime('%Y%m%d')}00","data","A1F*0000_101.nc")
+#         models_structure+= ("ECMWF", path_ncEcmwf),
     
-    if 'ETA' in MODELOS_COMPOSICAO_PCONJUNTO:
-        path_ncEta = os.path.join(PATH_PREVISAO_MODELOS_RZ, "ons-eta",f"{data.strftime('%Y%m%d')}00","data","pp*_0252.ctl.nc")
-        models_structure+= ("ETA40", path_ncEta),
+#     if 'ETA' in MODELOS_COMPOSICAO_PCONJUNTO:
+#         path_ncEta = os.path.join(PATH_PREVISAO_MODELOS_RZ, "ons-eta",f"{data.strftime('%Y%m%d')}00","data","pp*_0252.ctl.nc")
+#         models_structure+= ("ETA40", path_ncEta),
     
-    modelos_disponiveis = []
-    for modelo, path_modelo in models_structure:
-        if not glob.glob(path_modelo):
-            print(f'Faltando:\n{path_modelo}')
-        else:
-            modelos_disponiveis += modelo,
+#     modelos_disponiveis = []
+#     for modelo, path_modelo in models_structure:
+#         if not glob.glob(path_modelo):
+#             print(f'Faltando:\n{path_modelo}')
+#         else:
+#             modelos_disponiveis += modelo,
     
-    #se tiver pelo menos 2 de 3 modelos do pconjunto, ou 1 de 2 modelos 
-    if len(modelos_disponiveis) >= len(MODELOS_COMPOSICAO_PCONJUNTO)-1 : 
+#     #se tiver pelo menos 2 de 3 modelos do pconjunto, ou 1 de 2 modelos 
+#     if len(modelos_disponiveis) >= len(MODELOS_COMPOSICAO_PCONJUNTO)-1 : 
 
-        if len(modelos_disponiveis) == len(MODELOS_COMPOSICAO_PCONJUNTO):
-            task_conjunto_rz(
-                dt_rodada_exec=data,
-                forcar_rodar=forcar_rodar   
-                )
-        else:
-            task_conjunto_rz_d1(
-                dt_rodada_exec=data,
-                modelos_disponiveis=modelos_disponiveis,
-                forcar_rodar=forcar_rodar
-                )
-        return True
-    else:
-        print("Não há modelos suficientes para executar a task PCONJUNTO_RZ!")
-        return False
+#         if len(modelos_disponiveis) == len(MODELOS_COMPOSICAO_PCONJUNTO):
+#             task_conjunto_rz(
+#                 dt_rodada_exec=data,
+#                 forcar_rodar=forcar_rodar   
+#                 )
+#         else:
+#             task_conjunto_rz_d1(
+#                 dt_rodada_exec=data,
+#                 modelos_disponiveis=modelos_disponiveis,
+#                 forcar_rodar=forcar_rodar
+#                 )
+#         return True
+#     else:
+#         print("Não há modelos suficientes para executar a task PCONJUNTO_RZ!")
+#         return False
         
-def task_conjunto_rz(dt_rodada_exec,path_rotina=PATH_ROTINA_CONJUNTO_TMP,forcar_rodar=False):
+# def task_conjunto_rz(dt_rodada_exec,path_rotina=PATH_ROTINA_CONJUNTO_TMP,forcar_rodar=False):
 
-    exists = verifica_rodada_R_existente(path_rotina, dt_rodada_exec)
-    if not exists or forcar_rodar:
-        print(f'\n### CONJUNTO: PCONJUNTO-RZ')
+#     exists = verifica_rodada_R_existente(path_rotina, dt_rodada_exec)
+#     if not exists or forcar_rodar:
+#         print(f'\n### CONJUNTO: PCONJUNTO-RZ')
         
-        crirPconjuntoTmp()
+#         crirPconjuntoTmp()
 
-        pconjuntoTmp_entrada = os.path.join(path_rotina,'Arq_Entrada')
-        if 'GEFS' in MODELOS_COMPOSICAO_PCONJUNTO:
-            dst = os.path.join(pconjuntoTmp_entrada, 'GEFS')
-            conversorArquivos.converterFormatoPconjunto(modelo='gefs',dataRodada=dt_rodada_exec,rodada=0,destino=dst)
-        if 'ETA' in MODELOS_COMPOSICAO_PCONJUNTO:
-            dst = os.path.join(pconjuntoTmp_entrada, 'ETA40')
-            conversorArquivos.converterFormatoPconjunto(modelo='eta',dataRodada=dt_rodada_exec,rodada=0,destino=dst)
-        if 'ECMWF' in MODELOS_COMPOSICAO_PCONJUNTO:
-            dst = os.path.join(pconjuntoTmp_entrada, 'ECMWF')
-            conversorArquivos.converterFormatoPconjunto(modelo='ecmwf',dataRodada=dt_rodada_exec,rodada=0,destino=dst)
+#         pconjuntoTmp_entrada = os.path.join(path_rotina,'Arq_Entrada')
+#         if 'GEFS' in MODELOS_COMPOSICAO_PCONJUNTO:
+#             dst = os.path.join(pconjuntoTmp_entrada, 'GEFS')
+#             conversorArquivos.converterFormatoPconjunto(modelo='gefs',dataRodada=dt_rodada_exec,rodada=0,destino=dst)
+#         if 'ETA' in MODELOS_COMPOSICAO_PCONJUNTO:
+#             dst = os.path.join(pconjuntoTmp_entrada, 'ETA40')
+#             conversorArquivos.converterFormatoPconjunto(modelo='eta',dataRodada=dt_rodada_exec,rodada=0,destino=dst)
+#         if 'ECMWF' in MODELOS_COMPOSICAO_PCONJUNTO:
+#             dst = os.path.join(pconjuntoTmp_entrada, 'ECMWF')
+#             conversorArquivos.converterFormatoPconjunto(modelo='ecmwf',dataRodada=dt_rodada_exec,rodada=0,destino=dst)
 
-        numdias=14
-        sufixo='-RZ'
-        derivados = ['PCONJUNTO']
+#         numdias=14
+#         sufixo='-RZ'
+#         derivados = ['PCONJUNTO']
         
-        executarScriptR(path_rotina, dt_rodada_exec)
+#         executarScriptR(path_rotina, dt_rodada_exec)
         
-        organizarArquivosSaida(data=dt_rodada_exec, path_rotina=path_rotina, derivados=derivados, sufixo=sufixo, numdias=numdias)
-        inserirFilaRodaModelos(dt_rodada_exec,'PCONJUNTO-RZ.PRELIMINAR',0)
-        #smap novo
-        SmapTools.trigger_dag_SMAP(dt_rodada=dt_rodada_exec,modelos_names=['PCONJUNTO-RZ'],rodada=0)
+#         organizarArquivosSaida(data=dt_rodada_exec, path_rotina=path_rotina, derivados=derivados, sufixo=sufixo, numdias=numdias)
+#         #smap novo
+#         SmapTools.trigger_dag_SMAP(dt_rodada=dt_rodada_exec,modelos_names=['PCONJUNTO-RZ'],rodada=0)
                 
-    else:
-        print("Task Conjunto RZ ja foi executada!")
+#     else:
+#         print("Task Conjunto RZ ja foi executada!")
 
-def task_conjunto_rz_d1(dt_rodada_exec,modelos_disponiveis,forcar_rodar=False):
+# def task_conjunto_rz_d1(dt_rodada_exec,modelos_disponiveis,forcar_rodar=False):
 
-    pconjuntoTmp_entrada = os.path.join(PATH_ROTINA_CONJUNTO_TMP,'Arq_Entrada')
-    dt_anterior = dt_rodada_exec - datetime.timedelta(days=1)
+#     pconjuntoTmp_entrada = os.path.join(PATH_ROTINA_CONJUNTO_TMP,'Arq_Entrada')
+#     dt_anterior = dt_rodada_exec - datetime.timedelta(days=1)
     
-    exists = verifica_rodada_R_existente(PATH_ROTINA_CONJUNTO_TMP, dt_anterior)
-    if not exists or forcar_rodar:
+#     exists = verifica_rodada_R_existente(PATH_ROTINA_CONJUNTO_TMP, dt_anterior)
+#     if not exists or forcar_rodar:
         
-        crirPconjuntoTmp()
-        modelo_faltante = list(set(MODELOS_COMPOSICAO_PCONJUNTO) - set(modelos_disponiveis))[0]
-        print(f'\n### CONJUNTO: PCONJUNTO-RZ-{modelo_faltante}D1')
+#         crirPconjuntoTmp()
+#         modelo_faltante = list(set(MODELOS_COMPOSICAO_PCONJUNTO) - set(modelos_disponiveis))[0]
+#         print(f'\n### CONJUNTO: PCONJUNTO-RZ-{modelo_faltante}D1')
 
-        for modelo in modelos_disponiveis:
-            print(f"Convertendo {modelo}")
-            dst = os.path.join(pconjuntoTmp_entrada, modelo)
-            conversorArquivos.converterFormatoPconjunto(modelo=modelo.lower().replace("eta40","eta"),dataRodada=dt_rodada_exec,rodada=0,destino=dst)
-            pathArqPrevisto = os.path.join(dst,f'{modelo}_m_{dt_rodada_exec.strftime("%d%m%y")}.dat')
-            convertArqConjuD1(pathFile=pathArqPrevisto)
+#         for modelo in modelos_disponiveis:
+#             print(f"Convertendo {modelo}")
+#             dst = os.path.join(pconjuntoTmp_entrada, modelo)
+#             conversorArquivos.converterFormatoPconjunto(modelo=modelo.lower().replace("eta40","eta"),dataRodada=dt_rodada_exec,rodada=0,destino=dst)
+#             pathArqPrevisto = os.path.join(dst,f'{modelo}_m_{dt_rodada_exec.strftime("%d%m%y")}.dat')
+#             convertArqConjuD1(pathFile=pathArqPrevisto)
         
-        dst = os.path.join(pconjuntoTmp_entrada, modelo_faltante)
-        conversorArquivos.converterFormatoPconjunto(modelo=modelo_faltante.lower().replace("eta40","eta"),dataRodada=dt_anterior,rodada=0,destino=dst)
+#         dst = os.path.join(pconjuntoTmp_entrada, modelo_faltante)
+#         conversorArquivos.converterFormatoPconjunto(modelo=modelo_faltante.lower().replace("eta40","eta"),dataRodada=dt_anterior,rodada=0,destino=dst)
 
-        executarScriptR(PATH_ROTINA_CONJUNTO_TMP, dt_anterior)
+#         executarScriptR(PATH_ROTINA_CONJUNTO_TMP, dt_anterior)
 
-        numdias=13
-        sufixo=f'-RZ-{modelo_faltante}D1'
-        derivados = ['PCONJUNTO']
+#         numdias=13
+#         sufixo=f'-RZ-{modelo_faltante}D1'
+#         derivados = ['PCONJUNTO']
         
-        organizarArquivosSaida(data=dt_rodada_exec, path_rotina=PATH_ROTINA_CONJUNTO_TMP, derivados=derivados, sufixo=sufixo, numdias=numdias)
-        inserirFilaRodaModelos(data=dt_rodada_exec,modelo=f'PCONJUNTO-RZ-{modelo_faltante}D1.PRELIMINAR',rodada=0)
-        #smap novo
-        SmapTools.trigger_dag_SMAP(dt_rodada=dt_rodada_exec,modelos_names=[f"PCONJUNTO-RZ-{modelo_faltante}D1"],rodada=0)
-    else:
-        print("Task Conjunto RZ-D1 ja foi executada!")
+#         organizarArquivosSaida(data=dt_rodada_exec, path_rotina=PATH_ROTINA_CONJUNTO_TMP, derivados=derivados, sufixo=sufixo, numdias=numdias)
+#         #smap novo
+#         SmapTools.trigger_dag_SMAP(dt_rodada=dt_rodada_exec,modelos_names=[f"PCONJUNTO-RZ-{modelo_faltante}D1"],rodada=0)
+#     else:
+#         print("Task Conjunto RZ-D1 ja foi executada!")
 
 def task_conjunto_ons(dt_rodada_exec, forcar_rodar=False):
 
-    exists = verifica_rodada_R_existente(PATH_ROTINA_CONJUNTO, dt_rodada_exec)
+    if forcar_rodar: exists = False
+    else:
+        exists = verifica_rodada_R_existente(PATH_ROTINA_CONJUNTO, dt_rodada_exec)
+    
     files_exists = verifica_arquivos_entrada(PATH_ROTINA_CONJUNTO, dt_rodada_exec)
     
-    if (not exists or forcar_rodar) :
+    if (not exists) :
 
         if files_exists:
             print(f'\n### CONJUNTO: PCONJUNTO-ONS')
             executarScriptR(PATH_ROTINA_CONJUNTO, dt_rodada_exec)
-            derivados = ['PMEDIA', 'PCONJUNTO', 'PCONJUNTO2', 'PCONJUNTO-EXT']+MODELOS_COMPOSICAO_PCONJUNTO
+            derivados = ['PMEDIA', 'PCONJUNTO', 'PCONJUNTO2', 'PCONJUNTO-EXT'] + MODELOS_COMPOSICAO_PCONJUNTO
             sufixo=''
             numdias=14
             modelos_inserir_fila = organizarArquivosSaida(data=dt_rodada_exec, path_rotina=PATH_ROTINA_CONJUNTO, derivados=derivados, sufixo=sufixo, numdias=numdias)
             
-            #smap antigo
-            for modelo in modelos_inserir_fila:  
-                print(f"inserindo {modelo} na fila")
-                inserirFilaRodaModelos(data=dt_rodada_exec,modelo=f'{modelo}.PRELIMINAR',rodada=0)
-            
             #smap novo
             SmapTools.trigger_dag_SMAP(dt_rodada=dt_rodada_exec)
                 
-            path_fig = os.path.abspath('/WX2TB/Documentos/saidas-modelos/gefs-eta')
-            wx_plota_pconjunto.plota_saida_pconjunto(dt_rodada_exec,PATH_ROTINA_CONJUNTO,path_fig)
+            # path_fig = os.path.abspath('/WX2TB/Documentos/saidas-modelos/gefs-eta')
+            # wx_plota_pconjunto.plota_saida_pconjunto(dt_rodada_exec,PATH_ROTINA_CONJUNTO,path_fig)
 
             cmd = "cd /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/tempo"
             cmd + f"python tempo.py plotarMapasPrevisao data {dt_rodada_exec.strftime('%d/%m/%Y')} modelo 'pconjunto' rodada 0"
@@ -199,185 +199,369 @@ def task_conjunto_ons(dt_rodada_exec, forcar_rodar=False):
     else:
         print("Task Conjunto ONS ja foi executada!")
 
-    
 def organizarArquivosSaida(data, path_rotina, derivados, sufixo, numdias=14):
-
     modelos_inserir_fila = []
-
-    print("")
     print("AJUSTANDO .DAT PARA FORMATO SMAP ONS")
 
-    path_cv_working_date = os.path.join(PATH_CV, data.strftime('%Y%m%d'))
-    path_dropbox_working_date = os.path.join(PATH_DROPBOX_MIDDLE, "NovoSMAP", data.strftime('%Y%m%d'), "rodada00z")
+    # path_cv_working_date = os.path.join(PATH_CV, data.strftime('%Y%m%d'))
+    # path_dropbox_working_date = os.path.join(PATH_DROPBOX_MIDDLE, "NovoSMAP", data.strftime('%Y%m%d'), "rodada00z")
     path_conjunto_saida = os.path.join(path_rotina,'Arq_Saida')
+    path_conjunto_entrada = os.path.join(path_rotina,'Arq_Entrada')
     
-    dirPrevisoesModelosRaizenDiario = os.path.join(PATH_PREVISAO_MODELOS_RZ, 'gefs-eta', data.strftime('%Y%m%d') + '00', 'data')
-    if not os.path.exists(dirPrevisoesModelosRaizenDiario):
-        os.makedirs(dirPrevisoesModelosRaizenDiario)
+    # dirPrevisoesModelosRaizenDiario = os.path.join(PATH_PREVISAO_MODELOS_RZ, 'gefs-eta', data.strftime('%Y%m%d') + '00', 'data')
+    # if not os.path.exists(dirPrevisoesModelosRaizenDiario):
+    #     os.makedirs(dirPrevisoesModelosRaizenDiario)
 
-    flag_primeirraSemana = 1
-    for nDia in range(1, numdias+1):
-        data_arquivo = data + datetime.timedelta(days=nDia)
+    def read_configs_file()-> pd.DataFrame:
+        path_configs =os.path.join(path_conjunto_entrada,"configuracao.xlsx")
+        df_configs = pd.read_excel(path_configs)
+        return df_configs
 
-        if data_arquivo.weekday() in [4,5] and flag_primeirraSemana == 1:
-            flag_primeirraSemana = 0
+    def get_subbacias() -> pd.DataFrame:
+        res = requests.get("https://tradingenergiarz.com/api/v2/rodadas/subbacias", verify=False)
+        df_response = pd.DataFrame(res.json()).rename(columns={"vl_lat":"Latitude","vl_lon":"Longitude",'id':"cd_subbacia","nome":"Codigo ANA"})
+        df_configs = read_configs_file()
+        df_subbacias_completo = pd.merge(df_configs[['Latitude','Longitude','Codigo ANA']],df_response[['Codigo ANA','cd_subbacia']])
+        return df_subbacias_completo
 
-        if 'D1' in sufixo:
-            pathArquivoPmedia = os.path.join(path_conjunto_saida, 'PMEDIA_p{}a{}.dat'.format((data-datetime.timedelta(days=1)).strftime('%d%m%y'), data_arquivo.strftime('%d%m%y')))
+    def extract_info_name(path_file):
+
+        file_name =  os.path.basename(path_file)
+        match = re.match(r'(.+?)_p(\d{6})a(\d{6})\.dat', file_name)
+        modelo, dt_rodada,dt_prevista = None,None,None
+        if match:
+            modelo = match.group(1)
+            dt_rodada = datetime.datetime.strptime(match.group(2),"%d%m%y").isoformat()
+            dt_prevista = datetime.datetime.strptime(match.group(3),"%d%m%y").strftime("%Y-%m-%d")
         
-        else:
-            pathArquivoPmedia = os.path.join(path_conjunto_saida, 'PMEDIA_p{}a{}.dat'.format(data.strftime('%d%m%y'), data_arquivo.strftime('%d%m%y')))
+        return modelo, dt_rodada,dt_prevista
 
-        if 'PMEDIA' in derivados:
+    def gerar_arq_modelos_saida():
 
-            dst_dropbox = os.path.join(path_dropbox_working_date, 'PMEDIA{}_p{}a{}.dat'.format(sufixo, data.strftime('%d%m%y'), data_arquivo.strftime('%d%m%y')))
-            shutil.copyfile(pathArquivoPmedia, dst_dropbox)
+        path_ecmwf = os.path.join(path_conjunto_entrada,'ECMWF',f'ECMWF_m_{data.strftime("%d%m%y")}.dat')
+        path_gefs = os.path.join(path_conjunto_entrada,'GEFS',f'GEFS_m_{data.strftime("%d%m%y")}.dat')
+        path_eta = os.path.join(path_conjunto_entrada,'ETA40',f'ETA40_m_{data.strftime("%d%m%y")}.dat')
+        
+        path_ecmwf_vies = os.path.join(path_conjunto_saida, 'ECMWF_rem_vies.dat')
+        path_gefs_vies = os.path.join(path_conjunto_saida,'GEFS_rem_vies.dat')
+        path_eta_vies = os.path.join(path_conjunto_saida, 'ETA40_rem_vies.dat')
 
-        if 'PCONJUNTO' in derivados:
-
-            pathArquivoPconjunto = os.path.join(path_dropbox_working_date, 'PCONJUNTO{}_p{}a{}.dat'.format(sufixo, data.strftime('%d%m%y'), data_arquivo.strftime('%d%m%y')))
-            print(pathArquivoPconjunto)
-            shutil.copyfile(pathArquivoPmedia,pathArquivoPconjunto)
+        config_modelos = [
             
-            # Completa a primeira semana (ate quinta) com o GEFS para o PCONJUNTO
-            if data_arquivo.weekday() in [0,1,2,3,6] and flag_primeirraSemana == 1:
-                src = os.path.join(path_cv_working_date, "GEFS", "GEFS_p" + data.strftime('%d%m%y') + "a" + data_arquivo.strftime('%d%m%y') + ".dat")                
-                dst = pathArquivoPconjunto
-                try:
-                    shutil.copyfile(src,dst)
-                except Exception as e:
-                    print("Nao foi possivel copiar arquivo GEFS")
-                    print(e)
+            #essemble 
+            {"modelo":"ECMWF", "ndias": 14, "path":path_ecmwf },
 
-        if 'PCONJUNTO2' in derivados:
+            #essemble
+            {"modelo":"GEFS", "ndias": 14, "path":path_gefs },
+            
+            {"modelo":"ETA40", "ndias": 9, "path":path_eta },
 
-            pathArquivoPconjunto2 = os.path.join(path_dropbox_working_date, 'PCONJUNTO2{}_p{}a{}.dat'.format(sufixo, data.strftime('%d%m%y'), data_arquivo.strftime('%d%m%y')))
-            shutil.copyfile(pathArquivoPmedia,pathArquivoPconjunto2)
+            {"modelo":"ECMWFremvies", "ndias": 14, "path":path_ecmwf_vies },
+            {"modelo":"GEFSremvies", "ndias": 14, "path":path_gefs_vies },
+            {"modelo":"ETA40remvies", "ndias": 9, "path":path_eta_vies },
+        ]
 
-            # Completa a primeira semana (ate quinta) com o EC-ens  para o PCONJUNTO2
-            if data_arquivo.weekday() in [0,1,2,3,6] and flag_primeirraSemana == 1:
-                src = os.path.join(path_cv_working_date, "ECMWF-ens", "EC-ens101_p" + data.strftime('%d%m%y') + "a" + data_arquivo.strftime('%d%m%y') + ".dat")                
-                dst = pathArquivoPconjunto2
-                try:
-                    shutil.copyfile(src,dst)
-                except Exception as e:
-                    print("Nao foi possivel copiar arquivo EC")
-                    print(e)
+        for config in config_modelos:
+            print(f"Escrevendo modelo: {config['modelo']}")
 
-    if 'PCONJUNTO' in derivados:
-        try:
-            arquivos_copia = os.path.join(path_dropbox_working_date, 'PCONJUNTO{}_p{}a*'.format(sufixo,data.strftime('%d%m%y')))            
-            copia_arquivos(arquivos_copia,os.path.join(path_cv_working_date, 'CONJUNTO_ONS_WX'))
-            rodadas.importar_chuva(data=data,rodada=0,modelo=f"PCONJUNTO{sufixo}",flag_estudo=False)
-            modelos_inserir_fila += f'PCONJUNTO{sufixo}',
-        except Exception as e:
-            print("Não foi possivel completar o PCONJUNTO")
-            print(e)
+            escreve_arquivos_chuva(
+                data,
+                config['path'],
+                config['modelo'],
+                path_conjunto_saida,
+                config['ndias']
+                )
+    
+    def get_modelo_chuva_by_id(id_chuva:int,dt_ini:str,dt_fim):
 
-    if 'PCONJUNTO2' in derivados:
-        try:
-            arquivos_copia = os.path.join(path_dropbox_working_date, 'PCONJUNTO2{}_p{}a*'.format(sufixo,data.strftime('%d%m%y')))            
-            copia_arquivos(arquivos_copia,os.path.join(path_cv_working_date, 'CONJUNTO_ONS_WX'))
-            rodadas.importar_chuva(data=data,rodada=0,modelo="PCONJUNTO2",flag_estudo=False)
-            modelos_inserir_fila += 'PCONJUNTO2',
-        except Exception as e:
-            print("Não foi possivel completar o PCONJUNTO2")
-            print(e)
+        response_rodadas = requests.get('https://tradingenergiarz.com/api/v2/rodadas/chuva/previsao/subbacia',
+                    params = {
+                        "id":id_chuva,
+                        "dt_inicio": dt_ini,
+                        "dt_fim": dt_fim,
+                        "no_cache": "false",
+                        "atualizar": "false"
+                    },
+                    verify=False
+                )
+        return response_rodadas.json()
 
-    if 'PMEDIA' in derivados:
-        try:
-            arquivos_copia = os.path.join(path_dropbox_working_date, 'PMEDIA{}_p{}a*'.format(sufixo,data.strftime('%d%m%y')))
-            copia_arquivos(arquivos_copia,os.path.join(path_cv_working_date,'CONJUNTO_ONS_ORIG'))
-            rodadas.importar_chuva(data=data,rodada=0,modelo="PMEDIA",flag_estudo=False)
-            modelos_inserir_fila += 'PMEDIA',
-        except Exception as e:
-            print("Não foi possivel completar o PMEDIA")
-            print(e)
+    def get_rodadas_do_dia(dt_rodada):
+        response_rodadas = requests.get('https://tradingenergiarz.com/api/v2/rodadas',
+            params = {
+                "dt": dt_rodada,
+                "no_cache": "true",
+                "atualizar": "false"
+            },
+            verify=False
+        )
+        return response_rodadas.json()
+    
 
-    if 'ECMWF' in derivados:
-        try:
-            arquivo = os.path.join(path_conjunto_saida, 'ECMWF_rem_vies.dat')
-            copia_arquivos(arquivo,dirPrevisoesModelosRaizenDiario)
+    def gerar_modelos_derivados(df_previsao_modelos:pd.DataFrame):
 
-            model = 'EC-ensremvies'; dias = 14
-            vies_arqsmap(data,arquivo,model,path_conjunto_saida,dias)  
-            arquivos_copia = os.path.join(path_conjunto_saida, model + '_p' + data.strftime('%d%m%y') + 'a*')
-            copia_arquivos(arquivos_copia,path_cv_working_date + '/CONJUNTO_ONS_ORIG')   
-            copia_arquivos(arquivos_copia,path_dropbox_working_date) 
-            rodadas.importar_chuva(data=data,rodada=0,modelo="EC-ensremvies",flag_estudo=False)
-            modelos_inserir_fila += 'EC-ensremvies',
-        except Exception as e:
-            print("Não foi possivel completar o EC-ensremvies")
-            print(e)
+        df_previsao_modelos['dt_rodada'] = pd.to_datetime(df_previsao_modelos['dt_rodada'])
+        df_previsao_modelos['dt_prevista'] = pd.to_datetime(df_previsao_modelos['dt_prevista'])
+        dt_rodada = df_previsao_modelos['dt_rodada'].dt.strftime('%Y-%m-%d').unique()[0]
 
-    if 'ETA' in derivados:
-        try:
-            arquivo = os.path.join(path_conjunto_saida, 'ETA40_rem_vies.dat')
-            copia_arquivos(arquivo,dirPrevisoesModelosRaizenDiario)
+        response_rodadas = get_rodadas_do_dia(dt_rodada)
+        df_rodadas_do_dia = pd.DataFrame(response_rodadas)
 
-            model = 'ETA40remvies'; dias = 9
-            vies_arqsmap(data,arquivo,model,path_conjunto_saida,dias)
-            arquivos_copia = os.path.join(path_conjunto_saida, model + '_p' + data.strftime('%d%m%y') + 'a*')
-            copia_arquivos(arquivos_copia,path_cv_working_date + '/CONJUNTO_ONS_ORIG')   
-            copia_arquivos(arquivos_copia,path_dropbox_working_date)
-            rodadas.importar_chuva(data=data,rodada=0,modelo="ETA40remvies",flag_estudo=False)
-            modelos_inserir_fila += 'ETA40remvies',
-            rodadas.importar_chuva(data=data,rodada=0,modelo="ETA40",flag_estudo=False)
-            modelos_inserir_fila += 'ETA40',
-        except Exception as e:
-            print("Não foi possivel completar o ETA40remvies")
-            print(e)
 
-    if 'GEFS' in derivados:
-        try:
-            arquivo = os.path.join(path_conjunto_saida, 'GEFS_rem_vies.dat')
-            copia_arquivos(arquivo,dirPrevisoesModelosRaizenDiario)
+        for modelo in MODELOS_DERIVADOS:
 
-            model = 'GEFSremvies'; dias = 14
-            vies_arqsmap(data,arquivo,model,path_conjunto_saida,dias)
-            arquivos_copia = os.path.join(path_conjunto_saida, model + '_p' + data.strftime('%d%m%y') + 'a*')
-            copia_arquivos(arquivos_copia,path_cv_working_date + '/CONJUNTO_ONS_ORIG')   
-            copia_arquivos(arquivos_copia,path_dropbox_working_date)
-            rodadas.importar_chuva(data=data,rodada=0,modelo="GEFSremvies",flag_estudo=False)
-            modelos_inserir_fila += 'GEFSremvies',
-        except Exception as e:
-            print("Não foi possivel completar o GEFSremvies")
-            print(e)
+            dias_ate_quinta = (3-df_previsao_modelos['dt_rodada'].dt.dayofweek +7) % 7
+            quinta_feira = df_previsao_modelos['dt_rodada'] + datetime.timedelta(days=int(dias_ate_quinta.unique()[0]))
+            mask = (df_previsao_modelos['dt_prevista'] <= quinta_feira)
 
-    if 'PCONJUNTO-EXT' in derivados:
-        try:
-            dt =  data + datetime.timedelta(days=1)
-            dtFinalPconjunto = data + datetime.timedelta(days=nDia)
+            df_pmedia = df_previsao_modelos[df_previsao_modelos['modelo'] == 'PMEDIA'].copy()
+            if modelo =='PCONJUNTO':
+                #completar até quinta feira com o gefs-ens , se for sexta ou sabado completar até a quinta da semana que vem
+                df_pconjunto = df_pmedia.copy()
+                df_gefs = df_previsao_modelos[df_previsao_modelos['modelo'] == 'GEFS'].copy()
+                df_pconjunto.loc[mask, df_gefs.columns] = df_gefs.loc[mask,df_gefs.columns].values
+                df_pconjunto.loc[:,'modelo'] = 'PCONJUNTO'
+                df_previsao_modelos = pd.concat([df_previsao_modelos, df_pconjunto], ignore_index=True)
 
-            while dt <= dtFinalPconjunto:
-                nomeArq = 'PCONJUNTO_p{}a{}.dat'.format(data.strftime('%d%m%y'),dt.strftime('%d%m%y'))
-                src = os.path.join(path_dropbox_working_date, nomeArq)
-                novoNomeArq = nomeArq.replace('PCONJUNTO_','PCONJUNTO-EXT_')
-                dst = os.path.join(path_dropbox_working_date, novoNomeArq)
-                shutil.copyfile(src,dst)
-                print(dst)
+            if modelo =='PCONJUNTO2':
+                #completar até quinta feira com o ecmwf-ens , se for sexta ou sabado completar até a quinta da semana que vem
+                df_pconjunto2 = df_pmedia.copy()
+                df_ecmwf = df_previsao_modelos[df_previsao_modelos['modelo'] == 'ECMWF'].copy()
+                df_pconjunto2.loc[mask, df_ecmwf.columns] = df_ecmwf.loc[mask,df_ecmwf.columns].values
+                df_pconjunto2.loc[:,'modelo'] = 'PCONJUNTO2'
+                df_previsao_modelos = pd.concat([df_previsao_modelos, df_pconjunto2], ignore_index=True)
 
-                dt = dt + datetime.timedelta(days=1)
+                # try:
+                #     df_rodada_ecmwf_ens = df_rodadas_do_dia[df_rodadas_do_dia['str_modelo'].str.lower() == 'ecmwf-ens']
+                #     id_chuva = df_rodada_ecmwf_ens['id_chuva'].values[0]
 
-            dtDiaAnterior = data - datetime.timedelta(days=1)
-            cvGefsAnterior = os.path.join(PATH_CV, dtDiaAnterior.strftime('%Y%m%d'), 'GEFS')
+                #     response_prev_chuva = get_modelo_chuva_by_id(
+                #         id_chuva=id_chuva,
+                #         dt_ini=df_previsao_modelos['dt_rodada'].dt.strftime('%Y-%m-%d').unique()[0],
+                #         dt_fim=quinta_feira.dt.strftime('%Y-%m-%d').unique()[0]
+                #         )
 
-            # Completa a terceira semana do PCONJUNTO com a previsao do GEFS-estendido do dia anterior (gefs estendido demora muito)
-            while dt.weekday() != 5:
-                nomeArq = 'GEFS-ext_p{}a{}.dat'.format(dtDiaAnterior.strftime('%d%m%y'),dt.strftime('%d%m%y'))
-                src = os.path.join(cvGefsAnterior,nomeArq)
-                novoNomeArq = 'PCONJUNTO-EXT_p{}a{}.dat'.format(data.strftime('%d%m%y'),dt.strftime('%d%m%y'))
-                dst = os.path.join(path_dropbox_working_date,novoNomeArq)
-                shutil.copyfile(src,dst)
-                print(dst)
+                #     df_pconjunto2 = df_previsao_modelos[df_previsao_modelos['modelo'] == 'PMEDIA'].copy()
+                    
+                #     if response_prev_chuva:
 
-                dt = dt + datetime.timedelta(days=1)
+                #         df_ecmwf_ens = pd.DataFrame(response_prev_chuva).rename(columns={'id':"cd_subbacia"})
+                #         df_ecmwf_ens = pd.merge(df_ecmwf_ens, df_pconjunto2[['Longitude', 'Latitude', 'Codigo ANA', 'cd_subbacia']].drop_duplicates(), on='cd_subbacia', how='left')
+                        
+                #         df_ecmwf_ens['dt_rodada'] = pd.to_datetime(df_ecmwf_ens['dt_rodada'])
+                #         df_ecmwf_ens['dt_prevista'] = pd.to_datetime(df_ecmwf_ens['dt_prevista'])
 
-            rodadas.importar_chuva(data=data,rodada=0,modelo="PCONJUNTO-EXT",flag_estudo=False)
-            modelos_inserir_fila += 'PCONJUNTO-EXT',
-        except Exception as e:
-            print("Não foi possivel completar o PCONJUNTO-EXT")
-            print(e)
+                #         quinta_feira = df_ecmwf_ens['dt_rodada'] + datetime.timedelta(days=int(dias_ate_quinta.unique()[0]))
+                #         mask_ec = (df_ecmwf_ens['dt_prevista'] <= quinta_feira)
+
+                #         df_pconjunto2.loc[mask, df_pconjunto2.columns] = df_ecmwf_ens.loc[mask_ec,df_pconjunto2.columns].values
+
+                #     df_pconjunto2.loc[:,'modelo'] = 'PCONJUNTO2'
+                #     df_previsao_modelos = pd.concat([df_previsao_modelos, df_pconjunto2], ignore_index=True)
+                # except:
+                #     print("Não foi possivel gerar o PCONJUNTO2")
+
+        df_previsao_modelos['dt_rodada'] = pd.to_datetime(df_previsao_modelos['dt_rodada']).apply(lambda x: x.isoformat())
+        df_previsao_modelos['dt_prevista'] = pd.to_datetime(df_previsao_modelos['dt_prevista']).dt.strftime("%Y-%m-%d")
+
+        return df_previsao_modelos
+
+    gerar_arq_modelos_saida()
+
+    #leitura Arquivos de saida
+    df_concatenated = pd.DataFrame()
+    file_paths = os.path.join(path_conjunto_saida,f"*_p{data.strftime('%d%m%y')}*.dat")
+    forecast_files = glob.glob(file_paths)
+
+    for file_path in forecast_files:
+        modelo, dt_rodada,dt_prevista = extract_info_name(file_path)
+        df_temp = pd.read_csv(file_path, delimiter='\s+', header=None, names=['Longitude','Latitude','vl_chuva'])
+        df_temp['modelo'] = modelo
+        df_temp['dt_rodada'] = dt_rodada
+        df_temp['dt_prevista'] = dt_prevista
+
+        df_concatenated = pd.concat([df_concatenated, df_temp], ignore_index=True)
+
+    df_sub_bacias_db = get_subbacias()
+    df_previsao_modelos = pd.merge(df_concatenated,df_sub_bacias_db, on=['Longitude','Latitude'])
+    df_previsao_modelos = df_previsao_modelos.dropna()
+
+    df_previsao_modelos = gerar_modelos_derivados(df_previsao_modelos)
+
+    for modelo in df_previsao_modelos['modelo'].unique():
+        previsao_modelos = df_previsao_modelos[df_previsao_modelos['modelo']==modelo][['cd_subbacia','dt_prevista','vl_chuva','modelo','dt_rodada']]
+        previsao_modelos = previsao_modelos.dropna()
+        response = requests.post('https://tradingenergiarz.com/api/v2/rodadas/chuva/previsao/modelos', verify=False, json=previsao_modelos.to_dict('records'))
+        print(f'{modelo} - > Código POST: {response.status_code}')
+
+
+        
+
+    # flag_primeirraSemana = 1
+    # for nDia in range(1, numdias+1):
+    #     data_arquivo = data + datetime.timedelta(days=nDia)
+
+    #     if data_arquivo.weekday() in [4,5] and flag_primeirraSemana == 1:
+    #         flag_primeirraSemana = 0
+
+    #     if 'D1' in sufixo:
+    #         pathArquivoPmedia = os.path.join(path_conjunto_saida, 'PMEDIA_p{}a{}.dat'.format((data-datetime.timedelta(days=1)).strftime('%d%m%y'), data_arquivo.strftime('%d%m%y')))
+        
+    #     else:
+    #         pathArquivoPmedia = os.path.join(path_conjunto_saida, 'PMEDIA_p{}a{}.dat'.format(data.strftime('%d%m%y'), data_arquivo.strftime('%d%m%y')))
+
+    #     if 'PMEDIA' in derivados:
+
+    #         dst_dropbox = os.path.join(path_dropbox_working_date, 'PMEDIA{}_p{}a{}.dat'.format(sufixo, data.strftime('%d%m%y'), data_arquivo.strftime('%d%m%y')))
+    #         shutil.copyfile(pathArquivoPmedia, dst_dropbox)
+
+    #     if 'PCONJUNTO' in derivados:
+
+    #         pathArquivoPconjunto = os.path.join(path_dropbox_working_date, 'PCONJUNTO{}_p{}a{}.dat'.format(sufixo, data.strftime('%d%m%y'), data_arquivo.strftime('%d%m%y')))
+    #         print(pathArquivoPconjunto)
+    #         shutil.copyfile(pathArquivoPmedia,pathArquivoPconjunto)
+            
+    #         # Completa a primeira semana (ate quinta) com o GEFS para o PCONJUNTO
+    #         if data_arquivo.weekday() in [0,1,2,3,6] and flag_primeirraSemana == 1:
+    #             src = os.path.join(path_cv_working_date, "GEFS", "GEFS_p" + data.strftime('%d%m%y') + "a" + data_arquivo.strftime('%d%m%y') + ".dat")                
+    #             dst = pathArquivoPconjunto
+    #             try:
+    #                 shutil.copyfile(src,dst)
+    #             except Exception as e:
+    #                 print("Nao foi possivel copiar arquivo GEFS")
+    #                 print(e)
+
+    #     if 'PCONJUNTO2' in derivados:
+
+    #         pathArquivoPconjunto2 = os.path.join(path_dropbox_working_date, 'PCONJUNTO2{}_p{}a{}.dat'.format(sufixo, data.strftime('%d%m%y'), data_arquivo.strftime('%d%m%y')))
+    #         shutil.copyfile(pathArquivoPmedia,pathArquivoPconjunto2)
+
+    #         # Completa a primeira semana (ate quinta) com o EC-ens  para o PCONJUNTO2
+    #         if data_arquivo.weekday() in [0,1,2,3,6] and flag_primeirraSemana == 1:
+    #             src = os.path.join(path_cv_working_date, "ECMWF-ens", "EC-ens101_p" + data.strftime('%d%m%y') + "a" + data_arquivo.strftime('%d%m%y') + ".dat")                
+    #             dst = pathArquivoPconjunto2
+    #             try:
+    #                 shutil.copyfile(src,dst)
+    #             except Exception as e:
+    #                 print("Nao foi possivel copiar arquivo EC")
+    #                 print(e)
+
+    # if 'PCONJUNTO' in derivados:
+    #     try:
+    #         arquivos_copia = os.path.join(path_dropbox_working_date, 'PCONJUNTO{}_p{}a*'.format(sufixo,data.strftime('%d%m%y')))            
+    #         copia_arquivos(arquivos_copia,os.path.join(path_cv_working_date, 'CONJUNTO_ONS_WX'))
+    #         rodadas.importar_chuva(data=data,rodada=0,modelo=f"PCONJUNTO{sufixo}",flag_estudo=False)
+    #         modelos_inserir_fila += f'PCONJUNTO{sufixo}',
+    #     except Exception as e:
+    #         print("Não foi possivel completar o PCONJUNTO")
+    #         print(e)
+
+    # if 'PCONJUNTO2' in derivados:
+    #     try:
+    #         arquivos_copia = os.path.join(path_dropbox_working_date, 'PCONJUNTO2{}_p{}a*'.format(sufixo,data.strftime('%d%m%y')))            
+    #         copia_arquivos(arquivos_copia,os.path.join(path_cv_working_date, 'CONJUNTO_ONS_WX'))
+    #         rodadas.importar_chuva(data=data,rodada=0,modelo="PCONJUNTO2",flag_estudo=False)
+    #         modelos_inserir_fila += 'PCONJUNTO2',
+    #     except Exception as e:
+    #         print("Não foi possivel completar o PCONJUNTO2")
+    #         print(e)
+
+    # if 'PMEDIA' in derivados:
+    #     try:
+    #         arquivos_copia = os.path.join(path_dropbox_working_date, 'PMEDIA{}_p{}a*'.format(sufixo,data.strftime('%d%m%y')))
+    #         copia_arquivos(arquivos_copia,os.path.join(path_cv_working_date,'CONJUNTO_ONS_ORIG'))
+    #         rodadas.importar_chuva(data=data,rodada=0,modelo="PMEDIA",flag_estudo=False)
+    #         modelos_inserir_fila += 'PMEDIA',
+    #     except Exception as e:
+    #         print("Não foi possivel completar o PMEDIA")
+    #         print(e)
+
+    
+
+
+    # if 'ECMWF' in derivados:
+    #     try:
+    #         arquivo = os.path.join(path_conjunto_saida, 'ECMWF_rem_vies.dat')
+    #         copia_arquivos(arquivo,dirPrevisoesModelosRaizenDiario)
+    #         model = 'EC-ensremvies'; dias = 14
+    #         escreve_arquivos_chuva(data,arquivo,model,path_conjunto_saida,dias)  
+
+    #         arquivos_copia = os.path.join(path_conjunto_saida, model + '_p' + data.strftime('%d%m%y') + 'a*')
+    #         copia_arquivos(arquivos_copia,path_cv_working_date + '/CONJUNTO_ONS_ORIG')   
+    #         copia_arquivos(arquivos_copia,path_dropbox_working_date) 
+    #         rodadas.importar_chuva(data=data,rodada=0,modelo="EC-ensremvies",flag_estudo=False)
+    #         modelos_inserir_fila += 'EC-ensremvies',
+    #     except Exception as e:
+    #         print("Não foi possivel completar o EC-ensremvies")
+    #         print(e)
+
+    # if 'ETA' in derivados:
+    #     try:
+    #         arquivo = os.path.join(path_conjunto_saida, 'ETA40_rem_vies.dat')
+    #         copia_arquivos(arquivo,dirPrevisoesModelosRaizenDiario)
+    #         model = 'ETA40remvies'; dias = 9
+    #         escreve_arquivos_chuva(data,arquivo,model,path_conjunto_saida,dias)
+    #         arquivos_copia = os.path.join(path_conjunto_saida, model + '_p' + data.strftime('%d%m%y') + 'a*')
+    #         copia_arquivos(arquivos_copia,path_cv_working_date + '/CONJUNTO_ONS_ORIG')   
+    #         copia_arquivos(arquivos_copia,path_dropbox_working_date)
+    #         rodadas.importar_chuva(data=data,rodada=0,modelo="ETA40remvies",flag_estudo=False)
+    #         modelos_inserir_fila += 'ETA40remvies',
+    #         rodadas.importar_chuva(data=data,rodada=0,modelo="ETA40",flag_estudo=False)
+    #         modelos_inserir_fila += 'ETA40',
+    #     except Exception as e:
+    #         print("Não foi possivel completar o ETA40remvies")
+    #         print(e)
+
+    # if 'GEFS' in derivados:
+    #     try:
+    #         arquivo = os.path.join(path_conjunto_saida, 'GEFS_rem_vies.dat')
+    #         copia_arquivos(arquivo,dirPrevisoesModelosRaizenDiario)
+
+    #         model = 'GEFSremvies'; dias = 14
+    #         escreve_arquivos_chuva(data,arquivo,model,path_conjunto_saida,dias)
+    #         arquivos_copia = os.path.join(path_conjunto_saida, model + '_p' + data.strftime('%d%m%y') + 'a*')
+    #         copia_arquivos(arquivos_copia,path_cv_working_date + '/CONJUNTO_ONS_ORIG')   
+    #         copia_arquivos(arquivos_copia,path_dropbox_working_date)
+    #         rodadas.importar_chuva(data=data,rodada=0,modelo="GEFSremvies",flag_estudo=False)
+    #         modelos_inserir_fila += 'GEFSremvies',
+    #     except Exception as e:
+    #         print("Não foi possivel completar o GEFSremvies")
+    #         print(e)
+
+    # if 'PCONJUNTO-EXT' in derivados:
+    #     try:
+    #         dt =  data + datetime.timedelta(days=1)
+    #         dtFinalPconjunto = data + datetime.timedelta(days=nDia)
+
+    #         while dt <= dtFinalPconjunto:
+    #             nomeArq = 'PCONJUNTO_p{}a{}.dat'.format(data.strftime('%d%m%y'),dt.strftime('%d%m%y'))
+    #             src = os.path.join(path_dropbox_working_date, nomeArq)
+    #             novoNomeArq = nomeArq.replace('PCONJUNTO_','PCONJUNTO-EXT_')
+    #             dst = os.path.join(path_dropbox_working_date, novoNomeArq)
+    #             shutil.copyfile(src,dst)
+    #             print(dst)
+
+    #             dt = dt + datetime.timedelta(days=1)
+
+    #         dtDiaAnterior = data - datetime.timedelta(days=1)
+    #         cvGefsAnterior = os.path.join(PATH_CV, dtDiaAnterior.strftime('%Y%m%d'), 'GEFS')
+
+    #         # Completa a terceira semana do PCONJUNTO com a previsao do GEFS-estendido do dia anterior (gefs estendido demora muito)
+    #         while dt.weekday() != 5:
+    #             nomeArq = 'GEFS-ext_p{}a{}.dat'.format(dtDiaAnterior.strftime('%d%m%y'),dt.strftime('%d%m%y'))
+    #             src = os.path.join(cvGefsAnterior,nomeArq)
+    #             novoNomeArq = 'PCONJUNTO-EXT_p{}a{}.dat'.format(data.strftime('%d%m%y'),dt.strftime('%d%m%y'))
+    #             dst = os.path.join(path_dropbox_working_date,novoNomeArq)
+    #             shutil.copyfile(src,dst)
+    #             print(dst)
+
+    #             dt = dt + datetime.timedelta(days=1)
+
+    #         rodadas.importar_chuva(data=data,rodada=0,modelo="PCONJUNTO-EXT",flag_estudo=False)
+    #         modelos_inserir_fila += 'PCONJUNTO-EXT',
+    #     except Exception as e:
+    #         print("Não foi possivel completar o PCONJUNTO-EXT")
+    #         print(e)
 
     return modelos_inserir_fila
     
@@ -402,46 +586,46 @@ def copia_arquivos(arquivos_copia,path_dst):
             print("Nao foi possivel copiar arquivo " + src)
             print(e)
 
-def get_psat(dt_ini_obs):
-    db_rodadas = wx_dbClass.db_mysql_master('db_rodadas')
-    db_rodadas.connect()
+# def get_psat(dt_ini_obs):
+#     db_rodadas = wx_dbClass.db_mysql_master('db_rodadas')
+#     db_rodadas.connect()
 
-    tb_subbacia = db_rodadas.getSchema('tb_subbacia')
-    tb_chuva_psat = db_rodadas.getSchema('tb_chuva_psat')
+#     tb_subbacia = db_rodadas.getSchema('tb_subbacia')
+#     tb_chuva_psat = db_rodadas.getSchema('tb_chuva_psat')
 
-    select_psat = db.select(
-        tb_subbacia.c.txt_nome_subbacia,
-        tb_subbacia.c.vl_lat,
-        tb_subbacia.c.vl_lon,
-        tb_chuva_psat.c.vl_chuva
-        )\
-        .join(
-            tb_subbacia, 
-            tb_subbacia.c.cd_subbacia==tb_chuva_psat.c.cd_subbacia
-        )\
-        .where(
-            tb_chuva_psat.c.dt_ini_observado == dt_ini_obs.strftime("%Y-%m-%d")
-            )
-    psat_values = db_rodadas.conn.execute(select_psat).fetchall()
-    return psat_values
-
-
-def get_gpm(dt_ini_obs):
-    db_rodadas = wx_dbClass.db_mysql_master('db_rodadas')
-    db_rodadas.connect()
-
-    tb_subbacia = db_rodadas.getSchema('tb_subbacia')
-    tb_chuva_obs = db_rodadas.getSchema('tb_chuva_obs')
-
-    select_gpm = db.select(tb_subbacia.c.txt_nome_subbacia,tb_subbacia.c.vl_lat,tb_subbacia.c.vl_lon,tb_chuva_obs.c.vl_chuva)\
-                    .join(tb_subbacia, tb_subbacia.c.cd_subbacia==tb_chuva_obs.c.cd_subbacia)\
-                    .where(tb_chuva_obs.c.dt_observado == dt_ini_obs.strftime("%Y-%m-%d"))
-    gpm_values = db_rodadas.conn.execute(select_gpm).fetchall()
-
-    return gpm_values
+#     select_psat = db.select(
+#         tb_subbacia.c.txt_nome_subbacia,
+#         tb_subbacia.c.vl_lat,
+#         tb_subbacia.c.vl_lon,
+#         tb_chuva_psat.c.vl_chuva
+#         )\
+#         .join(
+#             tb_subbacia, 
+#             tb_subbacia.c.cd_subbacia==tb_chuva_psat.c.cd_subbacia
+#         )\
+#         .where(
+#             tb_chuva_psat.c.dt_ini_observado == dt_ini_obs.strftime("%Y-%m-%d")
+#             )
+#     psat_values = db_rodadas.conn.execute(select_psat).fetchall()
+#     return psat_values
 
 
-def get_df_chuva_obserervada(data):
+# def get_gpm(dt_ini_obs):
+#     db_rodadas = wx_dbClass.db_mysql_master('db_rodadas')
+#     db_rodadas.connect()
+
+#     tb_subbacia = db_rodadas.getSchema('tb_subbacia')
+#     tb_chuva_obs = db_rodadas.getSchema('tb_chuva_obs')
+
+#     select_gpm = db.select(tb_subbacia.c.txt_nome_subbacia,tb_subbacia.c.vl_lat,tb_subbacia.c.vl_lon,tb_chuva_obs.c.vl_chuva)\
+#                     .join(tb_subbacia, tb_subbacia.c.cd_subbacia==tb_chuva_obs.c.cd_subbacia)\
+#                     .where(tb_chuva_obs.c.dt_observado == dt_ini_obs.strftime("%Y-%m-%d"))
+#     gpm_values = db_rodadas.conn.execute(select_gpm).fetchall()
+
+#     return gpm_values
+
+
+# def get_df_chuva_obserervada(data):
 
     #a chuva do dia alvo inicia no dia anterior 
     # por isso no banco a chuva da data alvo esta cadastrada como a data de inicio
@@ -516,36 +700,6 @@ def convertArqConjuD1(pathFile):
     return pathArqSaida
 
 
-
-
-
-def inserirFilaRodaModelos(data,modelo,rodada):
-    
-    dt = data
-    semInteresse = data
-    nDias=0
-    while semInteresse.weekday() != 5:
-        semInteresse = semInteresse+datetime.timedelta(days=1)
-        nDias += 1
-
-    # Sextas-feiras, a semana prevista sera 1 semana a frente
-    if nDias == 1:
-        semInteresse = semInteresse+datetime.timedelta(days=7)
-
-    if '.PRELIMINAR' in modelo.upper():
-        dt = data-datetime.timedelta(days=1)
-
-    dt = dt.strftime('%d/%m/%Y')
-    semInteresse = semInteresse.strftime('%d/%m/%Y')
-    rodada = '{:0>2}'.format(rodada)
-
-    cmd = '. /WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; '
-    cmd += 'cd /WX2TB/Documentos/fontes/PMO/roda_modelos; '
-    cmd += 'python roda_modelos.py inserirFila data {} modelos "[\'{}\']" run "{}" sem_interesse {} fechamento 5 rodar_smap rodar_previvaz prioridade'.format(dt, modelo, rodada, semInteresse)
-
-    os.system(cmd)
-
-
 def executarScriptR(path_rotina, data):
     
     # Data para a entrada do script R (CONJUNTO-ONS)
@@ -556,7 +710,7 @@ def executarScriptR(path_rotina, data):
     time.sleep(2)
     
     print("\n### INICIANDO ROTINAS EM R")
-    pathScriptR = os.path.join(path_rotina, 'Codigos_R', 'Roda_Conjunto_V3.6.4.R')
+    pathScriptR = os.path.join(path_rotina, 'Codigos_R', 'Roda_Conjunto_V3.4.R')
     os.chdir(path_rotina)
     try:
         subprocess.run(["Rscript", "--vanilla", pathScriptR], check=True)
@@ -595,13 +749,18 @@ def verifica_arquivos_entrada(path_rotina,dt_rodada_exec):
     return files_exists
 
     
-def vies_arqsmap(data,arqin,modelout,pathout,dias):
+def escreve_arquivos_chuva(data,arqin,modelout,pathout,dias):
+
     
-    cols = ['PSAT', 'Lon', 'Lat', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'D11', 'D12', 'D13', 'D14']
+    colunas_fixas = ['PSAT', 'Lon', 'Lat']
+    colunas_dinamicas = [f'D{i+1}' for i in range(dias)]
+
+    if modelout.upper() in ['ETA40','GEFS','ECMWF']:
+        #Arquivos de entrada tem a sequencia lat e depois lon
+        colunas_fixas = ['PSAT', 'Lat', 'Lon']
+        colunas_dinamicas = [f'D{i+1}' for i in range(dias)]
     
-    # Arquivo ETA antes de passar pelo script R do pconjunto tem a longitude invertida cm a latitude e vem apenas 9 colunas
-    if modelout == 'ETA40':
-        cols = ['PSAT', 'Lat', 'Lon', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9']
+    cols = colunas_fixas + colunas_dinamicas
     
     df =  pd.read_csv(arqin,delimiter=r'\s+',header=None,names=cols)
 
@@ -616,14 +775,14 @@ def vies_arqsmap(data,arqin,modelout,pathout,dias):
         df_out = df[['Lon','Lat','D' +str(dd+1)]].copy()
 
         # Contas feitas dentro dos scripts R para subbacias especiais
-        for coord in subBaciasCalculadas:
-            subBac_calc = subBaciasCalculadas[coord]
+        # for coord in subBaciasCalculadas:
+        #     subBac_calc = subBaciasCalculadas[coord]
 
-            precipCalculado = 0
-            for sbac in subBac_calc:
-                precipCalculado += df_out[(df_out['Lon'] == sbac['Lon']) & (df_out['Lat'] == sbac['Lat'])].iloc[0,2]*sbac['fator']
+        #     precipCalculado = 0
+        #     for sbac in subBac_calc:
+        #         precipCalculado += df_out[(df_out['Lon'] == sbac['Lon']) & (df_out['Lat'] == sbac['Lat'])].iloc[0,2]*sbac['fator']
 
-            df_out = df_out.append({'Lon':coord[0], 'Lat':coord[1], 'D'+str(dd+1):round(precipCalculado,1)}, ignore_index=True)
+        #     df_out = df_out.append({'Lon':coord[0], 'Lat':coord[1], 'D'+str(dd+1):round(precipCalculado,1)}, ignore_index=True)
 
         df_out.to_csv(arq_out, index=False, sep = '\t', header = False)
 
@@ -650,7 +809,7 @@ if __name__ == '__main__':
             p_dataReferente = sys.argv[i+1]
             parametros['data'] = datetime.datetime.strptime(p_dataReferente, "%d/%m/%Y")
 
-        if argumento == 'forcarRodar':
-            p_forcarRodar = True
+        if argumento == 'forcarrodar':
+            parametros['forcarRodar'] = True
             
     previsao_conjunto_ONS(parametros)
