@@ -204,9 +204,9 @@ class Chuva:
     @staticmethod
     def get_chuva_por_id_data_entre_granularidade(
         id_chuva:int,
-        dt_inicio:datetime.date,
-        dt_fim:datetime.date,
         granularidade:str,
+        dt_inicio_previsao:Optional[datetime.date] = None,
+        dt_fim_previsao:Optional[datetime.date] = None,
         no_cache: Optional[bool] = False,
         atualizar:Optional[bool] = False):
         
@@ -216,9 +216,11 @@ class Chuva:
             df = pd.DataFrame(cache.get_cached(Chuva.get_chuva_por_id_subbacia, id_chuva, atualizar=atualizar))
         if df.empty:
             return df
-        df = df[(df['dt_prevista'] >= dt_inicio.strftime('%Y-%m-%d')) & (df['dt_prevista'] <= dt_fim.strftime('%Y-%m-%d'))]
+        if dt_inicio_previsao != None:
+            df = df[(df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')) & (df['dt_prevista'] <= dt_fim_previsao.strftime('%Y-%m-%d'))]
         df = df.sort_values(['dt_prevista', 'id'])
         if granularidade == 'subbacia':
+            df.rename(columns={'id':'cd_subbacia'}, inplace=True)
             return df.to_dict('records')
         df_subbacia = pd.DataFrame(Subbacia.get_subbacia())
         merged = df.merge(df_subbacia[['id', 'nome_bacia', 'nome_submercado']], on='id')
@@ -233,15 +235,23 @@ class Chuva:
                 )
             grouped = merged.groupby(['nome_bacia', 'dt_prevista', 'dia_semana', 'semana', 'hr_rodada', 'dt_rodada', 'modelo']).agg({'vl_chuva':'mean'}).reset_index()
             grouped = grouped.rename(columns={'nome_bacia':'nome'}).merge(df_bacia[['id', 'nome']], on='nome')
-            print(grouped.drop(columns=['nome']).to_dict('records'))
-            return grouped.drop(columns=['nome']).to_dict('records')
+            grouped = grouped.drop(columns=['nome']).rename(columns={'id':'id_bacia'})
+            return grouped.to_dict('records')
 
         if granularidade == 'submercado':
             df_submercado = pd.DataFrame(ons_crud.tb_submercado.get_submercados())
             df_submercado['nome'] = df_submercado['nome'].str.capitalize()
             grouped = merged.groupby(['nome_submercado', 'dt_prevista', 'dia_semana', 'semana', 'hr_rodada', 'dt_rodada', 'modelo']).agg({'vl_chuva':'mean'}).reset_index()
             grouped = grouped.rename(columns={'nome_submercado':'nome'}).merge(df_submercado[['id', 'nome']], on='nome')
-            return grouped.drop(columns=['nome']).to_dict('records')
+            grouped = grouped.drop(columns=['nome']).rename(columns={'id':'id_submercado'})
+            return grouped.to_dict('records')
+        
+    @staticmethod
+    def get_chuva_por_nome_modelo_data_entre_granularidade(nome_modelo, dt_hr_rodada, granularidade, dt_inicio_previsao, dt_fim_previsao, no_cache, atualizar):
+        rodadas = CadastroRodadas.get_rodadas_por_dt_hr_nome(dt_hr_rodada, nome_modelo)
+        return Chuva.get_chuva_por_id_data_entre_granularidade(rodadas[0]["id_chuva"], granularidade, dt_inicio_previsao, dt_fim_previsao, no_cache, atualizar)
+        
+    
     @staticmethod
     def get_previsao_chuva_modelos_combinados(
         query_obj: List[PesquisaPrevisaoChuva],

@@ -26,17 +26,21 @@ async def get_rodadas(
         return rodadas_crud.CadastroRodadas.get_rodadas_por_dt(dt)
     return cache.get_cached(rodadas_crud.CadastroRodadas.get_rodadas_por_dt, dt, atualizar=atualizar)
 
-@router.get('/chuva/previsao/{granularidade}', tags=['Rodadas'])
+@router.get('/chuva/previsao', tags=['Rodadas'])
 async def get_chuva_previsao_por_id_data_entre_granularidade(
-    id:int,
-    dt_inicio:datetime.date,
-    dt_fim:datetime.date,
-    granularidade:GranularidadeEnum,
+    nome_modelo:Optional[str] = None,
+    dt_hr_rodada:Optional[datetime.datetime] = None,
+    granularidade:Optional[GranularidadeEnum] = GranularidadeEnum.subbacia,
+    id_chuva:Optional[int] = None,
+    dt_inicio_previsao:Optional[datetime.date] = None,
+    dt_fim_previsao:Optional[datetime.date] = None,
     no_cache:Optional[bool] = False,
     atualizar:Optional[bool] = False
     ):
-    
-    return rodadas_crud.Chuva.get_chuva_por_id_data_entre_granularidade(id, dt_inicio, dt_fim, granularidade.name, no_cache, atualizar)
+    if id_chuva:
+        return rodadas_crud.Chuva.get_chuva_por_id_data_entre_granularidade(id_chuva, granularidade.name, dt_inicio_previsao, dt_fim_previsao, no_cache, atualizar)
+    elif nome_modelo and dt_hr_rodada:
+        return rodadas_crud.Chuva.get_chuva_por_nome_modelo_data_entre_granularidade(nome_modelo, dt_hr_rodada, granularidade.name, dt_inicio_previsao, dt_fim_previsao, no_cache, atualizar)
 
 @router.get('/subbacias', tags=['Rodadas'])
 async def get_subbacias():
