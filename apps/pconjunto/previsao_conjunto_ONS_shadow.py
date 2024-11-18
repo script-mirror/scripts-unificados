@@ -30,7 +30,7 @@ PATH_PREVISAO_MODELOS_RZ = os.path.abspath('/WX4TB/Documentos/saidas-modelos')
 
 
 MODELOS_COMPOSICAO_PCONJUNTO = ['ETA','GEFS', 'ECMWF']
-MODELOS_DERIVADOS = ['PCONJUNTO','PCONJUNTO2']
+MODELOS_DERIVADOS = ['pconjunto','pconjunto2']
 
 def previsao_conjunto_ONS(param):
 
@@ -42,7 +42,7 @@ def previsao_conjunto_ONS(param):
 
     print("\nRODANDO PCONJUNTO -",data.strftime('%d/%m/%Y'))
 
-    # cria_diretorio(path_dropbox_working_date)
+    cria_diretorio(path_dropbox_working_date)
     # cria_diretorio(path_cv_working_date + '/CONJUNTO_ONS_ORIG')
     # cria_diretorio(path_cv_working_date + '/CONJUNTO_ONS_WX')
     # cria_diretorio(path_cv_working_date + '/ETA40')
@@ -185,9 +185,6 @@ def task_conjunto_ons(dt_rodada_exec, forcar_rodar=False):
             numdias=14
             modelos_inserir_fila = organizarArquivosSaida(data=dt_rodada_exec, path_rotina=PATH_ROTINA_CONJUNTO, derivados=derivados, sufixo=sufixo, numdias=numdias)
             
-            #smap novo
-            SmapTools.trigger_dag_SMAP(dt_rodada=dt_rodada_exec)
-                
             # path_fig = os.path.abspath('/WX2TB/Documentos/saidas-modelos/gefs-eta')
             # wx_plota_pconjunto.plota_saida_pconjunto(dt_rodada_exec,PATH_ROTINA_CONJUNTO,path_fig)
 
@@ -204,7 +201,7 @@ def organizarArquivosSaida(data, path_rotina, derivados, sufixo, numdias=14):
     print("AJUSTANDO .DAT PARA FORMATO SMAP ONS")
 
     # path_cv_working_date = os.path.join(PATH_CV, data.strftime('%Y%m%d'))
-    # path_dropbox_working_date = os.path.join(PATH_DROPBOX_MIDDLE, "NovoSMAP", data.strftime('%Y%m%d'), "rodada00z")
+    path_dropbox_working_date = os.path.join(PATH_DROPBOX_MIDDLE, "NovoSMAP", data.strftime('%Y%m%d'), "rodada00z")
     path_conjunto_saida = os.path.join(path_rotina,'Arq_Saida')
     path_conjunto_entrada = os.path.join(path_rotina,'Arq_Entrada')
     
@@ -248,17 +245,17 @@ def organizarArquivosSaida(data, path_rotina, derivados, sufixo, numdias=14):
 
         config_modelos = [
             
-            #essemble 
-            {"modelo":"ECMWF", "ndias": 14, "path":path_ecmwf },
+            #essemble 0.1
+            {"modelo":"ecmwf-ens-ons", "ndias": 14, "path":path_ecmwf },
 
             #essemble
-            {"modelo":"GEFS", "ndias": 14, "path":path_gefs },
+            {"modelo":"gefs-ons", "ndias": 14, "path":path_gefs },
             
-            {"modelo":"ETA40", "ndias": 9, "path":path_eta },
+            {"modelo":"eta40-ons", "ndias": 9, "path":path_eta },
 
-            {"modelo":"ECMWFremvies", "ndias": 14, "path":path_ecmwf_vies },
-            {"modelo":"GEFSremvies", "ndias": 14, "path":path_gefs_vies },
-            {"modelo":"ETA40remvies", "ndias": 9, "path":path_eta_vies },
+            {"modelo":"ecmwf-ens-remvies-ons", "ndias": 14, "path":path_ecmwf_vies },
+            {"modelo":"gefs-remvies-ons", "ndias": 14, "path":path_gefs_vies },
+            {"modelo":"eta40-remvies-ons", "ndias": 9, "path":path_eta_vies },
         ]
 
         for config in config_modelos:
@@ -313,27 +310,20 @@ def organizarArquivosSaida(data, path_rotina, derivados, sufixo, numdias=14):
             dias_ate_quinta = (3-df_previsao_modelos['dt_rodada'].dt.dayofweek +7) % 7
             quinta_feira = df_previsao_modelos['dt_rodada'] + datetime.timedelta(days=int(dias_ate_quinta.unique()[0]))
             mask = (df_previsao_modelos['dt_prevista'] <= quinta_feira)
-
-            df_pmedia = df_previsao_modelos[df_previsao_modelos['modelo'] == 'PMEDIA'].copy()
-            if modelo =='PCONJUNTO':
+            df_pmedia_to_modify = df_previsao_modelos[df_previsao_modelos['modelo'] == 'PMEDIA'].copy()
+            
+            if modelo =='pconjunto':
                 #completar até quinta feira com o gefs-ens , se for sexta ou sabado completar até a quinta da semana que vem
-                df_pconjunto = df_pmedia.copy()
-                df_gefs = df_previsao_modelos[df_previsao_modelos['modelo'] == 'GEFS'].copy()
-                df_pconjunto.loc[mask, df_gefs.columns] = df_gefs.loc[mask,df_gefs.columns].values
-                df_pconjunto.loc[:,'modelo'] = 'PCONJUNTO'
-                df_previsao_modelos = pd.concat([df_previsao_modelos, df_pconjunto], ignore_index=True)
+                df_composicao = df_previsao_modelos[df_previsao_modelos['modelo'] == 'gefs-ons'].copy()
 
-            if modelo =='PCONJUNTO2':
+            elif modelo =='pconjunto2':
                 #completar até quinta feira com o ecmwf-ens , se for sexta ou sabado completar até a quinta da semana que vem
-                df_pconjunto2 = df_pmedia.copy()
-                df_ecmwf = df_previsao_modelos[df_previsao_modelos['modelo'] == 'ECMWF'].copy()
-                df_pconjunto2.loc[mask, df_ecmwf.columns] = df_ecmwf.loc[mask,df_ecmwf.columns].values
-                df_pconjunto2.loc[:,'modelo'] = 'PCONJUNTO2'
-                df_previsao_modelos = pd.concat([df_previsao_modelos, df_pconjunto2], ignore_index=True)
+                df_composicao = df_previsao_modelos[df_previsao_modelos['modelo'] == 'ecmwf-ens-ons'].copy()
 
+            # elif modelo == 'PCONJUNTO-EXT':
                 # try:
-                #     df_rodada_ecmwf_ens = df_rodadas_do_dia[df_rodadas_do_dia['str_modelo'].str.lower() == 'ecmwf-ens']
-                #     id_chuva = df_rodada_ecmwf_ens['id_chuva'].values[0]
+                #     df_rodada_gefs-est = df_rodadas_do_dia[df_rodadas_do_dia['str_modelo'].str.lower() == 'gefs-est']
+                #     id_chuva = df_rodada_gefs-est['id_chuva'].values[0]
 
                 #     response_prev_chuva = get_modelo_chuva_by_id(
                 #         id_chuva=id_chuva,
@@ -345,21 +335,34 @@ def organizarArquivosSaida(data, path_rotina, derivados, sufixo, numdias=14):
                     
                 #     if response_prev_chuva:
 
-                #         df_ecmwf_ens = pd.DataFrame(response_prev_chuva).rename(columns={'id':"cd_subbacia"})
-                #         df_ecmwf_ens = pd.merge(df_ecmwf_ens, df_pconjunto2[['Longitude', 'Latitude', 'Codigo ANA', 'cd_subbacia']].drop_duplicates(), on='cd_subbacia', how='left')
+                #         df_gefs-est = pd.DataFrame(response_prev_chuva).rename(columns={'id':"cd_subbacia"})
+                #         df_gefs-est = pd.merge(df_gefs-est, df_pmedia_to_modify[['Longitude', 'Latitude', 'Codigo ANA', 'cd_subbacia']].drop_duplicates(), on='cd_subbacia', how='left')
                         
-                #         df_ecmwf_ens['dt_rodada'] = pd.to_datetime(df_ecmwf_ens['dt_rodada'])
-                #         df_ecmwf_ens['dt_prevista'] = pd.to_datetime(df_ecmwf_ens['dt_prevista'])
+                #         df_gefs-est['dt_rodada'] = pd.to_datetime(df_gefs-est['dt_rodada'])
+                #         df_gefs-est['dt_prevista'] = pd.to_datetime(df_gefs-est['dt_prevista'])
 
-                #         quinta_feira = df_ecmwf_ens['dt_rodada'] + datetime.timedelta(days=int(dias_ate_quinta.unique()[0]))
-                #         mask_ec = (df_ecmwf_ens['dt_prevista'] <= quinta_feira)
+                #         quinta_feira = df_gefs-est['dt_rodada'] + datetime.timedelta(days=int(dias_ate_quinta.unique()[0]))
+                #         mask_ec = (df_gefs-est['dt_prevista'] <= quinta_feira)
 
-                #         df_pconjunto2.loc[mask, df_pconjunto2.columns] = df_ecmwf_ens.loc[mask_ec,df_pconjunto2.columns].values
+                #         df_pmedia_to_modify.loc[mask, df_pmedia_to_modify.columns] = df_gefs-est.loc[mask_ec,df_pmedia_to_modify.columns].values
 
-                #     df_pconjunto2.loc[:,'modelo'] = 'PCONJUNTO2'
-                #     df_previsao_modelos = pd.concat([df_previsao_modelos, df_pconjunto2], ignore_index=True)
+                #     df_pmedia_to_modify.loc[:,'modelo'] = 'pconjunto-est'
+                #     df_previsao_modelos = pd.concat([df_previsao_modelos, df_pmedia_to_modify], ignore_index=True)
                 # except:
                 #     print("Não foi possivel gerar o PCONJUNTO2")
+
+
+            df_pmedia_to_modify.loc[mask, df_composicao.columns] = df_composicao.loc[mask,df_composicao.columns].values
+            df_pmedia_to_modify.loc[:,'modelo'] = modelo.lower()
+            df_previsao_modelos = pd.concat([df_previsao_modelos, df_pmedia_to_modify], ignore_index=True)
+        
+
+        df_pconjunto_out = df_previsao_modelos[df_previsao_modelos['modelo']=='pconjunto']
+        df_to_write = df_pconjunto_out[["dt_prevista","Longitude","Latitude","vl_chuva"]].set_index('dt_prevista')
+        for dt_prevista in df_to_write.index.unique():
+            file = os.path.join(path_dropbox_working_date, f'PCONJUNTO_p{data.strftime("%d%m%y")}a{dt_prevista.strftime("%d%m%y")}.dat')
+            print(file)
+            df_to_write.loc[dt_prevista].to_csv(file, sep = '\t',header=False,index=False)
 
         df_previsao_modelos['dt_rodada'] = pd.to_datetime(df_previsao_modelos['dt_rodada']).apply(lambda x: x.isoformat())
         df_previsao_modelos['dt_prevista'] = pd.to_datetime(df_previsao_modelos['dt_prevista']).dt.strftime("%Y-%m-%d")
@@ -374,7 +377,11 @@ def organizarArquivosSaida(data, path_rotina, derivados, sufixo, numdias=14):
     forecast_files = glob.glob(file_paths)
 
     for file_path in forecast_files:
+
         modelo, dt_rodada,dt_prevista = extract_info_name(file_path)
+        if modelo in ["ECMWF","GEFS","ETA40"]:
+            continue
+
         df_temp = pd.read_csv(file_path, delimiter='\s+', header=None, names=['Longitude','Latitude','vl_chuva'])
         df_temp['modelo'] = modelo
         df_temp['dt_rodada'] = dt_rodada
@@ -629,17 +636,17 @@ def copia_arquivos(arquivos_copia,path_dst):
 
     #a chuva do dia alvo inicia no dia anterior 
     # por isso no banco a chuva da data alvo esta cadastrada como a data de inicio
-    dt_ini_obs = data - datetime.timedelta(days=1)
-    observado_values = get_psat(dt_ini_obs=dt_ini_obs)
-    if not observado_values:
-        print(f'PSAT {data.strftime("%Y-%m-%d")} não disponivel no banco!')
-        print(f'GPM sera utilizado no lugar!')
-        observado_values = get_gpm(dt_ini_obs=dt_ini_obs)
-        if not observado_values:
-            print(f'GPM {data.strftime("%Y-%m-%d")} não disponivel!')
+    # dt_ini_obs = data - datetime.timedelta(days=1)
+    # observado_values = get_psat(dt_ini_obs=dt_ini_obs)
+    # if not observado_values:
+    #     print(f'PSAT {data.strftime("%Y-%m-%d")} não disponivel no banco!')
+    #     print(f'GPM sera utilizado no lugar!')
+    #     observado_values = get_gpm(dt_ini_obs=dt_ini_obs)
+    #     if not observado_values:
+    #         print(f'GPM {data.strftime("%Y-%m-%d")} não disponivel!')
 
-    df_observado = pd.DataFrame(observado_values,columns=["subbacia","lat","lon","vl_chuva"])
-    return df_observado.set_index("subbacia")
+    # df_observado = pd.DataFrame(observado_values,columns=["subbacia","lat","lon","vl_chuva"])
+    # return df_observado.set_index("subbacia")
 
 # def cria_arq_psat(data, destino):
 
@@ -716,7 +723,7 @@ def executarScriptR(path_rotina, data):
         subprocess.run(["Rscript", "--vanilla", pathScriptR], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Ocorreu um erro ao executar o script R: {e}")
-        raise
+        quit()
 
     print("\n### CODIGOS EM R FINALIZADOS")
     print("")
@@ -755,7 +762,7 @@ def escreve_arquivos_chuva(data,arqin,modelout,pathout,dias):
     colunas_fixas = ['PSAT', 'Lon', 'Lat']
     colunas_dinamicas = [f'D{i+1}' for i in range(dias)]
 
-    if modelout.upper() in ['ETA40','GEFS','ECMWF']:
+    if modelout.lower() in ['eta40-ons','gefs-ons','ecmwf-ens-ons']:
         #Arquivos de entrada tem a sequencia lat e depois lon
         colunas_fixas = ['PSAT', 'Lat', 'Lon']
         colunas_dinamicas = [f'D{i+1}' for i in range(dias)]
