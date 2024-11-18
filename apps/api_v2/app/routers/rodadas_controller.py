@@ -69,12 +69,17 @@ async def post_chuva_membros(
 ):  
     return rodadas_crud.ChuvaMembro.post_chuva_membro(chuva_prev, rodar_smap)
 
+@router.delete('/chuva/previsao', tags=['Rodadas'])
+async def delete_rodada_chuva_smap_por_id_rodada(
+    id_rodada:int
+):
+    return rodadas_crud.CadastroRodadas.delete_rodada_chuva_smap_por_id_rodada(id_rodada)
 
-@router.post('/smap', tags=['Rodadas'])
-async def post_smap(
-    rodada:RodadaSmap
-):  
-    return rodadas_crud.Smap.post_rodada_smap(rodada)
+@router.get('/chuva/observada', tags=['Rodadas'])
+def get_chuva_observada_por_data(
+    dt_observada:datetime.date
+    ):
+    return rodadas_crud.ChuvaObs.get_chuva_observada_por_data(dt_observada)
 
 @router.post('/chuva/observada', tags=['Rodadas'])
 async def post_chuva_observada(
@@ -82,11 +87,11 @@ async def post_chuva_observada(
 ):
     return rodadas_crud.ChuvaObs.post_chuva_obs(chuva_obs)
 
-@router.delete('/chuva/previsao', tags=['Rodadas'])
-async def delete_rodada_chuva_smap_por_id_rodada(
-    id_rodada:int
-):
-    return rodadas_crud.CadastroRodadas.delete_rodada_chuva_smap_por_id_rodada(id_rodada)
+@router.post('/smap', tags=['Rodadas'])
+async def post_smap(
+    rodada:RodadaSmap
+):  
+    return rodadas_crud.Smap.post_rodada_smap(rodada)
 
 # @router.get("/protected-endpoint")
 # async def protected_endpoint(session_data: dict = Depends(auth_dependency)):

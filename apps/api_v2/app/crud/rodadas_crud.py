@@ -555,6 +555,21 @@ class ChuvaObs:
         rows_insert = __DB__.db_execute(query_insert, prod).rowcount
         print(f'{rows_insert} linha(s) inserida(s)')
         
+    @staticmethod
+    def get_chuva_observada_por_data(
+        dt_observado:datetime.date
+    ):
+        query_select = db.select(
+            ChuvaObs.tb.c['cd_subbacia'],
+            ChuvaObs.tb.c['dt_observado'],
+            ChuvaObs.tb.c['vl_chuva']
+        ).where(
+            ChuvaObs.tb.c['dt_observado'] == dt_observado
+        )
+        result = __DB__.db_execute(query_select, prod)
+        df = pd.DataFrame(result, columns=['cd_subbacia', 'dt_observado', 'vl_chuva'])
+        return df.to_dict('records')
+        
     
 if __name__ == '__main__':
     ChuvaMembro.media_membros(datetime.datetime(2024,10,24,12,0,0), 'string')
