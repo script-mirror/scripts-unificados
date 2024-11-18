@@ -18,7 +18,6 @@ AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 
 TIME_OUT = 60*60*30
 
-
 def create_ec2_client(region):
     return boto3.client('ec2',
            aws_access_key_id=AWS_ACCESS_KEY_ID,
@@ -92,6 +91,8 @@ def stop_instance(instance_id, region):
     else:
         print(f"A instância está em um estado não manipulável: {state}")
 
+##################################################################################################
+
 with DAG(
     'CPC',
     start_date= datetime.datetime(2024, 4, 28),
@@ -150,6 +151,8 @@ with DAG(
     )
     
     start_ec2_task >> run_cpc >> run_shell_script >> stop_ec2_task >> fim
+
+##################################################################################################
 
 with DAG(
     'EC-FORECAST',
@@ -258,6 +261,8 @@ with DAG(
     
     start_ec2_task >> [run_forecast]  >> stop_ec2_task >> fim
 
+##################################################################################################
+
 with DAG(
     'PREV_CHUVA_DB_ECMWF',
     start_date= datetime.datetime(2024, 4, 28),
@@ -305,11 +310,13 @@ with DAG(
     
     start_ec2_task >> [run_forecast]  >> stop_ec2_task >> fim    
 
+##################################################################################################
+
 with DAG(
     'PREV_CHUVA_DB_GEFS-EST',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='30 23 * * *',
+    schedule='10 0 * * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -352,6 +359,7 @@ with DAG(
     
     start_ec2_task >> [run_forecast]  >> stop_ec2_task >> fim
 
+##################################################################################################
 
 with DAG(
     'PREV_CHUVA_DB_GEFS',
@@ -400,6 +408,7 @@ with DAG(
     
     start_ec2_task >> [run_forecast]  >> stop_ec2_task >> fim
 
+##################################################################################################
 
 with DAG(
     'PREV_CHUVA_DB_GFS',
@@ -448,6 +457,57 @@ with DAG(
 
     start_ec2_task >> run_forecast  >> stop_ec2_task >> fim
 
+##################################################################################################
+
+with DAG(
+    'PREV_CHUVA_DB_ETA',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='10 5 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia']
+) as dag:
+        
+    start_ec2_task = PythonOperator(
+        task_id='start_ec2',
+        python_callable=start_instance,
+        # provide_context=True,
+    )
+    
+     # Task to run a command on the remote server
+    
+    run_forecast = SSHOperator(
+        task_id='vl_chuva_to_db',
+        remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
+        ssh_conn_id='ssh_ecmwf',
+        command="{{ '/home/admin/enviMetereologia/bin/python /home/admin/rotinas/gera_forecast_to_db.py eta' }}",
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+        trigger_rule=TriggerRule.ALL_DONE,
+        do_xcom_push=False,
+        
+    )
+
+    stop_ec2_task = PythonOperator(
+        task_id='stop_ec2',
+        python_callable=stop_instance,
+        op_kwargs={'instance_id': 'i-0edbeb5435710d5f3', 'region': 'us-east-1'},
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    fim = DummyOperator(
+        task_id='fim',
+        trigger_rule="none_failed_min_one_success",
+    )
+
+    start_ec2_task >> run_forecast  >> stop_ec2_task >> fim
+
+##################################################################################################
+
 with DAG(
     'C3S',
     start_date= datetime.datetime(2024, 4, 28),
@@ -467,6 +527,7 @@ with DAG(
     )
 
      # Task to run a command on the remote server
+
     run_cpc = SSHOperator(
         task_id='run_c3s',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
@@ -507,3 +568,858 @@ with DAG(
     )
 
     start_ec2_task >> run_cpc >> run_shell_script >> stop_ec2_task >> fim
+
+
+##################################################################################################
+
+DIR_PRODUTOS_MAPAS = '/WX2TB/Documentos/fontes/tempo/novos_produtos/'
+
+with DAG(
+    'Mapas_GFS',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 2,8,14,20 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_gfs',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/gfs/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_GEFS',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 3,8,15,20 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_gefs',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/gefs/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_GEFS-MEMBROS',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 3,8,15,20 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_gefs-membros',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/gefs-membros/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_ECMWF',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 4,16 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_ecmwf',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_ECMWF-NOVARES',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 4 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_ecmwfnovares',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-novares/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_ECMWF-ENS',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 6,18 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_ecmwf-ens',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-ens/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_ECMWF-ENS-CHUVA',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 6,18 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_ecmwf-ens-chuva',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-ens-chuva/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_ECMWF-ENS-MEMBROS',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 6,18 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_ecmwf-ens-membros',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-ens-membros/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_ECMWF-AIFS',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 5,10,18,23 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_ecmwf-aifs',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-aifs/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_ETA',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 8 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_eta',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/eta/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_ETA-CPTEC',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='10 5 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_eta-cptec',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/eta-cptec/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_GEFS-ESTENDIDO',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='2 0 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_gefs-est',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/gefs-estendido/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_GEFS-ESTENDIDO-MEMBROS',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='2 0 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_gefs-est-membros',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/gefs-estendido-membros/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_ECMWF-ESTENDIDO',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='5 17 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_ecmwf-est',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-ens-estendido/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_ECMWF-ESTENDIDO-MEMBROS',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='5 17 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_ecmwf-est-membros',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-ens-estendido-membros/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_ECMWF-ESTENDIDO-HINDCAST',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='50 18 * * 1,4',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_ecmwf-est-hindcast',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-estendido-hindcast/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_MERGE-GPM',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='30 13 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_merge-gpm-daily',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/merge-gpm-daily/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_MERGE-GPM-PREVOBS',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='40 13 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_merge-gpm-daily-prevobs',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/merge-gpm-daily/produtos_prevobsparalelo.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_CPC',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='35 10 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_cpc',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/cpc/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_CFSv2_Semanal',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='10 6,12,18,0 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_cfsv2semanal',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/cfsv2/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_CFSv2_Mensal',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='10 6,12,18,0 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_cfsv2mensal',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/cfsv2-mensal/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_ClusterONS',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='24 6 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_clusterons',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/cluster_ons/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_PSAT',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='10 14 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_psat',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/psat/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_NMME',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='30 2 8 * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_nmme',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/nmme/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Indices_teleconexao',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='30 2 5,15,30 * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_indices_teleconexoes',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/csv_teleconexao/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_Temperatura_SaMET',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 1 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_temp_samet',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/temp_samet/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_Reanalises',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='30 14 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_reanalises',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/reanalises/novo/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_Reanalises_mensais',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='30 14 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_reanalises_mensais',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/reanalises/novo/produtos_mensais.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Dirs_CFSv2',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='10 0 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_limpadirscfsv2',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/limpa_dirs/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Dados_MJO_BoM',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 3 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_mjobom',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/mjo/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_ZCIT_Funceme',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 12 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_zcit_funceme',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/zcit/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_Umidade_do_solo',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 8 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_umidade_solo',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/umidade_solo/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_temperatura_subsuperficial_ECMWF',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 8 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_temp_subsuperficial',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/temp_subsuperficial/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'Mapas_PCONJUNTO',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='5 8 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        task_id='roda_produtos_pconjunto',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/pconjunto/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
