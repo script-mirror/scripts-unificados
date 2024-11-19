@@ -87,6 +87,19 @@ async def post_chuva_observada(
 ):
     return rodadas_crud.ChuvaObs.post_chuva_obs(chuva_obs)
 
+@router.get('/chuva/observada/psat', tags=['Rodadas'])
+def get_chuva_observada_psat_por_data(
+    dt_observada:datetime.date
+    ):
+    return rodadas_crud.ChuvaObsPsat.get_chuva_observada_psat_por_data(dt_observada)
+
+
+@router.post('/chuva/observada/psat', tags=['Rodadas'])
+async def post_chuva_observada_psat(
+    chuva_obs:List[ChuvaObsReq]
+):
+    return rodadas_crud.ChuvaObsPsat.post_chuva_obs_psat(chuva_obs)
+
 @router.post('/smap', tags=['Rodadas'])
 async def post_smap(
     rodada:RodadaSmap

@@ -569,6 +569,46 @@ class ChuvaObs:
         result = __DB__.db_execute(query_select, prod)
         df = pd.DataFrame(result, columns=['cd_subbacia', 'dt_observado', 'vl_chuva'])
         return df.to_dict('records')
+
+
+class ChuvaObsPsat:
+    tb:db.Table = __DB__.getSchema('tb_chuva_psat')
+    
+    @staticmethod
+    def post_chuva_obs_psat(
+        chuva_obs:List[ChuvaObsReq]
+    ):
+        chuva_obs = [c.model_dump() for c in chuva_obs]
+        df = pd.DataFrame(chuva_obs)
+        df['dt_observado'].to_list()
+        
+        query_delete = ChuvaObsPsat.tb.delete(
+            ).where(db.and_(
+                   ChuvaObsPsat.tb.c['dt_ini_observado'] == chuva_obs[0]['dt_observado']
+            ))
+        rows_delete = __DB__.db_execute(query_delete, prod).rowcount
+        print(f'{rows_delete} linha(s) deletada(s)')
+        query_insert = ChuvaObsPsat.tb.insert(
+            ).values(
+            df.to_dict('records')
+        )
+        rows_insert = __DB__.db_execute(query_insert, prod).rowcount
+        print(f'{rows_insert} linha(s) inserida(s)')
+        
+    @staticmethod
+    def get_chuva_observada_psat_por_data(
+        dt_observado:datetime.date
+    ):
+        query_select = db.select(
+            ChuvaObsPsat.tb.c['cd_subbacia'],
+            ChuvaObsPsat.tb.c['dt_ini_observado'],
+            ChuvaObsPsat.tb.c['vl_chuva']
+        ).where(
+            ChuvaObsPsat.tb.c['dt_ini_observado'] == dt_observado
+        )
+        result = __DB__.db_execute(query_select, prod)
+        df = pd.DataFrame(result, columns=['cd_subbacia', 'dt_observado', 'vl_chuva'])
+        return df.to_dict('records')
         
     
 if __name__ == '__main__':
