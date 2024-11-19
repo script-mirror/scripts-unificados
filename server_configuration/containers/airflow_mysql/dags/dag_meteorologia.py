@@ -122,7 +122,7 @@ with DAG(
         execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
-        do_xcom_push=False,
+
     )
 
     run_shell_script = SSHOperator(
@@ -134,7 +134,7 @@ with DAG(
         cmd_timeout = TIME_OUT,
         execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
-        do_xcom_push=False,
+
         
     )
 
@@ -182,7 +182,7 @@ with DAG(
         execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
-        do_xcom_push=False,
+
         
     )
 
@@ -197,7 +197,7 @@ with DAG(
         execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
-        do_xcom_push=False,
+
         
     )
 
@@ -243,7 +243,7 @@ with DAG(
         execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
-        do_xcom_push=False,
+
         
     )
 
@@ -292,7 +292,7 @@ with DAG(
         execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
-        do_xcom_push=False,
+
         
     )
 
@@ -341,7 +341,7 @@ with DAG(
         execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
-        do_xcom_push=False,
+
         
     )
 
@@ -390,7 +390,7 @@ with DAG(
         execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
-        do_xcom_push=False,
+
         
     )
 
@@ -439,7 +439,7 @@ with DAG(
         execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
-        do_xcom_push=False,
+
         
     )
 
@@ -488,7 +488,7 @@ with DAG(
         execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
-        do_xcom_push=False,
+
         
     )
 
@@ -538,7 +538,7 @@ with DAG(
         execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
         trigger_rule=TriggerRule.ALL_DONE,
-        do_xcom_push=False,
+
         
     )
 
@@ -551,7 +551,7 @@ with DAG(
         cmd_timeout = TIME_OUT,
         execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
-        do_xcom_push=False,
+
         
     )
 
@@ -582,7 +582,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -607,7 +609,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -632,7 +636,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -657,7 +663,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -682,7 +690,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -707,7 +717,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -732,7 +744,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -757,7 +771,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -782,7 +798,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -807,7 +825,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -832,7 +852,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -857,7 +879,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -882,7 +906,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -907,7 +933,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -932,7 +960,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -957,7 +987,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -982,7 +1014,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1007,7 +1041,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1032,7 +1068,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1057,7 +1095,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1082,7 +1122,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1107,7 +1149,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1132,7 +1176,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1157,7 +1203,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1182,7 +1230,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1207,7 +1257,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1232,7 +1284,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1257,7 +1311,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1282,7 +1338,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1307,7 +1365,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1332,7 +1392,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1357,7 +1419,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1382,7 +1446,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
@@ -1407,7 +1473,9 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas']
+    tags=['Metereologia', 'Mapas'],
+    default_args={"do_xcom_push":False}
+
 
 ) as dag:
 
