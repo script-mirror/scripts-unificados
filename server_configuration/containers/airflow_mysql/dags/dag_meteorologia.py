@@ -1178,7 +1178,7 @@ with DAG(
     'Indices_teleconexao',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='30 2 5,15,30 * *',
+    schedule='10 12 * * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
