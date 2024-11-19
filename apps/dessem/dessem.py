@@ -94,7 +94,7 @@ def executar_deck_convertido(data, executar_prospec=False):
     else:
         print(f'Iniciando simulação do desse para dia {data.strftime("%d/%m/%Y")}')
         os.chdir(path_deck_convertido)
-        resultado = subprocess.run(['dessem'], capture_output=True, text=True)
+        resultado = subprocess.run(['sudo','dessem_20.0.11'], capture_output=True, text=True)
         print(resultado.stdout)
         path_saida_dessem = path_deck_convertido
     
