@@ -418,7 +418,54 @@ class ChuvaMembro:
         df['dt_rodada'] = pd.Series(df['dt_rodada'].dt.to_pydatetime(), dtype = object)
         if inserir:
             Chuva.post_chuva_modelo_combinados([ChuvaPrevisaoCriacao.model_validate(x) for x in df.to_dict('records')], True)
+    @staticmethod
+    def get_chuva_por_nome_modelo_dt_hr(nome_modelo, dt_hr_rodada):
+        query = db.select(
+            MembrosModelo.tb.c['nome'],
+            MembrosModelo.tb.c['modelo'],
+            MembrosModelo.tb.c['dt_hr_rodada'],
+            ChuvaMembro.tb.c['cd_subbacia'],
+            ChuvaMembro.tb.c['dt_prevista'],
+            ChuvaMembro.tb.c['vl_chuva']
+            ).where(db.and_(
+                MembrosModelo.tb.c['modelo'] == nome_modelo,
+                MembrosModelo.tb.c['dt_hr_rodada'] == dt_hr_rodada
+                )
+            ).join(
+                MembrosModelo.tb, MembrosModelo.tb.c['id'] == ChuvaMembro.tb.c['id_membro_modelo']
+            
+        )
+        result = __DB__.db_execute(query, commit=prod).fetchall()
+        df = pd.DataFrame(result, columns=['membro', 'modelo', 'dt_hr_rodada', 'id', 'dt_prevista', 'vl_chuva'])
+        df['dia_semana'] = df['dt_prevista'].astype('datetime64[ns]').dt.strftime('%A')
+        df['dt_prevista'] = df['dt_prevista'].astype('datetime64[ns]').dt.strftime('%Y-%m-%d')
+        df = df.drop_duplicates()
+        df = df.sort_values('dt_prevista')
+        
+        dfs = [g for _,g in df.groupby((pd.to_datetime(df['dt_prevista']) + pd.to_timedelta(1, unit='D')).dt.to_period('W'))]
+        for i, item in enumerate(dfs):
+            item['semana'] = i+1
+            dfs[i] = item
+            pass
+        df = pd.concat(dfs)
+        return df.to_dict('records')
 
+    @staticmethod
+    def get_chuva_por_nome_modelo_data_entre_granularidade(nome_modelo, dt_hr_rodada, granularidade, dt_inicio_previsao, dt_fim_previsao, no_cache, atualizar):
+        
+        if no_cache:
+            df = pd.DataFrame(ChuvaMembro.get_chuva_por_nome_modelo_dt_hr(nome_modelo, dt_hr_rodada))
+        else:
+            df = pd.DataFrame(cache.get_cached(ChuvaMembro.get_chuva_por_nome_modelo_dt_hr, nome_modelo, dt_hr_rodada, atualizar=atualizar))
+        if df.empty:
+            return list()
+        if dt_inicio_previsao != None:
+            df = df[(df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')) & (df['dt_prevista'] <= dt_fim_previsao.strftime('%Y-%m-%d'))]
+        df = df.sort_values(['dt_prevista', 'id', 'membro'])
+        if granularidade == 'subbacia':
+            df.rename(columns={'id':'cd_subbacia'}, inplace=True)
+            return df.to_dict('records')
+        
 class Subbacia:
     tb:db.Table = __DB__.getSchema('tb_subbacia')
     @staticmethod
@@ -531,6 +578,29 @@ class MembrosModelo:
         df = pd.DataFrame(result, columns=["id", "dt_hr_rodada", "nome", "modelo"])
         return df.to_dict("records")
         
+        
+    @staticmethod
+    def get_chuva_por_id_data_entre_granularidade(
+        id_chuva:int,
+        granularidade:str,
+        dt_inicio_previsao:Optional[datetime.date] = None,
+        dt_fim_previsao:Optional[datetime.date] = None,
+        no_cache: Optional[bool] = False,
+        atualizar:Optional[bool] = False):
+        
+        if no_cache:
+            df = pd.DataFrame(Chuva.get_chuva_por_id_subbacia(id_chuva))
+        else:
+            df = pd.DataFrame(cache.get_cached(Chuva.get_chuva_por_id_subbacia, id_chuva, atualizar=atualizar))
+        if df.empty:
+            return df
+        if dt_inicio_previsao != None:
+            df = df[(df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')) & (df['dt_prevista'] <= dt_fim_previsao.strftime('%Y-%m-%d'))]
+        df = df.sort_values(['dt_prevista', 'id'])
+        if granularidade == 'subbacia':
+            df.rename(columns={'id':'cd_subbacia'}, inplace=True)
+            return df.to_dict('records')
+    
 class ChuvaObs:
     tb:db.Table = __DB__.getSchema('tb_chuva_obs')
     
@@ -610,6 +680,7 @@ class ChuvaObsPsat:
         df = pd.DataFrame(result, columns=['cd_subbacia', 'dt_observado', 'vl_chuva'])
         return df.to_dict('records')
         
+
     
 if __name__ == '__main__':
     ChuvaMembro.media_membros(datetime.datetime(2024,10,24,12,0,0), 'string')
