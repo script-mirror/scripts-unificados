@@ -146,6 +146,12 @@ def gerarCompiladoPrevPrecipt(data, modelo, rodada):
     elif modelo.lower() == 'ecmwf-ens':
         pattern = os.path.join(path,modelo,dtRodada,'semana-energ','EC-ENS_[0-9]semana_energ-r{}*'.format(dtRodada))
 
+    elif modelo.lower() == 'ecmwf-ens-estendido':
+        pattern = os.path.join(path,modelo,dtRodada,'semana-energ','EC-ENS-ESTENDIDO_[0-9]semana_energ-r{}*'.format(dtRodada))
+
+    elif modelo.lower() == 'diferença-ecmwf-estendido':
+        pattern = os.path.join(path,'ecmwf-ens-estendido',dtRodada,'dif_prec','dif_acumulado_total-r{}*'.format(dtRodada))
+
     else:
         pattern = os.path.join(path,modelo,dtRodada,'semana-energ','[0-9]semana_energ-r{}*'.format(dtRodada))
         
