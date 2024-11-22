@@ -914,7 +914,7 @@ with DAG(
 
     run_shell_script = SSHOperator(
         task_id='roda_produtos_gefs-est-membros',
-        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/gefs-estendido-membros/produtos.sh'}}",
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/gefs-membros-estendido/produtos.sh'}}",
         dag=dag,
         ssh_conn_id='ssh_master',
         conn_timeout = TIME_OUT,
