@@ -7,7 +7,9 @@ import glob
 import shutil
 import datetime
 import zipfile
-
+import pandas as pd
+import locale
+locale.setlocale(locale.LC_TIME, 'pt_BR.utf8')
 
 path_fontes = "/WX2TB/Documentos/fontes/"
 sys.path.insert(1,path_fontes)
@@ -407,7 +409,7 @@ def converter_deck_ons_ccee(path_arquivo_ons, mudar_gap=False, novo_deck=None):
     
     return path_deck_resultados
 
-def alterar_bloco_dager(path_dadger, novoBloco):
+def alterar_bloco_dager(path_dadger, novo_bloco):
     path_dadger = os.path.abspath(path_dadger)
     file = open(path_dadger, 'r', encoding='latin-1')
     
@@ -415,11 +417,11 @@ def alterar_bloco_dager(path_dadger, novoBloco):
     file.close()
     
     bloco_alteracao = None
-    for linha in novoBloco:
+    for linha in novo_bloco:
         match = re.match(r'& {1,} BLOCO ([0-9]{1}).*', linha)
         if match:
             bloco_alteracao = int(match.group(1))
-
+            break
     inicio_bloco = 0
     fim_bloco = 0
     for i_linha, linha in enumerate(arquivo):
@@ -435,34 +437,35 @@ def alterar_bloco_dager(path_dadger, novoBloco):
             match = re.match(r'& {1,} BLOCO ([0-9]{1}).*', linha)
             numero_bloco = int(match.group(1))
 
-    novoBloco_com_quebralinha = [f'{linha}\n' for linha in novoBloco]
-    novo_arquivo = arquivo[:inicio_bloco] + novoBloco_com_quebralinha + arquivo[fim_bloco:]
+    novo_bloco_com_quebralinha = [f'{linha}\n' for linha in novo_bloco]
+    novo_arquivo = arquivo[:inicio_bloco] + novo_bloco_com_quebralinha + arquivo[fim_bloco:]
     with open(path_dadger, 'w') as f:
             f.writelines(novo_arquivo)
     print(path_dadger)
+import pprint
 
-def atualizacao_carga(path_carga_zip,path_deck):
-    import locale
-    locale.setlocale(locale.LC_TIME, 'pt_BR.utf8')
+def trim_df(df:pd.DataFrame) -> pd.DataFrame:
+    df_obj = df.select_dtypes('object')
+    df[df_obj.columns] = df_obj.apply(lambda x: x.str.strip())
+    return df
 
+def df_dp_to_dadger(df:pd.DataFrame):
+    df = trim_df(df)
+    linha = 0
+    result = ''
+    for i in df.iterrows():
+        result += f"{i[1]['mnemonico']:>2}{i[1]['ip']:>4}{i[1]['sub']:>5}{i[1]['pat']:>4}{i[1]['mwmed_p1']:>14}{i[1]['horas_p1']:>10}{i[1]['mwmed_p2']:>10}{i[1]['horas_p2']:>10}{i[1]['mwmed_p3']:>10}{i[1]['horas_p3']:>10}\n"
+        linha += 1
+        if linha == 5:
+            result += "&\n"
+            linha = 0
+    result = result.removesuffix("&\n")
+    return result
+
+
+def unzip_carga_ons(path_carga_zip):
     path_diretorio = os.path.dirname(path_carga_zip)
     nome_arquivo_zip = os.path.basename(path_carga_zip).split('.')[0]
-
-    match = re.match(r'RV([0-9]{1})_PMO_([A-z]+)([0-9]{4})_carga_semanal', nome_arquivo_zip)
-    rv = int(match.group(1))
-    mes = match.group(2)
-    ano = match.group(3)
-
-    try:
-        mes_ref = datetime.datetime.strptime(mes+ano, '%B%Y')
-    except:
-        mes_ref = datetime.datetime.strptime(mes+ano, '%B_%Y')
-        
-    inicio_mes_eletrico = mes_ref
-    while inicio_mes_eletrico.weekday() != 5:
-        inicio_mes_eletrico = inicio_mes_eletrico - datetime.timedelta(days=1)
-        
-    inicio_rv_atual = inicio_mes_eletrico + datetime.timedelta(days=7*rv)
     
     path_unzip_folder = os.path.join(path_diretorio, nome_arquivo_zip)
     
@@ -472,41 +475,83 @@ def atualizacao_carga(path_carga_zip,path_deck):
     with zipfile.ZipFile(path_carga_zip, 'r') as zip_ref:
         zip_ref.extractall(path_unzip_folder)
 
-    carga_decomp_txt = glob.glob(os.path.join(path_unzip_folder,'CargaDecomp_PMO*.txt'))[0]
+    return glob.glob(os.path.join(path_unzip_folder,'CargaDecomp_PMO*.txt'))[0]
+
+
+def get_rv_atual(nome_arquivo_zip):
+    match = re.match(r'RV([0-9]{1})_PMO_([A-z]+)([0-9]{4})_carga_semanal', nome_arquivo_zip)
+    rv = int(match.group(1))
+    mes = match.group(2)
+    ano = match.group(3)
+
+    try:
+        mes_ref = datetime.datetime.strptime(mes+ano, '%B%Y')
+    except:
+        mes_ref = datetime.datetime.strptime(mes+ano, '%B_%Y')
     
+    inicio_mes_eletrico = mes_ref
+    while inicio_mes_eletrico.weekday() != 5:
+        inicio_mes_eletrico = inicio_mes_eletrico - datetime.timedelta(days=1)
+    inicio_rv_atual = inicio_mes_eletrico + datetime.timedelta(days=7*rv)
+    return inicio_rv_atual 
+    
+def atualizacao_carga(path_carga_zip,path_deck):
+
+    carga_decomp_txt = unzip_carga_ons(path_carga_zip)
     df_dadger, comentarios = wx_dadger.leituraArquivo(carga_decomp_txt)
-    
-    bloco_dp = df_dadger['DP']
-    bloco_dp['ip'] = bloco_dp['ip'].astype(int)
     
     comentarios_dp = comentarios['DP']
     
+    bloco_dp:pd.DataFrame = df_dadger['DP']
+    bloco_dp['ip'] = bloco_dp['ip'].astype(int)
+    
+    nome_arquivo_zip = os.path.basename(path_carga_zip).split('.')[0]
+    inicio_rv_atual = get_rv_atual(nome_arquivo_zip)
+    
     semana_eletrica_atual = wx_opweek.ElecData(inicio_rv_atual.date())
     semana_eletrica = wx_opweek.ElecData(inicio_rv_atual.date())
-    
     info_blocos = wx_dadger.info_blocos
+    # pdb.set_trace()
     while 1:
         nome_dadger = f'dadger.rv{semana_eletrica.atualRevisao}'
-        novoBloco = []
+        df, teste = wx_dadger.leituraArquivo(glob.glob(os.path.join(path_deck,f"DC{semana_eletrica.anoReferente}{semana_eletrica.mesRefente:0>2}-sem{semana_eletrica.atualRevisao+1}/dadger*"))[0])
+        df = df['DP']
+        novo_bloco = []
         
-        for idx, row in bloco_dp.iterrows():
-            if idx in comentarios_dp:
-                for coment in comentarios_dp[idx]:
-                    novoBloco.append(coment.strip())
-            novoBloco.append('{}'.format(info_blocos['DP']['formatacao'].format(*row.values).strip()))
+        for i, row in bloco_dp.iterrows():
+            pass
+            # if i in comentarios_dp:
+            #     # CONSTRUÇÃO DO HEADER/BLOCO
+            #     for coment in comentarios_dp[i]:
+            #         novo_bloco.append(coment.strip())
+            # # CONTEUDO / VALORES
+            # # print('{}'.format(info_blocos['DP']['formatacao'].format(*row.values)))
+            # novo_bloco.append('{}'.format(info_blocos['DP']['formatacao'].format(*row.values).strip()))
             
         path_dadger = os.path.join(path_deck,f"DC{semana_eletrica.anoReferente}{semana_eletrica.mesRefente:0>2}-sem{semana_eletrica.atualRevisao+1}",nome_dadger)
+        # pdb.set_trace()
         if not os.path.exists(path_dadger):
+            # print(f"CAMINHO {path_dadger} NÃO ENCONTRADO")
+            # print("BREAK")
             break
-        alterar_bloco_dager(path_dadger, novoBloco)
+        bloco_atual = df_dp_to_dadger(df)
+        
+        
+        nb = f"{''.join(comentarios_dp[0])}{bloco_atual.removesuffix("\n")}".split("\n")
+        print(f"{''.join(comentarios_dp[0])}{bloco_atual}")
+        alterar_bloco_dager(path_dadger, novo_bloco)
         
         semana_eletrica = wx_opweek.ElecData(semana_eletrica.data + datetime.timedelta(days=7))
-        if semana_eletrica.mesRefente != semana_eletrica_atual.mesRefente and semana_eletrica.data.month != semana_eletrica_atual.data.month:
-            break
         
+        if semana_eletrica.mesRefente != semana_eletrica_atual.mesRefente and semana_eletrica.data.month != semana_eletrica_atual.data.month:
+            print(f"{semana_eletrica.mesRefente} != {semana_eletrica_atual.mesRefente} and {semana_eletrica.data.month} != {semana_eletrica_atual.data.month}")
+            # print("BREAK")
+            break
+        # pdb.set_trace()
         bloco_dp = bloco_dp.loc[bloco_dp['ip']!=1].copy()
-        comentarios_dp[bloco_dp.iloc[0].name] = comentarios_dp[0]
+        # comentarios_dp[bloco_dp.iloc[0].name] = comentarios_dp[0]
         bloco_dp['ip'] = bloco_dp['ip'] - 1
+
 
 def gerar_rvs_base_zip(p_path, dt_primeira_rv):
     num_rvs_zip_files = [1,2,3,4,5,6,7,8]
