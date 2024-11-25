@@ -118,6 +118,18 @@ class ElecData:
 
 	def getPesoSemanas(self):
 		return getPesoSemanas(self.primeiroDiaMes)
+	def __str__(self):
+		return f"""'primeiroDiaAno': {self.primeiroDiaAno}
+'ultimoDiaAno': {self.ultimoDiaAno}
+'primeiroDiaMes': {self.primeiroDiaMes}
+'inicioSemana': {self.inicioSemana}
+'atualRevisao': {self.atualRevisao}
+'numSemanas': {self.numSemanas}
+'numSemanasAno': {self.numSemanasAno}
+'mesRefente': {self.mesRefente}
+'numSemanasPrimeiroDiaMes': {self.numSemanasPrimeiroDiaMes}
+""" 
+
 
 
 if __name__ == '__main__':
