@@ -483,11 +483,10 @@ def get_rv_atual(nome_arquivo_zip):
     rv = int(match.group(1))
     mes = match.group(2)
     ano = match.group(3)
-
     try:
-        mes_ref = datetime.datetime.strptime(mes+ano, '%B%Y')
-    except:
         mes_ref = datetime.datetime.strptime(mes+ano, '%B_%Y')
+    except:
+        mes_ref = datetime.datetime.strptime(mes+ano, '%B%Y')
     
     inicio_mes_eletrico = mes_ref
     while inicio_mes_eletrico.weekday() != 5:
@@ -496,13 +495,12 @@ def get_rv_atual(nome_arquivo_zip):
     return inicio_rv_atual 
     
 def atualizacao_carga(path_carga_zip,path_deck):
-
     carga_decomp_txt = unzip_carga_ons(path_carga_zip)
-    df_dadger, comentarios = wx_dadger.leituraArquivo(carga_decomp_txt)
+    df_dadger_novo, comentarios = wx_dadger.leituraArquivo(carga_decomp_txt)
     
     comentarios_dp = comentarios['DP']
     
-    bloco_dp:pd.DataFrame = df_dadger['DP']
+    bloco_dp:pd.DataFrame = df_dadger_novo['DP']
     bloco_dp['ip'] = bloco_dp['ip'].astype(int)
     
     nome_arquivo_zip = os.path.basename(path_carga_zip).split('.')[0]
@@ -510,47 +508,50 @@ def atualizacao_carga(path_carga_zip,path_deck):
     
     semana_eletrica_atual = wx_opweek.ElecData(inicio_rv_atual.date())
     semana_eletrica = wx_opweek.ElecData(inicio_rv_atual.date())
-    info_blocos = wx_dadger.info_blocos
-    # pdb.set_trace()
+    semanas_a_remover = 0
     while 1:
         nome_dadger = f'dadger.rv{semana_eletrica.atualRevisao}'
-        df, teste = wx_dadger.leituraArquivo(glob.glob(os.path.join(path_deck,f"DC{semana_eletrica.anoReferente}{semana_eletrica.mesRefente:0>2}-sem{semana_eletrica.atualRevisao+1}/dadger*"))[0])
-        df = df['DP']
+        path_dadger = os.path.join(path_deck,f"DC{semana_eletrica.anoReferente}{semana_eletrica.mesRefente:0>2}-sem{semana_eletrica.atualRevisao+1}",nome_dadger)
+        if not os.path.exists(path_dadger):
+            break
+        
         novo_bloco = []
         
-        for i, row in bloco_dp.iterrows():
-            pass
-            # if i in comentarios_dp:
-            #     # CONSTRUÇÃO DO HEADER/BLOCO
-            #     for coment in comentarios_dp[i]:
-            #         novo_bloco.append(coment.strip())
-            # # CONTEUDO / VALORES
-            # # print('{}'.format(info_blocos['DP']['formatacao'].format(*row.values)))
-            # novo_bloco.append('{}'.format(info_blocos['DP']['formatacao'].format(*row.values).strip()))
+        for coment in comentarios_dp[0]:
+            novo_bloco.append(coment.strip())
             
-        path_dadger = os.path.join(path_deck,f"DC{semana_eletrica.anoReferente}{semana_eletrica.mesRefente:0>2}-sem{semana_eletrica.atualRevisao+1}",nome_dadger)
-        # pdb.set_trace()
-        if not os.path.exists(path_dadger):
-            # print(f"CAMINHO {path_dadger} NÃO ENCONTRADO")
-            # print("BREAK")
-            break
-        bloco_atual = df_dp_to_dadger(df)
+        if semana_eletrica.atualRevisao == 0 and semana_eletrica_atual.primeiroDiaMes != semana_eletrica.primeiroDiaMes:
+            if semana_eletrica.primeiroDiaMes.day != 1:
+                df_bloco_atual, comentarios_bloco_atual = wx_dadger.leituraArquivo(
+                    glob.glob(
+                        os.path.join(
+                            path_deck,f"DC{semana_eletrica.anoReferente}{semana_eletrica.mesRefente:0>2}-sem{semana_eletrica.atualRevisao+1}/dadger*"
+                            )
+                        )[0]
+                    )
+                df_bloco_atual = df_bloco_atual['DP']
+                df_bloco_atual['ip'] = df_bloco_atual['ip'].astype(int)
+                
+                index_ultimo_bloco = int(bloco_dp['ip'].max()) - 1
+                ultimo_bloco = bloco_dp[bloco_dp['ip']==index_ultimo_bloco].copy()
+                ultimo_bloco['ip'] = 1
+                df_bloco_atual[df_bloco_atual['ip']==1] = ultimo_bloco.values
+                novo_bloco = novo_bloco + df_dp_to_dadger(df_bloco_atual)[:-1].split("\n")
+        else:
+            df_novo_bloco = bloco_dp.copy()
+            df_novo_bloco['ip'] = df_novo_bloco['ip'] - semanas_a_remover
+            df_novo_bloco = df_novo_bloco.loc[df_novo_bloco['ip']>=1].copy()
+            semanas_a_remover = semanas_a_remover + 1
+            novo_bloco = novo_bloco + df_dp_to_dadger(df_novo_bloco)[:-1].split("\n")
+            
         
-        
-        nb = f"{''.join(comentarios_dp[0])}{bloco_atual.removesuffix("\n")}".split("\n")
-        print(f"{''.join(comentarios_dp[0])}{bloco_atual}")
         alterar_bloco_dager(path_dadger, novo_bloco)
         
         semana_eletrica = wx_opweek.ElecData(semana_eletrica.data + datetime.timedelta(days=7))
         
         if semana_eletrica.mesRefente != semana_eletrica_atual.mesRefente and semana_eletrica.data.month != semana_eletrica_atual.data.month:
-            print(f"{semana_eletrica.mesRefente} != {semana_eletrica_atual.mesRefente} and {semana_eletrica.data.month} != {semana_eletrica_atual.data.month}")
-            # print("BREAK")
             break
-        # pdb.set_trace()
-        bloco_dp = bloco_dp.loc[bloco_dp['ip']!=1].copy()
         # comentarios_dp[bloco_dp.iloc[0].name] = comentarios_dp[0]
-        bloco_dp['ip'] = bloco_dp['ip'] - 1
 
 
 def gerar_rvs_base_zip(p_path, dt_primeira_rv):
