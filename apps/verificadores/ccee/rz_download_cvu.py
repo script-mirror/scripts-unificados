@@ -5,7 +5,7 @@ import argparse
 import pandas as pd
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import  wx_download
+from PMO.scripts_unificados.bibliotecas import  wx_download,rz_dir_tools
 
 def get_cvu_acervo_ccee():
 
@@ -36,17 +36,16 @@ def get_cvu_acervo_ccee():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
     }
 
-# Enviando o POST
     response = requests.post(url, params=query_params, data=form_data, headers=headers)
     if response.status_code == 200:
         return response.json()
     else:
         print("Erro ao fazer a requisição: ", response.status_code)
 
-
 def download_cvu_acervo_ccee(ano_referencia, mes_referencia, pathSaida):
 
-
+    DIR_TOOLS = rz_dir_tools.DirTools()
+    
     TITULO_DOCUMENTO='Relatório de Reajuste do CVU'
 
     CVU_FILES = [
@@ -54,7 +53,6 @@ def download_cvu_acervo_ccee(ano_referencia, mes_referencia, pathSaida):
         f"CVU_PMR_{ano_referencia}{mes_referencia}.zip",
         f"CVU_Merchant_ANEEL_{ano_referencia}{mes_referencia}.zip"
     ]
-
 
     json_data = get_cvu_acervo_ccee()
 
@@ -64,13 +62,29 @@ def download_cvu_acervo_ccee(ano_referencia, mes_referencia, pathSaida):
     df_cvu_target = df_cvu[df_cvu['nomeDocumento'].isin(CVU_FILES)]
 
     if not df_cvu_target.empty:
-        info_files = df_cvu_target[['url','nomeDocumento']].to_dict(orient='records')
+        info_files = df_cvu_target[['url','nomeDocumento','anoReferencia', 'mesReferencia']].to_dict('records')
         for info in info_files:
-            url,filename = info.values()
+            url,filename,ano_referencia,mes_referencia = info.values()
             print("Baixando Arquivo: ", info['nomeDocumento'])
-            wx_download.downloadByRequest(url, pathSaida, filename=filename, delay=60*15)
+            file = wx_download.downloadByRequest(url, pathSaida, filename=filename, delay=60*15)
+            info['pathFile'] = file
+
+            extracted_file = DIR_TOOLS.extract_specific_files_from_zip(
+                path=file,
+                files_name_template=["*Custo_Variavel_Unitario*"],
+                dst=pathSaida,
+                extracted_files=[]
+                )    
+                
+            info['extractedPathFile'] = extracted_file[0]
+
+        return info_files
+
     else:
         print("Nenhum arquivo encontrado")
+        return None
+
+
 
 def runWithParams():
 
