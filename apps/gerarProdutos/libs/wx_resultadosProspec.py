@@ -78,6 +78,8 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 		
 		df = pd.read_csv(os.path.join(pathCompilado, 'compila_cmo_medio.csv'), sep=';')
 		df['Sensibilidade'] = df['Sensibilidade'].replace({'Original':nomeRodadaOriginal[i]})
+		df.loc[df['Deck'].str.contains('DC'), 'MEN=0-SEM=1'] = 1
+
 		df_mensal = df[df['MEN=0-SEM=1'] == 0].copy()
 		df = df[df['MEN=0-SEM=1'] == 1]
 		df['Sensibilidade'] = df['Sensibilidade'] + '_id'+ numeroEstudo
@@ -91,6 +93,7 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 				df.loc[df['Deck'] == '{}_s1'.format(deck_), 'NORTE'] = dados['NORTE']
 
 		compila_cmo_medio =pd.concat([compila_cmo_medio, df])
+
   
 		# Colocando o preco medio das 2000 do NW
 		df_nw = df.copy()
@@ -106,24 +109,32 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 
 		df = pd.read_csv(os.path.join(pathCompilado, 'compila_ea_inicial.csv'), sep=';')
 		df['Sensibilidade'] = df['Sensibilidade'].replace({'Original':nomeRodadaOriginal[i]})
+		df.loc[df['Deck'].str.contains('DC'), 'MEN=0-SEM=1'] = 1
+
 		df = df[df['MEN=0-SEM=1'] == 1]
 		df['Sensibilidade'] = df['Sensibilidade'] + '_id'+ numeroEstudo
 		compila_eaInicial = pd.concat([compila_eaInicial,df])
 
 		df = pd.read_csv(os.path.join(pathCompilado, 'compila_ena.csv'), sep=';')
 		df['Sensibilidade'] = df['Sensibilidade'].replace({'Original':nomeRodadaOriginal[i]})
+		df.loc[df['Deck'].str.contains('DC'), 'MEN=0-SEM=1'] = 1
+
 		df = df[df['MEN=0-SEM=1'] == 1]
 		df['Sensibilidade'] = df['Sensibilidade'] + '_id'+ numeroEstudo
 		compila_ena = pd.concat([compila_ena,df])
 
 		df = pd.read_csv(os.path.join(pathCompilado, 'compila_ena_mensal_percentual.csv'), sep=';')
-		df['Sensibilidade'] = df['Sensibilidade'].replace({'Original':nomeRodadaOriginal[i]})		
+		df['Sensibilidade'] = df['Sensibilidade'].replace({'Original':nomeRodadaOriginal[i]})	
+		df.loc[df['Deck'].str.contains('DC'), 'MEN=0-SEM=1'] = 1
+
 		df = df[df['MEN=0-SEM=1'] == 1]
 		df['Sensibilidade'] = df['Sensibilidade'] + '_id'+ numeroEstudo
 		compila_enaPercentualMensal = pd.concat([compila_enaPercentualMensal,df])
 
 		df = pd.read_csv(os.path.join(pathCompilado, 'compila_ena_mensal.csv'), sep=';')
-		df['Sensibilidade'] = df['Sensibilidade'].replace({'Original':nomeRodadaOriginal[i]})		
+		df['Sensibilidade'] = df['Sensibilidade'].replace({'Original':nomeRodadaOriginal[i]})
+		df.loc[df['Deck'].str.contains('DC'), 'MEN=0-SEM=1'] = 1
+
 		df = df[df['MEN=0-SEM=1'] == 1]
 		df['Sensibilidade'] = df['Sensibilidade'] + '_id'+ numeroEstudo
 		compila_enaMensal = pd.concat([compila_enaMensal,df])
@@ -132,6 +143,7 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 
 		df = pd.read_csv(os.path.join(pathCompilado, 'compila_convergencia.csv'), sep=';')
 		df['Sensibilidade'] = df['Sensibilidade'].replace({'Original':nomeRodadaOriginal[i]})
+		df.loc[df['Deck'].str.contains('DC'), 'MEN=0-SEM=1'] = 1
 		df_nw = df[df['Deck'].str.startswith('NW')].set_index('Deck')
 		df_dc = df[df['Deck'].str.startswith('DC')].copy()
 		df_dc['NW_Group'] = 'NW' + df_dc['Deck'].str[2:8]
@@ -165,7 +177,7 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 		compila_ena                     = compila_ena[compila_ena['Deck'].str.contains(considerarrv)]
 		compila_enaMensal               = compila_enaMensal[compila_enaMensal['Deck'].str.contains(considerarrv)]
 		compila_enaPercentualMensal     = compila_enaPercentualMensal[compila_enaPercentualMensal['Deck'].str.contains(considerarrv)]
-		compila_gapMensal     = compila_gapMensal[compila_gapMensal['Deck'].str.contains(considerarrv)]
+		# compila_gapMensal     = compila_gapMensal[compila_gapMensal['Deck'].str.contains(considerarrv)]
 		if fazer_media_rvs:
 			compila_cmo_medio           = compila_cmo_medio[compila_cmo_medio['Deck'].str.contains('s1')]
 			compila_preco_medio_nw		= compila_preco_medio_nw[compila_preco_medio_nw['Deck'].str.contains('s1')]
@@ -198,6 +210,7 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 			if value in key:
 				return new_value
 		return value
+		
 	compila_gapMensal['Deck'] = compila_gapMensal['Deck'].apply(replace_if_contains)
 
 	cmo = {}
@@ -320,7 +333,6 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 
 	resumoTabela1 = enasMensaisResumo+'<br>'+earResumo+'<br>'+enasResumo+'<br>'+gap_iter_resumo+'<br>'+precoNwResumo+'<br>'+cmoResumo
 	resumoTabela1.insert(0, "", ['ENA-Mês(%)<br>EAR(%)<br>ENA-S1(GW)<br>GAP-IT(NW/DC)<br>PLD NW(R$)<br>PLD DC(R$)']*resumoTabela1.shape[0])
-	
 	resumoTabela1 = resumoTabela1.applymap(lambda x: x.replace('nan-nan-nan-nan','-'))
 
 	titulo = '[Rodada] - Prospec RV{}'.format(dts[0].atualRevisao)
@@ -335,7 +347,7 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 		else:
 			header_tabela_sub.append(h)
 	corpo_tabela = resumoTabela1.reset_index().values.tolist()
-	html += wx_emailSender.gerarTabela(body=corpo_tabela, header=header_tabela_sub, widthColunas=[200,80]+[120]*(resumoTabela1.shape[1]-1))
+	html += wx_emailSender.gerarTabela(body=corpo_tabela, header=header_tabela_sub, widthColunas=[200,100]+[120]*(resumoTabela1.shape[1]-1))
 	html += "<br/>"
 	html += "<br/>"
 	html += "<br/>"
