@@ -113,6 +113,7 @@ with DAG(
     
      # Task to run a command on the remote server
     run_cpc = SSHOperator(
+        do_xcom_push=False,
         task_id='run_cpc',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
@@ -126,6 +127,7 @@ with DAG(
     )
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='sobe_banco_cpc',
         command="{{'/home/admin/jose/cpc/produtos_banco.sh'}}",
         dag=dag,
@@ -173,6 +175,7 @@ with DAG(
     
      # Task to run a command on the remote server
     run_forecast = SSHOperator(
+        do_xcom_push=False,
         task_id='run_forecast',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
@@ -188,6 +191,7 @@ with DAG(
 
      # Task to run a command on the remote server
     run_hindcast = SSHOperator(
+        do_xcom_push=False,
         task_id='run_hindcast',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
@@ -234,6 +238,7 @@ with DAG(
      # Task to run a command on the remote server
     
     run_forecast = SSHOperator(
+        do_xcom_push=False,
         task_id='vl_chuva_to_db',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
@@ -283,6 +288,7 @@ with DAG(
      # Task to run a command on the remote server
     
     run_forecast = SSHOperator(
+        do_xcom_push=False,
         task_id='vl_chuva_to_db',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
@@ -332,6 +338,7 @@ with DAG(
      # Task to run a command on the remote server
     
     run_forecast = SSHOperator(
+        do_xcom_push=False,
         task_id='vl_chuva_to_db',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
@@ -381,6 +388,7 @@ with DAG(
      # Task to run a command on the remote server
     
     run_forecast = SSHOperator(
+        do_xcom_push=False,
         task_id='vl_chuva_to_db',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
@@ -430,6 +438,7 @@ with DAG(
      # Task to run a command on the remote server
     
     run_forecast = SSHOperator(
+        do_xcom_push=False,
         task_id='vl_chuva_to_db',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
@@ -479,6 +488,7 @@ with DAG(
      # Task to run a command on the remote server
     
     run_forecast = SSHOperator(
+        do_xcom_push=False,
         task_id='vl_chuva_to_db',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
@@ -529,6 +539,7 @@ with DAG(
      # Task to run a command on the remote server
 
     run_cpc = SSHOperator(
+        do_xcom_push=False,
         task_id='run_c3s',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
@@ -543,6 +554,7 @@ with DAG(
     )
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='gera_produtos_c3s',
         command="{{'/home/admin/jose/c3s/produtos.sh'}}",
         dag=dag,
@@ -582,13 +594,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_gfs',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/gfs/produtos.sh'}}",
         dag=dag,
@@ -609,13 +621,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_gefs',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/gefs/produtos.sh'}}",
         dag=dag,
@@ -636,13 +648,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_gefs-membros',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/gefs-membros/produtos.sh'}}",
         dag=dag,
@@ -663,13 +675,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_ecmwf',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf/produtos.sh'}}",
         dag=dag,
@@ -690,13 +702,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_ecmwfnovares',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-novares/produtos.sh'}}",
         dag=dag,
@@ -717,13 +729,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_ecmwf-ens',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-ens/produtos.sh'}}",
         dag=dag,
@@ -744,13 +756,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_ecmwf-ens-chuva',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-ens-chuva/produtos.sh'}}",
         dag=dag,
@@ -771,13 +783,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_ecmwf-ens-membros',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-ens-membros/produtos.sh'}}",
         dag=dag,
@@ -798,13 +810,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_ecmwf-aifs',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-aifs/produtos.sh'}}",
         dag=dag,
@@ -825,13 +837,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_eta',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/eta/produtos.sh'}}",
         dag=dag,
@@ -852,13 +864,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_eta-cptec',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/eta-cptec/produtos.sh'}}",
         dag=dag,
@@ -879,13 +891,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_gefs-est',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/gefs-estendido/produtos.sh'}}",
         dag=dag,
@@ -906,13 +918,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_gefs-est-membros',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/gefs-membros-estendido/produtos.sh'}}",
         dag=dag,
@@ -933,15 +945,42 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_ecmwf-est',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-ens-estendido/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'COPIA_S3_ECMWF-ESTENDIDO',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='10 17 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        do_xcom_push=False,
+        task_id='copia-s3_ecmwf-est',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-ens-estendido/copia_s3.sh'}}",
         dag=dag,
         ssh_conn_id='ssh_master',
         conn_timeout = TIME_OUT,
@@ -960,13 +999,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_ecmwf-est-membros',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-ens-estendido-membros/produtos.sh'}}",
         dag=dag,
@@ -987,13 +1026,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_ecmwf-est-hindcast',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/ecmwf-estendido-hindcast/produtos.sh'}}",
         dag=dag,
@@ -1014,13 +1053,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_merge-gpm-daily',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/merge-gpm-daily/produtos.sh'}}",
         dag=dag,
@@ -1041,13 +1080,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_merge-gpm-daily-prevobs',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/merge-gpm-daily/produtos_prevobsparalelo.sh'}}",
         dag=dag,
@@ -1068,13 +1107,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_cpc',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/cpc/produtos.sh'}}",
         dag=dag,
@@ -1095,13 +1134,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_cfsv2semanal',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/cfsv2/produtos.sh'}}",
         dag=dag,
@@ -1122,13 +1161,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_cfsv2mensal',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/cfsv2-mensal/produtos.sh'}}",
         dag=dag,
@@ -1149,13 +1188,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_clusterons',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/cluster_ons/produtos.sh'}}",
         dag=dag,
@@ -1176,13 +1215,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_psat',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/psat/produtos.sh'}}",
         dag=dag,
@@ -1203,13 +1242,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_nmme',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/nmme/produtos.sh'}}",
         dag=dag,
@@ -1230,13 +1269,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_indices_teleconexoes',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/csv_teleconexao/produtos.sh'}}",
         dag=dag,
@@ -1257,13 +1296,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_temp_samet',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/temp_samet/produtos.sh'}}",
         dag=dag,
@@ -1284,13 +1323,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_reanalises',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/reanalises/novo/produtos.sh'}}",
         dag=dag,
@@ -1311,13 +1350,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_reanalises_mensais',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/reanalises/novo/produtos_mensais.sh'}}",
         dag=dag,
@@ -1338,13 +1377,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_limpadirscfsv2',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/limpa_dirs/produtos.sh'}}",
         dag=dag,
@@ -1365,13 +1404,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_mjobom',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/mjo/produtos.sh'}}",
         dag=dag,
@@ -1392,13 +1431,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_zcit_funceme',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/zcit/produtos.sh'}}",
         dag=dag,
@@ -1419,13 +1458,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_umidade_solo',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/umidade_solo/produtos.sh'}}",
         dag=dag,
@@ -1446,13 +1485,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_temp_subsuperficial',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/temp_subsuperficial/produtos.sh'}}",
         dag=dag,
@@ -1473,13 +1512,13 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia', 'Mapas'],
-    default_args={"do_xcom_push":False}
+    tags=['Metereologia', 'Mapas']
 
 
 ) as dag:
 
     run_shell_script = SSHOperator(
+        do_xcom_push=False,
         task_id='roda_produtos_pconjunto',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/pconjunto/produtos.sh'}}",
         dag=dag,
