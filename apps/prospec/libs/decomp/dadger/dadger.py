@@ -639,6 +639,16 @@ info_blocos['VA'] = {'campos':[
             'formatacao':'{:>2}  {:>4}  {:>4}  {:>15}'}
             
 
+info_blocos['CX'] = {'campos':[
+                'mnemonico',
+                'acoplamento_nw',
+                'acoplamento_dc',
+            ],
+            'regex':'(.{2})  (.{4}) (.{4})(.*)',
+            'formatacao':'{:>2}   {:>4} {:>4}'}
+            
+
+
 def leituraArquivo(filePath):
 
     file = open(filePath, 'r', encoding='latin-1')
