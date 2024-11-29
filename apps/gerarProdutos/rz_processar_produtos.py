@@ -109,7 +109,7 @@ def processar_produto_ACOMPH(parametros):
     path_file = parametros.get("path")
 
     if not parametros.get("path"):
-        path_file = os.path.join(PATH_WEBHOOK_TMP,"ACOMPH","ACOMPH_{}.xls".format(dtReferente.strftime('%d.%m.%Y')))
+        path_file = os.path.join(PATH_WEBHOOK_TMP,"Acomph","ACOMPH_{}.xls".format(dtReferente.strftime('%d.%m.%Y')))
 
     grafico_acomph = rz_aux_libs.gerarGraficoAcomph(dt=dtReferente)
     tabela_acomph = rz_aux_libs.gerarTabelasEmailAcomph(dtReferente)
