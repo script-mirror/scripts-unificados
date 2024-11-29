@@ -8,15 +8,17 @@ import datetime
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.bibliotecas import rz_dir_tools
+PATH_DOWNLOAD_TMP = os.path.join(os.path.dirname(__file__),"info_arquivos_externos","tmp")
 
 
-def extract_file_estudo(path_estudo,path_saida):
+def extract_file_estudo(path_estudo,path_saida=PATH_DOWNLOAD_TMP):
 
     DIR_TOOLS = rz_dir_tools.DirTools()
 
     extracted_zip_estudo = DIR_TOOLS.extrair_zip_mantendo_nome_diretorio(
         path_estudo,
-        path_saida
+        path_saida,
+        deleteAfterExtract=True
     )
 
     return extracted_zip_estudo

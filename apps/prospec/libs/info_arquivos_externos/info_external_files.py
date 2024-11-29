@@ -12,12 +12,18 @@ from PMO.scripts_unificados.apps.verificadores.ccee import rz_download_cvu
 from PMO.scripts_unificados.apps.prospec.libs.decomp.dadger import dadger
 from PMO.scripts_unificados.apps.prospec.libs import utils
 
+PATH_DOWNLOAD_TMP = os.path.join(os.path.dirname(__file__),"tmp")
 
-def organizar_info_cvu(ano_referencia, mes_referencia,path_saida):
+
+def organizar_info_cvu(ano_referencia, mes_referencia,path_saida=PATH_DOWNLOAD_TMP):
 
     info_cvu={}
 
-    extracted_files = rz_download_cvu.download_cvu_acervo_ccee(ano_referencia, mes_referencia, path_saida)
+    extracted_files = rz_download_cvu.download_cvu_acervo_ccee(
+        ano_referencia, 
+        mes_referencia, 
+        path_saida
+        )
 
     for file in extracted_files:
 
@@ -66,27 +72,29 @@ def organizar_info_cvu(ano_referencia, mes_referencia,path_saida):
         except:
             pass
 
+        os.remove(file['pathFile'])
+        os.remove(file['extractedPathFile'])
+
     return info_cvu
 
 
-def extract_carga_decomp_ons(path_carga,path_saida):
+def extract_carga_decomp_ons(path_carga,path_saida=PATH_DOWNLOAD_TMP):
         DIR_TOOLS = rz_dir_tools.DirTools()
 
-    
         extracted_zip_carga = DIR_TOOLS.extract_specific_files_from_zip(
                 path=path_carga,
                 files_name_template=["*CargaDecomp*.txt"],
                 dst=path_saida,
                 extracted_files=[]
                 )  
+        
         return extracted_zip_carga
 
 
-def organizar_info_carga(path_carga_zip,path_deck,path_saida):
+def organizar_info_carga(path_carga_zip,path_deck):
 
     carga_decomp_txt = extract_carga_decomp_ons(
-        path_carga_zip,
-        path_saida
+        path_carga_zip
     )
     
     df_dadger_novo, comentarios = dadger.leituraArquivo(carga_decomp_txt[0])
@@ -146,5 +154,8 @@ def organizar_info_carga(path_carga_zip,path_deck,path_saida):
         
         if semana_eletrica.mesRefente != semana_eletrica_atual.mesRefente and semana_eletrica.data.month != semana_eletrica_atual.data.month:
             break
+
+    # os.remove(path_carga_zip)
+    os.remove(carga_decomp_txt[0])
 
     return novo_bloco

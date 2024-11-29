@@ -28,11 +28,13 @@ def atualizar_cvu_NW(info_cvu,paths_to_modify):
         else:
             quit(f"Erro ao tentar extrair ano e mes do nome da pasta {folder_name}")
 
+        if not info_cvu.get(dt_referente):
+            continue
+
         #SEPARANDO BLOCOS DE CLAST
         df_clast_completo = pd.read_fwf(path_clast,sep=';',encoding='latin1')
         df_clast_completo['NUM'] = df_clast_completo['NUM'].astype(str)
         index_separacao_blocos = df_clast_completo[df_clast_completo['NUM']== '9999'].index[0]
-
 
         #COMPLETANDO BLOCO DE CLAST ESTRUTURAL
         df_clast_estrutural = df_clast_completo.iloc[:index_separacao_blocos].copy()
