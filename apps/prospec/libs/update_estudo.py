@@ -18,7 +18,7 @@ api = RzProspec()
 
 def get_ids_to_modify():
 
-    path = r"C:\WX2TB\Documentos\fontes\PMO\API_Prospec\ConfigProspecAPI\ConfigRodadaDiaria.csv"
+    path = "/WX2TB/Documentos/fontes/PMO/API_Prospec/ConfigProspecAPI/ConfigRodadaDiaria.csv"
     df = pd.read_csv(path, sep=';')
     df.columns = df.columns.str.strip()
     df.set_index('username', inplace=True)
