@@ -698,7 +698,7 @@ def sobrescreve_bloco(path_to_modify:str,mnemonico_bloco:str, values:list,skip_l
     alterar=False
     count_lines=0
 
-    with open(path_to_modify, 'r') as file:
+    with open(path_to_modify, 'r', encoding='iso-8859-1') as file:
 
         lines = file.readlines()
         new_lines = []
