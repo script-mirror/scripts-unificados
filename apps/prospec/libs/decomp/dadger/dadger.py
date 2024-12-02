@@ -639,6 +639,16 @@ info_blocos['VA'] = {'campos':[
             'formatacao':'{:>2}  {:>4}  {:>4}  {:>15}'}
             
 
+info_blocos['CX'] = {'campos':[
+                'mnemonico',
+                'acoplamento_nw',
+                'acoplamento_dc',
+            ],
+            'regex':'(.{2})  (.{4}) (.{4})(.*)',
+            'formatacao':'{:>2}   {:>4} {:>4}'}
+            
+
+
 def leituraArquivo(filePath):
 
     file = open(filePath, 'r', encoding='latin-1')
@@ -688,7 +698,7 @@ def sobrescreve_bloco(path_to_modify:str,mnemonico_bloco:str, values:list,skip_l
     alterar=False
     count_lines=0
 
-    with open(path_to_modify, 'r') as file:
+    with open(path_to_modify, 'r', encoding='iso-8859-1') as file:
 
         lines = file.readlines()
         new_lines = []

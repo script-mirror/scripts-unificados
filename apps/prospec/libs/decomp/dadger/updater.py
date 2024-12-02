@@ -33,6 +33,9 @@ def atualizar_cvu_DC(info_cvu,paths_to_modify):
         else:
             quit(f"Erro ao tentar extrair ano e mes do nome da pasta {folder_name}")
 
+        if not info_cvu.get(dt_referente):
+            continue
+
         cvu_map = info_cvu[dt_referente]['conjuntural'].set_index("CÓDIGO")["CVU CONJUNTURAL"].to_dict()
         extracted_blocos_dadger['CT'] = utils.trim_df(extracted_blocos_dadger['CT'])
 
@@ -72,6 +75,13 @@ def atualizar_carga_DC(info_cargas,paths_to_modify):
             quit(f"Erro ao tentar extrair ano e mes do nome da pasta {folder_name}")
         
         formatacao = '{:>2}  {:>2}   {:>2}  {:>3}   {:>10}{:>10}{:>10}{:>10}{:>10}{:>10}'
+        
+        if not info_cargas.get(dt_referente):
+            continue
+        
+        if info_cargas[dt_referente].get(int(semana)- 1,pd.DataFrame()).empty:
+            continue
+
         linhas_formatadas = info_cargas[dt_referente][int(semana) - 1].apply(
             lambda row: formatacao.format(*row), 
             axis=1
@@ -110,6 +120,7 @@ if __name__ == "__main__":
         mes_referencia=11,
         path_saida=path_saida
         )
+
     #ALTERAR CVU EM DECKS DC
     paths_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
     atualizar_cvu_DC(

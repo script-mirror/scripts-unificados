@@ -31,8 +31,8 @@ with DAG(
         task_id='run_dessem_on_host',
         ssh_conn_id='ssh_master',  # Ensure this matches the connection ID set in the Airflow UI
         command="{{ ti.xcom_pull(task_ids='inicio', key='command')}}",
-        conn_timeout = None,
-        cmd_timeout = None,
+        conn_timeout = 36000,
+        cmd_timeout = 28800,
         get_pty=True,
     )
 

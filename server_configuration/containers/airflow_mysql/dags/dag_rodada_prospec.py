@@ -13,7 +13,7 @@ default_args = {
 
 with DAG(
     default_args = default_args,
-    dag_id = 'PROSPEC_PCONJUNTO_DEFINITIVO', 
+    dag_id = '1.1-PROSPEC_PCONJUNTO_DEFINITIVO', 
     start_date=datetime(2024, 4, 28), 
     schedule_interval=None, 
     catchup=False,
@@ -34,7 +34,7 @@ with DAG(
 
 with DAG(
     default_args = default_args,
-    dag_id = 'PROSPEC_1RV', 
+    dag_id = '1.3-PROSPEC_1RV', 
     start_date=datetime(2024, 4, 28), 
     schedule_interval="30 07 * * 1-4", 
     catchup=False
@@ -54,7 +54,7 @@ with DAG(
 
 with DAG(
     default_args = default_args,
-    dag_id = 'PROSPEC_EC_EXT', 
+    dag_id = '1.4-PROSPEC_EC_EXT', 
     start_date=datetime(2024, 4, 28), 
     schedule_interval="00 22 * * 1-4", 
     catchup=False
@@ -74,7 +74,7 @@ with DAG(
 
 with DAG(
     default_args = default_args,
-    dag_id = 'PROSPEC_PCONJUNTO_PREL', 
+    dag_id = '1.2-PROSPEC_PCONJUNTO_PREL', 
     start_date=datetime(2024, 4, 28), 
     schedule_interval='00 07 * * *', 
     catchup=False
@@ -95,7 +95,7 @@ with DAG(
     
 with DAG(
     default_args = default_args,
-    dag_id = 'PROSPEC_CHUVA_0', 
+    dag_id = '1.7-PROSPEC_CHUVA_0', 
     start_date=datetime(2024, 4, 28), 
     schedule_interval='00 8 * * 1', 
     catchup=False
@@ -115,7 +115,7 @@ with DAG(
 
 with DAG(
     default_args = default_args,
-    dag_id = 'PROSPEC_CENARIO_10', 
+    dag_id = '1.5-PROSPEC_CENARIO_10', 
     start_date=datetime(2024, 4, 28), 
     schedule_interval='40 6 * * 1-5', 
     catchup=False
@@ -134,7 +134,7 @@ with DAG(
 
 with DAG(
     default_args = default_args,
-    dag_id = 'PROSPEC_CENARIO_11', 
+    dag_id = '1.6-PROSPEC_CENARIO_11', 
     start_date=datetime(2024, 4, 28), 
     schedule_interval='40 7 * * 1-5', 
     catchup=False

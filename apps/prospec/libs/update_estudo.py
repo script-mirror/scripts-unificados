@@ -1,0 +1,128 @@
+
+import os
+import pdb
+import sys
+import glob
+import shutil
+import pandas as pd
+
+
+sys.path.insert(1,"/WX2TB/Documentos/fontes/")
+from PMO.scripts_unificados.apps.prospec.prospec import RzProspec
+from PMO.scripts_unificados.apps.prospec.libs import utils
+from PMO.scripts_unificados.apps.prospec.libs.decomp.dadger import updater as dadger_updater
+from PMO.scripts_unificados.apps.prospec.libs.newave.clast import updater as clast_updater
+from PMO.scripts_unificados.apps.prospec.libs.info_arquivos_externos import info_external_files
+
+api = RzProspec()
+
+def get_ids_to_modify():
+
+    path = "/WX2TB/Documentos/fontes/PMO/API_Prospec/ConfigProspecAPI/ConfigRodadaDiaria.csv"
+    df = pd.read_csv(path, sep=';')
+    df.columns = df.columns.str.strip()
+    df.set_index('username', inplace=True)
+    ids_mask = df.index[df.index.str.startswith('prospecStudyId')]
+    ids_to_modify = df.loc[ids_mask,df.columns[0]].values.tolist()
+    return list(set(ids_to_modify)) 
+
+
+def send_files_to_api(idEstudo, pathEstudo):
+
+    endpoint = f'/api/prospectiveStudies/{idEstudo}/UploadFiles'
+    arquivo_enviado = api.sendFile(endpoint, pathEstudo)
+
+    if 'filesUploaded' in arquivo_enviado:
+        print(f'{arquivo_enviado["filesUploaded"][0]} - OK')
+    else:
+        print(f'Falha ao enviar estudo {idEstudo}')
+
+
+def update_cvu_estudo(ids_to_modify,ano_referencia_cvu,mes_referencia_cvu):
+
+    # ORGANIZA INFORMACOES DE CVU
+    info_cvu = info_external_files.organizar_info_cvu(
+        ano_referencia=ano_referencia_cvu,    
+        mes_referencia=mes_referencia_cvu,
+        )
+
+    for id_estudo in ids_to_modify:
+
+        print(f"\n\nModificando estudo {id_estudo}...")
+
+        path_to_modify = api.downloadEstudoPorId(id_estudo)
+
+
+        extracted_zip_estudo = utils.extract_file_estudo(
+            path_to_modify,
+            ) 
+
+        #ALTERAR CVU EM DECKS DC
+        dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
+        dadger_updater.atualizar_cvu_DC(
+            info_cvu,
+            dadgers_to_modify
+            )
+
+        clast_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*clast*"),recursive=True)
+        clast_updater.atualizar_cvu_NW(
+            info_cvu,
+            clast_to_modify
+            )
+
+        file = shutil.make_archive(
+            extracted_zip_estudo,
+            'zip',
+            extracted_zip_estudo
+            )
+
+        send_files_to_api(id_estudo, file)
+        print(f"============================================")
+
+
+def update_carga_estudo(ids_to_modify,path_carga_zip):
+
+    # #ORGANIZA INFORMACOES DE CARGA
+
+    for id_estudo in ids_to_modify:
+
+        print(f"\n\nModificando estudo {id_estudo}...")
+
+        path_to_modify = api.downloadEstudoPorId(id_estudo)
+
+        extracted_zip_estudo = utils.extract_file_estudo(
+            path_to_modify,
+            ) 
+
+        info_cargas = info_external_files.organizar_info_carga(
+            path_carga_zip,
+            extracted_zip_estudo,
+            )
+
+        # #ALTERAR CARGA EM DECKS DC
+        dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
+        dadger_updater.atualizar_carga_DC(
+            info_cargas,
+            dadgers_to_modify
+        )
+
+        file = shutil.make_archive(
+            extracted_zip_estudo,
+            'zip',
+            extracted_zip_estudo
+            )
+
+        send_files_to_api(id_estudo, file)
+        print(f"============================================")
+    
+if __name__ == "__main__":
+
+    # ids_to_modify = get_ids_to_modify()
+    ids_to_modify = [22152]
+    path_carga_zip=r"C:\Users\CS399274\Downloads\RV0_PMO_Dezembro_2024_carga_semanal.zip"
+
+    ano_referencia_cvu=2024
+    mes_referencia_cvu=11
+
+    update_cvu_estudo(ids_to_modify,ano_referencia_cvu,mes_referencia_cvu)
+    update_carga_estudo(ids_to_modify,path_carga_zip)

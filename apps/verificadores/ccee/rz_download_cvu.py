@@ -65,7 +65,7 @@ def download_cvu_acervo_ccee(ano_referencia, mes_referencia, pathSaida):
         info_files = df_cvu_target[['url','nomeDocumento','anoReferencia', 'mesReferencia']].to_dict('records')
         for info in info_files:
             url,filename,ano_referencia,mes_referencia = info.values()
-            print("Baixando Arquivo: ", info['nomeDocumento'])
+            print("\n\nBaixando Arquivo: ", info['nomeDocumento'])
             file = wx_download.downloadByRequest(url, pathSaida, filename=filename, delay=60*15)
             info['pathFile'] = file
 
@@ -77,6 +77,8 @@ def download_cvu_acervo_ccee(ano_referencia, mes_referencia, pathSaida):
                 )    
                 
             info['extractedPathFile'] = extracted_file[0]
+            print(f"============================================")
+
 
         return info_files
 

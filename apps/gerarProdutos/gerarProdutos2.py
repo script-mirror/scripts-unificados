@@ -5,6 +5,7 @@ import sys
 import locale
 import argparse
 import datetime
+import requests
 from pandas.plotting import register_matplotlib_converters
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
@@ -22,6 +23,7 @@ from PMO.scripts_unificados.apps.gerarProdutos import rz_processar_produtos
 from PMO.scripts_unificados.bibliotecas import wx_emailSender,wx_opweek
 from PMO.scripts_unificados.apps.bot_whatsapp.whatsapp_bot import WhatsappBot
 
+WHATSAPP_API = os.getenv('WHATSAPP_API')
 
 
 PATH_BOT_WHATS = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/bot_whatsapp"
@@ -95,6 +97,9 @@ class GerardorProdutos(WhatsappBot):
             elif parametros.get("teste_user") == 'arthur':
                 resultado.destinatarioWhats='11945892210'
                 resultado.destinatarioEmail = ['arthur.moraes@raizen.com']
+            elif parametros.get("teste_user") == 'tenorio':
+                resultado.destinatarioWhats='21981155829'
+                resultado.destinatarioEmail = ['rodrigo.tenorio@raizen.com']
                 
             if resultado.flagEmail:
 
@@ -128,14 +133,22 @@ class GerardorProdutos(WhatsappBot):
                 if not resultado.msgWhats:
                     resultado.msgWhats = f'{produto} ({data_str})'
                     
-                self.inserirMsgFila(resultado.destinatarioWhats, resultado.msgWhats, resultado.fileWhats)
+                fields={
+                    "destinatario": resultado.destinatarioWhats,
+                    "mensagem": resultado.msgWhats,
+                }
+                files={}
+                if resultado.fileWhats:
+                    files={
+                        "arquivo": (os.path.basename(resultado.fileWhats), open(resultado.fileWhats, "rb"))
+                    }
 
+                response = requests.post(WHATSAPP_API, data=fields, files=files)
+                print("Status Code:", response.status_code)
 
+                if response.status_code != 201:
+                    self.inserirMsgFila(resultado.destinatarioWhats, resultado.msgWhats, resultado.fileWhats)
 
-                
-                
-                # cmd = f'cd {PATH_BOT_WHATS} && python whatsapp_bot.py inserirMsgFila dst "{resultado.destinatarioWhats}" msg "{resultado.msgWhats}" file "{resultado.fileWhats}"'
-                # os.system(cmd)
         else:
             print(
                 '''
