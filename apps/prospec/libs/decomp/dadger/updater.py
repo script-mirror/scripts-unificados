@@ -4,7 +4,8 @@ import sys
 import glob
 import pdb
 import pandas as pd
-
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.prospec.libs import utils
 from PMO.scripts_unificados.apps.prospec.libs.decomp.dadger import dadger
@@ -88,12 +89,13 @@ def atualizar_carga_DC(info_cargas,paths_to_modify):
             skip_lines=len(linhas_formatadas)
             )
             
-
+def atualizar_eolica_DC(info_cargas,paths_to_modify):
+    pass
 
 if __name__ == "__main__":
 
     
-    path_saida = "C:/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp"
+    path_saida = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp"
 
     #EXTRAINDO ZIP
     file_estudo = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/verificadores/ccee/Estudo_21904_Entrada.zip"
@@ -128,3 +130,15 @@ if __name__ == "__main__":
         info_cargas,
         paths_to_modify
     )
+    
+    # path_eolica_zip= "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/verificadores/ccee/RV3_PMO_Novembro_2024_carga_semanal.zip"
+    # paths_dadgers = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
+    # info_eolica = info_external_files.organizar_info_eolica(
+    #     paths_dadgers,
+    #     path_saida
+    #     )
+    
+    # atualizar_eolica_DC(
+    #     info_eolica,
+    #     paths_to_modify
+    # )
