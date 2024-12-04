@@ -706,7 +706,7 @@ def sobrescreve_bloco(path_to_modify:str,mnemonico_bloco:str, values:list,skip_l
         for i, line in enumerate(lines):
 
             if alterar:
-                if count_lines < skip_lines:
+                if count_lines < skip_lines and '&-----------' not in line:
                     count_lines += 1
                     continue
                 else:
