@@ -1405,6 +1405,7 @@ def enviar(parametros):
 		if corpoE != '':
 
 			corpoEmail += corpoE
+		
 			remententeEmail = 'rodadas@climenergy.com'
 			flagEmail = True
 
@@ -1414,10 +1415,33 @@ def enviar(parametros):
 			if destinatarioEmail == '':
 				destinatarioEmail = ['front@wxe.com.br', 'middle@wxe.com.br', 'mateus.dias2@raizen.com']
     
-		if msg_whats != '' and parametros['enviar_whats']:
-			flagWhats = True
-			msgWhats = msg_whats
-			confgs['whatsapp']['destinatario'] = 'PMO'
+		if parametros['enviar_whats']:
+
+			destinatarioWhats = 'Preco'
+
+			if "gilseu.muhen@raizen.com" in parametros['destinatarioemail']:
+				destinatarioWhats = os.getenv('NUM_GILSEU')
+
+			html_str = "<div><br>"+corpoEmail
+			soup = BeautifulSoup(html_str, 'lxml')
+			tabela = soup.find('table')
+			print('Enviado whatsapp para o destinatario:', destinatarioWhats)
+			
+			fileWhats = wx_emailSender.api_html_to_image(str(tabela),path_save='out_put.png')
+			fields={
+                    "destinatario": destinatarioWhats,
+                    "mensagem": parametros['assuntoemail'],
+                }
+			files={}
+			if fileWhats:
+				files={
+					"arquivo": (os.path.basename(fileWhats), open(fileWhats, "rb"))
+				}
+			response = requests.post(os.getenv('WHATSAPP_API'), data=fields, files=files)
+			print("Status Code:", response.status_code)
+			
+
+			flagWhats = False
     
 
 	elif parametros["produto"] == 'PREVISAO_GEADA':
