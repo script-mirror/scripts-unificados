@@ -128,7 +128,7 @@ with DAG(
         get_pty=True,
     )
 
-#==============================================MERGE-CPTEC=====================================================
+#==============================================MERGE-CPTEC-HOURLY=====================================================
 
 
 def cmd_command(**kwargs):
@@ -175,6 +175,74 @@ with DAG(
     
     run = SSHOperator(
         task_id='vl_chuva_merge_to_db',
+        remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
+        ssh_conn_id='ssh_ecmwf',
+        command="{{ ti.xcom_pull(task_ids='inicio', key='command')}}",
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = timedelta(hours=30),
+        get_pty=True,
+        trigger_rule=TriggerRule.ALL_DONE,
+        do_xcom_push=False,
+        
+    )
+
+
+    fim = DummyOperator(
+        task_id='fim',
+        trigger_rule="none_failed_min_one_success",
+    )
+    
+    start_ec2_task >> inicio >> run >> fim
+
+
+#==============================================MERGE-CPTEC-DAILY=====================================================
+
+
+def cmd_command(**kwargs):
+
+
+    params = kwargs.get('dag_run').conf
+    dt_ini = params.get('dt_ini')
+    dt_fim = params.get('dt_fim')
+
+    # na ons o arquivo que sai no dia é na verdade o do dia anterior
+    if (not dt_ini) or (not dt_fim):
+        dt_now = datetime.now()
+        dt_ini = dt_now.strftime("%Y-%m-%d")
+        dt_fim = dt_ini
+
+    cmd = f'''/home/admin/enviMetereologia/bin/python /home/admin/joao/download_merge.py {dt_ini} {dt_fim} daily; /home/admin/enviMetereologia/bin/python /home/admin/joao/extrair_chuva_merge.py {dt_ini} daily'''
+    print(f"Comando: {cmd}")
+    kwargs['ti'].xcom_push(key='command', value=cmd)
+
+
+with DAG(
+    'OBS_CHUVA_DB_MERGE-CPTEC-DAILY',
+    start_date= datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='30 13 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=["Chuva Observada",'Metereologia']
+) as dag:
+        
+    start_ec2_task = PythonOperator(
+        task_id='start_ec2',
+        python_callable=start_instance,
+        # provide_context=True,
+    )
+
+    inicio = PythonOperator(
+        task_id='inicio',
+        python_callable=cmd_command,
+    )
+    
+     # Task to run a command on the remote server
+    
+    run = SSHOperator(
+        task_id='vl_chuva_merge_daily_to_db',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
         command="{{ ti.xcom_pull(task_ids='inicio', key='command')}}",
