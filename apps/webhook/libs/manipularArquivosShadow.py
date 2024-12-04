@@ -20,6 +20,7 @@ from PMO.scripts_unificados.apps.pconjunto import wx_plota_pconjunto
 from PMO.scripts_unificados.apps.gerarProdutos import gerarProdutos2 
 from PMO.scripts_unificados.bibliotecas import wx_opweek,rz_dir_tools
 from PMO.scripts_unificados.apps.dbUpdater.libs import carga_ons,chuva,deck_ds,deck_dc,deck_nw,geracao,revisao,temperatura,vazao
+from PMO.scripts_unificados.apps.prospec.libs import update_estudo
 
 #constantes path
 PATH_CV = os.path.abspath("/WX2TB/Documentos/chuva-vazao")
@@ -212,7 +213,12 @@ def carga_patamar(dadosProduto):
     filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
     print(filename)
 
-    #gerar Produto
+    ids_to_modify = update_estudo.get_ids_to_modify()
+    print(ids_to_modify)
+    ids_to_modify = [22152]
+    update_estudo.update_carga_estudo(ids_to_modify,filename)
+
+    # gerar Produto
     GERAR_PRODUTO.enviar({
         "produto":"REVISAO_CARGA",
         "path":filename,
