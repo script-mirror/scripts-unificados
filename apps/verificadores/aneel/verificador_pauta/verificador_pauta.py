@@ -34,7 +34,7 @@ if __name__ == '__main__':
             corpoEmail = texto_final
 
             serv_email.username = 'pauta_aneel@climenergy.com'
-            serv_email.send_to = ['joao.filho4@raizen.com']
+            serv_email.send_to = ['middle@wxe.com.br','front@wxe.com.br']
             serv_email.password = "Clime2@sam"
             serv_email.sendEmail(texto=corpoEmail, assunto=assuntoEmail, anexos=[])
     else:
