@@ -5,12 +5,9 @@ import sqlalchemy as db
 from selenium import webdriver
 import pdb
 from bs4 import BeautifulSoup
-import sys
 import re
 import difflib as dl
 from ordered_set import OrderedSet
-import sqlalchemy as db
-import undetected_chromedriver as uc
 
 
 
