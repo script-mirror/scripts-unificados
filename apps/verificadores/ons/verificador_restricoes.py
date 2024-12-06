@@ -60,6 +60,7 @@ def checkAtualizFSARH(selenium):
     url ='https://integracaoagentes.ons.org.br/FSAR-H/SitePages/Exibir_Forms_FSARH.aspx'	
     selenium.get(url)
     time.sleep(20)
+
     while 'display' not in selenium.find_element(By.XPATH, "//div[@id='loading_loadExibir']").get_attribute('style'):
         time.sleep(1)
 
@@ -91,7 +92,6 @@ def checkAtualizFSARH(selenium):
         # idCompleto = colunas[1].get_attribute('innerText')
         idCompleto = colunas[2].get_attribute('innerText')
         tpAtualizacao = colunas[7].get_attribute('innerText')
-        # pdb.set_trace()
 
         idNum = int(re.findall('\d+', idCompleto)[0])
 
@@ -106,14 +106,12 @@ def checkAtualizFSARH(selenium):
 
         df = pd.read_html(selenium.page_source, decimal=',', thousands='.')
         df_tmp = pd.DataFrame(df[0].loc[3:40])
-        df_tmp = df_tmp.append(df[0].loc[[59,65,66]])
+        df_tmp = pd.concat([df_tmp,df[0].loc[[59,65,66]]])
 
         if df_fsarh.empty:
             df_fsarh = pd.DataFrame(columns=df_tmp[0].to_list())
 
         df_fsarh.loc[id_fsarh] = df_tmp[1].to_list()
-    # print(df_fsarh)
-    # pdb.set_trace()
     selenium.quit()
     html = ''
     # Insere no banco e gera a tabela que sera enviada por email das novas informacoes
@@ -161,13 +159,12 @@ def checkAtualizFSARH(selenium):
                 )
 
         # datab.executemany(sql, val)
-        sql_insert = tb_fsarh.insert().values(df_values.to_dict("records"))
+        sql_insert = tb_fsarh.insert().values(df_values.replace({float('nan'): None}).to_dict("records"))
         n_row = db_ons.db_execute(sql_insert).rowcount
         print(f"{n_row} Linhas inseridas na tb_fsarh")
 
         # Formatacao e geracao da tabela 
         hoje = datetime.datetime.now()
-        # pdb.set_trace()
         index = 0
         header = ['ID', 'Data Modificação', 'Data Inicio', 'Data Final', 'Agente', 'Região Hidrográfica', 'Reservatório', 'Restrição', 'Valor', 'Evento', 'Atualização', 'Temporarialidade', 'Status']
         body = []
@@ -449,7 +446,7 @@ def checkUpdateIntervernc(selenium):
                         'nome_categ', 'tipo', 'nome_natureza', 
                         'risco_postergacao', 'recomendacao'
                     ])
-        sql_insert = tb_intervencoes.insert().values(df_values.to_dict('records'))
+        sql_insert = tb_intervencoes.insert().values(df_values.replace({float('nan'): None}).to_dict("records"))
         n_row = db_ons.db_execute(sql_insert).rowcount
         print(f"{n_row} Linhas inseridas na tb_intervencoes")
 
@@ -502,6 +499,7 @@ def main():
         table_fsarh = checkAtualizFSARH(selenium_driver)
     except Exception as e:
         print(e)
+
     finally:
         selenium_driver.quit()
 
@@ -509,6 +507,7 @@ def main():
     print('\n\nVerificacao de atualizacoes das intervencoes.')
     selenium_driver = rz_selenium.abrir_undetected_chrome(path_tmp_download=PATH_TMP_DOWNLOAD)
     rz_ons.login_ons(selenium_driver)
+
     try:
         table_intervencoes = checkUpdateIntervernc(selenium_driver)
     except Exception as e:
@@ -548,12 +547,12 @@ def main():
 
 if __name__ == '__main__':
 
-    try:
-        main()
-    except Exception as e:
-        print(e)
-        hoje = datetime.datetime.now()
-        serv_email = wx_emailSender.WxEmail()
-        serv_email.send_to = ['joao.Filho4@raizen.com']
-        serv_email.sendEmail(texto=str(e), assunto='Erro no resticoes_verifier ({})'.format(hoje.strftime('%d/%m/%Y - %H:%M')))
+    # try:
+    main()
+    # except Exception as e:
+    #     print(e)
+    #     hoje = datetime.datetime.now()
+    #     serv_email = wx_emailSender.WxEmail()
+    #     serv_email.send_to = ['joao.Filho4@raizen.com']
+    #     serv_email.sendEmail(texto=str(e), assunto='Erro no resticoes_verifier ({})'.format(hoje.strftime('%d/%m/%Y - %H:%M')))
 
