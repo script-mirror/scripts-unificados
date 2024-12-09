@@ -52,6 +52,14 @@ def trigger_function(**kwargs):
     
     return ['fim']
     
+def deck_prev_eolica_semanal_patamares(**kwargs):
+    params = kwargs.get('dag_run').conf
+    manipularArquivosShadow.deck_prev_eolica_semanal_patamares(params)
+
+def deck_prev_eolica_semanal_previsao_final(**kwargs):
+    params = kwargs.get('dag_run').conf
+    manipularArquivosShadow.deck_prev_eolica_semanal_previsao_final(params)
+    
 with DAG(
     dag_id='WEEBHOOK',
     start_date=datetime.datetime(2024, 4, 28),
@@ -90,6 +98,7 @@ with DAG(
     schedule=None,
     tags=['Webhook', 'Decks', 'Decomp']
     ) as dag:
+    
     inicio = DummyOperator(
         task_id='inicio',
         trigger_rule="none_failed_min_one_success",
@@ -98,17 +107,16 @@ with DAG(
     patamares = PythonOperator(
         task_id='patamares',
         trigger_rule="none_failed_min_one_success",
-        python_callable = manipularArquivosShadow.deck_prev_eolica_semanal_patamares,
-        provide_context=True,
-        op_kwargs={'params': '{{ dag_run.conf }}'}
+        python_callable=deck_prev_eolica_semanal_patamares,
+        provide_context=True
     )
+    
     previsao_final = PythonOperator(
         task_id='previsao_final',
-        python_callable = manipularArquivosShadow.deck_prev_eolica_semanal_previsao_final,
-        provide_context=True,
-        op_kwargs={'params': '{{ dag_run.conf }}'}
-        
+        python_callable=deck_prev_eolica_semanal_previsao_final,
+        provide_context=True
     )
+    
     fim = DummyOperator(
         task_id='fim',
         trigger_rule="none_failed_min_one_success",
@@ -116,6 +124,5 @@ with DAG(
 
     inicio >> patamares
     patamares >> previsao_final >> fim
-    
     
     

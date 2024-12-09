@@ -701,10 +701,8 @@ def ler_csv_prev_weol_para_dicionario(file):
     
     
 def deck_prev_eolica_semanal_patamares(dadosProduto):
-    # res  = r.get(dadosProduto["url"])
-    # zip_file = zipfile.ZipFile(io.BytesIO(res.content))
-    
-    zip_file = zipfile.ZipFile("/home/arthur-moraes/Downloads/Deck_PrevMes_20241128.zip")
+    res  = r.get(dadosProduto["url"])
+    zip_file = zipfile.ZipFile(io.BytesIO(res.content))
     
     patamates_csv_path = [x for x in zip_file.namelist() if "Arquivos Entrada/Dados Cadastrais/Patamares_" in x and ".csv" in x]
     patamates_csv_path = patamates_csv_path[0]
@@ -722,10 +720,9 @@ def deck_prev_eolica_semanal_patamares(dadosProduto):
         logger.error(f"Erro ao inserir patamares. status code: {post_patamates.status_code}")
 
 def deck_prev_eolica_semanal_previsao_final(dadosProduto):
-    # res  = r.get(dadosProduto["url"])
-    # zip_file = zipfile.ZipFile(io.BytesIO(res.content))
+    res  = r.get(dadosProduto["url"])
+    zip_file = zipfile.ZipFile(io.BytesIO(res.content))
     
-    zip_file = zipfile.ZipFile("/home/arthur-moraes/Downloads/Deck_PrevMes_20241128.zip")
     prev_eol_csv_path = [x for x in zip_file.namelist() if "Arquivos Saida/Previsoes Subsistemas Finais/Total/Prev_" in x and ".csv" in x]
     prev_eol_csv_path = prev_eol_csv_path[0]
     
