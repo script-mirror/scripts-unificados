@@ -130,6 +130,7 @@ def leituraArquivoCarga_xlsx(pathFile, dataRv):
 
 
 def cargaPatamar(pathZip):
+  
   locale.setlocale(locale.LC_TIME, 'pt_BR.utf8')
   pathRvAtual = extractFiles(pathZip)
   nomeArquivoZip = os.path.basename(pathZip)
@@ -163,12 +164,11 @@ def cargaPatamar(pathZip):
 
   dfCargaAtual_xlsx = leituraArquivoCarga_xlsx(pathCargaDecompAtual_xlsx, dataRvAtual.data)
   dfCargaAnt_xlsx = leituraArquivoCarga_xlsx(pathCargaDecompAnt_xlsx, dataRvAnterior.data)
- 
   dfCargaAtual_txt = leituraArquivoCarga_txt(pathCargaDecompAtual_txt, dataRvAtual.data)
   dfCargaAnt_txt = leituraArquivoCarga_txt(pathCargaDecompAnt_txt, dataRvAnterior.data)
   difCarga = dfCargaAtual_txt - dfCargaAnt_txt
   difCarga.dropna(inplace=True)
- 
+  
   difCarga_xlsx = dfCargaAtual_xlsx - dfCargaAnt_xlsx
 
   difCarga_xlsx = difCarga_xlsx[list(difCarga_xlsx.columns[1:]) + ['Mensal']]
@@ -190,8 +190,8 @@ def cargaPatamar(pathZip):
     difCarga_xlsx.loc[sub, 'Mensal [M2]'] = media
     difCarga_xlsx.loc['Sistema Interligado Nacional', 'Mensal [M2]'] += media
 
+  difCarga_xlsx = difCarga_xlsx.dropna(axis=1)
   if dataRvAtual.atualRevisao == 0:
-    difCarga_xlsx = difCarga_xlsx.dropna(axis=1)
     difCarga_xlsx = difCarga_xlsx.drop(['Mensal [M1]','Mensal [M2]'], axis=1)
   
   shutil.rmtree(pathRvAtual)

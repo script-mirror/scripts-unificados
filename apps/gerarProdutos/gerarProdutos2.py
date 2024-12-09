@@ -6,8 +6,9 @@ import locale
 import argparse
 import datetime
 import requests
-from pandas.plotting import register_matplotlib_converters
 from dotenv import load_dotenv
+from smtplib import SMTPAuthenticationError
+from pandas.plotting import register_matplotlib_converters
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
 register_matplotlib_converters()
@@ -111,13 +112,18 @@ class GerardorProdutos(WhatsappBot):
                 serv_email.username = resultado.remetenteEmail if resultado.remetenteEmail else serv_email.username
                 serv_email.password = resultado.passwordEmail if resultado.passwordEmail else serv_email.password
                 serv_email.send_to = resultado.destinatarioEmail if resultado.destinatarioEmail else serv_email.send_to
-                
-                serv_email.sendEmail(
-                    texto= resultado.corpoEmail if resultado.corpoEmail else f'<h3>{produto} referente a data {data_str}</h3>',
-                    assunto=resultado.assuntoEmail if resultado.assuntoEmail else '',
-                    anexos= resultado.file if resultado.file else [] 
-                    )
-                
+
+                try:
+                    serv_email.sendEmail(
+                        texto= resultado.corpoEmail if resultado.corpoEmail else f'<h3>{produto} referente a data {data_str}</h3>',
+                        assunto=resultado.assuntoEmail if resultado.assuntoEmail else '',
+                        anexos= resultado.file if resultado.file else [] 
+                        )
+                except SMTPAuthenticationError:
+                    print("\033[91mErro de Autenticacao\033[0m")
+                except Exception as e:
+                    print(f"\033[91mErro nao mapeado \033[0m\n{e}\n")
+                    
             if parametros['produto'] == 'REVISAO_CARGA_NW':
                 for file in resultado.file:
                     self.inserirMsgFila(self.num_whatsapp, "", file)
