@@ -11,13 +11,13 @@ import datetime
 router = APIRouter(prefix="/decks")
 
 
-@router.post("/weol",tags=["Dessem"])
+@router.post("/weol",tags=["Decomp"])
 def post_weol(
     body: List[WeolSemanalSchema]
 ):
     return decks_crud.WeolSemanal.create(body)
 
-@router.post("/patamares", tags=["Dessem"])
+@router.post("/patamares", tags=["Decomp"])
 def post_patamares(
     body: List[PatamaresDecompSchema]
     
