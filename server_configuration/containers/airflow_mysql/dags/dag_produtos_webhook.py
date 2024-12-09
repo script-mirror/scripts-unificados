@@ -95,15 +95,19 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
     )
     
-    patamares = BranchPythonOperator(
+    patamares = PythonOperator(
         task_id='patamares',
         trigger_rule="none_failed_min_one_success",
         python_callable = manipularArquivosShadow.deck_prev_eolica_semanal_patamares,
         provide_context=True,
+        op_kwargs={'params': '{{ dag_run.conf }}'}
     )
     previsao_final = PythonOperator(
         task_id='previsao_final',
         python_callable = manipularArquivosShadow.deck_prev_eolica_semanal_previsao_final,
+        provide_context=True,
+        op_kwargs={'params': '{{ dag_run.conf }}'}
+        
     )
     fim = DummyOperator(
         task_id='fim',
