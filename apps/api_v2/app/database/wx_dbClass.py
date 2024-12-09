@@ -940,6 +940,32 @@ class db_mysql_master():
                 db.Column('nome', db.String(20)),
                 extend_existing=True
             )
+        elif table_name.lower() == 'tb_dc_weol_semanal':
+            table_schema = db.Table('tb_dc_weol_semanal', self.meta,
+                db.Column('id', db.Integer, primary_key=True),
+                db.Column('inicio_semana', db.Date),
+                db.Column('final_semana', db.Date),
+                db.Column('data_produto', db.Date),
+                db.Column('submercado', db.String(2)),
+                db.Column('patamar', db.String(6)),
+                db.Column('valor', db.Float),
+                extend_existing=True
+            )
+        elif table_name.lower() == 'tb_patamar_decomp':
+            table_schema = db.Table('tb_patamar_decomp', self.meta,
+                db.Column('inicio', db.DateTime),
+                db.Column('patamar', db.String(6)),
+                db.Column('cod_patamar', db.Integer),
+                db.Column('dia_semana', db.String(3)),
+                db.Column('dia_tipico', db.String(40)),
+                db.Column('tipo_dia', db.String(3)),
+                db.Column('intervalo', db.Integer),
+                db.Column('dia', db.Integer),
+                db.Column('semana', db.Integer),
+                db.Column('mes', db.Integer),
+                extend_existing=True
+            )
+
 
 
         return table_schema

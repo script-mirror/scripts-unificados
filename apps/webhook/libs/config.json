@@ -1,0 +1,19 @@
+{
+    "paths": {
+        "dessemNW": "/WX4TB/Documentos/fontes/PMO/dessem/",
+        "dropbox_middle": "/home/wxenergy/Dropbox/WX - Middle/"
+    },
+    "previvaz": {},
+    "selenium": {
+        "brownser": "chrome",
+        "downloadDirectory": "",
+        "seleniumDriverPath": ""
+    },
+    "ssh": {
+        "host": "wxe.ddns.net",
+        "pathKey": "/home/wxenergy/.ssh/id_rsa_edson",
+        "portaMaster": 8122,
+        "portaNW": 8022,
+        "user": "wxenergy"
+    }
+}

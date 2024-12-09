@@ -5,7 +5,7 @@ import sys
 from airflow.exceptions import AirflowException
 from airflow.models.dag import DAG
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.operators.python import BranchPythonOperator
+from airflow.operators.python import BranchPythonOperator, PythonOperator
 
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
@@ -56,7 +56,8 @@ with DAG(
     dag_id='WEEBHOOK',
     start_date=datetime.datetime(2024, 4, 28),
     catchup=False,
-    schedule=None
+    schedule=None,
+    tags=['webhook']
 ) as dag:
 
     # começo estrutura para rodar a sequencia das tarefas
@@ -81,3 +82,37 @@ with DAG(
         )
         inicio >> produtoEscolhido
         produtoEscolhido >> fim
+
+with DAG(
+    dag_id='webhook_deck_prev_eolica_semanal_weol',
+    start_date=datetime.datetime(2024, 4, 28),
+    catchup=False,
+    schedule=None,
+    tags=['Webhook', 'Decks', 'Decomp']
+    ) as dag:
+    inicio = DummyOperator(
+        task_id='inicio',
+        trigger_rule="none_failed_min_one_success",
+    )
+    
+    patamares = BranchPythonOperator(
+        task_id='',
+        trigger_rule="none_failed_min_one_success",
+        python_callable = manipularArquivosShadow.deck_prev_eolica_semanal_patamares,
+        provide_context=True,
+    )
+    previsao_final = PythonOperator(
+        task_id='',
+        python_callable = manipularArquivosShadow.deck_prev_eolica_semanal_previsao_final,
+    )
+    fim = DummyOperator(
+        task_id='fim',
+        trigger_rule="none_failed_min_one_success",
+    )
+
+
+    inicio >> patamares
+    patamares >> previsao_final >> fim
+    
+    
+    

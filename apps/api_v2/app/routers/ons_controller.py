@@ -14,7 +14,7 @@ router = APIRouter(prefix='/ons')
 
 
 @router.get('/bacias',tags=['ONS'])
-async def get_bacias(
+def get_bacias(
     divisao:DivisaoBaciasEnum,
     no_cache:Optional[bool] = False,
     atualizar:Optional[bool] = False):
@@ -23,7 +23,7 @@ async def get_bacias(
     return cache.get_cached(ons_crud.tb_bacias.get_bacias,divisao.name, atualizar=atualizar)
 
 @router.get('/submercados',tags=['ONS'])
-async def get_submercados(
+def get_submercados(
     no_cache:Optional[bool] = False,
     atualizar:Optional[bool] = False):
     if no_cache:

@@ -8,3 +8,5 @@ from .MembrosModeloSchema import MembrosModeloSchema
 from .ProdutoInteresseSchema import ProdutoInteresseSchema
 from .CategoriaNegociacaoEnum import CategoriaNegociacaoEnum
 from .ChuvaObsReq import ChuvaObsReq
+from .WeolSemanalSchema import WeolSemanalSchema
+from .PatamaresDecompSchema import PatamaresDecompSchema

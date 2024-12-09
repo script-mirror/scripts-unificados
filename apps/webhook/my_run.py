@@ -82,7 +82,8 @@ PRODUCT_MAPPING = {
     "Modelo ECMWF": "modelo_ECMWF",
     "Dados utilizados na previsão de geração eólica": "dados_geracaoEolica",
     "Arquivos de Previsão de Carga para o DESSEM - PrevCargaDESSEM": "prevCarga_dessem_saida",
-    'Deck NEWAVE Preliminar':"carga_newave_preliminar"
+    'Deck NEWAVE Preliminar':"carga_newave_preliminar",
+    "DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM":"deck_prev_eolica_semanal_weol",
 }
 
 
