@@ -111,12 +111,12 @@ def arquivo_acomph(dadosProduto):
     logger.info(path_copia_tmp)
 
     airflow_tools.trigger_airflow_dag(
-        dag_id="ONS-GRUPOS",
+        dag_id="1.8-PROSPEC_GRUPOS-ONS",
         json_produtos={}
         )
     
     airflow_tools.trigger_airflow_dag(
-        dag_id="PROSPEC_PCONJUNTO_DEFINITIVO",
+        dag_id="1.1-PROSPEC_PCONJUNTO_DEFINITIVO",
         json_produtos={
             'dt_ref':dadosProduto['dataProduto']
             })
