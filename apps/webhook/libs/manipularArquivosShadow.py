@@ -12,7 +12,7 @@ import requests as r
 from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s - %(name)s.py:%(lineno)d - %(levelname)s - %(message)s',
+                    format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     handlers=[
                         logging.StreamHandler()
@@ -745,14 +745,15 @@ def deck_prev_eolica_semanal_previsao_final(dadosProduto):
         
     post_decks_weol = r.post(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol", json=body_weol)
     if post_decks_weol.status_code == 200:
-        logger.info("Patamares inseridos com sucesso")
+        logger.info("WEOL inserido com sucesso")
     else:
-        logger.error(f"Erro ao inserir patamares. status code: {post_decks_weol.status_code}")
+        logger.error(f"Erro ao inserir WEOL. status code: {post_decks_weol.status_code}")
         
 def deck_prev_eolica_semanal_weol(dadosProduto:dict):
     airflow_tools.trigger_airflow_dag(
         dag_id="webhook_deck_prev_eolica_semanal_weol",
-        json_produtos=dadosProduto)
+        json_produtos=dadosProduto
+        )
 
 
 if __name__ == '__main__':

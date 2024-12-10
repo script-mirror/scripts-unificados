@@ -105,14 +105,14 @@ with DAG(
     )
     
     patamares = PythonOperator(
-        task_id='patamares',
+        task_id='inserir_patamares_decomp',
         trigger_rule="none_failed_min_one_success",
         python_callable=deck_prev_eolica_semanal_patamares,
         provide_context=True
     )
     
     previsao_final = PythonOperator(
-        task_id='previsao_final',
+        task_id='inserir_previsao_final_weol',
         python_callable=deck_prev_eolica_semanal_previsao_final,
         provide_context=True
     )

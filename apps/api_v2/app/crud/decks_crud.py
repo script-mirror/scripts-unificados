@@ -57,7 +57,7 @@ class Patamares:
         body_dict = [x.model_dump() for x in body]
         dates = list(set([x['inicio'] for x in body_dict]))
         dates.sort()
-        Patamares.delete_by_start_date_between(dates[0], dates[-1])
+        Patamares.delete_by_start_date_between(dates[0].date(), dates[-1].date())
         query = db.insert(Patamares.tb).values(body_dict)
         rows = __DB__.db_execute(query, commit=prod).rowcount
         logger.info(f"{rows} linhas adicionadas na tb_patamar_decomp")
