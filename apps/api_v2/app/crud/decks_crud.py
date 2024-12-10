@@ -37,14 +37,17 @@ class WeolSemanal:
     
     @staticmethod
     def get_by_product_date(date:datetime.date):
-        query = db.select([WeolSemanal.tb]).where(WeolSemanal.tb.c.data_produto == date)
-        result = __DB__.db_execute(query, commit=prod).fetchall()
-        return result
+        query = db.select(WeolSemanal.tb).where(WeolSemanal.tb.c.data_produto == date)
+        result = __DB__.db_execute(query).fetchall()
+        result = pd.DataFrame(result, columns=['id', 'inicio_semana', 'final_semana', 'data_produto', 'submercado', 'patamar', 'valor'])
+        return result.to_dict('records')
     
     @staticmethod
     def get_all():
-        query = db.select([WeolSemanal.tb])
-        result = __DB__.db_execute(query, commit=prod).fetchall()
+        query = db.select(WeolSemanal.tb)
+        result = __DB__.db_execute(query).fetchall()
+        result = pd.DataFrame(result, columns=['id', 'inicio_semana', 'final_semana', 'data_produto', 'submercado', 'patamar', 'valor'])
+        result = result.to_dict('records')
         return result
 
 class Patamares:
