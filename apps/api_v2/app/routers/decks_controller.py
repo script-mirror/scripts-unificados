@@ -16,6 +16,21 @@ def post_weol(
     body: List[WeolSemanalSchema]
 ):
     return decks_crud.WeolSemanal.create(body)
+@router.get("/weol",tags=["Decomp"])
+def get_weol(
+    data_produto: datetime.date
+):
+    return decks_crud.WeolSemanal.get_by_product_date(data_produto)
+
+@router.get("/weol",tags=["Decomp"])
+def get_weol_all():
+    return decks_crud.WeolSemanal.get_all()
+
+@router.delete("/weol",tags=["Decomp"])
+def delete_weol(
+    data_produto: datetime.date
+):
+    return decks_crud.WeolSemanal.delete_by_product_date(data_produto)
 
 @router.post("/patamares", tags=["Decomp"])
 def post_patamares(
@@ -24,3 +39,8 @@ def post_patamares(
 ):
     return decks_crud.Patamares.create(body)
 
+@router.delete("/patamares", tags=["Decomp"])
+def delete_patamares(
+    data_inicio: datetime.date
+):
+    return decks_crud.Patamares.delete_by_start_date(data_inicio)

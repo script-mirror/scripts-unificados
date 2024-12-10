@@ -12,24 +12,24 @@ router = APIRouter(prefix="/bbce")
 
 
 @router.get("/produtos-interesse",tags=["BBCE"])
-async def get_produtos_interesse():
+def get_produtos_interesse():
     return bbce_crud.ProdutoInteresse.get_all()
 
 @router.post("/produtos-interesse", tags=["BBCE"])
-async def post_produtos_interesse(
+def post_produtos_interesse(
         produtos_interesse: List[ProdutoInteresseSchema]
 ):
     return bbce_crud.ProdutoInteresse.post(produtos_interesse)
 
 @router.get("/produtos-interesse/html", tags=["BBCE"])
-async def get_produtos_interesse(
+def get_produtos_interesse(
     data:datetime.date,
     tipo_negociacao:Optional[CategoriaNegociacaoEnum] = None
 ):
     return bbce_crud.NegociacoesResumo.get_html_table_negociacoes_bbce(data, tipo_negociacao)
 
 @router.get("/negociacoes/categorias", tags=["BBCE"])
-async def get_categorias_negociacoes():
+def get_categorias_negociacoes():
     return bbce_crud.CategoriaNegociacao.get_all()
 
 
