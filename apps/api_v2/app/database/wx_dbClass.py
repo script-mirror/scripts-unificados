@@ -950,6 +950,7 @@ class db_mysql_master():
                 db.Column('patamar', db.String(6)),
                 db.Column('valor', db.Float),
                 db.Column('rv_atual', db.Integer),
+                db.Column('mes_eletrico', db.Integer),
                 extend_existing=True
             )
         elif table_name.lower() == 'tb_patamar_decomp':

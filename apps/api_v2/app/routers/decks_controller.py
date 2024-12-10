@@ -16,15 +16,23 @@ def post_weol(
     body: List[WeolSemanalSchema]
 ):
     return decks_crud.WeolSemanal.create(body)
+# @router.get("/weol",tags=["Decomp"])
+# def get_weol_all():
+#     return decks_crud.WeolSemanal.get_all()
 @router.get("/weol",tags=["Decomp"])
 def get_weol(
     data_produto: datetime.date
 ):
     return decks_crud.WeolSemanal.get_by_product_date(data_produto)
 
-@router.get("/weol",tags=["Decomp"])
-def get_weol_all():
-    return decks_crud.WeolSemanal.get_all()
+@router.get("/weol/dadger",tags=["Decomp"])
+def get_weol_by_product_date_start_week_year_month_rv(
+    data_produto: datetime.date,
+    mes_eletrico:int,
+    ano:int,
+    rv: int
+):
+    return decks_crud.WeolSemanal.get_by_product_date_start_week_year_month_rv(data_produto, mes_eletrico, ano, rv)
 
 @router.delete("/weol",tags=["Decomp"])
 def delete_weol(

@@ -39,16 +39,30 @@ class WeolSemanal:
     def get_by_product_date(date:datetime.date):
         query = db.select(WeolSemanal.tb).where(WeolSemanal.tb.c.data_produto == date)
         result = __DB__.db_execute(query).fetchall()
-        result = pd.DataFrame(result, columns=['id', 'inicio_semana', 'final_semana', 'data_produto', 'submercado', 'patamar', 'valor'])
+        result = pd.DataFrame(result, columns=['id', 'inicio_semana', 'final_semana', 'data_produto', 'submercado', 'patamar', 'valor', 'rv_atual', 'mes_eletrico'])
         return result.to_dict('records')
     
     @staticmethod
     def get_all():
         query = db.select(WeolSemanal.tb)
         result = __DB__.db_execute(query).fetchall()
-        result = pd.DataFrame(result, columns=['id', 'inicio_semana', 'final_semana', 'data_produto', 'submercado', 'patamar', 'valor'])
+        result = pd.DataFrame(result, columns=['id', 'inicio_semana', 'final_semana', 'data_produto', 'submercado', 'patamar', 'valor', 'rv_atual', 'mes_eletrico'])
         result = result.to_dict('records')
         return result
+    
+    @staticmethod
+    def get_by_product_date_start_week_year_month_rv(data_produto:datetime.date, mes_eletrico:int, ano:int, rv:int):
+        query = db.select(
+            WeolSemanal.tb
+            ).where(db.and_(
+                WeolSemanal.tb.c.data_produto == data_produto,
+                WeolSemanal.tb.c.mes_eletrico == mes_eletrico,
+                db.func.year(WeolSemanal.tb.c.inicio_semana) == ano,
+                WeolSemanal.tb.c.rv_atual == rv
+            ))
+        result = __DB__.db_execute(query).fetchall()
+        result = pd.DataFrame(result, columns=['id', 'inicio_semana', 'final_semana', 'data_produto', 'submercado', 'patamar', 'valor', 'rv_atual', 'mes_eletrico'])
+        return result.to_dict('records')
 
 class Patamares:
     tb:db.Table = __DB__.getSchema('tb_patamar_decomp')

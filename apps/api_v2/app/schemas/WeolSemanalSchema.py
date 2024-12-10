@@ -9,3 +9,4 @@ class WeolSemanalSchema(BaseModel):
     patamar:str
     valor:float
     rv_atual:int
+    mes_eletrico:int
