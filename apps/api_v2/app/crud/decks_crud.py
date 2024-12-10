@@ -55,7 +55,9 @@ class Patamares:
     @staticmethod
     def create(body: List[PatamaresDecompSchema]):
         body_dict = [x.model_dump() for x in body]
-        
+        dates = list(set([x['inicio'] for x in body_dict]))
+        dates.sort()
+        Patamares.delete_by_start_date_between(dates[0], dates[-1])
         query = db.insert(Patamares.tb).values(body_dict)
         rows = __DB__.db_execute(query, commit=prod).rowcount
         logger.info(f"{rows} linhas adicionadas na tb_patamar_decomp")
@@ -64,6 +66,13 @@ class Patamares:
     @staticmethod
     def delete_by_start_date(date:datetime.date):
         query = db.delete(Patamares.tb).where(db.func.date(Patamares.tb.c.inicio) == date)
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+        logger.info(f"{rows} linhas deletadas da tb_patamar_decomp")
+        return None
+    
+    @staticmethod
+    def delete_by_start_date_between(start:datetime.date, end:datetime.date):
+        query = db.delete(Patamares.tb).where(db.func.date(Patamares.tb.c.inicio).between(start, end))
         rows = __DB__.db_execute(query, commit=prod).rowcount
         logger.info(f"{rows} linhas deletadas da tb_patamar_decomp")
         return None
