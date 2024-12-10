@@ -738,6 +738,7 @@ def deck_prev_eolica_semanal_previsao_final(dadosProduto):
                     body_weol.append({
                         "inicio_semana":str(data_inicio.date()),
                         "final_semana":str(data_fim.date()),
+                        "rv_atual": wx_opweek.ElecData(data_inicio.date()).atualRevisao,
                         "submercado":submercado,
                         "patamar":patamar,
                         "valor":info_weol[data][submercado][patamar],

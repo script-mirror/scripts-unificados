@@ -949,6 +949,7 @@ class db_mysql_master():
                 db.Column('submercado', db.String(2)),
                 db.Column('patamar', db.String(6)),
                 db.Column('valor', db.Float),
+                db.Column('rv_atual', db.Integer),
                 extend_existing=True
             )
         elif table_name.lower() == 'tb_patamar_decomp':

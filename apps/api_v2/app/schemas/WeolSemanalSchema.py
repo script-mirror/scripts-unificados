@@ -8,3 +8,4 @@ class WeolSemanalSchema(BaseModel):
     submercado:str
     patamar:str
     valor:float
+    rv_atual:int
