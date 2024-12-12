@@ -64,6 +64,19 @@ class WeolSemanal:
         result = pd.DataFrame(result, columns=['id', 'inicio_semana', 'final_semana', 'data_produto', 'submercado', 'patamar', 'valor', 'rv_atual', 'mes_eletrico'])
         return result.to_dict('records')
 
+    @staticmethod
+    def get_by_product_start_week_date_product_date(inicio_semana:datetime.date, data_produto:datetime.date):
+        query = db.select(
+            WeolSemanal.tb
+            ).where(db.and_(
+                WeolSemanal.tb.c.data_produto == data_produto,
+                WeolSemanal.tb.c.inicio_semana >= inicio_semana
+            ))
+        result = __DB__.db_execute(query).fetchall()
+        result = pd.DataFrame(result, columns=['id', 'inicio_semana', 'final_semana', 'data_produto', 'submercado', 'patamar', 'valor', 'rv_atual', 'mes_eletrico'])
+        return result.to_dict('records')
+
+
 class Patamares:
     tb:db.Table = __DB__.getSchema('tb_patamar_decomp')
     @staticmethod

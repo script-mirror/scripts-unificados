@@ -18,6 +18,9 @@ Thumbs.db
 *.flv
 *.mov
 *.wmv
+*.zip
+*.db
+*out_put.png
 
 #CONTAINERS
 .env
@@ -38,6 +41,9 @@ apps/dessem/tmp/
 #PCONJUNTO
 apps/pconjunto/pconjunto-ONS/
 apps/pconjunto/pconjunto-tmp/
+
+#CONTORNOS BACIAS
+apps/tempo/arquivos/auxiliares/contornos_bacias/
 
 # verificador processos aneel
 apps/verificador_processos/
