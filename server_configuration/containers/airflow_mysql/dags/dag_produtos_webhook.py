@@ -65,7 +65,11 @@ with DAG(
     start_date=datetime.datetime(2024, 4, 28),
     catchup=False,
     schedule=None,
-    tags=['webhook']
+    tags=['webhook'],
+    default_args={
+        'retries': 1,
+        'retry_delay': datetime.timedelta(minutes=2) 
+    }
 ) as dag:
 
     # começo estrutura para rodar a sequencia das tarefas
@@ -96,6 +100,10 @@ with DAG(
     start_date=datetime.datetime(2024, 4, 28),
     catchup=False,
     schedule=None,
+    default_args={
+        'retries': 1,
+        'retry_delay': datetime.timedelta(minutes=2) 
+    },
     tags=['Webhook', 'Decks', 'Decomp']
     ) as dag:
     

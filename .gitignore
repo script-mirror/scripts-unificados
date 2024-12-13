@@ -48,6 +48,8 @@ apps/tempo/arquivos/auxiliares/contornos_bacias/
 # verificador processos aneel
 apps/verificador_processos/
 
+scripts_crontab/*
+
 apps/gerarProdutos/arquivos/tmp/
 apps/gerarProdutos/chrome-data/
 apps/gerarProdutos/log/
