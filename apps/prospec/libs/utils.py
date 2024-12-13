@@ -11,6 +11,7 @@ locale.setlocale(locale.LC_TIME, 'pt_BR.utf8')
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.bibliotecas import rz_dir_tools
+from PMO.scripts_unificados.apps.prospec.libs.decomp.dadger import dadger
 PATH_DOWNLOAD_TMP = os.path.join(os.path.dirname(__file__),"info_arquivos_externos","tmp")
 
 
@@ -47,7 +48,6 @@ def get_rv_atual_from_zip(nome_arquivo_zip) -> datetime.datetime:
 def get_rv_atual_from_dadger(path_dadger) -> datetime.datetime:
     data = path_dadger[path_dadger.index("/DC")+3:path_dadger.index("-sem")]
     mes_ref = datetime.datetime.strptime(data, "%Y%m")
-    pdb.set_trace()
     rv = int(path_dadger[path_dadger.index("rv")+2:])
     
     inicio_mes_eletrico = mes_ref
@@ -56,6 +56,9 @@ def get_rv_atual_from_dadger(path_dadger) -> datetime.datetime:
     inicio_rv_atual = inicio_mes_eletrico + datetime.timedelta(days=7*rv)
     return inicio_rv_atual 
 
+def get_date_from_dadger(path_dadger) -> datetime.date:
+    df = dadger.leituraArquivo(path_dadger)[0]['DT']
+    return datetime.date(int(df['ano'][0]),int(df['mes'][0]),int(df['dia'][0]))
 
 def trim_df(df:pd.DataFrame) -> pd.DataFrame:
     df_obj = df.select_dtypes('object')

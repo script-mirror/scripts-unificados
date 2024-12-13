@@ -4,14 +4,16 @@ import pdb
 import sys
 import glob
 import shutil
+import datetime
 import pandas as pd
+from typing import List
 
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.prospec.prospec import RzProspec
 from PMO.scripts_unificados.apps.prospec.libs import utils
-from PMO.scripts_unificados.apps.prospec.libs.decomp.dadger import updater as dadger_updater
+from PMO.scripts_unificados.apps.prospec.prospec import RzProspec
 from PMO.scripts_unificados.apps.prospec.libs.newave.clast import updater as clast_updater
+from PMO.scripts_unificados.apps.prospec.libs.decomp.dadger import updater as dadger_updater
 from PMO.scripts_unificados.apps.prospec.libs.info_arquivos_externos import info_external_files
 
 api = RzProspec()
@@ -115,6 +117,19 @@ def update_carga_estudo(ids_to_modify,path_carga_zip):
         send_files_to_api(id_estudo, file)
         print(f"============================================")
     
+def update_weol_estudo(ids_to_modify:List[int],data_produto:datetime.date):
+    for id_estudo in ids_to_modify:
+
+        print(f"\n\nModificando estudo {id_estudo}...")
+
+        path_estudo = api.downloadEstudoPorId(id_estudo)
+
+        extracted_zip_estudo = utils.extract_file_estudo(
+            path_estudo,
+            )
+        dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
+        dadger_updater.atualizar_eolica_DC(dadgers_to_modify, data_produto)
+        
 if __name__ == "__main__":
 
     # ids_to_modify = get_ids_to_modify()

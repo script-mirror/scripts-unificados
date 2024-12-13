@@ -10,7 +10,8 @@ sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.prospec.libs import utils
 from PMO.scripts_unificados.apps.prospec.libs.decomp.dadger import dadger
 from PMO.scripts_unificados.apps.prospec.libs.info_arquivos_externos import info_external_files
-
+from typing import List
+import datetime
 
 
 def atualizar_cvu_DC(info_cvu,paths_to_modify):
@@ -99,8 +100,19 @@ def atualizar_carga_DC(info_cargas,paths_to_modify):
             skip_lines=len(linhas_formatadas)
             )
             
-def atualizar_eolica_DC(info_cargas,paths_to_modify):
-    pass
+def atualizar_eolica_DC(paths_to_modify:List[str], data_produto:datetime.date):
+    info_eolica = info_external_files.organizar_info_eolica(
+        paths_to_modify,
+        data_produto
+        )
+    for path_dadger in info_eolica:
+        bloco = info_eolica[path_dadger].split('\n')
+        dadger.sobrescreve_bloco(
+            path_to_modify=path_dadger,
+            mnemonico_bloco='PQ',
+            values=bloco,
+            skip_lines=len(bloco)
+        )
 
 if __name__ == "__main__":
 
@@ -115,39 +127,40 @@ if __name__ == "__main__":
         )
 
     # ORGANIZA INFORMACOES DE CVU
-    info_cvu = info_external_files.organizar_info_cvu(
-        ano_referencia=2024,    
-        mes_referencia=11,
-        path_saida=path_saida
-        )
+    # info_cvu = info_external_files.organizar_info_cvu(
+    #     ano_referencia=2024,    
+    #     mes_referencia=11,
+    #     path_saida=path_saida
+    #     )
 
-    #ALTERAR CVU EM DECKS DC
-    paths_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
-    atualizar_cvu_DC(
-        info_cvu,
-        paths_to_modify
-        )
+    # #ALTERAR CVU EM DECKS DC
+    # paths_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
+    # atualizar_cvu_DC(
+    #     info_cvu,
+    #     paths_to_modify
+    #     )
 
-    #ORGANIZA INFORMACOES DE CARGA
-    path_carga_zip= "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/verificadores/ccee/RV3_PMO_Novembro_2024_carga_semanal.zip"
-    info_cargas = info_external_files.organizar_info_carga(
-        path_carga_zip,
-        extracted_zip_estudo,
-        path_saida
-        )
-    #ALTERAR CARGA EM DECKS DC
-    paths_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
-    atualizar_carga_DC(
-        info_cargas,
-        paths_to_modify
-    )
-    
-    # path_eolica_zip= "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/verificadores/ccee/RV3_PMO_Novembro_2024_carga_semanal.zip"
-    # paths_dadgers = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
-    # info_eolica = info_external_files.organizar_info_eolica(
-    #     paths_dadgers,
+    # #ORGANIZA INFORMACOES DE CARGA
+    # path_carga_zip= "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/verificadores/ccee/RV3_PMO_Novembro_2024_carga_semanal.zip"
+    # info_cargas = info_external_files.organizar_info_carga(
+    #     path_carga_zip,
+    #     extracted_zip_estudo,
     #     path_saida
     #     )
+    # #ALTERAR CARGA EM DECKS DC
+    # paths_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
+    # atualizar_carga_DC(
+    #     info_cargas,
+    #     paths_to_modify
+    # )
+    
+    path_eolica_zip= "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/verificadores/ccee/RV3_PMO_Novembro_2024_carga_semanal.zip"
+    paths_dadgers = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
+    pdb.set_trace()
+    info_eolica = info_external_files.organizar_info_eolica(
+        paths_dadgers,
+        path_saida
+        )
     
     # atualizar_eolica_DC(
     #     info_eolica,
