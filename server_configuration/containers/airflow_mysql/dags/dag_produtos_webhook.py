@@ -133,7 +133,7 @@ with DAG(
         python_callable=deck_prev_eolica_semanal_previsao_final,
         provide_context=True
     )
-    previsao_final = PythonOperator(
+    atualizar_estudos = PythonOperator(
         task_id='atualizar_estudos_prospec_bloco_pq',
         python_callable=deck_prev_eolica_semanal_update_estudos,
         provide_context=True
@@ -145,6 +145,6 @@ with DAG(
     )
 
     inicio >> patamares
-    patamares >> previsao_final >> fim
+    patamares >> previsao_final >> atualizar_estudos >> fim
     
     
