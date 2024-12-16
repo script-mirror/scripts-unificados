@@ -11,7 +11,7 @@ from airflow.operators.python import BranchPythonOperator, PythonOperator
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.webhook.my_run import PRODUCT_MAPPING
 from PMO.scripts_unificados.apps.webhook.libs import manipularArquivosShadow
-
+from PMO.scripts_unificados.apps.prospec.libs.update_estudo import update_weol_estudo
 
 def remover_acentos_e_caracteres_especiais(texto):
     import re
@@ -60,6 +60,15 @@ def deck_prev_eolica_semanal_previsao_final(**kwargs):
     params = kwargs.get('dag_run').conf
     manipularArquivosShadow.deck_prev_eolica_semanal_previsao_final(params)
     
+def deck_prev_eolica_semanal_update_estudos(**kwargs):
+    params = kwargs.get('dag_run').conf
+    # ids_to_modify = get_ids_estudos()
+
+    ids_to_modify = [22152]
+    data_produto = datetime.datetime.strptime(params.get('dataProduto'), "%d/%m/%Y")
+    
+    update_weol_estudo(ids_to_modify, data_produto.date)
+    
 with DAG(
     dag_id='WEEBHOOK',
     start_date=datetime.datetime(2024, 4, 28),
@@ -68,7 +77,7 @@ with DAG(
     tags=['webhook'],
     default_args={
         'retries': 1,
-        'retry_delay': datetime.timedelta(minutes=2) 
+        'retry_delay': datetime.timedelta(minutes=5) 
     }
 ) as dag:
 
@@ -102,7 +111,7 @@ with DAG(
     schedule=None,
     default_args={
         'retries': 1,
-        'retry_delay': datetime.timedelta(minutes=2) 
+        'retry_delay': datetime.timedelta(minutes=5) 
     },
     tags=['Webhook', 'Decks', 'Decomp']
     ) as dag:
@@ -122,6 +131,11 @@ with DAG(
     previsao_final = PythonOperator(
         task_id='inserir_previsao_final_weol',
         python_callable=deck_prev_eolica_semanal_previsao_final,
+        provide_context=True
+    )
+    previsao_final = PythonOperator(
+        task_id='atualizar_estudos_prospec_bloco_pq',
+        python_callable=deck_prev_eolica_semanal_update_estudos,
         provide_context=True
     )
     

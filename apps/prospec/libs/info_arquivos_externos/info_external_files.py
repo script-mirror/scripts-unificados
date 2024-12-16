@@ -199,6 +199,11 @@ def df_pq_to_dadger(df: pd.DataFrame) -> str:
 
 def get_weol(data_produto:datetime.date, data_inicio_semana:datetime.datetime) -> pd.DataFrame:
     weol_decomp = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol/start-week-date", params={"dataProduto":str(data_produto), "inicioSemana":str(data_inicio_semana)})
+    weol_decomp.raise_for_status()
+    if weol_decomp.json() == []:
+        logger.info("Nenhum dado encontrado")
+        return pd.DataFrame()
+        
     df = pd.DataFrame(weol_decomp.json())
     df['valor'] = df['valor'].astype(str).str[:5]
     df_estagio = pd.DataFrame({'inicio_semana': df['inicio_semana'].sort_values().unique()}).reset_index().rename(columns={'index': 'estagio'})
@@ -248,7 +253,7 @@ def organizar_info_eolica(paths_dadgers:List[str], data_produto:datetime.date):
             except:
                 continue
         df_bloco_atual = df_bloco_atual.sort_values(['sub', 'nome', 'estagio'])
-        novos_blocos[''][path_dadger] = df_pq_to_dadger(df_bloco_atual)
+        novos_blocos[path_dadger] = df_pq_to_dadger(df_bloco_atual)
     return novos_blocos
 
 

@@ -1,22 +1,34 @@
 import os
 import re
 import sys
-import glob
 import pdb
-import pandas as pd
+import glob
+import logging
+import datetime
 import warnings
+import pandas as pd
+from typing import List
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
+
 from PMO.scripts_unificados.apps.prospec.libs import utils
 from PMO.scripts_unificados.apps.prospec.libs.decomp.dadger import dadger
 from PMO.scripts_unificados.apps.prospec.libs.info_arquivos_externos import info_external_files
-from typing import List
-import datetime
+
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    handlers=[
+                        logging.StreamHandler()
+                    ])
+logger = logging.getLogger(__name__)
 
 
 def atualizar_cvu_DC(info_cvu,paths_to_modify):
     for path_dadger in paths_to_modify:
-        print(f"\n\n\nModificando arquivo {path_dadger}")
+        logger.info(f"\n\n\nModificando arquivo {path_dadger}")
 
         extracted_blocos_dadger, headers = dadger.leituraArquivo(path_dadger)
 
@@ -59,7 +71,7 @@ def atualizar_cvu_DC(info_cvu,paths_to_modify):
 def atualizar_carga_DC(info_cargas,paths_to_modify):
     
     for path_dadger in paths_to_modify:
-        print(f"\n\n\nModificando arquivo {path_dadger}")
+        logger.info(f"\n\n\nModificando arquivo {path_dadger}")
 
         #LEITURA DO DECK 
         folder_name = os.path.basename(os.path.dirname(path_dadger))
@@ -100,23 +112,32 @@ def atualizar_carga_DC(info_cargas,paths_to_modify):
             skip_lines=len(linhas_formatadas)
             )
             
-def atualizar_eolica_DC(paths_to_modify:List[str], data_produto:datetime.date):
+def update_eolica_DC(paths_to_modify:List[str], data_produto:datetime.date):
     info_eolica = info_external_files.organizar_info_eolica(
         paths_to_modify,
         data_produto
         )
     for path_dadger in info_eolica:
         bloco = info_eolica[path_dadger].split('\n')
-        dadger.sobrescreve_bloco(
-            path_to_modify=path_dadger,
-            mnemonico_bloco='PQ',
-            values=bloco,
-            skip_lines=len(bloco)
-        )
+        try:
+            dadger.sobrescreve_bloco(
+                path_to_modify=path_dadger,
+                mnemonico_bloco='PQ',
+                values=bloco,
+                skip_lines=len(bloco)
+            )
+            logger.info(f"Bloco {path_dadger} sobrescrito com sucesso")
+        except Exception as e:
+            logger.error(f"Erro ao tentar sobrescrever bloco {path_dadger}: {str(e)}")
+            continue    
 
 if __name__ == "__main__":
 
-    
+    update_eolica_DC([
+        '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_21904_Entrada/DC202411-sem4/dadger.rv3',
+        '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_21904_Entrada/DC202411-sem5/dadger.rv4',
+        '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_21904_Entrada/DC202412-sem1/dadger.rv0'
+        ], datetime.date(2025,11,16))
     path_saida = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp"
 
     #EXTRAINDO ZIP

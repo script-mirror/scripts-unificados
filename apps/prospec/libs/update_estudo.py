@@ -4,6 +4,7 @@ import pdb
 import sys
 import glob
 import shutil
+import logging
 import datetime
 import pandas as pd
 from typing import List
@@ -15,6 +16,15 @@ from PMO.scripts_unificados.apps.prospec.prospec import RzProspec
 from PMO.scripts_unificados.apps.prospec.libs.newave.clast import updater as clast_updater
 from PMO.scripts_unificados.apps.prospec.libs.decomp.dadger import updater as dadger_updater
 from PMO.scripts_unificados.apps.prospec.libs.info_arquivos_externos import info_external_files
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    handlers=[
+                        logging.StreamHandler()
+                    ])
+
+logger = logging.getLogger(__name__)
 
 api = RzProspec()
 
@@ -35,9 +45,9 @@ def send_files_to_api(idEstudo, pathEstudo):
     arquivo_enviado = api.sendFile(endpoint, pathEstudo)
 
     if 'filesUploaded' in arquivo_enviado:
-        print(f'{arquivo_enviado["filesUploaded"][0]} - OK')
+        logger.info(f'{arquivo_enviado["filesUploaded"][0]} - OK')
     else:
-        print(f'Falha ao enviar estudo {idEstudo}')
+        logger.info(f'Falha ao enviar estudo {idEstudo}')
 
 
 def update_cvu_estudo(ids_to_modify,ano_referencia_cvu,mes_referencia_cvu):
@@ -50,7 +60,8 @@ def update_cvu_estudo(ids_to_modify,ano_referencia_cvu,mes_referencia_cvu):
 
     for id_estudo in ids_to_modify:
 
-        print(f"\n\nModificando estudo {id_estudo}...")
+        print("\n\n")
+        logger.info(f"Modificando estudo {id_estudo}")
 
         path_to_modify = api.downloadEstudoPorId(id_estudo)
 
@@ -79,7 +90,7 @@ def update_cvu_estudo(ids_to_modify,ano_referencia_cvu,mes_referencia_cvu):
             )
 
         send_files_to_api(id_estudo, file)
-        print(f"============================================")
+        logger.info(f"============================================")
 
 
 def update_carga_estudo(ids_to_modify,path_carga_zip):
@@ -87,8 +98,8 @@ def update_carga_estudo(ids_to_modify,path_carga_zip):
     # #ORGANIZA INFORMACOES DE CARGA
 
     for id_estudo in ids_to_modify:
-
-        print(f"\n\nModificando estudo {id_estudo}...")
+        print("\n\n")
+        logger.info(f"Modificando estudo {id_estudo}")
 
         path_to_modify = api.downloadEstudoPorId(id_estudo)
 
@@ -115,12 +126,12 @@ def update_carga_estudo(ids_to_modify,path_carga_zip):
             )
 
         send_files_to_api(id_estudo, file)
-        print(f"============================================")
+        logger.info(f"============================================")
     
 def update_weol_estudo(ids_to_modify:List[int],data_produto:datetime.date):
     for id_estudo in ids_to_modify:
-
-        print(f"\n\nModificando estudo {id_estudo}...")
+        print("\n\n")
+        logger.info(f"Modificando estudo {id_estudo}")
 
         path_estudo = api.downloadEstudoPorId(id_estudo)
 
@@ -128,7 +139,15 @@ def update_weol_estudo(ids_to_modify:List[int],data_produto:datetime.date):
             path_estudo,
             )
         dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
-        dadger_updater.atualizar_eolica_DC(dadgers_to_modify, data_produto)
+        dadger_updater.update_eolica_DC(dadgers_to_modify, data_produto)
+        
+        file = shutil.make_archive(
+            extracted_zip_estudo,
+            'zip',
+            extracted_zip_estudo
+            )
+        send_files_to_api(id_estudo, file)
+        logger.info(f"============================================")
         
 if __name__ == "__main__":
 
