@@ -183,8 +183,11 @@ def completar_estagios(df):
             if estagio not in estagios:
                 linha_base = df_nome.iloc[0].copy()
                 linha_base['estagio'] = estagio
-                df_completo = df_completo._append(linha_base, ignore_index=True)
-
+                try:
+                    df_completo = df_completo.append(linha_base, ignore_index=True)
+                except:
+                    df_completo = df_completo._append(linha_base, ignore_index=True)
+                    
         df_completo = df_completo._append(df_nome, ignore_index=True)
 
     df_completo = df_completo.sort_values(by=['nome', 'estagio']).reset_index(drop=True)
