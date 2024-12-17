@@ -202,6 +202,7 @@ def get_weol(data_produto:datetime.date, data_inicio_semana:datetime.datetime) -
     weol_decomp.raise_for_status()
     if weol_decomp.json() == []:
         logger.info("Nenhum dado encontrado")
+        raise Exception("Nenhum dado encontrado")
         return pd.DataFrame()
         
     df = pd.DataFrame(weol_decomp.json())
