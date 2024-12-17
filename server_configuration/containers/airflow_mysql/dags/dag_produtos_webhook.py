@@ -67,7 +67,7 @@ def deck_prev_eolica_semanal_update_estudos(**kwargs):
     ids_to_modify = [22152]
     data_produto = datetime.datetime.strptime(params.get('dataProduto'), "%d/%m/%Y")
     
-    update_weol_estudo(ids_to_modify, data_produto.date)
+    update_weol_estudo(ids_to_modify, data_produto.date())
     
 with DAG(
     dag_id='WEEBHOOK',
