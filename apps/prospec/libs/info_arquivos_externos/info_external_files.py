@@ -184,7 +184,7 @@ def completar_estagios(df):
                 linha_base = df_nome.iloc[0].copy()
                 linha_base['estagio'] = estagio
                 
-                df_completo = pd.concat([df_completo, linha_base], ignore_index=True)
+                df_completo = pd.concat([df_completo, pd.DataFrame([linha_base])], ignore_index=True)
 
         df_completo = pd.concat([df_completo, df_nome], ignore_index=True)
 
@@ -196,7 +196,7 @@ def df_pq_to_dadger(df: pd.DataFrame) -> str:
         f"{row['mnemonico']:<4}{row['nome']:<11}{row['sub']:<1}{row['estagio']:>5}{row['gerac_p1']:>8}{row['gerac_p2']:>5}{row['gerac_p3']:>5}\n"
         for _, row in df.iterrows()
     )
-    return result.removesuffix("&\n").removesuffix("\n")
+    return result.rstrip("&\n").rstrip("\n")
 
 def get_weol(data_produto:datetime.date, data_inicio_semana:datetime.datetime) -> pd.DataFrame:
     weol_decomp = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol/start-week-date", params={"dataProduto":str(data_produto), "inicioSemana":str(data_inicio_semana)})

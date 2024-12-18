@@ -141,22 +141,21 @@ def update_weol_estudo(ids_to_modify:List[int],data_produto:datetime.date):
         dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
         dadger_updater.update_eolica_DC(dadgers_to_modify, data_produto)
         
-        file = shutil.make_archive(
-            extracted_zip_estudo,
-            'zip',
-            extracted_zip_estudo
-            )
-        send_files_to_api(id_estudo, file)
+
+        for dadger in dadgers_to_modify:
+            send_files_to_api(id_estudo, dadger)
+
         logger.info(f"============================================")
         
 if __name__ == "__main__":
 
     # ids_to_modify = get_ids_to_modify()
-    ids_to_modify = [22152]
-    path_carga_zip=r"C:\Users\CS399274\Downloads\RV0_PMO_Dezembro_2024_carga_semanal.zip"
+    update_weol_estudo([22400], datetime.date(2024, 12, 16))
+    # ids_to_modify = [22152]
+    # path_carga_zip=r"C:\Users\CS399274\Downloads\RV0_PMO_Dezembro_2024_carga_semanal.zip"
 
-    ano_referencia_cvu=2024
-    mes_referencia_cvu=11
+    # ano_referencia_cvu=2024
+    # mes_referencia_cvu=11
 
-    update_cvu_estudo(ids_to_modify,ano_referencia_cvu,mes_referencia_cvu)
-    update_carga_estudo(ids_to_modify,path_carga_zip)
+    # update_cvu_estudo(ids_to_modify,ano_referencia_cvu,mes_referencia_cvu)
+    # update_carga_estudo(ids_to_modify,path_carga_zip)
