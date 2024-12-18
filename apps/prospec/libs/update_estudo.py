@@ -1,5 +1,6 @@
 
 import os
+import re
 import pdb
 import sys
 import glob
@@ -39,9 +40,9 @@ def get_ids_to_modify():
     return list(set(ids_to_modify)) 
 
 
-def send_files_to_api(idEstudo, pathEstudo):
+def send_files_to_api(idEstudo, pathEstudo, deckId):
 
-    endpoint = f'/api/prospectiveStudies/{idEstudo}/UploadFiles'
+    endpoint = f'/api/prospectiveStudies/{idEstudo}/UploadFiles?deckId={deckId}'
     arquivo_enviado = api.sendFile(endpoint, pathEstudo)
 
     if 'filesUploaded' in arquivo_enviado:
@@ -127,9 +128,13 @@ def update_carga_estudo(ids_to_modify,path_carga_zip):
 
         send_files_to_api(id_estudo, file)
         logger.info(f"============================================")
-    
-def update_weol_estudo(ids_to_modify:List[int],data_produto:datetime.date):
+        
+def update_weol_estudo(data_produto:datetime.date, ids_to_modify:List[int] = None):
+    if ids_to_modify == None:
+        ids_to_modify = get_ids_to_modify()
     for id_estudo in ids_to_modify:
+        info_estudo = api.getInfoRodadaPorId(id_estudo)
+        df_estudo = pd.DataFrame(info_estudo['Decks'])
         print("\n\n")
         logger.info(f"Modificando estudo {id_estudo}")
 
@@ -141,16 +146,20 @@ def update_weol_estudo(ids_to_modify:List[int],data_produto:datetime.date):
         dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
         dadger_updater.update_eolica_DC(dadgers_to_modify, data_produto)
         
-
+        pattern = r'DC\d{6}-sem\d'
+        
         for dadger in dadgers_to_modify:
-            send_files_to_api(id_estudo, dadger)
+            match = re.search(pattern, dadger)
+            nome_estudo = match.group() + ".zip"
+            id_deck = int(df_estudo['Id'][df_estudo['FileName'] == nome_estudo].values[0])
+            send_files_to_api(id_estudo, dadger, id_deck)
 
         logger.info(f"============================================")
         
 if __name__ == "__main__":
 
     # ids_to_modify = get_ids_to_modify()
-    update_weol_estudo([22400], datetime.date(2024, 12, 16))
+    update_weol_estudo([22406], datetime.date(2024, 12, 17))
     # ids_to_modify = [22152]
     # path_carga_zip=r"C:\Users\CS399274\Downloads\RV0_PMO_Dezembro_2024_carga_semanal.zip"
 

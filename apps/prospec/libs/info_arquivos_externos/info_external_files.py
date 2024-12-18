@@ -203,7 +203,6 @@ def get_weol(data_produto:datetime.date, data_inicio_semana:datetime.datetime) -
     weol_decomp.raise_for_status()
     if weol_decomp.json() == []:
         logger.info("Nenhum dado encontrado")
-        raise Exception("Nenhum dado encontrado")
         return pd.DataFrame()
         
     df = pd.DataFrame(weol_decomp.json())
@@ -223,6 +222,7 @@ def organizar_info_eolica(paths_dadgers:List[str], data_produto:datetime.date):
     novos_blocos = {}
     for path_dadger in paths_dadgers:
         data = utils.get_date_from_dadger(path_dadger)
+
         df_weol = get_weol(data_produto, data)
 
         # Completando estagios apenas para os blocos de EOL
