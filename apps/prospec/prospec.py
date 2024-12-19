@@ -272,6 +272,24 @@ class RzProspec():
                             print(f'{prospecStudy["filesUploaded"][0]} - OK')
                             break
 
+    def update_tags(self, idEstudo:int, tags:list, textColor:str, backgroundColor:str):
+        tags_delete = self.getInfoRodadaPorId(idEstudo)['Tags']
+        parameter = ''
+        url = f'/api/prospectiveStudies/{idEstudo}/'
+        self.modificarDeck(url+"RemoveTags",
+                parameter, tags_delete)
+        
+        tags_add = []
+        for tag in tags:
+            tagsConfiguration = {}
+            tagsConfiguration['Text'] = tag
+            tagsConfiguration['TextColor'] = textColor
+            tagsConfiguration['BackgroundColor'] = backgroundColor
+            tags_add.append(tagsConfiguration)
+        
+        self.modificarDeck(url+"AddTags",
+                parameter, tags_add)
+
     def modificar_tags(self,idEstudo:int,tags:list,tipoModificacao:str):
         
         listaTags = []

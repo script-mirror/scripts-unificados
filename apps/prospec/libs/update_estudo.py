@@ -9,7 +9,7 @@ import logging
 import datetime
 import pandas as pd
 from typing import List
-
+from io import StringIO
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.prospec.libs import utils
@@ -32,12 +32,16 @@ api = RzProspec()
 def get_ids_to_modify():
 
     path = "/WX2TB/Documentos/fontes/PMO/API_Prospec/ConfigProspecAPI/ConfigRodadaDiaria.csv"
-    df = pd.read_csv(path, sep=';')
+    with open(path, 'r') as file:
+        csv_text = file.read()
+    
+    csv_text = csv_text[:csv_text.find('prospecStudyIdToAssociate')]
+    df = pd.read_csv(StringIO(csv_text), sep=';')
     df.columns = df.columns.str.strip()
     df.set_index('username', inplace=True)
-    ids_mask = df.index[df.index.str.startswith('prospecStudyId')]
+    ids_mask = df.index[df.index.str.startswith('prospecStudyIdToDuplicate')]
     ids_to_modify = df.loc[ids_mask,df.columns[0]].values.tolist()
-    return list(set(ids_to_modify)) 
+    return list(set(ids_to_modify))
 
 
 def send_files_to_api(idEstudo, pathEstudo, deckId):
@@ -130,6 +134,7 @@ def update_carga_estudo(ids_to_modify,path_carga_zip):
         logger.info(f"============================================")
         
 def update_weol_estudo(data_produto:datetime.date, ids_to_modify:List[int] = None):
+    tag = [f'WEOL {datetime.datetime.now().strftime("%d/%m %H:%M")}']
     if ids_to_modify == None:
         ids_to_modify = get_ids_to_modify()
     for id_estudo in ids_to_modify:
@@ -145,7 +150,7 @@ def update_weol_estudo(data_produto:datetime.date, ids_to_modify:List[int] = Non
             )
         dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
         dadger_updater.update_eolica_DC(dadgers_to_modify, data_produto)
-        
+        api.update_tags(id_estudo, tag, "#FFF", "#44F")
         pattern = r'DC\d{6}-sem\d'
         
         for dadger in dadgers_to_modify:
@@ -159,7 +164,7 @@ def update_weol_estudo(data_produto:datetime.date, ids_to_modify:List[int] = Non
 if __name__ == "__main__":
 
     # ids_to_modify = get_ids_to_modify()
-    update_weol_estudo([22406], datetime.date(2024, 12, 17))
+    update_weol_estudo(datetime.date(2024, 12, 17))
     # ids_to_modify = [22152]
     # path_carga_zip=r"C:\Users\CS399274\Downloads\RV0_PMO_Dezembro_2024_carga_semanal.zip"
 
