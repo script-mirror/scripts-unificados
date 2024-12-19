@@ -277,7 +277,7 @@ class RzProspec():
         tags_prefix = [x.split(' ')[0] for x in tags]
         
         for tag in tags_delete:
-            if tag.split(' ')[0] not in tags_prefix:
+            if tag['Text'].split(' ')[0] not in tags_prefix:
                 tags_delete.remove(tag)
             
         parameter = ''
