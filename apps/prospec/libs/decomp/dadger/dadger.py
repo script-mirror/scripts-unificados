@@ -1,6 +1,14 @@
 import re
 import pandas as pd
+import logging
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    handlers=[
+                        logging.StreamHandler()
+                    ])
 
+logger = logging.getLogger(__name__)
 
 info_blocos = {}
 info_blocos['TE'] = {'campos':['mnemonico',
@@ -668,11 +676,13 @@ def leituraArquivo(filePath):
         else:
             mnemonico = line.split()[0]
             if mnemonico not in info_blocos:
-                print(mnemonico)
-                pdb.set_trace()
+                logger.warning(f'Mnemonico {mnemonico} nao encontrado.')
+                continue
+                
             infosLinha = re.split(info_blocos[mnemonico]['regex'], line)
             if len(infosLinha) < 2:
-                pdb.set_trace()
+                logger.warning(f"Linha incorreta: {infosLinha}")
+                continue
             
             if mnemonico not in blocos:
                 blocos[mnemonico] = []

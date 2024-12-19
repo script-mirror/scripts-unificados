@@ -274,6 +274,12 @@ class RzProspec():
 
     def update_tags(self, idEstudo:int, tags:list, textColor:str, backgroundColor:str):
         tags_delete = self.getInfoRodadaPorId(idEstudo)['Tags']
+        tags_prefix = [x['Text'].split(' ')[0] for x in tags]
+        
+        for tag in tags_delete:
+            if tag.split(' ')[0] not in tags_prefix:
+                tags_delete.remove(tag)
+            
         parameter = ''
         url = f'/api/prospectiveStudies/{idEstudo}/'
         self.modificarDeck(url+"RemoveTags",
