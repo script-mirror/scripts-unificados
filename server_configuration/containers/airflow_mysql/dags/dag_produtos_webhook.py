@@ -72,7 +72,7 @@ with DAG(
     schedule=None,
     tags=['webhook'],
     default_args={
-        'retries': 1,
+        'retries': 4,
         'retry_delay': datetime.timedelta(minutes=5) 
     }
 ) as dag:
@@ -106,7 +106,7 @@ with DAG(
     catchup=False,
     schedule=None,
     default_args={
-        'retries': 1,
+        'retries': 4,
         'retry_delay': datetime.timedelta(minutes=5) 
     },
     tags=['Webhook', 'Decks', 'Decomp']
