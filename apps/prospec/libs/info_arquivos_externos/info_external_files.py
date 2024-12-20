@@ -172,7 +172,7 @@ def organizar_info_carga(path_carga_zip,path_deck):
 
 def completar_estagios(df):
     df_completo = pd.DataFrame(columns=df.columns)
-
+    
     for nome in df['nome'].unique():
         df_nome = df[df['nome'] == nome]
         estagios = df_nome['estagio'].tolist()
@@ -189,6 +189,7 @@ def completar_estagios(df):
         df_completo = pd.concat([df_completo, df_nome], ignore_index=True)
 
     df_completo = df_completo.sort_values(by=['nome', 'estagio']).reset_index(drop=True)
+    df_completo = df_completo.drop_duplicates(['nome', 'estagio'])
     return df_completo
 
 def df_pq_to_dadger(df: pd.DataFrame) -> str:

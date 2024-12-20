@@ -164,7 +164,7 @@ def update_weol_estudo(data_produto:datetime.date, ids_to_modify:List[int] = Non
 if __name__ == "__main__":
 
     # ids_to_modify = get_ids_to_modify()
-    update_weol_estudo(datetime.date(2024, 12, 17))
+    update_weol_estudo(datetime.date(2024, 12, 19))
     # ids_to_modify = [22152]
     # path_carga_zip=r"C:\Users\CS399274\Downloads\RV0_PMO_Dezembro_2024_carga_semanal.zip"
 
