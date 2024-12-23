@@ -846,8 +846,8 @@ def gerador_arquivos_cAdic_Sistema_DAT(path,dataAnoMesAtual):
             DIR_TOOLS.extrair_zip_mantendo_nome_diretorio(path_arquivo_base, deleteAfterExtract=False)
             
             data_mesAnterior = dataAnoMesAtual - relativedelta(months=1)
-            resposta_cAdic_NW = gerar_dados_cAdic_NW(path, data_mesAnterior)
-            resposta_Sistema_NW = gerar_dados_sistema_dat_NW(path, data_mesAnterior)
+            resposta_cAdic_NW = gerar_dados_cAdic_NW(path_, data_mesAnterior)
+            resposta_Sistema_NW = gerar_dados_sistema_dat_NW(path_, data_mesAnterior)
             
             arquivo_deckUtilizado = f"Foi utilizado o deck do mês passado {mes_anterior_numero}/{ano_anterior} para gerar os arquivos de C_ADIC.DAT e SISTEMA.DAT.<br> Arquivo newave preliminar ainda não foi disponibilizado.<br>"
             apagar_arquivos_C_Adic_Sistema_DAT_obsoletos(path_saida)
