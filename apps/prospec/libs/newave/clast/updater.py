@@ -11,9 +11,8 @@ from PMO.scripts_unificados.apps.prospec.libs.newave.clast import clast
 
 def atualizar_cvu_NW(info_cvu,paths_to_modify):
 
-
+    paths_modified = []
     for path_clast in paths_to_modify:
-        print(f"\n\n\nModificando arquivo {path_clast}")
 
         #LEITURA DO DECK
         folder_name = os.path.basename(os.path.dirname(path_clast))
@@ -30,6 +29,8 @@ def atualizar_cvu_NW(info_cvu,paths_to_modify):
 
         if not info_cvu.get(dt_referente):
             continue
+
+        print(f"\n\n\nModificando arquivo {path_clast}")
 
         #SEPARANDO BLOCOS DE CLAST
         df_clast_completo = pd.read_fwf(path_clast,sep=';',encoding='latin1')
@@ -53,6 +54,9 @@ def atualizar_cvu_NW(info_cvu,paths_to_modify):
             df_estrutural = df_clast_estrutural.fillna(''),
             df_conjuntural = df_clast_conjuntural.fillna('')
             )
+        
+        paths_modified.append(path_clast)
+    return paths_modified
 
 if __name__ == "__main__":
     from PMO.scripts_unificados.apps.prospec.libs import utils

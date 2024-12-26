@@ -27,8 +27,9 @@ logger = logging.getLogger(__name__)
 
 
 def atualizar_cvu_DC(info_cvu,paths_to_modify):
+
+    paths_modified=[]
     for path_dadger in paths_to_modify:
-        logger.info(f"\n\n\nModificando arquivo {path_dadger}")
 
         extracted_blocos_dadger, headers = dadger.leituraArquivo(path_dadger)
 
@@ -49,6 +50,8 @@ def atualizar_cvu_DC(info_cvu,paths_to_modify):
         if not info_cvu.get(dt_referente):
             continue
 
+        logger.info(f"\n\n\nModificando arquivo {path_dadger}")
+
         cvu_map = info_cvu[dt_referente]['conjuntural'].set_index("CÓDIGO")["CVU CONJUNTURAL"].to_dict()
         extracted_blocos_dadger['CT'] = utils.trim_df(extracted_blocos_dadger['CT'])
 
@@ -67,11 +70,16 @@ def atualizar_cvu_DC(info_cvu,paths_to_modify):
             values=linhas_formatadas,
             skip_lines=len(extracted_blocos_dadger['CT'])
             )
+        paths_modified.append(path_dadger)
+
+    return paths_modified
+        
 
 def atualizar_carga_DC(info_cargas,paths_to_modify):
     
+    paths_modified=[]
+
     for path_dadger in paths_to_modify:
-        logger.info(f"\n\n\nModificando arquivo {path_dadger}")
 
         #LEITURA DO DECK 
         folder_name = os.path.basename(os.path.dirname(path_dadger))
@@ -95,6 +103,8 @@ def atualizar_carga_DC(info_cargas,paths_to_modify):
         if info_cargas[dt_referente].get(int(semana)- 1,pd.DataFrame()).empty:
             continue
 
+        logger.info(f"\n\n\nModificando arquivo {path_dadger}")
+
         linhas_formatadas = info_cargas[dt_referente][int(semana) - 1].apply(
             lambda row: formatacao.format(*row), 
             axis=1
@@ -111,6 +121,10 @@ def atualizar_carga_DC(info_cargas,paths_to_modify):
             values=linhas_formatadas,
             skip_lines=len(linhas_formatadas)
             )
+
+        paths_modified.append(path_dadger)
+
+    return paths_modified
             
 def update_eolica_DC(paths_to_modify:List[str], data_produto:datetime.date):
     info_eolica = info_external_files.organizar_info_eolica(
