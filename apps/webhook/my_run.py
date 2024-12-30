@@ -130,7 +130,7 @@ with app.app_context():
     if not os.path.exists('users.db'):
         db.create_all()
 
-@app.route("/webhook/api/webhook", methods=["GET", "POST", "OPTIONS"])
+@app.route("/webhook", methods=["GET", "POST", "OPTIONS"])
 def webhook():
 
     logger.info(f'ONS: {request.data}')
