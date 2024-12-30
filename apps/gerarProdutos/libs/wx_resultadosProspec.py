@@ -70,8 +70,8 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 
 	for i, compil in enumerate(pathCompilados):
 		pathCompilado = extractFiles(os.path.abspath(compil))
-
 		nomeEstudo = os.path.basename(pathCompilado)
+		print(nomeEstudo)
 		match = re.match('Estudo_([0-9]{1,})_compilation',nomeEstudo)
 		numeroEstudo = match.group(1)
 		num_estudo.append(numeroEstudo)
@@ -147,7 +147,7 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 		df_nw = df[df['Deck'].str.startswith('NW')].set_index('Deck')
 		df_dc = df[df['Deck'].str.startswith('DC')].copy()
 		df_dc['NW_Group'] = 'NW' + df_dc['Deck'].str[2:8]
-		
+
 		iter_gap_strings = []
 		for nw_key, group in df_dc.groupby('NW_Group'):
 			if nw_key in df_nw.index:
@@ -166,6 +166,7 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 					iter_gap_strings.append(iter_gap_string)
 			else:
 				iter_gap_strings.extend([None] * len(group))
+
 		df_dc['iter_gap'] = iter_gap_strings
 		df_dc['Sensibilidade'] = df_dc['Sensibilidade'] + '_id'+ numeroEstudo
 		compila_gapMensal =  pd.concat([compila_gapMensal,df_dc])
@@ -333,8 +334,10 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 
 	resumoTabela1 = enasMensaisResumo+'<br>'+earResumo+'<br>'+enasResumo+'<br>'+gap_iter_resumo+'<br>'+precoNwResumo+'<br>'+cmoResumo
 	resumoTabela1.insert(0, "", ['ENA-Mês(%)<br>EAR(%)<br>ENA-S1(GW)<br>GAP-IT(NW/DC)<br>PLD NW(R$)<br>PLD DC(R$)']*resumoTabela1.shape[0])
-	resumoTabela1 = resumoTabela1.applymap(lambda x: x.replace('nan-nan-nan-nan','-'))
-
+	
+	resumoTabela1 = resumoTabela1.fillna('-')
+	resumoTabela1 = resumoTabela1.applymap(lambda x: x.replace('nan-nan-nan-nan', '-') if isinstance(x, str) else x)
+		
 	titulo = '[Rodada] - Prospec RV{}'.format(dts[0].atualRevisao)
 	html = "</div>"
 	html += "<div class=\"row\" style=\"display: flex;margin-left:-5px;margin-right:-5px;\">"
