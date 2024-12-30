@@ -364,16 +364,20 @@ def processar_produto_CMO_DC_PRELIMINAR(parametros):
 
     html = '<h1>'+assunto+'</h1>'
     html += '<p>Deck do ONS não comentado.</p>'
-    resultado.msgWhats = '\`\`\`{}\\nDeck do ONS não comentado\\n{:->15}\\n'.format(assunto,'')
+    resultado.msgWhats = '{}\nDeck do ONS não comentado\n{:->20}\n'.format(assunto,'')
     
+    from tabulate import tabulate
+
+    teste=[]
+    header=[]
     for submercado in cmo:
         html += '<h3>{}</h3>'.format(submercado)
         html += wx_emailSender.gerarTabela(cmo[submercado][1:], cmo[submercado][0])
-        resultado.msgWhats += '| {:>2} | {:>6} |\\n'.format(submercado, cmo[submercado][4][1])
+        teste.append([submercado,cmo[submercado][4][1]])
     
-    resultado.msgWhats += '{:->15}\\n\`\`\`'.format('')
+    resultado.msgWhats += tabulate(teste,tablefmt="plain")
 
-    resultado.flagEmail = True
+    # resultado.flagEmail = True
     resultado.assuntoEmail = assunto
     resultado.corpoEmail = html
     resultado.remetenteEmail = 'cmo@climenergy.com'
@@ -447,6 +451,8 @@ def processar_produto_REVISAO_CARGA_NW_preliminar(parametros):
     resultado.remetenteEmail = 'rev_carga@climenergy.com'
     arquivo_deckUtilizado = f"Arquivos C_ADIC.DAT e SISTEMA.DAT gerados com a carga NEWAVE preliminar da ONS.<br><br>"
     resultado.destinatarioEmail = ['middle@wxe.com.br']
+
+    resultado.flagWhats = True
     
     return resultado
 
