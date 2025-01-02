@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+import datetime
 from airflow import DAG
 import sys
 from airflow.operators.python import PythonOperator
@@ -13,7 +13,7 @@ def get_mes_anterior():
 
 with DAG(
     dag_id = 'ONS_DADOS_ABERTOS', 
-    start_date=datetime(2024, 4, 28), 
+    start_date=datetime.date(2024, 4, 28), 
     schedule_interval= "0 17 * * * ", 
     catchup=False
     ) as dag:
