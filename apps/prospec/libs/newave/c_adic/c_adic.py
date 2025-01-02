@@ -78,11 +78,6 @@ def leituraArquivo(filePath):
                         comentarios[iAno] = [line]
                     else:
                         comentarios[iAno].append(line)
-                    
-                else:
-                    print(info_bloco['id_subsistema']['regex'])
-                    print(line)
-                    pdb.set_trace()
 
     df_c_adic = {}
     for nome_bloco in bloco:
