@@ -728,6 +728,17 @@ def sobrescreve_bloco(path_to_modify:str,mnemonico_bloco:str, values:list,skip_l
                 alterar = True
                 count_lines = 0
                 new_lines.extend([f"{linha}\n" for linha in values])
+    
+    lista_sem_duplicatas = []
+    for item in new_lines:
+        if 'PQ' in item:
+            if item not in lista_sem_duplicatas:
+                lista_sem_duplicatas.append(item)
+            else:
+                print('Linha duplicada: ', item)
+        else:
+            lista_sem_duplicatas.append(item)
+    new_lines = lista_sem_duplicatas
 
     with open(path_to_modify, 'w') as file:
         file.writelines(new_lines)
