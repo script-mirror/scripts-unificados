@@ -150,7 +150,7 @@ def gerarCompiladoPrevPrecipt(data, modelo, rodada):
         pattern = os.path.join(path,modelo,dtRodada,'semana-energ','EC-ENS-ESTENDIDO_[0-9]semana_energ-r{}*'.format(dtRodada))
 
     elif modelo.lower() == 'diferença-ecmwf-estendido':
-        pattern = os.path.join(path,'ecmwf-ens-estendido',dtRodada,'dif_prec','dif_acumulado_total-r{}*'.format(dtRodada))
+        pattern = os.path.join(path,'ecmwf-ens-estendido',dtRodada,'dif_prec','*_dif_acumulado_*-r{}*'.format(dtRodada))
 
     else:
         pattern = os.path.join(path,modelo,dtRodada,'semana-energ','[0-9]semana_energ-r{}*'.format(dtRodada))
@@ -186,7 +186,7 @@ def gerarCompiladoPrevPrecipt(data, modelo, rodada):
 
     files.sort()
 
-    numImgs_v = 2
+    numImgs_v = len(files) if len(files) <=3 else 2
     numImgs_h = int(len(files)/numImgs_v)
 
     if len(files)%numImgs_v:
