@@ -62,7 +62,7 @@ def abrir_firefox(firefox_binary=None,driver_path=None):
 def abrir_undetected_chrome( versao_chrome = 94,path_tmp_download=PATH_TMP_DOWNLOAD):
 
     options = uc.ChromeOptions()
-    # options.add_argument('--headless')
+    options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     # options.add_argument('--single-process')
     options.add_argument('--disable-dev-shm-usage')

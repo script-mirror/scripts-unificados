@@ -62,6 +62,20 @@ class GerardorProdutos(WhatsappBot):
         WhatsappBot.__init__(self)
         # pass
 
+    def send_whatsapp_message(self, destinatarioWhats,msgWhats,fileWhats=None):   
+        fields={
+            "destinatario": destinatarioWhats,
+            "mensagem": msgWhats,
+        }
+        files={}
+        if fileWhats:
+            files={
+                "arquivo": (os.path.basename(fileWhats), open(fileWhats, "rb"))
+            }
+        response = requests.post(WHATSAPP_API, data=fields, files=files)
+        print("Status Code:", response.status_code)
+
+
     def enviar(self,parametros):
 
         # confgs = configs.getConfiguration()
@@ -91,6 +105,7 @@ class GerardorProdutos(WhatsappBot):
             #TESTES
             if parametros.get("teste_user") == 'joao':
                 resultado.destinatarioWhats='11999029326'
+                self.num_whatsapp = '11999029326'
                 resultado.destinatarioEmail = ['joao.filho4@raizen.com']
             elif parametros.get("teste_user") == 'jose':
                 resultado.destinatarioWhats='11968606707'
@@ -119,17 +134,12 @@ class GerardorProdutos(WhatsappBot):
                         assunto=resultado.assuntoEmail if resultado.assuntoEmail else '',
                         anexos= resultado.file if resultado.file else [] 
                         )
+                
                 except SMTPAuthenticationError:
                     print("\033[91mErro de Autenticacao\033[0m")
+
                 except Exception as e:
                     print(f"\033[91mErro nao mapeado \033[0m\n{e}\n")
-                    
-            if parametros['produto'] == 'REVISAO_CARGA_NW':
-                for file in resultado.file:
-                    self.inserirMsgFila(self.num_whatsapp, "", file)
-            elif parametros['produto'] == 'REVISAO_CARGA_NW_PRELIMINAR':
-                for file in resultado.file:
-                    self.inserirMsgFila(self.num_whatsapp, "PRELIMINAR", file)
                     
             if resultado.flagWhats:
 
@@ -138,22 +148,24 @@ class GerardorProdutos(WhatsappBot):
 
                 if not resultado.msgWhats:
                     resultado.msgWhats = f'{produto} ({data_str})'
-                    
-                fields={
-                    "destinatario": resultado.destinatarioWhats,
-                    "mensagem": resultado.msgWhats,
-                }
-                files={}
-                if resultado.fileWhats:
-                    files={
-                        "arquivo": (os.path.basename(resultado.fileWhats), open(resultado.fileWhats, "rb"))
-                    }
 
-                response = requests.post(WHATSAPP_API, data=fields, files=files)
-                print("Status Code:", response.status_code)
+                # esses produtos enviam para o whatsapp do gilseu, os arquivos enviados no email
+                if (parametros['produto'] == 'REVISAO_CARGA_NW') or (parametros['produto'] == 'REVISAO_CARGA_NW_PRELIMINAR'):
+                    msgWhats = " " 
+                    if parametros['produto'] == 'REVISAO_CARGA_NW_PRELIMINAR': msgWhats="PRELIMINAR"
 
-                if response.status_code != 201:
-                    self.inserirMsgFila(resultado.destinatarioWhats, resultado.msgWhats, resultado.fileWhats)
+                    for file in resultado.file:
+                        self.send_whatsapp_message(
+                            destinatarioWhats=self.num_whatsapp,
+                            msgWhats = msgWhats,
+                            fileWhats = file
+                        )
+
+                self.send_whatsapp_message(
+                    destinatarioWhats=resultado.destinatarioWhats,
+                    msgWhats = resultado.msgWhats,
+                    fileWhats = resultado.fileWhats
+                    )
 
         else:
             print(
@@ -219,9 +231,11 @@ class GerardorProdutos(WhatsappBot):
         parser.add_argument('--psat', type=int, help='flag psat')
         parser.add_argument('--url', type=str, help='Descrição do parâmetro')
         parser.add_argument('--path', type=str, help='Descrição do parâmetro')
-        parser.add_argument('--nomerodadaoriginal', type=str, help='Descrição do parâmetro')
+        parser.add_argument('--nomeRodadaOriginal', type=str, help='Descrição do parâmetro')
         parser.add_argument('--considerarprevs', type=str, help='Descrição do parâmetro')
         parser.add_argument('--considerarrv', type=str, help='Descrição do parâmetro')
+        parser.add_argument('--assuntoEmail', type=str, help='Descrição do parâmetro')
+        parser.add_argument('--corpoEmail', type=str, help='Descrição do parâmetro')
         parser.add_argument('--gerarmatriz', type=int, help='Descrição do parâmetro')
         parser.add_argument('--fazer_media', type=float, help='Descrição do parâmetro')
         parser.add_argument('--enviar_whats', type=bool, help='Descrição do parâmetro')

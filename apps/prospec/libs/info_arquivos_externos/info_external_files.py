@@ -1,6 +1,13 @@
-import os, re, sys, pdb, datetime, glob
-import pandas as pd
+import os
+import re
+import sys
+import pdb
 import csv
+import glob
+import datetime
+import pandas as pd
+from dateutil.relativedelta import relativedelta
+
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.bibliotecas import rz_dir_tools,wx_opweek
@@ -259,6 +266,68 @@ def organizar_info_eolica(paths_dadgers:List[str], data_produto:datetime.date):
         novos_blocos[path_dadger] = df_pq_to_dadger(df_bloco_atual)
     return novos_blocos
 
+
+def extract_carga_nw(path_carga,path_saida=PATH_DOWNLOAD_TMP):
+        DIR_TOOLS = rz_dir_tools.DirTools()
+
+        extracted_zip_carga = DIR_TOOLS.extract_specific_files_from_zip(
+                path=path_carga,
+                files_name_template=['PLAN*_CargaGlobal*','CargaMensal_PMO-*'],
+                dst=path_saida,
+                extracted_files=[]
+                )  
+        
+        return extracted_zip_carga
+
+
+def organizar_info_carga_nw(path_carga_zip):
+
+    '''
+    Essa função extrair e calcula para todas as cargas a média ponderada por patamar
+    '''
+
+    extracted_zip_carga = extract_carga_nw(path_carga_zip)
+    df = pd.read_excel(extracted_zip_carga[0]) 
+    df["DATE"] = pd.to_datetime(df["DATE"])
+
+    df = df.rename(columns={"TYPE": "PATAMAR", "GAUGE": "HOURS"})
+    pivot_df = df.pivot_table(
+        index=["DATE", "SOURCE"],
+        columns="PATAMAR",
+        values=[col for col in df.columns if col not in ["DATE",'WEEK',"SOURCE","PATAMAR",'REVISION']],
+        aggfunc="sum"
+    )
+    numeric_columns = [col for col in pivot_df.columns.levels[0] if col not in ["HOURS"]]
+
+    for col in numeric_columns:
+        pivot_df[(col, "Weighted")] = (
+            (pivot_df[(col, "LOW")] * pivot_df[("HOURS", "LOW")]) +
+            (pivot_df[(col, "MIDDLE")] * pivot_df[("HOURS", "MIDDLE")]) +
+            (pivot_df[(col, "HIGH")] * pivot_df[("HOURS", "HIGH")])
+        ) / (
+            pivot_df[("HOURS", "LOW")] +
+            pivot_df[("HOURS", "MIDDLE")] +
+            pivot_df[("HOURS", "HIGH")]
+        )
+    result_df = pivot_df.reset_index()
+
+    if 'carga_mensal' in os.path.basename(path_carga_zip).lower():
+        mes_referencia_inicial = datetime.datetime.strptime(os.path.basename(extracted_zip_carga[0]).lower(),"cargamensal_pmo-%B%Y.xlsx")
+        result_df = result_df[(result_df['DATE'] >= mes_referencia_inicial) & (result_df['DATE'] <= (mes_referencia_inicial + relativedelta(months=1)))]
+
+    result_dict = {}
+    result_df["YearMonth"] = result_df["DATE"].dt.strftime("%Y%m")
+
+    for year_month, group in result_df.groupby("YearMonth"):
+
+        weighted_columns = [col for col in result_df.columns if "Weighted" in col]
+        relevant_columns = [("SOURCE",'')] + weighted_columns
+        
+        filtered_df = group[relevant_columns].copy()
+        filtered_df.columns = ["SOURCE"] + [col[0] for col in weighted_columns]
+        result_dict[year_month] = filtered_df
+
+    return result_dict
 
 
 if __name__ == "__main__":
