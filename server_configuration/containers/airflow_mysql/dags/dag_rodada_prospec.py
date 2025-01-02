@@ -36,7 +36,7 @@ with DAG(
     default_args = default_args,
     dag_id = '1.3-PROSPEC_1RV', 
     start_date=datetime(2024, 4, 28), 
-    schedule_interval="30 07 * * 1-4", 
+    schedule_interval="25 07 * * 1-4", 
     catchup=False
     ) as dag:
     
