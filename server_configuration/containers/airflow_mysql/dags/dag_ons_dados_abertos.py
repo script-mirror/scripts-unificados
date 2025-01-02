@@ -7,13 +7,13 @@ sys.path.insert(1,"/WX2TB/Documentos/fontes")
 from PMO.scripts_unificados.apps.dadosAbertosOns.libs import coff, geracao_usina, carga, cmo
 
 def get_mes_anterior():
-    data = datetime.today()
+    data = datetime.date.today()
     return data - datetime.timedelta(days=data.day)
 
 
 with DAG(
     dag_id = 'ONS_DADOS_ABERTOS', 
-    start_date=datetime.date(2024, 4, 28), 
+    start_date=datetime.datetime(2024, 4, 28), 
     schedule_interval= "0 17 * * * ", 
     catchup=False
     ) as dag:
