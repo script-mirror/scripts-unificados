@@ -26,7 +26,7 @@ def get_weol(
     return decks_crud.WeolSemanal.get_by_product_date(data_produto)
 
 @router.get("/weol/product-date", tags=["Decomp"])
-def get_weol_by_product_date_start_week_year_month_rv(
+def get_by_product_date_start_week_year_month_rv(
     dataProduto: datetime.date,
     mesEletrico: int,
     ano: int,
@@ -35,7 +35,7 @@ def get_weol_by_product_date_start_week_year_month_rv(
     return decks_crud.WeolSemanal.get_by_product_date_start_week_year_month_rv(dataProduto, mesEletrico, ano, rv)
 
 @router.get("/weol/start-week-date", tags=["Decomp"])
-def get_weol_by_product_date_start_week_year_month_rv(
+def get_weol_by_product_date_start_week(
     inicioSemana: datetime.date,
     dataProduto: datetime.date
 ):
@@ -59,3 +59,24 @@ def delete_patamares(
     data_inicio: datetime.date
 ):
     return decks_crud.Patamares.delete_by_start_date(data_inicio)
+
+@router.get("/patamares", tags=["Decomp"])
+def get_weol_by_product_date_start_week_year_month_rv(
+    inicioSemana: datetime.date,
+    fimSemana: datetime.date
+):
+    return decks_crud.Patamares.get_horas_por_patamar_por_inicio_semana_data(inicioSemana, fimSemana)
+
+@router.get("/patamares/weighted-average", tags=["Decomp"])
+def get_weighted_avg_by_product_date(
+    dataProduto: datetime.date
+):
+    return decks_crud.WeolSemanal.get_weighted_avg_by_product_date(dataProduto)
+
+
+@router.get("/patamares/weighted-average/table", tags=["Decomp"])
+def get_weighted_avg_table_by_product_date(
+    dataProduto: datetime.date,
+    quantidadeProdutos: int
+):
+    return decks_crud.WeolSemanal.get_weighted_avg_table_by_product_date(dataProduto, quantidadeProdutos)
