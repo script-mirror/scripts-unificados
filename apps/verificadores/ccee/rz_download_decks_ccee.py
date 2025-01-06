@@ -70,7 +70,7 @@ def download_decks_acervo_ccee(pathArquivos, nome_deck_pesquisado, dtAtual=None,
  
     dataframe_produtos = pd.DataFrame(data['results'])
 
-    padrao_regex = r'Dessem - \d{2}/\d{4}'
+    padrao_regex = r'Newave - \d{2}/\d{4}'    
     url = dataframe_produtos[dataframe_produtos['nomeComplementar'].str.contains(padrao_regex, regex=True)][['url']].values
     
     url_string = url[0][0]
@@ -129,4 +129,8 @@ def runWithParams():
  
  
 if __name__ == '__main__':
-    runWithParams()
+    download_decks_acervo_ccee(
+            pathArquivos = "/WX2TB/Documentos/fontes/PMO/decks/ccee/nw", 
+            nome_deck_pesquisado = "Newave"
+        ) 
+    # runWithParams()
