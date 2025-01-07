@@ -1,4 +1,3 @@
-
 import os
 import re
 import pdb
@@ -71,10 +70,109 @@ def send_files_to_api(id_estudo:int, paths_modified:List[str], tag:str):
         else:
             logger.info(f'Falha ao enviar estudo {id_estudo}')
 
+#DECOMP
+def update_cvu_dadger_dc_estudo(ano_referencia_cvu:int,mes_referencia_cvu:int,ids_to_modify:List[int]=None):
+
+    tag = [f'CVU {datetime.datetime.now().strftime("%d/%m %H:%M")}']
+    if not ids_to_modify:
+        ids_to_modify = get_ids_to_modify()
+
+    # ORGANIZA INFORMACOES DE CVU
+    info_cvu = info_external_files.organizar_info_cvu(
+        ano_referencia=int(ano_referencia_cvu),    
+        mes_referencia=int(mes_referencia_cvu),
+        )
+
+    for id_estudo in ids_to_modify:
+
+        logger.info("\n\n")
+        logger.info(f"Modificando estudo {id_estudo}")
+
+        path_to_modify = api.downloadEstudoPorId(id_estudo)
 
 
+        extracted_zip_estudo = utils.extract_file_estudo(
+            path_to_modify,
+            ) 
 
-def update_cvu_estudo(ids_to_modify:List[int],ano_referencia_cvu:int,mes_referencia_cvu:int):
+        #ALTERAR CVU EM DECKS DC
+        dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
+        arquivos_filtrados = [arquivo for arquivo in dadgers_to_modify if not re.search(r'\.0+$', arquivo)]
+        
+        paths_modified = dadger_updater.atualizar_cvu_DC(
+            info_cvu,
+            arquivos_filtrados
+            )
+
+        send_files_to_api(id_estudo, paths_modified, tag)
+
+        logger.info(f"============================================")
+
+def update_carga_dadger_dc_estudo(file_path,ids_to_modify:List[int]=None):
+
+    tag = [f'CARGA-DC {datetime.datetime.now().strftime("%d/%m %H:%M")}']
+    if not ids_to_modify:
+        ids_to_modify = get_ids_to_modify()
+
+    for id_estudo in ids_to_modify:
+        logger.info("\n\n")
+        logger.info(f"Modificando estudo {id_estudo}")
+
+        path_to_modify = api.downloadEstudoPorId(id_estudo)
+
+        extracted_zip_estudo = utils.extract_file_estudo(
+            path_to_modify,
+            ) 
+
+        info_cargas = info_external_files.organizar_info_carga(
+            file_path,
+            extracted_zip_estudo,
+            )
+
+        # #ALTERAR CARGA EM DECKS DC
+        dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
+        arquivos_filtrados = [arquivo for arquivo in dadgers_to_modify if not re.search(r'\.0+$', arquivo)]
+
+        paths_modified = dadger_updater.atualizar_carga_DC(
+            info_cargas,
+            arquivos_filtrados
+            )
+
+        send_files_to_api(id_estudo, paths_modified, tag)
+
+        logger.info(f"============================================")
+        
+def update_weol_dadger_dc_estudo(data_produto:datetime.date, ids_to_modify:List[int] = None):
+    tag = [f'WEOL {datetime.datetime.now().strftime("%d/%m %H:%M")}']
+    if not ids_to_modify:
+        ids_to_modify = get_ids_to_modify()
+
+    for id_estudo in ids_to_modify:
+        logger.info("\n\n")
+        logger.info(f"Modificando estudo {id_estudo}")
+
+        path_estudo = api.downloadEstudoPorId(id_estudo)
+
+        extracted_zip_estudo = utils.extract_file_estudo(
+            path_estudo,
+            )
+
+        dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
+        arquivos_filtrados = [arquivo for arquivo in dadgers_to_modify if not re.search(r'\.0+$', arquivo)]
+
+        dadger_updater.update_eolica_DC(
+            arquivos_filtrados,
+            data_produto
+            )
+
+        api.update_tags(id_estudo, tag, "#FFF", "#44F")
+        
+        send_files_to_api(id_estudo, arquivos_filtrados, tag)
+
+        logger.info(f"============================================")
+        
+#NEWAVE
+def update_cvu_clast_nw_estudo(ano_referencia_cvu:int,mes_referencia_cvu:int,ids_to_modify:List[int]=None):
 
     tag = [f'CVU {datetime.datetime.now().strftime("%d/%m %H:%M")}']
     if not ids_to_modify:
@@ -98,34 +196,31 @@ def update_cvu_estudo(ids_to_modify:List[int],ano_referencia_cvu:int,mes_referen
             path_to_modify,
             ) 
 
-        #ALTERAR CVU EM DECKS DC
-        dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
-        arquivos_filtrados = [arquivo for arquivo in dadgers_to_modify if not re.search(r'\.0+$', arquivo)]
-        paths_modified = dadger_updater.atualizar_cvu_DC(
+        clast_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*clast*"),recursive=True)
+        arquivos_filtrados = [arquivo for arquivo in clast_to_modify if not re.search(r'\.0+$', arquivo)]
+
+        paths_modified = clast_updater.atualizar_cvu_NW(
             info_cvu,
-            arquivos_filtrados
+            clast_to_modify
             )
         send_files_to_api(id_estudo, paths_modified, tag)
 
-        # clast_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*clast*"),recursive=True)
-        # clast_updater.atualizar_cvu_NW(
-        #     info_cvu,
-        #     clast_to_modify
-        #     )
-        # send_files_to_api(id_estudo, clast_to_modify, tag)
-
         logger.info(f"============================================")
 
+def update_carga_c_adic_nw_estudo(file_path:str,ids_to_modify:List[int]=None):
 
-def update_carga_estudo(ids_to_modify:List[int],path_carga_zip):
+    tag = [f'CARGA-NW {datetime.datetime.now().strftime("%d/%m %H:%M")}']
+    # if not ids_to_modify:
+    #     ids_to_modify = get_ids_to_modify()
 
-    tag = [f'CARGA-DC {datetime.datetime.now().strftime("%d/%m %H:%M")}']
-    if not ids_to_modify:
-        ids_to_modify = get_ids_to_modify()
+    info_cargas_nw = info_external_files.organizar_info_carga_nw(
+            file_path,
+            )
+    initial_info_carga_date = sorted(info_cargas_nw.keys())[0]
 
     for id_estudo in ids_to_modify:
-        logger.info("\n\n")
-        logger.info(f"Modificando estudo {id_estudo}")
+
+        logger.info(f"\n\nModificando estudo {id_estudo}...")
 
         path_to_modify = api.downloadEstudoPorId(id_estudo)
 
@@ -133,24 +228,75 @@ def update_carga_estudo(ids_to_modify:List[int],path_carga_zip):
             path_to_modify,
             ) 
 
-        info_cargas = info_external_files.organizar_info_carga(
-            path_carga_zip,
-            extracted_zip_estudo,
-            )
+        c_adic_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*c_adic*"),recursive=True)
 
-        # #ALTERAR CARGA EM DECKS DC
-        dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
-        arquivos_filtrados = [arquivo for arquivo in dadgers_to_modify if not re.search(r'\.0+$', arquivo)]
+        if 'carga_mensal' in os.path.basename(file_path).lower():
 
-        paths_modified = dadger_updater.atualizar_carga_DC(
-            info_cargas,
-            arquivos_filtrados
-            )
+            intial_deck_date = sorted([os.path.basename(os.path.dirname(dir))[2:] for dir in c_adic_to_modify])[0] 
+            
+            if not intial_deck_date == initial_info_carga_date:
+                logger.info(f'''
+                    A data referente do arquivo de carga {os.path.basename(file_path)} 
+                    Não é compativel com a data do Deck inicial NW{intial_deck_date}.
+                ''')
+                continue
+        
+        paths_modified = c_adic_updater.atualizar_carga_c_adic_NW(
+            info_cargas_nw,
+            c_adic_to_modify
+        )
 
         send_files_to_api(id_estudo, paths_modified, tag)
 
         logger.info(f"============================================")
-        
+
+def update_carga_sistema_nw_estudo(file_path:str,ids_to_modify:List[int]=None):
+
+    tag = [f'CARGA-NW {datetime.datetime.now().strftime("%d/%m %H:%M")}']
+    # if not ids_to_modify:
+    #     ids_to_modify = get_ids_to_modify()
+
+    info_cargas_nw = info_external_files.organizar_info_carga_nw(
+            file_path,
+            )
+    initial_info_carga_date = sorted(info_cargas_nw.keys())[0]
+
+    for id_estudo in ids_to_modify:
+
+        logger.info(f"\n\nModificando estudo {id_estudo}...")
+
+        path_to_modify = api.downloadEstudoPorId(id_estudo)
+
+        extracted_zip_estudo = utils.extract_file_estudo(
+            path_to_modify,
+            ) 
+        paths_sistema_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*sistema*"),recursive=True)
+
+        if 'carga_mensal' in os.path.basename(file_path).lower():
+
+            intial_deck_date = sorted([os.path.basename(os.path.dirname(dir))[2:] for dir in paths_sistema_to_modify])[0] 
+            
+            if not intial_deck_date == initial_info_carga_date:
+                logger.info(f'''
+                    A data referente do arquivo de carga {os.path.basename(file_path)} 
+                    Não é compativel com a data do Deck inicial NW{intial_deck_date}.
+                ''')
+                continue
+
+        paths_modified = sistema_updater.atualizar_carga_sistema_NW(
+            info_cargas_nw,
+            paths_sistema_to_modify
+        )
+        paths_modified = sistema_updater.atualizar_geracao_sistema_NW(
+            info_cargas_nw,
+            paths_sistema_to_modify
+        )
+
+        send_files_to_api(id_estudo, paths_modified, tag)
+
+        logger.info(f"============================================")
+
+  
 
 def update_weol_estudo(data_produto:datetime.date, ids_to_modify:List[int] = None):
     tag = [f'WEOL {datetime.datetime.now().strftime("%d/%m %H:%M")}']
@@ -181,97 +327,6 @@ def update_weol_estudo(data_produto:datetime.date, ids_to_modify:List[int] = Non
 
         logger.info(f"============================================")
         
-def update_carga_c_adic_nw_estudo(ids_to_modify,path_carga_zip):
-
-    tag = [f'CARGA-NW {datetime.datetime.now().strftime("%d/%m %H:%M")}']
-    if not ids_to_modify:
-        ids_to_modify = get_ids_to_modify()
-
-    info_cargas_nw = info_external_files.organizar_info_carga_nw(
-            path_carga_zip,
-            )
-    initial_info_carga_date = sorted(info_cargas_nw.keys())[0]
-
-    for id_estudo in ids_to_modify:
-
-        logger.info(f"\n\nModificando estudo {id_estudo}...")
-
-        path_to_modify = api.downloadEstudoPorId(id_estudo)
-
-        extracted_zip_estudo = utils.extract_file_estudo(
-            path_to_modify,
-            ) 
-
-        c_adic_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*c_adic*"),recursive=True)
-
-        if 'carga_mensal' in os.path.basename(path_carga_zip).lower():
-
-            intial_deck_date = sorted([os.path.basename(os.path.dirname(dir))[2:] for dir in c_adic_to_modify])[0] 
-            
-            if not intial_deck_date == initial_info_carga_date:
-                logger.info(f'''
-                    A data referente do arquivo de carga {os.path.basename(path_carga_zip)} 
-                    Não é compativel com a data do Deck inicial NW{intial_deck_date}.
-                ''')
-                continue
-        
-        paths_modified = c_adic_updater.atualizar_carga_c_adic_NW(
-            info_cargas_nw,
-            c_adic_to_modify
-        )
-
-        send_files_to_api(id_estudo, paths_modified, tag)
-
-        logger.info(f"============================================")
-
-def update_carga_sistema_nw_estudo(ids_to_modify,path_carga_zip):
-
-    tag = [f'CARGA-NW {datetime.datetime.now().strftime("%d/%m %H:%M")}']
-    if not ids_to_modify:
-        ids_to_modify = get_ids_to_modify()
-
-    info_cargas_nw = info_external_files.organizar_info_carga_nw(
-            path_carga_zip,
-            )
-    initial_info_carga_date = sorted(info_cargas_nw.keys())[0]
-
-    for id_estudo in ids_to_modify:
-
-        logger.info(f"\n\nModificando estudo {id_estudo}...")
-
-        path_to_modify = api.downloadEstudoPorId(id_estudo)
-
-        extracted_zip_estudo = utils.extract_file_estudo(
-            path_to_modify,
-            ) 
-        paths_sistema_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*sistema*"),recursive=True)
-
-        if 'carga_mensal' in os.path.basename(path_carga_zip).lower():
-
-            intial_deck_date = sorted([os.path.basename(os.path.dirname(dir))[2:] for dir in paths_sistema_to_modify])[0] 
-            
-            if not intial_deck_date == initial_info_carga_date:
-                logger.info(f'''
-                    A data referente do arquivo de carga {os.path.basename(path_carga_zip)} 
-                    Não é compativel com a data do Deck inicial NW{intial_deck_date}.
-                ''')
-                continue
-
-        #paths_modified sao os mesmos 
-        paths_modified = sistema_updater.atualizar_carga_sistema_NW(
-            info_cargas_nw,
-            paths_sistema_to_modify
-        )
-        paths_modified = sistema_updater.atualizar_geracao_sistema_NW(
-            info_cargas_nw,
-            paths_sistema_to_modify
-        )
-
-        send_files_to_api(id_estudo, paths_modified, tag)
-
-        logger.info(f"============================================")
-
-
 
 
 if __name__ == "__main__":
@@ -279,10 +334,10 @@ if __name__ == "__main__":
     # ids_to_modify = get_ids_to_modify()
     update_weol_estudo(datetime.date(2024, 12, 19))
     # ids_to_modify = [22152]
-    # path_carga_zip=r"C:\Users\CS399274\Downloads\RV0_PMO_Dezembro_2024_carga_semanal.zip"
+    # file_path=r"C:\Users\CS399274\Downloads\RV0_PMO_Dezembro_2024_carga_semanal.zip"
 
     # ano_referencia_cvu=2024
     # mes_referencia_cvu=11
 
     # update_cvu_estudo(ids_to_modify,ano_referencia_cvu,mes_referencia_cvu)
-    # update_carga_estudo(ids_to_modify,path_carga_zip)
+    # update_carga_estudo(ids_to_modify,file_path)
