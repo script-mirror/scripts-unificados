@@ -1419,7 +1419,7 @@ def enviar(parametros):
 
 			destinatarioWhats = 'Preco'
 
-			if "gilseu.muhen@raizen.com" in parametros['destinatarioemail']:
+			if 'gilseu.muhlen@raizen.com' in parametros['destinatarioemail']:
 				destinatarioWhats = os.getenv('NUM_GILSEU')
 
 			html_str = "<div><br>"+corpoEmail
