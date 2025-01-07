@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from airflow import DAG
-from airflow.operators.python import PythonOperator, BranchPythonOperator
+from airflow.operators.python import BranchPythonOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+
 from airflow.operators.dummy import DummyOperator
 from workalendar.america import Brazil
 from calendar import monthrange
@@ -45,30 +47,15 @@ def is_target_day(**kwargs):
         )
 
     if day == fourth_business_day or day == seventeenth:
-        kwargs['ti'].xcom_push(key='mes_referencia', value=month)
-        kwargs['ti'].xcom_push(key='ano_referencia', value=year)
+        kwargs.get('dag_run').conf.update(
+            {
+                'mes_referencia_cvu': month,
+                'ano_referencia_cvu': year,
+                'task_to_execute': 'revisao_cvu'
+            })	
 
-        return "update_files"
-
-    return "end_task"
-
-
-def update_estudo_files(**kwargs):
-
-    ti = kwargs['ti']
-    mes_referencia = ti.xcom_pull(key='mes_referencia', task_ids='check_target_day')
-    ano_referencia = ti.xcom_pull(key='ano_referencia', task_ids='check_target_day')
-
-    ids_to_modify = update_estudo.get_ids_to_modify()
-    print(ids_to_modify)
-    ids_to_modify = [22152]
-
-    update_estudo.update_cvu_estudo(
-        ids_to_modify,
-        ano_referencia,
-        mes_referencia
-        )
-
+        return "trigger_prospec_updater"
+    
     return "end_task"
 
 
@@ -79,6 +66,8 @@ with DAG(
     schedule_interval='0 9 * * *',  
     start_date=datetime(2024, 4, 28),
     catchup=False,
+    render_template_as_native_obj=True, 
+
 ) as dag:
 
     check_target_day = BranchPythonOperator(
@@ -87,15 +76,17 @@ with DAG(
         provide_context=True,
     )
 
-    update_files = BranchPythonOperator(
-        task_id='update_files',
-        python_callable=update_estudo_files,
-        provide_context=True,
+    trigger_updater_estudo = TriggerDagRunOperator(
+        task_id="trigger_prospec_updater",
+        trigger_dag_id='PROSPEC_UPDATER',
+        conf={'external_params': "{{dag_run.conf}}"},  
+        wait_for_completion=False,  
+        trigger_rule="none_failed_min_one_success",
     )
 
     end_task = DummyOperator(
         task_id='end_task',
     )
 
-    check_target_day >> update_files >> end_task
+    check_target_day >> trigger_updater_estudo >> end_task
     check_target_day >>  end_task
