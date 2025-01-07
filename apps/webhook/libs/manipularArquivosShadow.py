@@ -177,6 +177,7 @@ def historico_preciptacao(dadosProduto):
     
     #rodar smap
     SmapTools.trigger_dag_SMAP(dtRef)
+
     SmapTools.resultado_cv_obs(
         dtRef.date(),
         fonte_referencia='psat',
@@ -231,17 +232,18 @@ def carga_patamar(dadosProduto):
     path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
     filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
     logger.info(filename)
-
-    ids_to_modify = update_estudo.get_ids_to_modify()
-    logger.info(ids_to_modify)
-    ids_to_modify = [22152]
-    update_estudo.update_carga_estudo(ids_to_modify,filename)
-
+    
     # gerar Produto
     GERAR_PRODUTO.enviar({
         "produto":"REVISAO_CARGA",
         "path":filename,
     })
+
+    return {
+        "file_path": filename,
+        "trigger_dag_id":"PROSPEC_UPDATER",
+        "task_to_execute": "revisao_carga_dc"
+    }
 
 
 def deck_preliminar_decomp(dadosProduto):
@@ -295,6 +297,7 @@ def deck_entrada_saida_dessem(dadosProduto):
     
     dessem.organizarArquivosOns(dtRef, path_arquivos_ds, importarDb=False, enviarEmail=True)
     logger.info(f"Triggering DESSEM_convertido, dt_ref: {dadosProduto['dataProduto']}")
+    
     airflow_tools.trigger_airflow_dag(
         dag_id="DESSEM_convertido",
         json_produtos={
@@ -394,6 +397,12 @@ def carga_patamar_nw(dadosProduto):
         "path":filename,
     })
 
+    return {
+        "file_path": filename,
+        "trigger_dag_id":"PROSPEC_UPDATER",
+        "task_to_execute": "revisao_carga_nw"
+    }
+
 
 def carga_IPDO(dadosProduto):
     
@@ -439,16 +448,6 @@ def modelo_ECMWF(dadosProduto):
         json_produtos={
             'dt_ref':dadosProduto['dataProduto']
             })
-
-    # dtRef = datetime.datetime.strptime(dadosProduto["dataProduto"],'%d/%m/%Y')
-    # dst = os.path.join(PATH_CV,dtRef.strftime('%Y%m%d'),'ECMWF','ONS')
-    # os.makedirs(dst, exist_ok=True)
-    # extracted_files = DIR_TOOLS.extract_specific_files_from_zip(
-    #     path=filename,
-    #     files_name_template= ["ECMWF_p*a*.dat"],
-    #     date_format='%d%m%y',
-    #     dst=dst)
-    # logger.info(extracted_files)
 
             
 def dados_geracaoEolica(dadosProduto):
@@ -502,16 +501,6 @@ def modelo_gefs(dadosProduto):
         json_produtos={
             'dt_ref':dadosProduto['dataProduto']
             })
-
-    # dtRef = datetime.datetime.strptime(dadosProduto["dataProduto"],'%d/%m/%Y')
-    # dst = os.path.join(PATH_CV,dtRef.strftime('%Y%m%d'),'ECMWF','ONS')
-    # os.makedirs(dst, exist_ok=True)
-    # extracted_files = DIR_TOOLS.extract_specific_files_from_zip(
-    #     path=filename,
-    #     files_name_template= ["ECMWF_p*a*.dat"],
-    #     date_format='%d%m%y',
-    #     dst=dst)
-    # logger.info(extracted_files)
 
 
 def vazoes_observadas(dadosProduto):
@@ -611,6 +600,7 @@ def niveis_partida_dessem(dadosProduto):
     logger.info(path_copia_tmp)
 
     vazao.importNiveisDessem(filename)
+
 
 def dadvaz_vaz_prev(dadosProduto):
 
