@@ -1861,14 +1861,14 @@ def get_gerarPrevs():
   
     ano = int(anoComparativo_str)
     
-    if type(ano) == type(1):
-        ano = [ano]
+    # if type(ano) == type(1):
+    #     ano = [ano]
 
     # Chama a função desejada com o ano atual
     path_saida = wx_geradorPrevs.gerarador_prevs(dt_anoEscolhido, ano)
 
     # Restante do seu código para manipular os resultados conforme necessário
-    pasta_dst = os.path.join(os.path.dirname(path_saida), '_'.join([str(a) for a in ano]))
+    pasta_dst = os.path.join(os.path.dirname(path_saida), f'_{ano}')
     shutil.move(path_saida, pasta_dst)
 
     # criando pasta zip para cada ano
