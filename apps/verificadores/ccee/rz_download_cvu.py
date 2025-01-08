@@ -49,9 +49,9 @@ def download_cvu_acervo_ccee(ano_referencia, mes_referencia, pathSaida):
     TITULO_DOCUMENTO='Relatório de Reajuste do CVU'
 
     CVU_FILES = [
-        f"CVU_PMO_{ano_referencia}{mes_referencia+1}.zip",
-        f"CVU_PMR_{ano_referencia}{mes_referencia}.zip",
-        f"CVU_Merchant_ANEEL_{ano_referencia}{mes_referencia}.zip"
+        f"CVU_PMO_{ano_referencia}{str(mes_referencia+1).zfill(2)}.zip",
+        f"CVU_PMR_{ano_referencia}{str(mes_referencia).zfill(2)}.zip",
+        f"CVU_Merchant_ANEEL_{ano_referencia}{str(mes_referencia).zfill(2)}.zip"
     ]
 
     json_data = get_cvu_acervo_ccee()
