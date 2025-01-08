@@ -1861,14 +1861,11 @@ def get_gerarPrevs():
   
     ano = int(anoComparativo_str)
     
-    dt_inicial = datetime.datetime(dt_anoEscolhido, 1, 1)
-    dt_final = datetime.datetime(dt_anoEscolhido, 12, 1)
-    
     if type(ano) == type(1):
         ano = [ano]
 
     # Chama a função desejada com o ano atual
-    path_saida = wx_geradorPrevs.gerarador_prevs(dt_inicial, dt_final, ano)
+    path_saida = wx_geradorPrevs.gerarador_prevs(dt_anoEscolhido, ano)
 
     # Restante do seu código para manipular os resultados conforme necessário
     pasta_dst = os.path.join(os.path.dirname(path_saida), '_'.join([str(a) for a in ano]))
