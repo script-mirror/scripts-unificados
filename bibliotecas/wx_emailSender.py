@@ -181,18 +181,26 @@ def api_html_to_image(html_str,path_save='out_put.png'):
     __API_KEY_HCTI3 = os.getenv('API_KEY_HCTI3') 
     __USER_HCTI3 = os.getenv('USER_HCTI3') 
 
+    __API_KEY_HCTI4 = os.getenv('API_KEY_HCTI4') 
+    __USER_HCTI4 = os.getenv('USER_HCTI4') 
+
 
     data = { 'html': html_str,
             'google_fonts': "Roboto" 
             }
 
-    for user, token in [(__USER_HCTI,__API_KEY_HCTI),(__USER_HCTI2, __API_KEY_HCTI2),(__USER_HCTI3,__API_KEY_HCTI3)]:
+    imagem=None
+    for user, token in [(__USER_HCTI,__API_KEY_HCTI),(__USER_HCTI2, __API_KEY_HCTI2),(__USER_HCTI3,__API_KEY_HCTI3),(__USER_HCTI4,__API_KEY_HCTI4)]:
         image = requests.post(url = __API_URL_HCTI, data = data, auth=(user, token))
         if image.status_code != 200:
             continue
         resposta = requests.get(image.json()['url'])
         imagem = Image.open(BytesIO(resposta.content))
-            
+
+    if not imagem:
+        print('Erro ao gerar imagem')
+        return None
+        
     imagem.save(path_save)
 
     return os.path.abspath(path_save)
