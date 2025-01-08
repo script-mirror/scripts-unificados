@@ -131,6 +131,8 @@ def arquivo_acomph(dadosProduto):
         "produto":"ACOMPH",
         "data" : dtRef,
         "path":filename,
+        "destinatarioWhats": ["Condicao Hidrica","PMO"]
+
     })
 
 
@@ -424,7 +426,8 @@ def carga_IPDO(dadosProduto):
     GERAR_PRODUTO.enviar({
         "produto":"IPDO",
         "data":dtRef,
-        "path": filename
+        "path": filename,
+        "destinatarioWhats": ["Condicao Hidrica","PMO"]
     })
     
     

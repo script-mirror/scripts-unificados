@@ -95,9 +95,9 @@ def processar_produto_IPDO(parametros):
     resultado.fileWhats = os.path.join(os.path.dirname(parametros["path"]), 'IPDO_{}.jpeg'.format(dtReferente.strftime('%Y%m%d')))
     rz_aux_libs.pdfToJpeg(resultado.file[0], 2, resultado.fileWhats)
     
-    resultado.destinatarioWhats = 'PMO'
     resultado.flagWhats = True
     resultado.flagEmail = True
+
     return resultado
 
 
@@ -121,7 +121,6 @@ def processar_produto_ACOMPH(parametros):
     resultado.flagEmail = True
     
     resultado.fileWhats = grafico_acomph
-    resultado.destinatarioWhats = 'PMO'
     resultado.msgWhats = 'Acomph ({})'.format(dtReferente.strftime('%d/%m/%Y'))
     resultado.flagWhats = True
     
@@ -569,7 +568,6 @@ def processar_produto_SITUACAO_RESERVATORIOS(parametros):
     dtAtualizacao = datetime.datetime.now() - datetime.timedelta(days=1)
 		
     resultado.fileWhats = path_fig
-    resultado.destinatarioWhats = 'PMO'
     resultado.msgWhats = f"Situação dos Reservatórios ({dtAtualizacao.strftime('%d/%m/%Y')})"
     resultado.flagWhats = True
 

@@ -144,7 +144,10 @@ class GerardorProdutos(WhatsappBot):
             if resultado.flagWhats:
 
                 if not resultado.destinatarioWhats:
-                    resultado.destinatarioWhats = 'WX - Meteorologia'
+                    resultado.destinatarioWhats = ['WX - Meteorologia']
+
+                if isinstance(resultado.destinatarioWhats,str):
+                    resultado.destinatarioWhats= [resultado.destinatarioWhats]
 
                 if not resultado.msgWhats:
                     resultado.msgWhats = f'{produto} ({data_str})'
@@ -161,11 +164,13 @@ class GerardorProdutos(WhatsappBot):
                             fileWhats = file
                         )
 
-                self.send_whatsapp_message(
-                    destinatarioWhats=resultado.destinatarioWhats,
-                    msgWhats = resultado.msgWhats,
-                    fileWhats = resultado.fileWhats
-                    )
+                for destino in resultado.destinatarioWhats:
+                    print(f"Enviando mensagem para {destino}")
+                    self.send_whatsapp_message(
+                        destinatarioWhats=destino,
+                        msgWhats = resultado.msgWhats,
+                        fileWhats = resultado.fileWhats
+                        )
 
         else:
             print(
@@ -240,6 +245,7 @@ class GerardorProdutos(WhatsappBot):
         parser.add_argument('--fazer_media', type=float, help='Descrição do parâmetro')
         parser.add_argument('--enviar_whats', type=bool, help='Descrição do parâmetro')
         parser.add_argument('--teste_user', type=str, help='Coloque o nome \'thiago\' ou \'joao\'')
+        parser.add_argument('--destinatarioWhats', type=lambda s: eval(s), help='Coloque a lista de destinatários')
 
         args = parser.parse_args()
         parametros = vars(args)
