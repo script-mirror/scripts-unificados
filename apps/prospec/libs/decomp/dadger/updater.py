@@ -53,6 +53,7 @@ def atualizar_cvu_DC(info_cvu,paths_to_modify):
         logger.info(f"\n\n\nModificando arquivo {path_dadger}")
 
         cvu_map = info_cvu[dt_referente]['conjuntural'].set_index("CÓDIGO")["CVU CONJUNTURAL"].to_dict()
+        cvu_map = {key : round(value,2) for key, value in cvu_map.items()}
         extracted_blocos_dadger['CT'] = utils.trim_df(extracted_blocos_dadger['CT'])
 
         for col in ["cvu_p1", "cvu_p2", "cvu_pat3"]:
