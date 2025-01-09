@@ -1868,7 +1868,7 @@ def get_gerarPrevs():
     path_saida = wx_geradorPrevs.gerarador_prevs(dt_anoEscolhido, ano)
 
     # Restante do seu código para manipular os resultados conforme necessário
-    pasta_dst = os.path.join(os.path.dirname(path_saida), f'_{ano}')
+    pasta_dst = os.path.join(os.path.dirname(path_saida), f'{ano}')
     shutil.move(path_saida, pasta_dst)
 
     # criando pasta zip para cada ano

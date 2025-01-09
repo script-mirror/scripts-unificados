@@ -84,7 +84,6 @@ def gerarador_prevs(ano_desejado, ano_referencia):
         vazoes_ano_ref = df_vazoes.loc[posto,ano_referencia]
         vazoes_ano_ref.index = [f'{ano_desejado}{x:0>2}' for x in range(1,13)]
         dicionario_vazoes.update(vazoes_ano_ref.to_dict())
-
         vazoes_ano_mais_um = df_vazoes.loc[posto,ano_referencia+1]
         vazoes_ano_mais_um.index = [f'{ano_desejado+1}{x:0>2}' for x in range(1,13)]
         dicionario_vazoes.update(vazoes_ano_mais_um.to_dict())
