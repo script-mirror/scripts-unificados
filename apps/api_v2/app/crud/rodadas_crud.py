@@ -50,6 +50,20 @@ class CadastroRodadas:
         return df.to_dict('records')
     
     @staticmethod
+    def get_historico_rodadas_por_nome(nome_rodada:str) -> List[dict]:
+        query = db.select(
+            CadastroRodadas.tb.c['str_modelo'],
+            CadastroRodadas.tb.c['dt_rodada'],
+            CadastroRodadas.tb.c['hr_rodada']
+            ).where(
+                CadastroRodadas.tb.c['str_modelo'] == nome_rodada
+            ).distinct()
+        result = __DB__.db_execute(query, commit=prod).fetchall()
+        df = pd.DataFrame(result, columns=['modelo', 'dt_rodada', 'hr_rodada'])
+        return df.to_dict('records')
+        
+    
+    @staticmethod
     def get_rodadas_por_dt_hr_nome(dt:datetime.datetime, nome:str) -> List[dict]:
         dt = datetime.datetime(datetime.date.today().year, datetime.date.today().month, datetime.date.today().day, 0) if dt == None else dt
 
@@ -167,6 +181,8 @@ class CadastroRodadas:
             CadastroRodadas.delete_por_id(ids['id_rodada'])
         except IndexError:
             print(f'id rodada {id_rodada} nao existe.')
+       
+       
         
 class Chuva:
     tb:db.Table = __DB__.getSchema('tb_chuva')

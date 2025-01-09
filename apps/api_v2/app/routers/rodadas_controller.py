@@ -26,6 +26,15 @@ def get_rodadas(
         return rodadas_crud.CadastroRodadas.get_rodadas_por_dt(dt)
     return cache.get_cached(rodadas_crud.CadastroRodadas.get_rodadas_por_dt, dt, atualizar=atualizar)
 
+
+@router.get('/historico',tags=['Rodadas'])
+def get_historico_rodadas_por_nome(
+    nomeModelo:str
+    ):
+    return rodadas_crud.CadastroRodadas.get_historico_rodadas_por_nome(nomeModelo)
+
+
+
 @router.get('/chuva/previsao', tags=['Rodadas'])
 def get_chuva_previsao_por_id_data_entre_granularidade(
     nome_modelo:Optional[str] = None,
