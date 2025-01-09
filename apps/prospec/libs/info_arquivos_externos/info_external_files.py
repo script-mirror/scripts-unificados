@@ -5,6 +5,7 @@ import pdb
 import csv
 import glob
 import datetime
+import numpy as np
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 
@@ -54,14 +55,14 @@ def organizar_info_cvu(ano_referencia, mes_referencia,path_saida=PATH_DOWNLOAD_T
 
         #busca a coluna conjuntural nos arquivos nao merchant
         try:
-            df_conjuntural = df[['CÓDIGO','CVU CONJUNTURAL']].replace('-',None).dropna()
+            df_conjuntural = df[['CÓDIGO','CVU CONJUNTURAL']].replace('-',np.NaN).dropna()
             info_cvu[dt_referente]['conjuntural'] = df_conjuntural
         except:
             pass
 
         #busca a coluna estrutural nos arquivos nao merchant, pode ser que nao tenha essa coluna
         try:
-            df_estrutural = df[['CÓDIGO','CVU ESTRUTURAL']].replace('-',None).dropna()
+            df_estrutural = df[['CÓDIGO','CVU ESTRUTURAL']].replace('-',np.NaN).dropna()
             info_cvu[dt_referente]['estrutural'] = df_estrutural
         except:
             pass
