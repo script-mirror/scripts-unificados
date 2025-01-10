@@ -196,6 +196,8 @@ def api_html_to_image(html_str,path_save='out_put.png'):
             continue
         resposta = requests.get(image.json()['url'])
         imagem = Image.open(BytesIO(resposta.content))
+        if image.status_code == 200:
+            break
 
     if not imagem:
         print('Erro ao gerar imagem')

@@ -74,9 +74,16 @@ def get_weighted_avg_by_product_date(
     return decks_crud.WeolSemanal.get_weighted_avg_by_product_date(dataProduto)
 
 
-@router.get("/patamares/weighted-average/table", tags=["Decomp"])
-def get_weighted_avg_table_by_product_date(
+@router.get("/patamares/weighted-average/month/table", tags=["Decomp"])
+def get_weighted_avg_table_monthly_by_product_date(
     dataProduto: datetime.date,
     quantidadeProdutos: int
 ):
-    return decks_crud.WeolSemanal.get_weighted_avg_table_by_product_date(dataProduto, quantidadeProdutos)
+    return decks_crud.WeolSemanal.get_weighted_avg_table_monthly_by_product_date(dataProduto, quantidadeProdutos)
+
+@router.get("/patamares/weighted-average/week/table", tags=["Decomp"])
+def get_weighted_avg_table_weekly_by_product_date(
+    dataProduto: datetime.date,
+    quantidadeProdutos: int
+):
+    return decks_crud.WeolSemanal.get_weighted_avg_table_weekly_by_product_date(dataProduto, quantidadeProdutos)

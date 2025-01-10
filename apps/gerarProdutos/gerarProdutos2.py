@@ -53,6 +53,8 @@ PRODUTCS_MAPPING = {
         'PSATH_DIFF': "processar_produto_PSATH_DIFF",
         'SITUACAO_RESERVATORIOS': "processar_produto_SITUACAO_RESERVATORIOS",
         'REVISAO_CARGA_NW_PRELIMINAR': "processar_produto_REVISAO_CARGA_NW_preliminar",
+        'TABELA_WEOL_MENSAL': "processar_produto_TABELA_WEOL_MENSAL"
+        
     } 
 
 class GerardorProdutos(WhatsappBot):
@@ -217,6 +219,9 @@ class GerardorProdutos(WhatsappBot):
         print(f'python {sys.argv[0]} --produto REVISAO_CARGA_NW --path {os.path.join(path_plan_acomph_rdh, "RV0_PMO_%B_%Y_carga_mensal.zip")}')
         print(f'python {sys.argv[0]} --produto REVISAO_CARGA_NW_PRELIMINAR --data {data.strftime("%d/%m/%Y")}')
         print(f'python {sys.argv[0]} --produto PSATH_DIFF --path {os.path.join(pathArquivosTmp, "psath_%d%m%Y.zip")}')
+        print(f'python {sys.argv[0]} --produto TABELA_WEOL_MENSAL --data {data.strftime("%d/%m/%Y")}')
+
+        # TABELA_WEOL_MENSAL
         exit()
 
 
