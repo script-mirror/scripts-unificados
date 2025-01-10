@@ -414,9 +414,9 @@ def process_planilha_vazoes_obs(spreadsheet_path):
 
 def importar_vazoes_obs_smap(vazoes_values):
     
-    db_tmp = wx_dbClass.db_mysql_master('db_tmp')
-    db_tmp.connect()
-    tb_tmp_smap = db_tmp.getSchema('tb_tmp_smap')
+    db_rodadas = wx_dbClass.db_mysql_master('db_rodadas')
+    db_rodadas.connect()
+    tb_vazoes_obs = db_rodadas.getSchema('tb_vazoes_obs')
 
     df_values_total = pd.DataFrame(vazoes_values)
     
@@ -432,22 +432,22 @@ def importar_vazoes_obs_smap(vazoes_values):
         dt_max = df_values[3].max()
 
         delete_values = (
-            tb_tmp_smap.delete()
+            tb_vazoes_obs.delete()
             .where(
                 db.and_(
-                    tb_tmp_smap.c.dt_referente >= dt_min,
-                    tb_tmp_smap.c.dt_referente <= dt_max,
-                    tb_tmp_smap.c.txt_subbacia.in_(subbacias)
+                    tb_vazoes_obs.c.dt_referente >= dt_min,
+                    tb_vazoes_obs.c.dt_referente <= dt_max,
+                    tb_vazoes_obs.c.txt_subbacia.in_(subbacias)
                 )
             )
         )
-        num_deletadas = db_tmp.conn.execute(delete_values).rowcount
-        print(f"{num_deletadas} Linhas deletadas na tb_tmp_smap" )
+        num_deletadas = db_rodadas.conn.execute(delete_values).rowcount
+        print(f"{num_deletadas} Linhas deletadas na tb_vazoes_obs" )
         
         first_values = df_values.values.tolist()
-        insert_values = tb_tmp_smap.insert().values(first_values)
-        num_inseridas = db_tmp.conn.execute(insert_values).rowcount
-        print(f"{num_inseridas} Linhas inseridas na tb_tmp_smap" )
+        insert_values = tb_vazoes_obs.insert().values(first_values)
+        num_inseridas = db_rodadas.conn.execute(insert_values).rowcount
+        print(f"{num_inseridas} Linhas inseridas na tb_vazoes_obs" )
 
 
     print('Dados tratados com sucesso!\n')

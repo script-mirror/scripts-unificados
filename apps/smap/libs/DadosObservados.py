@@ -10,12 +10,12 @@ from PMO.scripts_unificados.bibliotecas.wx_dbClass import db_mysql_master
 class VazaoObservada(db_mysql_master):
 
     def __init__(self) -> None:
-        self.db_tmp = db_mysql_master('db_tmp',connect=True)
+        self.db_tmp = db_mysql_master('db_rodadas',connect=True)
 
     def get_vazao_for_smap(self,dt_ini,dt_fim):
         
-        tb_tmp_smap = self.db_tmp.db_schemas['tb_tmp_smap']
-        select_values = tb_tmp_smap.select().where(tb_tmp_smap.c.dt_referente >= dt_ini, tb_tmp_smap.c.dt_referente < dt_fim )
+        tb_vazoes_obs = self.db_tmp.db_schemas['tb_vazoes_obs']
+        select_values = tb_vazoes_obs.select().where(tb_vazoes_obs.c.dt_referente >= dt_ini, tb_vazoes_obs.c.dt_referente < dt_fim )
         vazoes_obs = self.db_tmp.db_execute(select_values).fetchall()
         
         df_vazoes_obs = pd.DataFrame(vazoes_obs, columns = [ "txt_nome_subbacia","cd_estacao","txt_tipo_vaz" ,"data","vl_vaz"])
