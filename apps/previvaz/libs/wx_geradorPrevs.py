@@ -162,8 +162,8 @@ if __name__ == '__main__':
     
     # Mexa apenas no ano e no mes, deixe o dia com o dia 1
     ano_desejado = 2025
-    # anos_referencia = [a for a in range(1932,2015)]
-    anos_referencia = [2019]
+    anos_referencia = [a for a in range(1932,2024)]
+    #anos_referencia = [2019]
 
     pastas_compress = []
     for ano in anos_referencia:
