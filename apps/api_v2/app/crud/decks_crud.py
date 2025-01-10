@@ -130,7 +130,7 @@ class WeolSemanal:
 
         df_eol_newave = df_eol_newave.groupby(['mes', 'ano']).agg({'geracaoEolica':'sum'}).reset_index()
         df_eol_newave['yearMonth'] = df_eol_newave['ano'].astype(str) + '-' + df_eol_newave['mes'].astype(str)
-        columns_rename = [MONTH_DICT[int(row['mes'])] + f' {int(row['ano'])}' for i, row in df_eol_newave.iterrows()]
+        columns_rename = [MONTH_DICT[int(row['mes'])] + f' {int(row["ano"])}' for i, row in df_eol_newave.iterrows()]
         df_eol_newave.drop(columns=['mes', 'ano'], inplace=True)
         
         df_eol_newave = df_eol_newave.sort_values(by='yearMonth')
