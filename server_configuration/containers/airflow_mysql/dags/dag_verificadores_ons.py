@@ -23,7 +23,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='RotinaReservatorios',
         ssh_conn_id='ssh_master',  
-        command='''. /WX2TB/pythonVersions/myVenv38/bin/activate;cd /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/gerarProdutos; python gerarProdutos2.py --produto SITUACAO_RESERVATORIOS --destinatarioWhats "['Condicao Hidrica','PMO']" ''',
+        command='''. /WX2TB/pythonVersions/myVenv38/bin/activate;cd /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/gerarProdutos; python gerarProdutos2.py --produto SITUACAO_RESERVATORIOS --destinatarioWhats "['Condicao Hidrica',]" ''',
         conn_timeout = None,
         cmd_timeout = None,
         get_pty=True,
