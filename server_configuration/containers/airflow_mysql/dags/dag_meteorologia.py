@@ -1022,7 +1022,7 @@ with DAG(
     'Mapas_ECMWF-ESTENDIDO-HINDCAST',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='50 18 * * 1,4',
+    schedule='50 18 1-31/2 * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
