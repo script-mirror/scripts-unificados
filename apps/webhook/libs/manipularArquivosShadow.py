@@ -752,6 +752,18 @@ def deck_prev_eolica_semanal_weol(dadosProduto:dict):
         dag_id="webhook_deck_prev_eolica_semanal_weol",
         json_produtos=dadosProduto
         )
+    
+def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
+    data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto'), "%d/%m/%Y")
+    GERAR_PRODUTO.enviar({
+        "produto":"TABELA_WEOL_MENSAL",
+        "data":data_produto.date(),
+    })
+    GERAR_PRODUTO.enviar({
+        "produto":"TABELA_WEOL_SEMANAL",
+        "data":data_produto.date(),
+    })
+
 
 
 if __name__ == '__main__':

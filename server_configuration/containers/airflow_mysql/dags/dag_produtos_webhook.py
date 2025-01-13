@@ -65,6 +65,10 @@ def deck_prev_eolica_semanal_update_estudos(**kwargs):
     data_produto = datetime.datetime.strptime(params.get('dataProduto'), "%d/%m/%Y")
     update_weol_estudo(data_produto.date())
     
+def gerar_produto(**kwargs):
+    params = kwargs.get('dag_run').conf
+    manipularArquivosShadow.enviar_tabela_comparacao_weol_whatsapp_email(params)
+    
 with DAG(
     dag_id='WEEBHOOK',
     start_date=datetime.datetime(2024, 4, 28),
@@ -132,6 +136,11 @@ with DAG(
     atualizar_estudos = PythonOperator(
         task_id='atualizar_estudos_prospec_bloco_pq',
         python_callable=deck_prev_eolica_semanal_update_estudos,
+        provide_context=True
+    )
+    gerar_produtos = PythonOperator(
+        task_id='enviar_tabela_comparacao_weol_whatsapp_email',
+        python_callable=gerar_produto,
         provide_context=True
     )
     

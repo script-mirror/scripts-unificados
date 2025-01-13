@@ -579,12 +579,30 @@ def processar_produto_TABELA_WEOL_MENSAL(parametros):
     resultado = Resultado(parametros)
     data:datetime.date = parametros['data']
     
-    res = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average/month/table", params={"dataProduto":str(datetime.date.today()), "quantidadeProdutos":10})
+    res = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average/month/table", params={"dataProduto":str(data), "quantidadeProdutos":10})
     html = res.json()["html"]
     path_fig = wx_emailSender.api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'weol_mensal_{data}.png'))
 
     resultado.fileWhats = path_fig
     resultado.msgWhats = f"WEOL Mensal ({data.strftime('%d/%m/%Y')})"
     resultado.flagWhats = True
+    resultado.destinatarioWhats = "Premissas Preco"
 
     return resultado
+
+
+def processar_produto_TABELA_WEOL_SEMANAL(parametros):
+    resultado = Resultado(parametros)
+    data:datetime.date = parametros['data']
+    
+    res = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average/week/table", params={"dataProduto":str(data), "quantidadeProdutos":10})
+    html = res.json()["html"]
+    path_fig = wx_emailSender.api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'weol_mensal_{data}.png'))
+
+    resultado.fileWhats = path_fig
+    resultado.msgWhats = f"WEOL Semanal ({data.strftime('%d/%m/%Y')})"
+    resultado.flagWhats = True
+    resultado.destinatarioWhats = "Premissas Preco"
+
+    return resultado
+

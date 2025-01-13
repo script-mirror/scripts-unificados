@@ -9,7 +9,7 @@ import sqlalchemy as db
 from typing import List, Optional
 from fastapi import HTTPException
 from ..utils.logger import logging
-from ..utils.date_util import MONTH_DICT
+from ..utils.date_util import MONTH_DICT, ElecData
 from app.database.wx_dbClass import db_mysql_master
 from app.schemas import WeolSemanalSchema, PatamaresDecompSchema
 
@@ -117,23 +117,62 @@ class WeolSemanal:
         return df.to_dict('records')
 
     @staticmethod
+    def get_html_weighted_avg(df: pd.DataFrame):
+        html:str = '''<style> body { font-family: sans-serif; } th, td { padding: 4px; text-align: center; border: 0.5px solid; } table { border-collapse: collapse; } thead, .gray { background-color: #d9d9d9; border: 1px solid; } .none{ background-color: #e6e6e6; } tbody *{ border: none; } tbody{ border: 1px solid; } .n1{background-color: #63be7b;} .n2{background-color: #aad380;} .n3{background-color: #efe784;} .n4{background-color: #fcbc7b;} .n5{background-color: #fba777;} .n6{background-color: #f8696b;}</style><table> <thead> <tr>'''
+        for col in df.columns:
+            html += f'<th>{col}</th>'
+        html += ' </tr></thead><tbody>'
+            
+        eolica_newave = df[df['Origem'] == 'Eolica Newave'] 
+           
+        for i, row in df.iterrows():
+            html += '<tr>'
+            for j, col in enumerate(row):
+                if j == 0:
+                    html += f'<td class="gray"><strong>{col}</strong></td>'
+                else:
+                    if bool(np.isnan(col)):
+                        html += f'<td class="none"></td>'
+                        continue
+                    elif row['Origem'] == 'Eolica Newave':
+                        html += f'<td class="n3">{int(col)}</td>'
+                        continue
+                    percent_diff:float = col / eolica_newave.iloc[0].iloc[j]
+                    if percent_diff >= 1.30:
+                        html += f'<td class="n1">{int(col)}</td>'
+                    elif percent_diff > 1.10:
+                        html += f'<td class="n2">{int(col)}</td>'
+                    elif percent_diff > 0.9:
+                        html += f'<td class="n3">{int(col)}</td>'
+                    elif percent_diff > 0.8:
+                        html += f'<td class="n4">{int(col)}</td>'
+                    elif percent_diff > 0.6:
+                        html += f'<td class="n5">{int(col)}</td>'
+                    else:
+                        html += f'<td class="n6">{int(col)}</td>'
+                        
+            html += '</tr>'
+        html += '</tbody></table>'
+        # with open('/WX2TB/Documentos/fontes/index.html', 'w') as f:
+        #     f.write(html)
+        return {"html" : html}
+
+
+    @staticmethod
     def get_weighted_avg_table_monthly_by_product_date(data_produto:datetime.date, quantidade_produtos:int):
-        df = pd.DataFrame(WeolSemanal.get_weighted_avg_by_product_date(data_produto - datetime.timedelta(days=quantidade_produtos), data_produto))
-        mean_values = df.mean(numeric_only=True)
-        mean_row = {'inicioSemana': 'media'}
-        mean_row.update(mean_values)
-        mean_df = pd.DataFrame([mean_row])
+        df = pd.DataFrame(WeolSemanal.get_weighted_avg_by_product_date(data_produto - datetime.timedelta(days=quantidade_produtos-1), data_produto))
         
-        df = pd.concat([df, mean_df], ignore_index=True)
-        
-        df_eol_newave = pd.DataFrame(NwSistEnergia.get_eol_by_last_data_deck_mes_ano_between(df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-2]))
+        df_eol_newave = pd.DataFrame(NwSistEnergia.get_eol_by_last_data_deck_mes_ano_between(df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-1]))
 
         df_eol_newave = df_eol_newave.groupby(['mes', 'ano']).agg({'geracaoEolica':'sum'}).reset_index()
         df_eol_newave['yearMonth'] = df_eol_newave['ano'].astype(str) + '-' + df_eol_newave['mes'].astype(str)
         columns_rename = [MONTH_DICT[int(row['mes'])] + f' {int(row["ano"])}' for i, row in df_eol_newave.iterrows()]
-        df_eol_newave.drop(columns=['mes', 'ano'], inplace=True)
-        
+
+        df['ano'] = [row.year if type(row) != str else row for row in df['inicioSemana']]
+        df['mes'] = [row.month if type(row) != str else row for row in df['inicioSemana']]
+
         df_eol_newave = df_eol_newave.sort_values(by='yearMonth')
+        df_eol_newave.drop(columns=['mes', 'ano'], inplace=True)
         
         df['yearMonth'] = df['inicioSemana'].apply(lambda x: f'{x.year}-{x.month}' if type(x) != str else x)
 
@@ -142,6 +181,9 @@ class WeolSemanal:
 
 
         df = pd.merge(df_eol_newave,df, on='yearMonth', how='left')
+        
+        df.drop(columns=['mes', 'ano'], inplace=True)
+        
         df['yearMonth'] = columns_rename
         df.rename(columns={'yearMonth': 'Origem', 'geracaoEolica':'Eolica Newave'}, inplace=True)
         
@@ -152,122 +194,37 @@ class WeolSemanal:
         df.reset_index(inplace=True)
         df.columns = df.iloc[0]
         df = df[1:]
-        html:str = '''<style> body { font-family: sans-serif; } th, td { padding: 4px; text-align: center; border: 0.5px solid; } table { border-collapse: collapse; } thead, .gray { background-color: #d9d9d9; border: 1px solid; } .none{ background-color: #e6e6e6; } tbody *{ border: none; } tbody{ border: 1px solid; } .n1{background-color: #63be7b;} .n2{background-color: #aad380;} .n3{background-color: #efe784;} .n4{background-color: #fcbc7b;} .n5{background-color: #fba777;} .n6{background-color: #f8696b;}</style><table> <thead> <tr>'''
-        for col in df.columns:
-            html += f'<th>{col}</th>'
-        html += ' </tr></thead><tbody>'
-            
-        eolica_newave = df[df['Origem'] == 'Eolica Newave'] 
            
-        for i, row in df.iterrows():
-            html += '<tr>'
-            for j, col in enumerate(row):
-                if j == 0:
-                    html += f'<td class="gray">{col}</td>'
-                else:
-                    if bool(np.isnan(col)):
-                        html += f'<td class="none"></td>'
-                        continue
-                    elif row['Origem'] == 'Eolica Newave':
-                        html += f'<td class="n3">{int(col)}</td>'
-                        continue
-                    percent_diff:float = col / eolica_newave.iloc[0].iloc[j]
-                    if percent_diff >= 1.30:
-                        html += f'<td class="n1">{int(col)}</td>'
-                    elif percent_diff > 1.10:
-                        html += f'<td class="n2">{int(col)}</td>'
-                    elif percent_diff > 0.9:
-                        html += f'<td class="n3">{int(col)}</td>'
-                    elif percent_diff > 0.8:
-                        html += f'<td class="n4">{int(col)}</td>'
-                    elif percent_diff > 0.6:
-                        html += f'<td class="n5">{int(col)}</td>'
-                    else:
-                        html += f'<td class="n6">{int(col)}</td>'
-                        
-            html += '</tr>'
-        html += '</tbody></table>'
-        return {"html" : html}
-        # with open('/WX2TB/Documentos/fontes/sample.html', 'w') as f:
-        #     f.write(html)
+        return WeolSemanal.get_html_weighted_avg(df)
 
     @staticmethod
     def get_weighted_avg_table_weekly_by_product_date(data_produto:datetime.date, quantidade_produtos:int):
         df = pd.DataFrame(WeolSemanal.get_weighted_avg_by_product_date(data_produto - datetime.timedelta(days=quantidade_produtos), data_produto))
-        mean_values = df.mean(numeric_only=True)
-        mean_row = {'inicioSemana': 'media'}
-        mean_row.update(mean_values)
-        mean_df = pd.DataFrame([mean_row])
         
-        df = pd.concat([df, mean_df], ignore_index=True)
-        
-        df_eol_newave = pd.DataFrame(NwSistEnergia.get_eol_by_last_data_deck_mes_ano_between(df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-2]))
+        df_eol_newave = pd.DataFrame(NwSistEnergia.get_eol_by_last_data_deck_mes_ano_between(df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-1]))
         df_eol_newave = df_eol_newave.groupby(['mes', 'ano']).agg({'geracaoEolica':'sum'}).reset_index()
-        pdb.set_trace()
-        df_eol_newave['yearMonth'] = df_eol_newave['ano'].astype(str) + '-' + df_eol_newave['mes'].astype(str)
-        df_eol_newave.drop(columns=['mes', 'ano'], inplace=True)
+        df_eol_newave = df_eol_newave.sort_values(by=['ano', 'mes'])
+
+        df['ano'] = [row.year if type(row) != str else row for row in df['inicioSemana']]
+        df['mes'] = [row.month if type(row) != str else row for row in df['inicioSemana']]
+
+        df = pd.merge(df_eol_newave,df, on=['ano', 'mes'], how='left')
+        df.drop(columns=['mes', 'ano'], inplace=True)
         
-        df_eol_newave = df_eol_newave.sort_values(by='yearMonth')
-        
-        df['yearMonth'] = df['inicioSemana'].apply(lambda x: f'{x.year}-{x.month}' if type(x) != str else x)
-
-        df.drop(columns=['inicioSemana'], inplace=True)
-        df = df.groupby('yearMonth').mean()
-
-
-        df = pd.merge(df_eol_newave,df, on='yearMonth', how='left')
-
-        df.rename(columns={'yearMonth': 'Origem', 'geracaoEolica':'Eolica Newave'}, inplace=True)
+        df.rename(columns={'inicioSemana': 'Origem', 'geracaoEolica':'Eolica Newave'}, inplace=True)
         
         df.columns = [df.columns[0]] + [x.strftime('WEOL %d/%m') if type(x) != str else x for x in df.columns[1:]]
         df = df[[df.columns[1], df.columns[0]] +  df.columns[2:].to_list()]
 
-        # pdb.set_trace()
-
         df = df.transpose()
         df.reset_index(inplace=True)
+        
         df.columns = df.iloc[0]
         df = df[1:]
-        html:str = '''<style> body { font-family: sans-serif; } th, td { padding: 4px; text-align: center; border: 0.5px solid; } table { border-collapse: collapse; } thead, .gray { background-color: #d9d9d9; border: 1px solid; } .none{ background-color: #e6e6e6; } tbody *{ border: none; } tbody{ border: 1px solid; } .n1{background-color: #63be7b;} .n2{background-color: #aad380;} .n3{background-color: #efe784;} .n4{background-color: #fcbc7b;} .n5{background-color: #fba777;} .n6{background-color: #f8696b;}</style><table> <thead> <tr>'''
-        for col in df.columns:
-            html += f'<th>{col}</th>'
-        html += ' </tr></thead><tbody>'
-            
-        eolica_newave = df[df['Origem'] == 'Eolica Newave'] 
-           
-        for i, row in df.iterrows():
-            html += '<tr>'
-            for j, col in enumerate(row):
-                if j == 0:
-                    html += f'<td class="gray">{col}</td>'
-                else:
-                    if bool(np.isnan(col)):
-                        html += f'<td class="none"></td>'
-                        continue
-                    elif row['Origem'] == 'Eolica Newave':
-                        html += f'<td class="n3">{int(col)}</td>'
-                        continue
 
-                    
-                    percent_diff:float = col / eolica_newave.iloc[0].iloc[j]
-                    if percent_diff >= 1.30:
-                        html += f'<td class="n1">{int(col)}</td>'
-                    elif percent_diff > 1.10:
-                        html += f'<td class="n2">{int(col)}</td>'
-                    elif percent_diff > 0.9:
-                        html += f'<td class="n3">{int(col)}</td>'
-                    elif percent_diff > 0.8:
-                        html += f'<td class="n4">{int(col)}</td>'
-                    elif percent_diff > 0.6:
-                        html += f'<td class="n5">{int(col)}</td>'
-                    else:
-                        html += f'<td class="n6">{int(col)}</td>'
-                        
-            html += '</tr>'
-        html += '</tbody></table>'
-        # return {"html" : html}
-        with open('/WX2TB/Documentos/fontes/sample.html', 'w') as f:
-            f.write(html)
+        df.columns = [df.columns[0]] + [f'{MONTH_DICT[x.month]}-rv{ElecData(x).atualRevisao}' if type(x) != str else x for x in df.columns[1:]]
+        return WeolSemanal.get_html_weighted_avg(df)
+
 class Patamares:
     tb:db.Table = __DB__.getSchema('tb_patamar_decomp')
     @staticmethod
@@ -313,9 +270,9 @@ class Patamares:
         
         for i in range(2, len(result), 3):
             result.at[i, 'inicio'] = result.at[i-1, 'inicio']
-        result['patamar'][result['patamar'] == 'Pesada'] = 'pesado'
-        result['patamar'][result['patamar'] == 'Média'] = 'medio'
-        result['patamar'][result['patamar'] == 'Leve'] = 'leve'
+        result.loc[result['patamar'] == 'Pesada', 'patamar'] = 'pesado'
+        result.loc[result['patamar'] == 'Média', 'patamar'] = 'medio'
+        result.loc[result['patamar'] == 'Leve', 'patamar'] = 'leve'
         result = result.rename(columns={'inicio': 'inicioSemana'})
         return result.to_dict("records")
     
@@ -335,8 +292,6 @@ class NwSistEnergia:
     def get_eol_by_last_data_deck_mes_ano_between(start:datetime.date, end:datetime.date):
         start = start.replace(day=1)
         end = end.replace(day=1)
-        print(start)
-        print(end)
         last_data_deck = NwSistEnergia.get_last_data_deck()[0]["dt_deck"]
         query = db.select(
             NwSistEnergia.tb.c["vl_geracao_eol"],
@@ -360,7 +315,6 @@ class NwSistEnergia:
             ).between(start, end)
             )
         )
-        print(query)
         result = __DB__.db_execute(query)
         df = pd.DataFrame(result, columns=['geracaoEolica', 'codigoSubmercado', 'mes', 'ano', 'dataDeck'])
         return df.to_dict('records')
