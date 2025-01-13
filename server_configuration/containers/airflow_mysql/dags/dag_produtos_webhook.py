@@ -150,6 +150,6 @@ with DAG(
     )
 
     inicio >> patamares
-    patamares >> previsao_final >> atualizar_estudos >> fim
+    patamares >> previsao_final >> atualizar_estudos >> gerar_produtos >> fim
     
     
