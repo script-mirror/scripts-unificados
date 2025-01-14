@@ -1,11 +1,11 @@
 FROM python:3.10
 
-WORKDIR /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2
+WORKDIR /app
 
-COPY . .
+COPY ./requirements.txt /app/requirements.txt
 
-RUN pip install --no-cache-dir --upgrade -r  /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
-EXPOSE 8000
+COPY . /app
 
-CMD ["python3", "./main.py"]
+CMD ["fastapi", "run", "main.py", "--port", "8000"]
