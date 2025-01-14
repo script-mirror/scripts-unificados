@@ -3,50 +3,51 @@ import sys
 import shutil
 import datetime
 import pandas as pd
+import sqlalchemy as db
+import pdb
 
 path_libs = os.path.dirname(os.path.abspath(__file__))   # ou os.path.realpath(__file__)
 path_app = os.path.dirname(path_libs)
 
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.bibliotecas import wx_dbLib,wx_opweek
+from PMO.scripts_unificados.bibliotecas import wx_dbLib,wx_opweek, wx_dbClass
 from PMO.scripts_unificados.apps.previvaz.libs import wx_formatacao_prevs
+
 
 
 def getVazoesDat():
     vazoes_file = os.path.join(path_app, 'arquivos', 'vazoes.txt')
     return pd.read_csv(vazoes_file, sep=' ', skipinitialspace=True, names=['posto','ano',1,2,3,4,5,6,7,8,9,10,11,12])
 
-def getAcomph(dt_inicial, dt_final):
+def getAcomph(data_inicial, data_final=None):
 
-    datab = wx_dbLib.WxDataB()
-    sql = '''WITH groups AS (
-                SELECT
-                    CD_POSTO,
-                    DT_REFERENTE,
-                    VL_VAZ_INC_CONSO,
-                    VL_VAZ_NAT_CONSO,
-                    DT_ACOMPH,
-                    ROW_NUMBER() OVER ( PARTITION BY CD_POSTO,
-                    DT_REFERENTE
-                ORDER BY
-                    DT_ACOMPH DESC ) AS [ROW NUMBER]
-                FROM
-                    climenergy.dbo.TB_ACOMPH
-                WHERE
-                    DT_REFERENTE >= \'{}\'
-                    AND DT_REFERENTE <= \'{}\' )
-                    SELECT
-                        *
-                    FROM
-                        groups
-                    WHERE
-                        groups.[ROW NUMBER] = 1
-                    ORDER BY
-                        CD_POSTO,
-                        DT_REFERENTE'''.format(dt_inicial.strftime('%Y-%m-%d'), dt_final.strftime('%Y-%m-%d'))
+    db_ons = wx_dbClass.db_mysql_master('db_ons',connect=True)
+    tb_acomph = db_ons.db_schemas['tb_acomph']
 
-    answer = datab.requestServer(sql)
+    cte = (
+    db.select(
+        tb_acomph.c.cd_posto,
+        tb_acomph.c.dt_referente,
+        tb_acomph.c.vl_vaz_inc_conso,
+        tb_acomph.c.vl_vaz_nat_conso,
+        tb_acomph.c.dt_acomph,
+        db.func.row_number().over(
+            partition_by=[tb_acomph.c.cd_posto, tb_acomph.c.dt_referente],
+            order_by=db.desc(tb_acomph.c.dt_acomph)
+        ).label('row_num')
+    )
+    .where(tb_acomph.c.dt_referente.between(data_inicial, data_final) if data_final != None else tb_acomph.c.dt_referente >= data_inicial)
+    .cte('cte_groups')
+    )
+    query = (
+        db.select(cte)
+        .where(cte.c.row_num == 1)
+        .order_by(cte.c.cd_posto, cte.c.dt_referente)
+    )
+
+    answer = db_ons.db_execute(query).fetchall() 
+    db_ons.db_dispose()
     return answer
 
 def gerarador_prevs(ano_desejado, ano_referencia):
@@ -162,7 +163,7 @@ if __name__ == '__main__':
     
     # Mexa apenas no ano e no mes, deixe o dia com o dia 1
     ano_desejado = 2025
-    anos_referencia = [a for a in range(1932,2024)]
+    anos_referencia = [a for a in range(2024,2025)]
     #anos_referencia = [2019]
 
     pastas_compress = []
