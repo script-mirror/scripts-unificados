@@ -1,6 +1,8 @@
 import re
 import pandas as pd
 import logging
+from unidecode import unidecode
+
 logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
@@ -708,7 +710,7 @@ def sobrescreve_bloco(path_to_modify:str,mnemonico_bloco:str, values:list,skip_l
     alterar=False
     count_lines=0
 
-    with open(path_to_modify, 'r', encoding='utf-8') as file:
+    with open(path_to_modify, 'r', encoding='iso-8859-1') as file:
 
         lines = file.readlines()
         new_lines = []
@@ -722,7 +724,7 @@ def sobrescreve_bloco(path_to_modify:str,mnemonico_bloco:str, values:list,skip_l
                 else:
                     alterar = False
 
-            new_lines.append(line)
+            new_lines.append(unidecode(line))
             
             if f"&{mnemonico_bloco.upper()}" in line: 
                 alterar = True
