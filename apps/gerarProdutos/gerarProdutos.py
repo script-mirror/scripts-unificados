@@ -274,9 +274,10 @@ def geraRelatorioBbce(data = datetime.datetime.now()):
                     produto = f"SE CON TRI {dt_inicial.strftime('%B').upper()[:3]}/{dt_inicial.strftime('%y')} {dt_final.strftime('%B').upper()[:3]}/{dt_final.strftime('%y')} - Preço Fixo"
                 elif graniularidade == 'semestral':
                     dt_inicial = data
-                    while dt_inicial.month%6 != 0:
-                        dt_inicial = dt_inicial + relativedelta.relativedelta(months=1)
-                    dt_inicial = dt_inicial + relativedelta.relativedelta(months=1+i_produtos*6)
+                    if dt_inicial.month != 1:
+                        while dt_inicial.month%6 != 0:
+                            dt_inicial = dt_inicial + relativedelta.relativedelta(months=1)
+                    dt_inicial = dt_inicial + relativedelta.relativedelta(months=i_produtos*6)
                     dt_final = dt_inicial + relativedelta.relativedelta(months=5)
                     produto = f"SE CON SEM {dt_inicial.strftime('%B').upper()[:3]}/{dt_inicial.strftime('%y')} {dt_final.strftime('%B').upper()[:3]}/{dt_final.strftime('%y')} - Preço Fixo"
                 elif graniularidade == 'anual':
