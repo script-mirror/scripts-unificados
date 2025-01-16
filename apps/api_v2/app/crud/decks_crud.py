@@ -138,18 +138,18 @@ class WeolSemanal:
                         html += f'<td class="n3">{int(col)}</td>'
                         continue
                     percent_diff:float = col / eolica_newave.iloc[0].iloc[j]
-                    if percent_diff >= 1.30:
-                        html += f'<td class="n1">{int(col)}</td>'
-                    elif percent_diff > 1.10:
-                        html += f'<td class="n2">{int(col)}</td>'
-                    elif percent_diff > 0.9:
-                        html += f'<td class="n3">{int(col)}</td>'
-                    elif percent_diff > 0.8:
-                        html += f'<td class="n4">{int(col)}</td>'
-                    elif percent_diff > 0.6:
-                        html += f'<td class="n5">{int(col)}</td>'
+                    if percent_diff >= 1.3:
+                        html += f'<td class="n1">{int(col)}</td>'  # Acima de 30% da Eólica Newave
+                    elif percent_diff >= 1.1:
+                        html += f'<td class="n2">{int(col)}</td>'  # Entre 10% e 30%
+                    elif percent_diff >= 0.9:
+                        html += f'<td class="n3">{int(col)}</td>'  # Entre 10% acima e 10% abaixo
+                    elif percent_diff >= 0.8:
+                        html += f'<td class="n4">{int(col)}</td>'  # Entre 10% e 20% abaixo
+                    elif percent_diff >= 0.6:
+                        html += f'<td class="n5">{int(col)}</td>'  # Entre 20% e 40% abaixo
                     else:
-                        html += f'<td class="n6">{int(col)}</td>'
+                        html += f'<td class="n6">{int(col)}</td>'  # Menor que 40% da Eólica Newave
                         
             html += '</tr>'
         html += '</tbody></table>'
@@ -187,7 +187,7 @@ class WeolSemanal:
         df['yearMonth'] = columns_rename
         df.rename(columns={'yearMonth': 'Origem', 'geracaoEolica':'Eolica Newave'}, inplace=True)
         
-        df.columns = [df.columns[0]] + [x.strftime('WEOL %d/%m') if type(x) != str else x for x in df.columns[1:]]
+        df.columns = [df.columns[0]] + [(x + datetime.timedelta(days=1)).strftime('WEOL %d/%m') if type(x) != str else x for x in df.columns[1:]]
         df = df[[df.columns[1], df.columns[0]] +  df.columns[2:].to_list()]
 
         df = df.transpose()
@@ -213,7 +213,7 @@ class WeolSemanal:
         
         df.rename(columns={'inicioSemana': 'Origem', 'geracaoEolica':'Eolica Newave'}, inplace=True)
         
-        df.columns = [df.columns[0]] + [x.strftime('WEOL %d/%m') if type(x) != str else x for x in df.columns[1:]]
+        df.columns = [df.columns[0]] + [(x + datetime.timedelta(days=1)).strftime('WEOL %d/%m') if type(x) != str else x for x in df.columns[1:]]
         df = df[[df.columns[1], df.columns[0]] +  df.columns[2:].to_list()]
 
         df = df.transpose()
