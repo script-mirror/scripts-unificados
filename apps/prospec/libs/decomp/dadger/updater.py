@@ -47,12 +47,12 @@ def atualizar_cvu_DC(info_cvu,paths_to_modify):
         else:
             quit(f"Erro ao tentar extrair ano e mes do nome da pasta {folder_name}")
 
-        if not info_cvu.get(dt_referente):
-            continue
+        #if not info_cvu.get(dt_referente):
+        #    continue
 
         logger.info(f"\n\n\nModificando arquivo {path_dadger}")
 
-        cvu_map = info_cvu[dt_referente]['conjuntural'].set_index("CÓDIGO")["CVU CONJUNTURAL"].to_dict()
+        cvu_map = info_cvu[next(iter(info_cvu.keys()))]['conjuntural'].set_index("CÓDIGO")["CVU CONJUNTURAL"].to_dict()
         cvu_map = {key : round(value,2) for key, value in cvu_map.items()}
         extracted_blocos_dadger['CT'] = utils.trim_df(extracted_blocos_dadger['CT'])
 

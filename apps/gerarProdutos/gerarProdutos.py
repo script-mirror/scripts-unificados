@@ -1414,13 +1414,13 @@ def enviar(parametros):
 				assuntoEmail += assuntoE
 
 			if destinatarioEmail == '':
-				destinatarioEmail = ['front@wxe.com.br', 'middle@wxe.com.br', 'mateus.dias2@raizen.com']
+				destinatarioEmail = ['front@wxe.com.br', 'middle@wxe.com.br']
     
 		if parametros['enviar_whats']:
 
 			destinatarioWhats = 'Preco'
 
-			if 'gilseu.muhlen@raizen.com' in parametros['destinatarioemail']:
+			if 'front@wxe.com.br' not in parametros['destinatarioemail']:
 				destinatarioWhats = os.getenv('NUM_GILSEU')
 
 			html_str = "<div><br>"+corpoEmail
@@ -1430,9 +1430,9 @@ def enviar(parametros):
 			
 			fileWhats = wx_emailSender.api_html_to_image(str(tabela),path_save='out_put.png')
 			fields={
-                    "destinatario": destinatarioWhats,
-                    "mensagem": parametros['assuntoemail'],
-                }
+					"destinatario": destinatarioWhats,
+					"mensagem": parametros['assuntoemail'],
+				}
 			files={}
 			if fileWhats:
 				files={
@@ -1440,7 +1440,7 @@ def enviar(parametros):
 				}
 			response = requests.post(os.getenv('WHATSAPP_API'), data=fields, files=files)
 			print("Status Code:", response.status_code)
-			
+				
 
 			flagWhats = False
     
