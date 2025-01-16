@@ -206,10 +206,6 @@ def mapa_interativo():
 def resumo_negociacoes_bbce():
   return render_template('resumo_negociacoes_bbce.html')
 
-@bp.route('/acomphNew')
-# @login_required
-def acomphNew():
-  return render_template('acomphNew.html')
 
 def treatListRevisions(lstRv):
   dicRev = {}
@@ -827,32 +823,6 @@ def API_getEnaAcomph():
 
   return jsonify(acomph_values)
 
-
-@bp.route('/API/new_getEnaAcomph')
-# @cache.cached(timeout=60*60*24*7,query_string=True)
-# @login_required
-def API_new_getEnaAcomph():
-  
-  dataInicial = request.args.get('dataInicial')
-  dataFinal = request.args.get('dataFinal')
-  granularidade = request.args.get('divisao')
-  no_cache = request.args.get('flagNoCache')
-  
-  
-  if not dataInicial and not granularidade:
-    return jsonify({"message": "Adicione os parametros dataInicial e dataFinal, no seguinte formato (%d/%m/%Y), e granularidade (submercado/bacia)"})
-  
-  dataInicial = datetime.datetime.strptime(dataInicial, "%d/%m/%Y")
-  dataFinal = datetime.datetime.strptime(dataFinal, "%d/%m/%Y")
-  prefixo = "ACOMPH"
-
-  if no_cache == '1':
-    acomph_values = rz_ena.get_ena_acomph(dataInicial,granularidade)
-    acomph_values = acomph_values.to_dict()
-  else:
-    acomph_values = rz_cache.cache_acomph(prefixo, granularidade, dataInicial, dataFinal)
-
-  return jsonify(acomph_values)
 
 @bp.route('/API/prospec/getcadastrorodadas')
 @login_required
