@@ -1,16 +1,24 @@
 import os
 import sys
 import pdb
+import logging
 import datetime
 import pandas as pd
-from typing import Callable
 import requests as r
+from typing import Callable
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes")
 from PMO.scripts_unificados.apps.rodadas import rz_rodadasModelos
 from PMO.scripts_unificados.apps.web_modelos.server.server import cache
 from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_ena,rz_chuva,rz_dbLib,db_decks,db_meteorologia,db_ons
 
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    handlers=[
+                        logging.StreamHandler()
+                    ])
+logger = logging.getLogger(__name__)
 
 
 
@@ -258,8 +266,8 @@ def cache_previsao_modelos(key:str, dts_rodada_list:list,granularidade:str='subm
 def import_acomph_visualization_api(data_rodada:datetime.date):
   body:dict = {
   "dataRodada": f"{data_rodada}",
-  "mapName": "acomph",
-  "modelo": "acomph",
+  "mapName": "Acomph",
+  "modelo": "Acomph",
   "grupo": "ONS",
   "viez": "false",
   "data": []
@@ -272,15 +280,15 @@ def import_acomph_visualization_api(data_rodada:datetime.date):
           "dataReferente": ""
         }
       ],
-      "measuringUnit": "vazao",
+      "measuringUnit": "ENA",
       "agrupamento": {
         "valorAgrupamento": "",
         "tipo": ""
       }
     }
   for granularidade in ['submercado','bacia']:
-    res = cache_acomph(prefixo="ACOMPH",granularidade=granularidade,dataInicial=datetime.datetime(2013,1, 1))
-    df = pd.DataFrame(res).reset_index()
+    acomph_cache = cache_acomph(prefixo="ACOMPH",granularidade=granularidade,dataInicial=datetime.datetime(2013,1, 1))
+    df = pd.DataFrame(acomph_cache).reset_index()
     df.rename(columns={'index':'dataReferente'}, inplace=True)
     
     df['dataReferente'] = pd.to_datetime(df['dataReferente'])
@@ -300,7 +308,13 @@ def import_acomph_visualization_api(data_rodada:datetime.date):
       
       body["data"].append(data_)
       
-  r.post('http://localhost:3000/backend/map', json=body)
+  res = r.post('http://tradingenergiarz.com/backend/map', json=body)
+  
+  if res.status_code == 201:
+    logger.info(f"acomph {data_rodada} inserido na API de visualizacao")
+  else:
+    logger.warning(f"Erro ao tentar inserir acomph {data_rodada} na API de visualizacao")
+    
 
 def printHelper():
 
