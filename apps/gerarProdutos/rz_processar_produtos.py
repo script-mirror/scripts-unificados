@@ -584,7 +584,7 @@ def processar_produto_TABELA_WEOL_MENSAL(parametros):
     path_fig = wx_emailSender.api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'weol_mensal_{data}.png'))
 
     resultado.fileWhats = path_fig
-    resultado.msgWhats = f"WEOL Mensal ({data.strftime('%d/%m/%Y')})"
+    resultado.msgWhats = f"WEOL Mensal ({(data + datetime.timedelta(days=1)).strftime('%d/%m/%Y')})"
     resultado.flagWhats = True
     resultado.destinatarioWhats = "Premissas Preco"
 
@@ -600,7 +600,7 @@ def processar_produto_TABELA_WEOL_SEMANAL(parametros):
     path_fig = wx_emailSender.api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'weol_mensal_{data}.png'))
 
     resultado.fileWhats = path_fig
-    resultado.msgWhats = f"WEOL Semanal ({data.strftime('%d/%m/%Y')})"
+    resultado.msgWhats = f"WEOL Semanal ({(data + datetime.timedelta(days=1)).strftime('%d/%m/%Y')})"
     resultado.flagWhats = True
     resultado.destinatarioWhats = "Premissas Preco"
 
