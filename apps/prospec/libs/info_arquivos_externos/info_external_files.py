@@ -14,6 +14,7 @@ sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.bibliotecas import rz_dir_tools,wx_opweek
 from PMO.scripts_unificados.apps.verificadores.ccee import rz_download_cvu
 from PMO.scripts_unificados.apps.prospec.libs.decomp.dadger import dadger
+from PMO.scripts_unificados.apps.prospec.libs.newave.sistema import sistema
 from PMO.scripts_unificados.apps.prospec.libs import utils
 from typing import List
 import logging
@@ -330,13 +331,54 @@ def organizar_info_carga_nw(path_carga_zip):
 
     return result_dict
 
+def organizar_info_eolica_nw(paths_sistema:List[str], data_produto:datetime.date):
+    novos_blocos = {}
+    weol_decomp = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average", params={"dataProduto":str(data_produto)})
+    weol_decomp.raise_for_status()
+        
+    df_weol = pd.DataFrame(weol_decomp.json())
+    df_weol['inicioSemana'] = pd.to_datetime(df_weol['inicioSemana'])
+    df_weol['mes'] = df_weol['inicioSemana'].dt.to_period('M')
+
+    df_weol = df_weol.groupby(['mes', 'submercado'])['mediaPonderada'].mean().reset_index()
+    print(df_weol.to_string())
+    for path_to_modify in paths_sistema:
+        df_geracao = sistema.leituraArquivo(path_to_modify)['GERACAO DE USINAS NAO SIMULADAS']
+        for submercado in sistema.SUBMERCADOS_MNEMONICO:
+            index_sup = int(df_geracao[df_geracao[0] == str(submercado)][df_geracao[1] == '3'].index[0])
+            df_sub = df_geracao[index_sup:index_sup+6]
+
+            df_weol_sub = df_weol[df_weol['submercado']==sistema.SUBMERCADOS_MNEMONICO[submercado]].reset_index().drop(columns='index')
+            
+            for i, _ in df_weol_sub['mes'].dt.month.reset_index().drop(columns='index').iterrows():
+                aux_ano = str(df_weol_sub['mes'].dt.year.reset_index().drop(columns='index').iloc[i]['mes'])
+                aux_mes = int(df_weol_sub['mes'].dt.month.reset_index().drop(columns='index').iloc[i]['mes'])
+                
+                
+                media_ponderada = f"{float(df_weol_sub.iloc[i]['mediaPonderada']):7.1f}"
+                media_ponderada = media_ponderada[:media_ponderada.find('.')+1]
+                if aux_mes == 1:
+                    media_ponderada = f"{media_ponderada:>9}"
+                else:
+                    media_ponderada = f"{media_ponderada:>7}"
+                df_sub.loc[df_sub[0] == aux_ano, aux_mes] = media_ponderada
+            df_geracao[index_sup:index_sup+6] = df_sub
+
+        values_geracao = df_geracao.replace(np.nan, '').to_string(index=False, header=False).split('\n')
+        for i in range(1, len(values_geracao)-1, 6):
+            aux = values_geracao[i]
+            parts = ' '.join(aux.split()).split(' ')
+            if len(parts) == 4:
+                parts[2] = f'{parts[2]} {parts[3]}'
+            values_geracao[i] = f"{parts[0]:>4} {parts[1]:>4}  {parts[2]:<8}"
+            
+        novos_blocos[path_to_modify] = values_geracao
+    return novos_blocos
 
 if __name__ == "__main__":
-    organizar_info_eolica([
-        '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_21904_Entrada/DC202411-sem4/dadger.rv3',
-        '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_21904_Entrada/DC202411-sem5/dadger.rv4',
-        '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_21904_Entrada/DC202412-sem1/dadger.rv0'
-        ], datetime.date(2024,11,16))
+    organizar_info_eolica_nw([
+        '/home/arthur-moraes/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_22805/NW202503/sistema.dat'
+        ], datetime.date(2025,1,22))
 #     rvs = ['2024-11-30',
 #  '2024-12-07',
 #  '2024-12-14',

@@ -96,7 +96,31 @@ class WeolSemanal:
         return result.to_dict('records')
 
     @staticmethod
-    def get_weighted_avg_by_product_date(start_date:datetime.date, end_date:datetime.date):
+    def get_weighted_avg_by_product_date(product_date:datetime.date, ):
+        df = pd.DataFrame(WeolSemanal.get_by_product_date(product_date))
+        df_horas_por_patamar = pd.DataFrame(Patamares.get_horas_por_patamar_por_inicio_semana_data(df['inicioSemana'].min(), df['finalSemana'].max()))
+        merged_df = pd.merge(df, df_horas_por_patamar, on=['inicioSemana', 'patamar'], how='left')
+        
+        df_weighted = merged_df[['dataProduto', 'inicioSemana', 'qtdHoras']][merged_df['submercado'] == "S"]
+        df_weighted = df_weighted.groupby(['dataProduto', 'inicioSemana']).agg({'qtdHoras':'sum'}).rename({'qtdHoras':'totalHoras'}, axis=1)
+        
+        merged_df = pd.merge(df_weighted, merged_df, on=['dataProduto', 'inicioSemana'], how='left')
+
+        df_group  = merged_df[['dataProduto','inicioSemana','patamar','valor','qtdHoras','totalHoras', 'submercado']]
+        
+        df_group['mediaPonderada'] = df_group['valor'] * df_group['qtdHoras']
+        
+        df_group = df_group.groupby(['dataProduto', 'inicioSemana', 'submercado']).agg({'mediaPonderada':'sum', 'totalHoras':'max'}).reset_index()
+        
+        df_group['mediaPonderada'] = df_group['mediaPonderada'] / df_group['totalHoras']
+        df_group.sort_values(by=['submercado', 'inicioSemana'], inplace=True)
+        
+
+        
+        return df_group.to_dict('records')
+
+    @staticmethod
+    def get_weighted_avg_by_product_date_between(start_date:datetime.date, end_date:datetime.date):
         df = pd.DataFrame(WeolSemanal.get_by_product_date_between(start_date, end_date))
         
         df_horas_por_patamar = pd.DataFrame(Patamares.get_horas_por_patamar_por_inicio_semana_data(df['inicioSemana'].min(), df['finalSemana'].max()))
@@ -160,7 +184,7 @@ class WeolSemanal:
 
     @staticmethod
     def get_weighted_avg_table_monthly_by_product_date(data_produto:datetime.date, quantidade_produtos:int):
-        df = pd.DataFrame(WeolSemanal.get_weighted_avg_by_product_date(data_produto - datetime.timedelta(days=quantidade_produtos-1), data_produto))
+        df = pd.DataFrame(WeolSemanal.get_weighted_avg_by_product_date_between(data_produto - datetime.timedelta(days=quantidade_produtos-1), data_produto))
         
         df_eol_newave = pd.DataFrame(NwSistEnergia.get_eol_by_last_data_deck_mes_ano_between(df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-1]))
 
@@ -199,7 +223,7 @@ class WeolSemanal:
 
     @staticmethod
     def get_weighted_avg_table_weekly_by_product_date(data_produto:datetime.date, quantidade_produtos:int):
-        df = pd.DataFrame(WeolSemanal.get_weighted_avg_by_product_date(data_produto - datetime.timedelta(days=quantidade_produtos), data_produto))
+        df = pd.DataFrame(WeolSemanal.get_weighted_avg_by_product_date_between(data_produto - datetime.timedelta(days=quantidade_produtos), data_produto))
         
         df_eol_newave = pd.DataFrame(NwSistEnergia.get_eol_by_last_data_deck_mes_ano_between(df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-1]))
         df_eol_newave = df_eol_newave.groupby(['mes', 'ano']).agg({'geracaoEolica':'sum'}).reset_index()
@@ -270,8 +294,9 @@ class Patamares:
         
         for i in range(2, len(result), 3):
             result.at[i, 'inicio'] = result.at[i-1, 'inicio']
+        
+        result.loc[(result['patamar'] != 'Pesada') & (result['patamar'] != 'Leve'), 'patamar'] = 'medio'
         result.loc[result['patamar'] == 'Pesada', 'patamar'] = 'pesado'
-        result.loc[result['patamar'] == 'Média', 'patamar'] = 'medio'
         result.loc[result['patamar'] == 'Leve', 'patamar'] = 'leve'
         result = result.rename(columns={'inicio': 'inicioSemana'})
         return result.to_dict("records")

@@ -1,8 +1,9 @@
 import os
 import re
 import sys
-import glob
 import pdb
+import glob
+import logging
 import pandas as pd
 pd.options.mode.chained_assignment = None
 
@@ -12,9 +13,15 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.prospec.libs import utils
 from PMO.scripts_unificados.apps.prospec.libs.newave.sistema import sistema
+from PMO.scripts_unificados.apps.prospec.libs.info_arquivos_externos import info_external_files
 
-
-
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    handlers=[
+                        logging.StreamHandler()
+                    ])
+logger = logging.getLogger(__name__)
 # LOAD_sMMGD	MERCADO DE ENERGIA TOTAL (SISTEMA.DAT)
 
 # Exp_CGH	PCH MMGD (SISTEMA.DAT)
@@ -81,7 +88,6 @@ def atualizar_carga_sistema_NW(info_cargas_nw,paths_to_modify):
                     lambda row: sistema.INFO_BLOCOS[bloco_total]['formatacao'].format(*row), 
                     axis=1
                     ).tolist()
-
         sistema.sobrescreve_bloco(
             path_to_modify = path_sistema,
             bloco=bloco_total,
@@ -92,7 +98,6 @@ def atualizar_carga_sistema_NW(info_cargas_nw,paths_to_modify):
         paths_modified.append(path_sistema)
 
     return paths_modified
-
 
 def atualizar_geracao_sistema_NW(info_cargas_nw,paths_to_modify):
 
@@ -175,4 +180,28 @@ def atualizar_geracao_sistema_NW(info_cargas_nw,paths_to_modify):
         paths_modified.append(path_sistema)
 
     return paths_modified
-    
+def update_weol_sistema(data_produto,paths_to_modify):
+    info_eolica = info_external_files.organizar_info_eolica_nw(
+        paths_to_modify,
+        data_produto
+        )
+    for path_sistema in info_eolica:
+        try:
+            sistema.append_bloco(
+                path_to_modify = path_sistema,
+                values=info_eolica[path_sistema][1:],
+            )
+
+            logger.info(f"Bloco {path_sistema} sobrescrito com sucesso")
+        except Exception as e:
+            logger.error(f"Erro ao tentar sobrescrever bloco {path_sistema}: {str(e)}")
+            continue    
+    paths_modified=[]
+
+
+    return paths_modified
+
+
+if __name__ == "__main__":
+    atualizar_carga_sistema_NW(None, ['/home/arthur-moraes/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_22723/NW202502/sistema.dat'])
+    # atualizar_weol_sistema(None, ['/home/arthur-moraes/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_22723/NW202502/sistema.dat'])

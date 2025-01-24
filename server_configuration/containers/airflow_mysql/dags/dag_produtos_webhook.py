@@ -13,7 +13,7 @@ from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.webhook.my_run import PRODUCT_MAPPING
 from PMO.scripts_unificados.apps.webhook.libs import manipularArquivosShadow
-from PMO.scripts_unificados.apps.prospec.libs.update_estudo import update_weol_estudo
+from PMO.scripts_unificados.apps.prospec.libs.update_estudo import update_weol_dadger_dc_estudo, update_weol_sistema_nw_estudo
 
 def remover_acentos_e_caracteres_especiais(texto):
     import re
@@ -123,7 +123,8 @@ def deck_prev_eolica_semanal_previsao_final(**kwargs):
 def deck_prev_eolica_semanal_update_estudos(**kwargs):
     params = kwargs.get('dag_run').conf
     data_produto = datetime.datetime.strptime(params.get('dataProduto'), "%d/%m/%Y")
-    update_weol_estudo(data_produto.date())
+    update_weol_dadger_dc_estudo(data_produto.date())
+    update_weol_sistema_nw_estudo(data_produto.date())
     
 def gerar_produto(**kwargs):
     params = kwargs.get('dag_run').conf
@@ -159,7 +160,7 @@ with DAG(
         provide_context=True
     )
     atualizar_estudos = PythonOperator(
-        task_id='atualizar_estudos_prospec_bloco_pq',
+        task_id='atualizar_estudos_prospec_eolica',
         python_callable=deck_prev_eolica_semanal_update_estudos,
         provide_context=True
     )

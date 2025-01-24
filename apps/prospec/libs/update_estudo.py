@@ -143,6 +143,7 @@ def update_carga_dadger_dc_estudo(file_path,ids_to_modify:List[int]=None):
         logger.info(f"============================================")
         
 def update_weol_dadger_dc_estudo(data_produto:datetime.date, ids_to_modify:List[int] = None):
+    logger.info(f"UPDATE DADGER DECOMP")
     tag = [f'WEOL {datetime.datetime.now().strftime("%d/%m %H:%M")}']
     if not ids_to_modify:
         ids_to_modify = get_ids_to_modify()
@@ -165,12 +166,9 @@ def update_weol_dadger_dc_estudo(data_produto:datetime.date, ids_to_modify:List[
             data_produto
             )
 
-        api.update_tags(id_estudo, tag, "#FFF", "#44F")
-        
         send_files_to_api(id_estudo, arquivos_filtrados, tag)
 
         logger.info(f"============================================")
-        
 #NEWAVE
 def update_cvu_clast_nw_estudo(ano_referencia_cvu:int,mes_referencia_cvu:int,ids_to_modify:List[int]=None):
 
@@ -295,10 +293,9 @@ def update_carga_sistema_nw_estudo(file_path:str,ids_to_modify:List[int]=None):
         send_files_to_api(id_estudo, paths_modified, tag)
 
         logger.info(f"============================================")
-
-  
-
-def update_weol_estudo(data_produto:datetime.date, ids_to_modify:List[int] = None):
+        
+def update_weol_sistema_nw_estudo(data_produto:datetime.date, ids_to_modify:List[int] = None):
+    logger.info(f"UPDATE SISTEMA NEWAVE")
     tag = [f'WEOL {datetime.datetime.now().strftime("%d/%m %H:%M")}']
     if not ids_to_modify:
         ids_to_modify = get_ids_to_modify()
@@ -313,26 +310,30 @@ def update_weol_estudo(data_produto:datetime.date, ids_to_modify:List[int] = Non
             path_estudo,
             )
 
-        dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
-        arquivos_filtrados = [arquivo for arquivo in dadgers_to_modify if not re.search(r'\.0+$', arquivo)]
-
-        dadger_updater.update_eolica_DC(
-            arquivos_filtrados,
-            data_produto
+        paths_sistema_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*sistema*"),recursive=True)
+        sistema_updater.update_weol_sistema(
+            data_produto,
+            paths_sistema_to_modify
             )
-
-        api.update_tags(id_estudo, tag, "#FFF", "#44F")
-        
-        send_files_to_api(id_estudo, arquivos_filtrados, tag)
+        send_files_to_api(id_estudo, paths_sistema_to_modify, tag)
 
         logger.info(f"============================================")
         
 
 
 if __name__ == "__main__":
-
+    update_weol_sistema_nw_estudo(
+        datetime.date(2025, 1, 22),
+        [22800]
+        )
     # ids_to_modify = get_ids_to_modify()
-    update_weol_estudo(datetime.date(2024, 12, 19))
+
+    # for id_estudo in ids_to_modify:
+    #     logger.info("\n\n")
+    #     logger.info(f"Modificando estudo {id_estudo}")
+
+    #     path_to_modify = api.downloadEstudoPorId(id_estudo)
+    # update_weol_dadger_dc_estudo(datetime.date(2024, 12, 19))
     # ids_to_modify = [22152]
     # file_path=r"C:\Users\CS399274\Downloads\RV0_PMO_Dezembro_2024_carga_semanal.zip"
 

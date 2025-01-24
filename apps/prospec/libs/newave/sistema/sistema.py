@@ -37,6 +37,12 @@ SUBMERCADOS_MAPPING={
         3:'NORDESTE',
         4:'NORTE',
 }
+SUBMERCADOS_MNEMONICO={
+        1:'SE',
+        2:'S',
+        3:'NE',
+        4:'N',
+}
 
 GERACAO_MAPPING={
 
@@ -102,7 +108,16 @@ def leituraArquivo(file_path):
 
     return dataframes_dict
 
+def append_bloco(path_to_modify:str, values:list):
 
+    with open(path_to_modify, 'r', encoding='iso-8859-1') as file:
+        lines = file.readlines()
+        values = [f"{linha}\n" for linha in values]
+        lines = lines[:lines.index(' GERACAO DE USINAS NAO SIMULADAS\n')+3] + values
+
+    with open(path_to_modify, 'w') as file:
+        file.writelines(lines)
+        
 def sobrescreve_bloco(path_to_modify:str,bloco:str, title:str, values:list,skip_lines:int):
 
     alterar=False
