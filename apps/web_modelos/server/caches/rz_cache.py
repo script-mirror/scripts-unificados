@@ -10,7 +10,7 @@ from typing import Callable
 sys.path.insert(1,"/WX2TB/Documentos/fontes")
 from PMO.scripts_unificados.apps.rodadas import rz_rodadasModelos
 from PMO.scripts_unificados.apps.web_modelos.server.server import cache
-from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_ena,rz_chuva,rz_dbLib,db_decks,db_meteorologia,db_ons
+from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_ena, rz_chuva,rz_dbLib,db_decks,db_meteorologia,db_ons
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
@@ -152,7 +152,7 @@ def atualizar_cache_acomph(dt_inicial, reset=False):
 
   cache_acomph(prefixo="ACOMPH",granularidade='submercado',dataInicial=dt_inicial,flag_atualizar=True,reset=reset)
   cache_acomph(prefixo="ACOMPH",granularidade='bacia',dataInicial=dt_inicial,flag_atualizar=True,reset=reset)
-  import_acomph_visualization_api(dt_inicial)
+  # import_acomph_visualization_api(dt_inicial)
 
   print("CACHE ACOMPH ATUALIZADO!")
 
@@ -270,10 +270,26 @@ def import_acomph_visualization_api(data_rodada:datetime.date):
   "modelo": "Acomph",
   "grupo": "ONS",
   "viez": "false",
+  "membro":"0",
   "data": []
   }
   
-  data:dict = {
+
+  for granularidade in ['submercado','bacia']:
+    acomph_cache = cache_acomph(prefixo="ACOMPH",granularidade=granularidade,dataInicial=datetime.datetime(2013,1, 1))
+    df = pd.DataFrame(acomph_cache).reset_index()
+    df.rename(columns={'index':'dataReferente'}, inplace=True)
+    
+    df['dataReferente'] = pd.to_datetime(df['dataReferente'])
+    df['dataReferente'] = df['dataReferente'].dt.strftime('%Y-%m-%d')
+    
+    colunas_agrupamento = df.columns.to_list()[1:]
+
+    for col in colunas_agrupamento:
+      df_ = df[['dataReferente', col]]
+      df_.rename(columns={col:'valor'}, inplace=True)
+      
+      data =  {
       "valoresMapa": [
         {
           "valor": "0",
@@ -286,29 +302,14 @@ def import_acomph_visualization_api(data_rodada:datetime.date):
         "tipo": ""
       }
     }
-  for granularidade in ['submercado','bacia']:
-    acomph_cache = cache_acomph(prefixo="ACOMPH",granularidade=granularidade,dataInicial=datetime.datetime(2013,1, 1))
-    df = pd.DataFrame(acomph_cache).reset_index()
-    df.rename(columns={'index':'dataReferente'}, inplace=True)
-    
-    df['dataReferente'] = pd.to_datetime(df['dataReferente'])
-    df['dataReferente'] = df['dataReferente'].dt.strftime('%Y-%m-%d')
-    
-    colunas_agrupamento = df.columns.to_list()[1:]
-    
-    for col in colunas_agrupamento:
-      df_ = df[['dataReferente', col]]
-      df_.rename(columns={col:'valor'}, inplace=True)
+      data['valoresMapa'] = df_.to_dict('records')
       
-      data_ = data.copy()
-      data_['valoresMapa'] = df_.to_dict('records')
+      data['agrupamento']['valorAgrupamento'] = col
+      data['agrupamento']['tipo'] = granularidade
+      body["data"].append(data)
       
-      data_['agrupamento']['valorAgrupamento'] = col
-      data_['agrupamento']['tipo'] = granularidade
-      
-      body["data"].append(data_)
-      
-  res = r.post('http://tradingenergiarz.com/backend/map', json=body)
+  res = r.post('http://0.0.0.0:6001/backend/api/map', json=body)
+  
   
   if res.status_code == 201:
     logger.info(f"acomph {data_rodada} inserido na API de visualizacao")
@@ -391,6 +392,10 @@ def runWithParams():
 
 
 if __name__ == '__main__':
+  # rodadas = rz_rodadasModelos.Rodadas(dt_rodada = dt_rodada)
+  # rodadas.build_modelo_info_dict(granularidade = 'submercado', build_all_models=True)
+
+  # teste = cache_rodadas_modelos('PREVISAO_ENA', rodadas)
     runWithParams()
 
 
