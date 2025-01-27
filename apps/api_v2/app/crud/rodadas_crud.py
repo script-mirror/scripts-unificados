@@ -279,6 +279,39 @@ class Chuva:
         for q in query_obj:
             df = pd.concat([df, pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(q.id, q.dt_inicio, q.dt_fim, granularidade, no_cache, atualizar))])
         return df.to_dict('records')
+    @staticmethod
+    def export_rain(rain_forecast:List[dict]):
+        'cd_subbacia'
+        'dt_prevista'
+        'vl_chuva'
+        'modelo'
+        'dt_rodada'
+        base_rain = rain_forecast[0]
+        
+        body:dict = {
+            "dataRodada": f"{base_rain["dt_rodada"]}",
+            "mapName": base_rain["modelo"],
+            "modelo": base_rain["modelo"],
+            "grupo": base_rain["modelo"],
+            "viez": "false",
+            "membro":"0",
+            "data": []
+            }
+        data =  {
+            "valoresMapa": [
+            {
+                "valor": "0",
+                "dataReferente": ""
+            }
+            ],
+            "measuringUnit": "mm3",
+            "agrupamento": {
+            "valorAgrupamento": "",
+            "tipo": ""
+            }
+        }
+        # res = r.post('http://0.0.0.0:6001/backend/api/map', json=body)
+  
     
     @staticmethod
     def post_chuva_modelo_combinados(chuva_prev:List[ChuvaPrevisaoCriacao], rodar_smap:bool) -> None:
