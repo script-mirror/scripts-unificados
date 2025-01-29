@@ -1,6 +1,7 @@
 import pandas as pd
 import re
-
+import pdb
+from typing import Dict 
 
 
 INFO_BLOCOS={}
@@ -92,7 +93,7 @@ def parse_block_with_regex(content, line_regex, additional_line_regex):
     return rows
 
 
-def leituraArquivo(file_path):
+def leituraArquivo(file_path) -> Dict[str, pd.DataFrame]:
     with open(file_path, 'r') as file:
         lines = file.readlines()
 

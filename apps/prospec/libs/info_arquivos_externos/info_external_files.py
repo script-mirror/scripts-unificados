@@ -341,37 +341,36 @@ def organizar_info_eolica_nw(paths_sistema:List[str], data_produto:datetime.date
     df_weol['mes'] = df_weol['inicioSemana'].dt.to_period('M')
 
     df_weol = df_weol.groupby(['mes', 'submercado'])['mediaPonderada'].mean().reset_index()
-    print(df_weol.to_string())
     for path_to_modify in paths_sistema:
-        df_geracao = sistema.leituraArquivo(path_to_modify)['GERACAO DE USINAS NAO SIMULADAS']
+        df_geracao:pd.DataFrame = sistema.leituraArquivo(path_to_modify)['GERACAO DE USINAS NAO SIMULADAS']
+        df_geracao[0] = df_geracao[0].str.strip().apply(lambda x: "{:<6}".format(x))
         for submercado in sistema.SUBMERCADOS_MNEMONICO:
-            index_sup = int(df_geracao[df_geracao[0] == str(submercado)][df_geracao[1] == '3'].index[0])
+            index_sup = int(df_geracao[df_geracao[0] == "{:<6}".format(submercado)][df_geracao[1] == '3'].index[0])
             df_sub = df_geracao[index_sup:index_sup+6]
 
             df_weol_sub = df_weol[df_weol['submercado']==sistema.SUBMERCADOS_MNEMONICO[submercado]].reset_index().drop(columns='index')
             
             for i, _ in df_weol_sub['mes'].dt.month.reset_index().drop(columns='index').iterrows():
-                aux_ano = str(df_weol_sub['mes'].dt.year.reset_index().drop(columns='index').iloc[i]['mes'])
+                
+                aux_ano = "{:<6}".format(df_weol_sub['mes'].dt.year.reset_index().drop(columns='index').iloc[i]['mes'])
                 aux_mes = int(df_weol_sub['mes'].dt.month.reset_index().drop(columns='index').iloc[i]['mes'])
-                
-                
-                media_ponderada = f"{float(df_weol_sub.iloc[i]['mediaPonderada']):7.1f}"
+
+                media_ponderada = f"{float(df_weol_sub.iloc[i]['mediaPonderada']):6.1f}"
                 media_ponderada = media_ponderada[:media_ponderada.find('.')+1]
-                if aux_mes == 1:
-                    media_ponderada = f"{media_ponderada:>9}"
-                else:
-                    media_ponderada = f"{media_ponderada:>7}"
+                
+                media_ponderada = f"{media_ponderada:>7}"
                 df_sub.loc[df_sub[0] == aux_ano, aux_mes] = media_ponderada
             df_geracao[index_sup:index_sup+6] = df_sub
 
         values_geracao = df_geracao.replace(np.nan, '').to_string(index=False, header=False).split('\n')
+        
         for i in range(1, len(values_geracao)-1, 6):
             aux = values_geracao[i]
             parts = ' '.join(aux.split()).split(' ')
             if len(parts) == 4:
                 parts[2] = f'{parts[2]} {parts[3]}'
             values_geracao[i] = f"{parts[0]:>4} {parts[1]:>4}  {parts[2]:<8}"
-            
+        values_geracao[-1] = f' {values_geracao[-1].strip()} '
         novos_blocos[path_to_modify] = values_geracao
     return novos_blocos
 
