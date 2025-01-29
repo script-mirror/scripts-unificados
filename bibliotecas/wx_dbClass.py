@@ -45,10 +45,7 @@ DB_MAPPING = {
         "tb_chuva_obs",
         "tb_chuva_obs_cpc",
         "tb_pesos_grupos_ecmwf",
-        ],
-
-    "db_tmp": [
-        "tb_tmp_smap"
+        "tb_vazoes_obs",
         ],
 
     "db_meteorologia":[
@@ -67,6 +64,8 @@ DB_MAPPING = {
         "tb_indices_itcz_olr_previsto",
         "tb_cadastro_itcz_olr_previsto",
         "tb_cadastro_itcz_vento_previsto",
+        'tb_indices_itcz_previsto',
+        'tb_cadastro_indices_itcz',
     ]
 
 }
@@ -516,8 +515,8 @@ class db_mysql_master():
                 db.Column('dt_deck', db.Date),
             )
 
-        elif table_name.lower() == 'tb_tmp_smap':
-            table_schema = db.Table('tb_tmp_smap', self.meta,
+        elif table_name.lower() == 'tb_vazoes_obs':
+            table_schema = db.Table('tb_vazoes_obs', self.meta,
                     db.Column('txt_subbacia', db.String(100)),
                     db.Column('cd_estacao', db.Integer),
                     db.Column('txt_tipo_vaz', db.String(100)),
@@ -1108,6 +1107,30 @@ class db_mysql_master():
                 db.Column('str_indice', db.String(20)),
             )
 
+        elif table_name.lower() == 'tb_cadastro_indices_itcz':
+            table_schema = db.Table('tb_cadastro_indices_itcz', self.meta,
+                db.Column('id', db.Integer, primary_key=True),
+                db.Column('dt_rodada', db.Date, nullable=True),
+                db.Column('hr_rodada', db.Integer, nullable=True),
+                db.Column('str_modelo', db.String(255), nullable=True),
+            )
+
+        elif table_name.lower() == 'tb_indices_itcz_previsto':
+
+            table_schema = db.Table('tb_indices_itcz_previsto', self.meta,
+                db.Column('id_cadastro', db.Integer),
+                db.Column('dt_prevista', db.DateTime, nullable=True),
+                db.Column('lats_min', db.Float, nullable=True),
+                db.Column('lats_max', db.Float, nullable=True),
+                db.Column('lats_menor_olr', db.Float, nullable=True),
+                db.Column('lats_menor_vento', db.Float, nullable=True),
+                db.Column('lats_media_vento_olr', db.Float, nullable=True),
+                db.Column('intensidades_olr', db.Float, nullable=True),
+                db.Column('intensidades_chuva', db.Float, nullable=True),
+                db.Column('largura', db.Float, nullable=True),
+                
+            )
+
         return table_schema
 
     def get_db_schemas(self, tables=[]):
@@ -1139,10 +1162,12 @@ if __name__ == '__main__':
     # database.create_table('tb_cadastro_teleconexoes_indice')
     # database.create_table('tb_chuva_observada_estacao_chuvosa_norte')
     # database.create_table('tb_chuva_prevista_estacao_chuvosa_norte')
-    database.create_table('tb_indices_itcz_vento_previsto')
+    # database.create_table('tb_indices_itcz_vento_previsto')
     # database.create_table('tb_indices_itcz_olr_previsto')
     # database.create_table('tb_cadastro_itcz_olr_previsto')
-    # database.create_table('tb_cadastro_itcz_vento_previsto')    
+    # database.create_table('tb_cadastro_itcz_vento_previsto') 
+    database.create_table('tb_cadastro_indices_itcz') 
+    database.create_table('tb_indices_itcz_previsto')    
 
     # tb_cadastro_rodadas = database.getSchema('tb_cadastro_rodadas')
     # database.connect()

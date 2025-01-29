@@ -58,7 +58,11 @@ with DAG(
     tags=["Verificador","ONS","SMAP","Chuva Prevista"],
     start_date= datetime.datetime(2024, 4, 28),
     catchup=False,
-    schedule="30 6 * * *"
+    schedule="30 6 * * *",
+    default_args={
+        'retries': 10,
+        'retry_delay': datetime.timedelta(minutes=15) 
+    },
 ) as dag:
 
     # começo estrutura para rodar a sequencia das tarefas
