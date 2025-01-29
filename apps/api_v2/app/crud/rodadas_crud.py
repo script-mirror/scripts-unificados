@@ -10,7 +10,8 @@ from app.schemas.chuvaprevisao import ChuvaPrevisaoCriacao, ChuvaPrevisaoCriacao
 from app.schemas import PesquisaPrevisaoChuva, RodadaSmap, ChuvaObsReq
 from app.utils import cache
 from app.crud import ons_crud
-from app.utils.airflow.airflow_tools import trigger_dag_SMAP
+from app.utils.airflow import airflow_tools 
+# from app.utils.airflow.airflow_tools import trigger_dag_SMAP
 from app.database.wx_dbClass import db_mysql_master
 
 prod = True
@@ -281,7 +282,7 @@ class Chuva:
         return df.to_dict('records')
     
     @staticmethod
-    def post_chuva_modelo_combinados(chuva_prev:List[ChuvaPrevisaoCriacao], rodar_smap:bool) -> None:
+    def post_chuva_modelo_combinados(chuva_prev:List[ChuvaPrevisaoCriacao], rodar_smap:bool, prev_estendida:bool) -> None:
         prevs:List[dict] = []
         for prev in chuva_prev:
             prevs.append(prev.model_dump())
@@ -299,7 +300,7 @@ class Chuva:
             
         df = pd.DataFrame(prevs)
         df['cenario'] = f'{modelo[0]}_{modelo[1]}_{modelo[2]}'
-        Chuva.inserir_chuva_modelos(df, rodar_smap)
+        Chuva.inserir_chuva_modelos(df, rodar_smap, prev_estendida)
     
         return None
     
@@ -311,7 +312,7 @@ class Chuva:
         print(f"{n_value} Linhas inseridas na Chuva") 
         
     @staticmethod
-    def inserir_chuva_modelos(df_prev_chuva_out:pd.DataFrame, rodar_smap:bool = True):
+    def inserir_chuva_modelos(df_prev_chuva_out:pd.DataFrame, rodar_smap:bool, prev_estendida:bool): 
         df_info_subbacias = Subbacia.info_subbacias()
         df_chuva_final = pd.merge(df_info_subbacias[['cd_subbacia' ,'vl_lon'  ,'vl_lat']], df_prev_chuva_out)
         df_prev_chuva = df_chuva_final.drop(['vl_lat','vl_lon'],axis=1)
@@ -355,7 +356,7 @@ class Chuva:
             Chuva.inserir_prev_chuva(df_prev_chuva.round(2))
             
             if rodar_smap:
-                Smap.post_rodada_smap(RodadaSmap.model_validate({'dt_rodada':datetime.datetime.strptime(dt_rodada, '%Y-%m-%d'),'hr_rodada':hr_rodada,'str_modelo':str_modelo}))
+                Smap.post_rodada_smap(RodadaSmap.model_validate({'dt_rodada':datetime.datetime.strptime(dt_rodada, '%Y-%m-%d'),'hr_rodada':hr_rodada,'str_modelo':str_modelo}), prev_estendida)
 
     @staticmethod
     def delete_por_id(id:int):
@@ -413,7 +414,7 @@ class ChuvaMembro:
         print(f"{linhas_insert} linhas inseridas chuva membro")
 
     @staticmethod
-    def media_membros(dt_hr_rodada:datetime.datetime, modelo:str, inserir:bool = False) -> None:
+    def media_membros(dt_hr_rodada:datetime.datetime, modelo:str, inserir:bool = False, prev_estendida:bool = False) -> None:
         q_select = db.select(
             ChuvaMembro.tb.c['cd_subbacia'],
             ChuvaMembro.tb.c['dt_prevista'],
@@ -433,7 +434,7 @@ class ChuvaMembro:
         df['dt_rodada'] = dt_hr_rodada
         df['dt_rodada'] = pd.Series(df['dt_rodada'].dt.to_pydatetime(), dtype = object)
         if inserir:
-            Chuva.post_chuva_modelo_combinados([ChuvaPrevisaoCriacao.model_validate(x) for x in df.to_dict('records')], True)
+            Chuva.post_chuva_modelo_combinados([ChuvaPrevisaoCriacao.model_validate(x) for x in df.to_dict('records')], True, prev_estendida)
     @staticmethod
     def get_chuva_por_nome_modelo_dt_hr(nome_modelo, dt_hr_rodada):
         query = db.select(
@@ -523,9 +524,24 @@ class Subbacia:
 class Smap:
     tb:db.Table = __DB__.getSchema('tb_smap')
     @staticmethod
-    def post_rodada_smap(rodada:RodadaSmap):
+    def post_rodada_smap(rodada:RodadaSmap, prev_estendida:bool):
         momento_req:datetime.datetime = datetime.datetime.now()
-        trigger_dag_SMAP(rodada.dt_rodada, [rodada.str_modelo], rodada.hr_rodada, momento_req)
+        # trigger_dag_SMAP(rodada.dt_rodada, [rodada.str_modelo], rodada.hr_rodada, momento_req)
+        airflow_tools.trigger_airflow_dag(
+            dag_id="PREV_SMAP",
+            json_produtos={
+                "modelos":[[
+                    rodada.str_modelo,
+                    rodada.hr_rodada,
+                    rodada.dt_rodada.strftime("%Y-%m-%d")
+                    ]
+                ],
+                "prev_estendida":prev_estendida
+            },
+            momento_req=momento_req
+
+        )
+        
         return None
         # response:dict = get_dag_smap_run_status(rodada.str_modelo, momento_req)
         

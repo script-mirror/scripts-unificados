@@ -3,9 +3,9 @@ import datetime
 from typing import Annotated
 from random import randint
 from sys import path
-path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2")
 
-'* * * * * '
+
+
 router = APIRouter(prefix='/testes')
 
 @router.get('/', description='Descricao da rota', tags=['teste'])
