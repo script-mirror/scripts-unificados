@@ -10,7 +10,8 @@ from app.schemas.chuvaprevisao import ChuvaPrevisaoCriacao, ChuvaPrevisaoCriacao
 from app.schemas import PesquisaPrevisaoChuva, RodadaSmap, ChuvaObsReq
 from app.utils import cache
 from app.crud import ons_crud
-from app.utils.airflow.airflow_tools import trigger_dag_SMAP
+from app.utils.airflow import airflow_tools 
+# from app.utils.airflow.airflow_tools import trigger_dag_SMAP
 from app.database.wx_dbClass import db_mysql_master
 
 prod = True
@@ -525,7 +526,22 @@ class Smap:
     @staticmethod
     def post_rodada_smap(rodada:RodadaSmap):
         momento_req:datetime.datetime = datetime.datetime.now()
-        trigger_dag_SMAP(rodada.dt_rodada, [rodada.str_modelo], rodada.hr_rodada, momento_req)
+        # trigger_dag_SMAP(rodada.dt_rodada, [rodada.str_modelo], rodada.hr_rodada, momento_req)
+        airflow_tools.trigger_airflow_dag(
+            dag_id="PREV_SMAP",
+            json_produtos={
+                "modelos":[[
+                    rodada.str_modelo,
+                    rodada.hr_rodada,
+                    rodada.dt_rodada.strftime("%Y-%m-%d")
+                    ]
+                ],
+                "prev_estendida":True
+            },
+            momento_req=momento_req
+
+        )
+        
         return None
         # response:dict = get_dag_smap_run_status(rodada.str_modelo, momento_req)
         
