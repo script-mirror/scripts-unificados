@@ -19,10 +19,9 @@ from PMO.scripts_unificados.apps.prospec.libs import utils
 from typing import List
 import logging
 import requests as r
-from pprint import pp
 from dotenv import load_dotenv
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     handlers=[
@@ -47,6 +46,7 @@ def organizar_info_cvu(ano_referencia, mes_referencia,path_saida=PATH_DOWNLOAD_T
         path_saida
         )
 
+
     for file in extracted_files:
 
         dt_referente = f"{file['anoReferencia']}{file['mesReferencia']}"
@@ -63,8 +63,10 @@ def organizar_info_cvu(ano_referencia, mes_referencia,path_saida=PATH_DOWNLOAD_T
 
         #busca a coluna estrutural nos arquivos nao merchant, pode ser que nao tenha essa coluna
         try:
-            df_estrutural = df[['CÓDIGO','CVU ESTRUTURAL']].replace('-',np.NaN).dropna()
-            info_cvu[dt_referente]['estrutural'] = df_estrutural
+            info_cvu[dt_referente]['estrutural'] = {}
+            for ano in range(1,6):
+                df_estrutural = df[['CÓDIGO',f'CVU ESTRUTURAL ANO {ano}']].replace('-',np.NaN).dropna()
+                info_cvu[dt_referente]['estrutural'][ano] = df_estrutural
         except:
             pass
 
@@ -82,15 +84,17 @@ def organizar_info_cvu(ano_referencia, mes_referencia,path_saida=PATH_DOWNLOAD_T
 
 
             df_estrutural = df[['CVU CF [R$/MWh]','Código']].copy()
-            df_estrutural.columns = ['CVU ESTRUTURAL','CÓDIGO']
-            info_cvu[dt_referente]['estrutural'] = df_estrutural
-
+            info_cvu[dt_referente]['estrutural'] = {}
+            for ano in range(1,6):
+                df_estrutural.columns = [f'CVU ESTRUTURAL ANO {ano}','CÓDIGO']
+                info_cvu[dt_referente]['estrutural'][ano] = df_estrutural
         except:
             pass
 
         try:
-            info_cvu[dt_referente]['conjuntural']['CÓDIGO'] = info_cvu[dt_referente]['conjuntural']['CÓDIGO'].astype(str)
-            info_cvu[dt_referente]['estrutural']['CÓDIGO'] = info_cvu[dt_referente]['estrutural']['CÓDIGO'].astype(str)
+            info_cvu[dt_referente]['conjuntural']['CÓDIGO'] = info_cvu[dt_referente]['conjuntural']['CÓDIGO'].astype(int).astype(str)
+            for ano in range(1,6):
+                info_cvu[dt_referente]['estrutural'][ano]['CÓDIGO'] = info_cvu[dt_referente]['estrutural'][ano]['CÓDIGO'].astype(int).astype(str)
         except:
             pass
 

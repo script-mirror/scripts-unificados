@@ -96,7 +96,7 @@ def atualizar_carga_DC(info_cargas,paths_to_modify):
         else:
             quit(f"Erro ao tentar extrair ano e mes do nome da pasta {folder_name}")
         
-        formatacao = '{:>2}  {:>2}   {:>2}  {:>3}   {:>10}{:>10}{:>10}{:>10}{:>10}{:>10}'
+        formatacao = '{:>2}  {:>2}   {:>2}   {:>1}    {:>10}{:>10}{:>10}{:>10}{:>10}{:>10}'
         
         if not info_cargas.get(dt_referente):
             continue
@@ -116,6 +116,7 @@ def atualizar_carga_DC(info_cargas,paths_to_modify):
             simbolos_sequenciais=['&'],
             intervalo_linhas=5
         )
+
         dadger.sobrescreve_bloco(
             path_to_modify=path_dadger,
             mnemonico_bloco='DP',
@@ -148,26 +149,25 @@ def update_eolica_DC(paths_to_modify:List[str], data_produto:datetime.date):
 
 if __name__ == "__main__":
 
-    update_eolica_DC([
-        '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_21904_Entrada/DC202411-sem4/dadger.rv3',
-        '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_21904_Entrada/DC202411-sem5/dadger.rv4',
-        '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_21904_Entrada/DC202412-sem1/dadger.rv0'
-        ], datetime.date(2025,11,16))
+    # update_eolica_DC([
+    #     '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_21904_Entrada/DC202411-sem4/dadger.rv3',
+    #     '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_21904_Entrada/DC202411-sem5/dadger.rv4',
+    #     '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_21904_Entrada/DC202412-sem1/dadger.rv0'
+    #     ], datetime.date(2025,11,16))
     path_saida = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp"
-
-    #EXTRAINDO ZIP
-    file_estudo = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/verificadores/ccee/Estudo_21904_Entrada.zip"
-    extracted_zip_estudo = utils.extract_file_estudo(
-        file_estudo,
-        path_saida,
-        )
+    # #EXTRAINDO ZIP
+    # file_estudo = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/verificadores/ccee/Estudo_21904_Entrada.zip"
+    # extracted_zip_estudo = utils.extract_file_estudo(
+    #     file_estudo,
+    #     path_saida,
+    #     )
 
     # ORGANIZA INFORMACOES DE CVU
-    # info_cvu = info_external_files.organizar_info_cvu(
-    #     ano_referencia=2024,    
-    #     mes_referencia=11,
-    #     path_saida=path_saida
-    #     )
+    info_cvu = info_external_files.organizar_info_cvu(
+        ano_referencia=2025,    
+        mes_referencia=1,
+        path_saida=path_saida
+        )
 
     # #ALTERAR CVU EM DECKS DC
     # paths_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
@@ -183,6 +183,7 @@ if __name__ == "__main__":
     #     extracted_zip_estudo,
     #     path_saida
     #     )
+
     # #ALTERAR CARGA EM DECKS DC
     # paths_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
     # atualizar_carga_DC(
@@ -190,13 +191,13 @@ if __name__ == "__main__":
     #     paths_to_modify
     # )
     
-    path_eolica_zip= "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/verificadores/ccee/RV3_PMO_Novembro_2024_carga_semanal.zip"
-    paths_dadgers = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
-    pdb.set_trace()
-    info_eolica = info_external_files.organizar_info_eolica(
-        paths_dadgers,
-        path_saida
-        )
+    # path_eolica_zip= "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/verificadores/ccee/RV3_PMO_Novembro_2024_carga_semanal.zip"
+    # paths_dadgers = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
+    # pdb.set_trace()
+    # info_eolica = info_external_files.organizar_info_eolica(
+    #     paths_dadgers,
+    #     path_saida
+    #     )
     
     # atualizar_eolica_DC(
     #     info_eolica,
