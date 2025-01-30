@@ -200,6 +200,10 @@ def rdh_values():
 def mapa_interativo():
   return render_template('mapa_interativo.html')
 
+@bp.route('/mapa-interativo-tv')
+@login_required
+def mapa_interativo_tv():
+  return render_template('mapa_interativo_tv.html')
 
 @bp.route('/resumo-negociacoes-bbce')
 # @login_required
