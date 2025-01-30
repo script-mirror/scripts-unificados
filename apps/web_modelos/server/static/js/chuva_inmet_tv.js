@@ -1,11 +1,28 @@
 const mmChuvaMinimo = 5;
+
+const urlParams = new URLSearchParams(window.location.search);
+const paramZoom = urlParams.get('zoom');
+
+let zommSetting = 0;
+let coords = [];
+
+if (paramZoom == "sul") {
+  zommSetting = 6;
+  coords = [-23.40, -51.93];
+
+}else{
+  zommSetting = 5;
+  coords = [-14.24, -51.93];
+
+}
+
 class Mapa {
     constructor(id, cores, dtInicial, dtFinal) {
       this.id = id;
-      this.zoomSetting = 5;
+      this.zoomSetting = zommSetting;
       this.cores = cores;
       this.mapa = L.map(this.id, {
-        center: [-14.24, -51.93],
+        center: coords,
         zoom: this.zoomSetting,
         worldCopyJump: true,
         zoomControl: false,
@@ -37,11 +54,6 @@ class Mapa {
           labelText.className = 'row bg-light';
           div.append(labelColors);
           div.append(labelText);
-
-          let labelDataHora = L.DomUtil.create('div');
-          labelDataHora.id = 'labelDataHora';
-          labelDataHora.className = 'row bg-light';
-          div.append(labelDataHora);
 
           return div;
         },
@@ -262,7 +274,6 @@ class Mapa {
   
     const elementColors = document.getElementById(idColors)
     const elementText = document.getElementById(idText)
-    const elementDatetime = document.getElementById("labelDataHora")
     let widthDiv = 100 / listColors.length;
     for (let cor in listColors) {
       let divCores = document.createElement('div')
@@ -285,7 +296,6 @@ class Mapa {
       }
       elementText.appendChild(divParametros)
     }
-    elementDatetime.appendChild("Última atualização: " + moment().format('DD/MM/YYYY HH:mm'))
   
   }
   
