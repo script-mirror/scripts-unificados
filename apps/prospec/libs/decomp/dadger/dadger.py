@@ -1,6 +1,7 @@
 import re
-import pandas as pd
+import codecs
 import logging
+import pandas as pd
 from unidecode import unidecode
 
 logging.basicConfig(level=logging.INFO,
@@ -744,3 +745,101 @@ def sobrescreve_bloco(path_to_modify:str,mnemonico_bloco:str, values:list,skip_l
 
     with open(path_to_modify, 'w') as file:
         file.writelines(new_lines)
+
+def escrever_bloco_restricoes(fileOut, df_dadger, mnemonico_restricao, submnemonicos_restricao, comentarios):
+    
+    if mnemonico_restricao == 'HE':
+        for index, row in df_dadger[mnemonico_restricao].iterrows():
+            if index in comentarios[mnemonico_restricao]:
+                for coment in comentarios[mnemonico_restricao][index]:
+                    fileOut.write(coment)
+            fileOut.write('{}\n'.format(info_blocos[mnemonico_restricao]['formatacao'].format(*row.values).strip()))
+            
+            restricoes_mesma_rhe = df_dadger[mnemonico_restricao].loc[df_dadger[mnemonico_restricao]['id_restricao'] == row['id_restricao']]
+            
+            # Somente escreve o bloco CM se for a ultima restricao HE para aquela rhe
+            if row.name == restricoes_mesma_rhe.iloc[-1].name:
+                id_restr = int(row['id_restricao'])
+                for mnemon in ['CM']:
+                    restricoes_mnemon = df_dadger[mnemon].loc[df_dadger[mnemon]['id_restricao'].astype('int') == id_restr]
+                    for index, row in restricoes_mnemon.iterrows():
+                        if index in comentarios[mnemon]:
+                            for coment in comentarios[mnemon][index]:
+                                fileOut.write(coment)
+                        fileOut.write('{}\n'.format(info_blocos[mnemon]['formatacao'].format(*row.values).strip()))
+
+        # Escrita do ultimo comentário, se existir
+        if index+1 in comentarios[mnemon]:
+            for coment in comentarios[mnemon][index+1]:
+                fileOut.write(coment)
+    
+    else:
+        for index, row in df_dadger[mnemonico_restricao].iterrows():
+        
+            if index in comentarios[mnemonico_restricao]:
+                for coment in comentarios[mnemonico_restricao][index]:
+                    fileOut.write(coment)
+            fileOut.write('{}\n'.format(info_blocos[mnemonico_restricao]['formatacao'].format(*row.values).strip()))
+            id_restr = int(row['id_restricao'])
+            
+            for mnemon in submnemonicos_restricao:
+                restricoes_mnemon = df_dadger[mnemon].loc[df_dadger[mnemon]['id_restricao'].astype('int') == id_restr]
+                
+                for index, row in restricoes_mnemon.iterrows():
+                    if index in comentarios[mnemon]:
+                        for coment in comentarios[mnemon][index]:
+                            fileOut.write(coment)
+                    fileOut.write('{}\n'.format(info_blocos[mnemon]['formatacao'].format(*row.values).strip()))
+
+def escrever_dadger(df_dadger, comentarios, filePath):
+    
+    blocos_restricoes = {}
+    blocos_restricoes['RE'] = ['LU', 'FU', 'FT', 'FI']
+    blocos_restricoes['HQ'] = ['LQ', 'CQ']
+    blocos_restricoes['HV'] = ['LV', 'CV']
+    blocos_restricoes['HE'] = ['CM']
+    
+    # # Aproveitando a funcao de restricao para inserir a Influência de 
+    # # vazões laterais
+    # blocos_restricoes['VL'] = ['VU']
+    
+    bloco_dependentes = {}
+    bloco_dependentes['VL'] = ['VU']
+    
+    
+    blocos_infos_restricoes = []
+    for mnemonico_rest in blocos_restricoes:
+        blocos_infos_restricoes += blocos_restricoes[mnemonico_rest]
+
+    fileOut = codecs.open(filePath, 'a+', 'utf-8')
+    for mnemonico in df_dadger:
+        
+        if mnemonico in blocos_restricoes:
+            escrever_bloco_restricoes(fileOut, df_dadger, mnemonico, blocos_restricoes[mnemonico], comentarios)
+
+        elif mnemonico in blocos_infos_restricoes:
+            continue
+        
+        else:
+            for index, row in df_dadger[mnemonico].iterrows():
+                if index in comentarios[mnemonico]:
+                    for coment in comentarios[mnemonico][index]:
+                        fileOut.write(coment)
+                fileOut.write('{}\n'.format(info_blocos[mnemonico]['formatacao'].format(*row.values).strip()))
+                
+                if mnemonico in bloco_dependentes:
+                    for dep in bloco_dependentes[mnemonico]:
+                        
+                        mnemon_depend = df_dadger[dep].loc[df_dadger[dep]['id'].astype('int') == int(row['id'])]
+                        df_dadger[dep].drop(mnemon_depend.index, inplace=True)
+                
+                        for index, row in mnemon_depend.iterrows():
+                            if index in comentarios[dep]:
+                                for coment in comentarios[dep][index]:
+                                    fileOut.write(coment)
+                            fileOut.write('{}\n'.format(info_blocos[dep]['formatacao'].format(*row.values).strip()))
+
+    fileOut.close()
+    print(filePath)
+    return filePath
+

@@ -147,6 +147,44 @@ def update_eolica_DC(paths_to_modify:List[str], data_produto:datetime.date):
             logger.error(f"Erro ao tentar sobrescrever bloco {path_dadger}: {str(e)}")
             continue    
 
+def update_restricoes_eletricas_DC(info_restricoes:pd.DataFrame,paths_to_modify:List[str]):
+
+    codigos_restricoes = info_restricoes.index.tolist()
+    
+    for i, path_dadger in enumerate(paths_to_modify):
+
+        df_dadger, comentarios = dadger.leituraArquivo(path_dadger)
+        df_restricoes_re = df_dadger['RE'].set_index('id_restricao')
+        df_restricoes_re.index = df_restricoes_re.index.str.strip().astype(int)
+
+        df_dadger['LU']['id_restricao'] = df_dadger['LU']['id_restricao'].str.strip().astype(int)
+
+        for codigo in codigos_restricoes:
+            estagio_final = int(df_restricoes_re.loc[codigo]['estag_final'].strip())
+
+            print(codigo)
+            flag_append_LU = True
+
+            for index,row in df_dadger['LU'][df_dadger['LU']['id_restricao'] == codigo].iterrows(): 
+                if int(row['est']) != estagio_final:
+                    new_values = info_restricoes.loc[codigo][['1º Mês Pesada','1º Mês Média','1º Mês Leve']].values.tolist()
+                else:
+                    new_values = info_restricoes.loc[codigo][['2º Mês Pesada','2º Mês Média','2º Mês Leve']].values.tolist()
+                    flag_append_LU = False
+                    
+                df_dadger['LU'].loc[index, ['gmax_p1', 'gmax_p2', 'gmax_p3']] = new_values
+
+            if flag_append_LU:
+                new_values = info_restricoes.loc[codigo][['2º Mês Pesada','2º Mês Média','2º Mês Leve']].values.tolist()
+                new_values = [estagio_final] + new_values
+
+                df_dadger['LU'] = pd.concat([df_dadger['LU'],df_dadger['LU'].loc[[index]]],ignore_index=True)
+                df_dadger['LU'].loc[df_dadger['LU'].index[-1], ['est','gmax_p1', 'gmax_p2', 'gmax_p3']] = new_values
+                
+
+        path_novo_dadger = f"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/{str(i) + os.path.basename(path_dadger)}"
+        dadger.escrever_dadger(df_dadger, comentarios, path_novo_dadger)
+
 if __name__ == "__main__":
 
     # update_eolica_DC([

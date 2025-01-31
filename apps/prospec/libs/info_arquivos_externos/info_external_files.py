@@ -5,6 +5,7 @@ import pdb
 import csv
 import glob
 import datetime
+import pdfplumber
 import numpy as np
 import pandas as pd
 from dateutil.relativedelta import relativedelta
@@ -377,6 +378,76 @@ def organizar_info_eolica_nw(paths_sistema:List[str], data_produto:datetime.date
         values_geracao[-1] = f' {values_geracao[-1].strip()} '
         novos_blocos[path_to_modify] = values_geracao
     return novos_blocos
+
+#===================================RESTRICOES ELETRICAS=====================================
+
+# Caminho do arquivo PDF
+def read_table(pdf_path, table_name ):
+    dict_num = {'IPU60':462,'IPU50':461, 'Ger. MAD': 401, 'RNE': 403,'FNS':405,'FNESE':409,
+                'FNNE':413, 'FNEN':415, 'EXPNE':417,'SE/CO→FIC':419,'EXPN':427, 'FNS+FNESE':429,'FSENE':431,'FSUL':437,
+                'RSUL':439, 'RSE':441, '-RSE':443, 'FETXG+FTRXG':445,'FXGET+FXGTR':447 }
+ 
+    table_page = find_table_page(pdf_path, table_name)
+
+    if table_page is None:
+        print("Tabela não encontrada no PDF.")
+    else:      
+        df = extract_table_from_pdf(pdf_path, table_page)
+        return  reformat_dataframe(df,dict_num)
+
+ # Função para processar a tabela do PDF
+def extract_table_from_pdf(pdf_path, table_page):
+
+    with pdfplumber.open(pdf_path) as pdf:
+
+        page = pdf.pages[table_page - 1]  # Índice zero-based
+        tables = page.extract_tables()
+        
+        if tables:
+            df = pd.DataFrame(tables[0])
+            df.columns = df.iloc[0] 
+            df = df[1:] 
+            df.reset_index(drop=True, inplace=True)
+            return df
+        else:
+            print("Nenhuma tabela encontrada na página especificada.")
+            return None
+
+ # Função para localizar a página pelo nome da tabela
+def find_table_page(pdf_path, table_name):
+    with pdfplumber.open(pdf_path) as pdf:
+        for page_number, page in enumerate(pdf.pages):
+            text = page.extract_text()
+            if table_name in text:
+                return page_number + 1 
+    return None
+
+def reformat_dataframe(df, dict_num):
+
+    reformatted_df = pd.DataFrame()
+    reformatted_df["Item"] = df.iloc[2:, 0].str.strip()  # Coluna 0: Item
+    reformatted_df["Limite"] = df.iloc[2:, 1].str.strip()  # Coluna 1: Limite
+    reformatted_df["1º Mês Pesada"] = df.iloc[2:, 2].str.strip()  # Coluna 2
+    reformatted_df["1º Mês Média"] = df.iloc[2:, 5].str.strip()  # Coluna 5
+    reformatted_df["1º Mês Leve"] = df.iloc[2:, 8].str.strip()  # Coluna 8
+    reformatted_df["2º Mês Pesada"] = df.iloc[2:, 11].str.strip()  # Coluna 11
+    reformatted_df["2º Mês Média"] = df.iloc[2:, 14].str.strip()  # Coluna 14
+    reformatted_df["2º Mês Leve"] = df.iloc[2:, 17].str.strip()  # Coluna 17
+    reformatted_df.dropna(how="all", inplace=True)
+    reformatted_df.fillna(method='ffill', axis=1, inplace=True)
+    reformatted_df['RE'] = reformatted_df['Limite'].map(dict_num)
+    reformatted_df.dropna(subset=['RE'], inplace=True)
+    reformatted_df['RE'] = reformatted_df['RE'].astype(int)
+    reformatted_df.drop('Item', axis=1, inplace=True)
+    reformatted_df.set_index("RE", inplace=True)
+    columns_to_multiply = ["1º Mês Pesada", "1º Mês Média", "1º Mês Leve",  "2º Mês Pesada", "2º Mês Média", "2º Mês Leve" ]
+    reformatted_df[columns_to_multiply] = reformatted_df[columns_to_multiply].apply(pd.to_numeric, errors='coerce')  # Garantir que as colunas sejam numérica
+    reformatted_df[columns_to_multiply] *= 1000  # Multiplicar por 1000
+    return reformatted_df
+
+#============================================================================================
+
+
 
 if __name__ == "__main__":
     organizar_info_eolica_nw([
