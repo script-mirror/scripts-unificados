@@ -84,6 +84,8 @@ PRODUCT_MAPPING = {
     "Arquivos de Previsão de Carga para o DESSEM - PrevCargaDESSEM": "prevCarga_dessem_saida",
     'Deck NEWAVE Preliminar':"carga_newave_preliminar",
     "DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM":"deck_prev_eolica_semanal_weol",
+    "PRELIMINAR - RELATÓRIO MENSAL DE LIMITES DE INTERCÂMBIO":"relatorio_limites_intercambio",
+    "Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP":"relatorio_limites_intercambio",
 }
 
 
