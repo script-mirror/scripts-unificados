@@ -50,8 +50,7 @@ def trigger_function(**kwargs):
         func = getattr(manipularArquivosShadow, function_name, None)
         aditional_params = func(product_details)
         print(product_name)
-        
-        if product_name in ['Previsões de carga mensal e por patamar - NEWAVE','Carga por patamar - DECOMP']:
+        if aditional_params != None:
             kwargs.get('dag_run').conf.update(aditional_params)	
             return['trigger_external_dag']
 
