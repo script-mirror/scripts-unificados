@@ -764,6 +764,18 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
         "data":data_produto.date(),
     })
 
+def relatorio_limites_intercambio(dadosProduto):
+    
+    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
+    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    logger.info(filename)
+
+    return {
+        "file_path": filename,
+        "trigger_dag_id":"PROSPEC_UPDATER",
+        "task_to_execute": "revisao_restricao"
+    }
+
 
 
 if __name__ == '__main__':

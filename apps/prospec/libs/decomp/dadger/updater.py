@@ -181,9 +181,7 @@ def update_restricoes_eletricas_DC(info_restricoes:pd.DataFrame,paths_to_modify:
                 df_dadger['LU'] = pd.concat([df_dadger['LU'],df_dadger['LU'].loc[[index]]],ignore_index=True)
                 df_dadger['LU'].loc[df_dadger['LU'].index[-1], ['est','gmax_p1', 'gmax_p2', 'gmax_p3']] = new_values
                 
-
-        path_novo_dadger = f"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/{str(i) + os.path.basename(path_dadger)}"
-        dadger.escrever_dadger(df_dadger, comentarios, path_novo_dadger)
+        dadger.escrever_dadger(df_dadger, comentarios, path_dadger)
 
 if __name__ == "__main__":
 
@@ -201,11 +199,11 @@ if __name__ == "__main__":
     #     )
 
     # ORGANIZA INFORMACOES DE CVU
-    info_cvu = info_external_files.organizar_info_cvu(
-        ano_referencia=2025,    
-        mes_referencia=1,
-        path_saida=path_saida
-        )
+    # info_cvu = info_external_files.organizar_info_cvu(
+    #     ano_referencia=2025,    
+    #     mes_referencia=1,
+    #     path_saida=path_saida
+    #     )
 
     # #ALTERAR CVU EM DECKS DC
     # paths_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
@@ -241,3 +239,11 @@ if __name__ == "__main__":
     #     info_eolica,
     #     paths_to_modify
     # )
+
+    #RESTRICOES
+    # file_path = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/webhook/arquivos/tmp/PRELIMINAR - RELATÓRIO MENSAL DE LIMITES DE INTERCÂMBIO/Preliminar - RT-ONS DPL 0037-2025_Limites PMO_Fevereiro-2025.pdf"
+    # info_restricoes = info_external_files.read_table(file_path, "Tabela 4-1: Resultados dos Limites Elétricos")
+    # update_restricoes_eletricas_DC(
+    #     info_restricoes=info_restricoes,
+    #     paths_to_modify=["/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_22971/DC202502-sem1/dadger.rv0"]
+    #     )
