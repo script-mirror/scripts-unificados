@@ -22,10 +22,7 @@ from PMO.scripts_unificados.apps.smap.libs import BuildStructure
 
 
 DIR_TOOLS = rz_dir_tools.DirTools()
-
-PATH_S3_BUCKET = os.path.join(os.path.expanduser('~'),'s3-drive')
-PATH_S3_AUXILIO_AJUSTE = os.path.join(PATH_S3_BUCKET,'Programas','Aplicativo_SMAP','auxilio_ajuste')
-PATH_S3_CPINS = os.path.join(PATH_S3_BUCKET,'Chuva-vazão')
+PATH_ARQUIVOS_SMAP = "/WX2TB/Documentos/fontes/PMO/raizen-power-trading-previsao-hidrologia/smap/arquivos"
 
 __RODADAS =  {
         0:[
@@ -56,11 +53,11 @@ def organizar_chuva_vazao_files(pdp_file_zip:str,files_to_copy:list=[], flag_db=
     DIR_TOOLS.extract(zipFile=pdp_file_zip,path=path_extraction)
 
     if 'AJUSTE' in files_to_copy: 
-        copied_files = copy_pdp_files(path_src=path_extraction,dst=PATH_S3_AUXILIO_AJUSTE,file_to_copy='*AJUSTE.txt',upper=True)
-        if not copied_files: copy_pdp_files(path_src=path_extraction,dst=PATH_S3_AUXILIO_AJUSTE,file_to_copy='*ajuste.txt',upper=True)
+        copied_files = copy_pdp_files(path_src=path_extraction,dst=os.path.join(PATH_ARQUIVOS_SMAP,'auxilio_ajuste_inicializacao'),file_to_copy='*AJUSTE.txt',upper=True)
+        if not copied_files: copy_pdp_files(path_src=path_extraction,dst=os.path.join(PATH_ARQUIVOS_SMAP,'auxilio_ajuste_inicializacao'),file_to_copy='*ajuste.txt',upper=True)
         
     if 'PlanilhaUSB' in files_to_copy:
-        copy_pdp_files(path_src=path_extraction,dst=PATH_S3_CPINS,file_to_copy='PlanilhaUSB*')
+        copy_pdp_files(path_src=path_extraction,dst=os.path.join(PATH_ARQUIVOS_SMAP,'cpins'),file_to_copy='PlanilhaUSB*')
 
     if flag_db: 
         process_vazao_obs_pdp(path_src=path_extraction)

@@ -88,7 +88,18 @@ def arquivos_modelo_pdp(dadosProduto):
     
     #rodar smap
     SmapTools.organizar_chuva_vazao_files(pdp_file_zip=filename,files_to_copy=['AJUSTE','PlanilhaUSB'], flag_db=True)
-    SmapTools.trigger_dag_SMAP(dtRef)
+    
+    for modelo in ["pconjunto","pconjunto2","pmedia"]:
+        for fonte in ['ons','rz']:
+            airflow_tools.trigger_airflow_dag(
+                dag_id="PREV_SMAP",
+                json_produtos={
+                    "modelos":[
+                            [f"{modelo}-{fonte}",0,dtRef.strftime("%Y-%m-%d")],
+                        ],
+                    "prev_estendida":True
+                })
+
     SmapTools.resultado_cv_obs(
         dtRef.date(),
         fonte_referencia='pdp',
@@ -176,10 +187,18 @@ def historico_preciptacao(dadosProduto):
     )
 
     chuva.importar_chuva_psath(filename)
-    
-    #rodar smap
-    SmapTools.trigger_dag_SMAP(dtRef)
 
+    for modelo in ["pconjunto","pconjunto2","pmedia"]:
+        for fonte in ['ons','rz']:
+            airflow_tools.trigger_airflow_dag(
+                dag_id="PREV_SMAP",
+                json_produtos={
+                    "modelos":[
+                            [f"{modelo}-{fonte}",0,dtRef.strftime("%Y-%m-%d")],
+                        ],
+                    "prev_estendida":True
+                })
+    
     SmapTools.resultado_cv_obs(
         dtRef.date(),
         fonte_referencia='psat',
@@ -519,7 +538,18 @@ def vazoes_observadas(dadosProduto):
 
     #novo smap
     vazao.process_planilha_vazoes_obs(filename)
-    SmapTools.trigger_dag_SMAP(dtRef)
+    
+    for modelo in ["pconjunto","pconjunto2","pmedia"]:
+        for fonte in ['ons','rz']:
+            airflow_tools.trigger_airflow_dag(
+                dag_id="PREV_SMAP",
+                json_produtos={
+                    "modelos":[
+                            [f"{modelo}-{fonte}",0,dtRef.strftime("%Y-%m-%d")],
+                        ],
+                    "prev_estendida":True
+                })
+
     SmapTools.resultado_cv_obs(
         dtRef.date(),
         fonte_referencia='psat',
