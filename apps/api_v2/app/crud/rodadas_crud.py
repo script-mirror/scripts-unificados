@@ -1,9 +1,12 @@
 from sys import path
 import pdb
+from venv import logger
 import sqlalchemy as db
 import pandas as pd
 import numpy as np
 import datetime
+import requests as r
+from requests.exceptions import HTTPError
 from typing import Optional, List
 from fastapi import HTTPException
 from app.schemas.chuvaprevisao import ChuvaPrevisaoCriacao, ChuvaPrevisaoCriacaoMembro
@@ -11,7 +14,9 @@ from app.schemas import PesquisaPrevisaoChuva, RodadaSmap, ChuvaObsReq
 from app.utils import cache
 from app.crud import ons_crud
 from app.utils.airflow.airflow_tools import trigger_dag_SMAP
+from app.utils.graphs import get_color
 from app.database.wx_dbClass import db_mysql_master
+
 
 prod = True
 
@@ -279,42 +284,118 @@ class Chuva:
         for q in query_obj:
             df = pd.concat([df, pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(q.id, q.dt_inicio, q.dt_fim, granularidade, no_cache, atualizar))])
         return df.to_dict('records')
+    
     @staticmethod
-    def export_rain(rain_forecast:List[dict]):
-        'cd_subbacia'
-        'dt_prevista'
-        'vl_chuva'
-        'modelo'
-        'dt_rodada'
-        base_rain = rain_forecast[0]
+    def export_rain(id_rain: int) -> dict:
         
-        body:dict = {
-            "dataRodada": f"{base_rain["dt_rodada"]}",
-            "mapName": base_rain["modelo"],
-            "modelo": base_rain["modelo"],
-            "grupo": base_rain["modelo"],
-            "viez": "false",
-            "membro":"0",
-            "data": []
-            }
-        data =  {
-            "valoresMapa": [
-            {
-                "valor": "0",
-                "dataReferente": ""
-            }
-            ],
-            "measuringUnit": "mm3",
-            "agrupamento": {
-            "valorAgrupamento": "",
-            "tipo": ""
-            }
+        def get_data_grouped(id_rain: int, granularidade: str):
+            return pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(id_rain, granularidade))
+        
+        df_map_grouped_by_subbacia = get_data_grouped(id_rain, 'subbacia')
+        df_map_grouped_by_bacia = get_data_grouped(id_rain, 'bacia')
+        df_map_grouped_by_submercado = get_data_grouped(id_rain, 'submercado')
+        
+        df_subbacias = pd.DataFrame(Subbacia.get_subbacia())
+        df_bacias = pd.DataFrame(ons_crud.tb_bacias.get_bacias('tb_chuva'))
+        df_submercados = pd.DataFrame(ons_crud.tb_submercado.get_submercados())
+        
+        df_subbacias_merged = pd.merge(df_map_grouped_by_subbacia, df_subbacias, left_on='cd_subbacia', right_on='id')
+        df_bacias_merged = pd.merge(df_map_grouped_by_bacia, df_bacias, left_on='id_bacia', right_on='id')
+        df_submercados_merged = pd.merge(df_map_grouped_by_submercado, df_submercados, left_on='id_submercado', right_on='id')
+        
+        df_map_grouped_by_subbacia = df_subbacias_merged[['modelo','dt_rodada', 'hr_rodada', 'dt_prevista', 'nome', 'vl_chuva']]
+        df_map_grouped_by_bacia = df_bacias_merged[['modelo','dt_rodada', 'dt_prevista', 'nome', 'vl_chuva']]
+        df_map_grouped_by_submercado = df_submercados_merged[['modelo','dt_rodada', 'dt_prevista', 'str_sigla', 'vl_chuva']]
+        
+        df_model_base = df_map_grouped_by_subbacia[['modelo','dt_rodada', 'hr_rodada']].drop_duplicates()
+        model_base = df_model_base.to_dict('records')[0]
+    
+        rodada = model_base['hr_rodada']
+        rodada_time = datetime.time(rodada, 0)
+        data_rodada = model_base['dt_rodada']
+        data_rodada_str = datetime.datetime.combine(data_rodada, rodada_time)
+        data_rodada_str = data_rodada_str.strftime('%Y-%m-%dT%H:%M:%S.000+00:00')
+        modelo = model_base['modelo']
+        grupo = "ONS" if 'ons' in model_base["modelo"].lower() else "RZ"
+        viez = False if 'remvies' in model_base["modelo"].lower() else True
+        cor = get_color(modelo.upper())
+        
+        subbacia_values = df_map_grouped_by_subbacia[['dt_prevista', 'vl_chuva', 'nome']].to_dict('records')
+        bacia_values = df_map_grouped_by_bacia[['dt_prevista', 'vl_chuva', 'nome']].to_dict('records')
+        submercado_values = df_map_grouped_by_submercado[['dt_prevista', 'vl_chuva', 'str_sigla']].to_dict('records')
+        
+        agrupamentos = {
+            "subbacia": subbacia_values,
+            "bacia": bacia_values,
+            "submercado": submercado_values
         }
-        # res = r.post('http://0.0.0.0:6001/backend/api/map', json=body)
-  
+        
+        data = []
+        data_final = None
+        agrupamento_dict = {}
+
+        for tipo, values in agrupamentos.items():
+            for value in values:
+                valorAgrupamento = value['nome'] if tipo == 'subbacia' else value['nome'] if tipo == 'bacia' else value['str_sigla']
+                
+                data_referente_date = datetime.datetime.strptime(value['dt_prevista'], '%Y-%m-%d')
+                data_referente_str = datetime.datetime.strftime(data_referente_date, '%Y-%m-%d')
+                
+                chave_agrupamento = (valorAgrupamento, tipo)
+                
+                if chave_agrupamento not in agrupamento_dict:
+                    agrupamento_dict[chave_agrupamento] = {
+                        "valoresMapa": [],
+                        "measuringUnit": "MWh",
+                        "agrupamento": {
+                            "valorAgrupamento": valorAgrupamento,
+                            "tipo": tipo
+                        }
+                    }
+                    data.append(agrupamento_dict[chave_agrupamento])
+                
+                agrupamento_dict[chave_agrupamento]["valoresMapa"].append({
+                    "valor": value['vl_chuva'],
+                    "dataReferente": value['dt_prevista']
+                })
+                
+                if data_final is None or data_referente_date > data_final:
+                    data_final = data_referente_date
+                    data_final_str = data_referente_str
+                    
+
+        body = {
+            "dataRodada": data_rodada_str,
+            "dataFinal": data_final_str,
+            "mapName": f"{grupo}_{modelo}_{'comvies' if viez else 'semvies'}_{rodada}",
+            "modelo": modelo,
+            "grupo": grupo,
+            "rodada": rodada.__str__(),
+            "viez": viez,
+            "membro": "0",
+            "color": cor,
+            "data": data,
+        }
+        
+        res = r.post('http://localhost:6001/api/map', verify=False, json=body, headers={'Content-Type': 'application/json', 'Authorization': 'Bearer eyJraWQiOiJnbHlJWXFDck5tT3JQSFkyOHNHZGxJUVpkUExHUlFMMnBXbWJ6eDA3VEdFPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJiNDQ4ODQ4OC04MDExLTcwZmUtMDM2OS04ZjU4NTE5NmNiZmYiLCJjb2duaXRvOmdyb3VwcyI6WyJ1cy1lYXN0LTFfNWpSQkxEaFNkX2F6dXJlLWFkLXJpcy1wcmQiXSwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tXC91cy1lYXN0LTFfNWpSQkxEaFNkIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoia2JiNzhsODA2NmJ2YWhjMWxraHVobG1laCIsIm9yaWdpbl9qdGkiOiI4YjAzNzMwOS0zMWE0LTQwZGYtYmUwZS0xNmQzNjJkYWEyNTIiLCJ0b2tlbl91c2UiOiJhY2Nlc3MiLCJzY29wZSI6ImRlZmF1bHRcL3Rva2VuIHBob25lIG9wZW5pZCBwcm9maWxlIGVtYWlsIiwiYXV0aF90aW1lIjoxNzM4OTI5OTcwLCJleHAiOjE3Mzg5MzM1NzAsImlhdCI6MTczODkyOTk3MCwianRpIjoiYjM5NWM4YmMtYzc5Yi00NTRiLWFmYTgtNGFlNDhiNmY5YzNhIiwidXNlcm5hbWUiOiJhenVyZS1hZC1yaXMtcHJkX0NTNDI0NTIyQE1pbmhhVEkuY29tLmJyIn0.47JcHxnm0UK5Y9UOYyUbWwOCu9-1n0UQa0IAYITXtCUZTtSf6S0265ETNeaqyHsfqvNeWZHvULsKYzBhrGKtzeDpZBPe0XBd6wyrlt-hSQs0Z-Dc615taevMUe4kQkWE15x-Rv8jGEsECLYKDslr4UiL6VM9Sua4V1mzgo3mi9RazMqryKzN8a_retAySVhFLAMnrcHMnUEB4uaezkAGavIAQQN4ocZ486iBZFf8ad8TDCrnD17IIhC1OL1d-G3UbjDnXdv1oUzNajQQOPHaCy9tFUG4jzvcEB_ciG8Sq8j3LdjqZ5tynd7iVFRVkShXIZfH_0GuyzhTMNMH2B1Vqg'})
+        pdb.set_trace() 
+        try:
+            res.raise_for_status()  
+        except HTTPError as http_err:
+            logger.error(f"HTTP error: {http_err}")
+        except Exception as err:
+            logger.error(f"Other error: {err}")
+        else:
+            if res.status_code == 201:
+                logger.info(f"Modelo {modelo} do dia {data_rodada} inserido na API de visualizacao")
+            else:
+                logger.warning(f"Erro ao tentar inserir o modelo {modelo} do dia {data_rodada} na API de visualizacao")
+        
+        
     
     @staticmethod
     def post_chuva_modelo_combinados(chuva_prev:List[ChuvaPrevisaoCriacao], rodar_smap:bool) -> None:
+        
         prevs:List[dict] = []
         for prev in chuva_prev:
             prevs.append(prev.model_dump())
@@ -332,8 +413,11 @@ class Chuva:
             
         df = pd.DataFrame(prevs)
         df['cenario'] = f'{modelo[0]}_{modelo[1]}_{modelo[2]}'
-        Chuva.inserir_chuva_modelos(df, rodar_smap)
-    
+        
+        id_chuva = Chuva.inserir_chuva_modelos(df, rodar_smap)
+        
+        Chuva.export_rain(id_chuva)
+
         return None
     
     @staticmethod
@@ -371,7 +455,7 @@ class Chuva:
             if df_info_rodadas[mask_id_chuva].empty:
                 insert_cadastro_values += [None, new_chuva_id, None, None,None,dt_rodada,int(hr_rodada),str_modelo,None,None,None,None,None],
                 df_prev_chuva.loc[df_prev_chuva['cenario']== cenario,'id_chuva'] = new_chuva_id
-                new_chuva_id += 1
+                
             else:
                 df_info_rodadas['id_chuva'] = df_info_rodadas['id_chuva'].astype(str).str.replace('nan','None')
                 id_chuva = df_info_rodadas[mask_id_chuva]['id_chuva'].unique()[0]
@@ -382,14 +466,14 @@ class Chuva:
                 else:
                     print(f"    cenario: {cenario} || modelo: {str_modelo} -> rodada ja esta cadastrada porem sem id_chuva, será cadastrado com id_chuva: {new_chuva_id}")
                     df_prev_chuva.loc[df_prev_chuva['cenario']== cenario,'id_chuva'] = new_chuva_id
-                    new_chuva_id +=1
+                    
 
             if insert_cadastro_values: CadastroRodadas.inserir_cadastro_rodadas(insert_cadastro_values)
             Chuva.inserir_prev_chuva(df_prev_chuva.round(2))
             
             if rodar_smap:
                 Smap.post_rodada_smap(RodadaSmap.model_validate({'dt_rodada':datetime.datetime.strptime(dt_rodada, '%Y-%m-%d'),'hr_rodada':hr_rodada,'str_modelo':str_modelo}))
-
+            return new_chuva_id
     @staticmethod
     def delete_por_id(id:int):
         query = Chuva.tb.delete(
