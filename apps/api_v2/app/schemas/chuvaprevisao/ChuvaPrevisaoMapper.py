@@ -1,7 +1,7 @@
 from sys import path
 from dataclasses import dataclass
 
-path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2")
+
 from app.schemas.chuvaprevisao.ChuvaPrevisaoCriacao import ChuvaPrevisaoCriacao
 from app.schemas.chuvaprevisao.ChuvaPrevisaoResposta import ChuvaPrevisaoResposta
 
