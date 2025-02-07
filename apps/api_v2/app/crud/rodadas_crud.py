@@ -414,11 +414,10 @@ class Chuva:
         df = pd.DataFrame(prevs)
         df['cenario'] = f'{modelo[0]}_{modelo[1]}_{modelo[2]}'
         
-        id_chuva = Chuva.inserir_chuva_modelos(df, rodar_smap)
+        id_chuva = Chuva.inserir_chuva_modelos(df, rodar_smap, prev_estendida)
         
         Chuva.export_rain(id_chuva)
 
-        Chuva.inserir_chuva_modelos(df, rodar_smap, prev_estendida)
     
         return None
     
@@ -457,7 +456,7 @@ class Chuva:
             if df_info_rodadas[mask_id_chuva].empty:
                 insert_cadastro_values += [None, new_chuva_id, None, None,None,dt_rodada,int(hr_rodada),str_modelo,None,None,None,None,None],
                 df_prev_chuva.loc[df_prev_chuva['cenario']== cenario,'id_chuva'] = new_chuva_id
-                
+
             else:
                 df_info_rodadas['id_chuva'] = df_info_rodadas['id_chuva'].astype(str).str.replace('nan','None')
                 id_chuva = df_info_rodadas[mask_id_chuva]['id_chuva'].unique()[0]
@@ -468,7 +467,7 @@ class Chuva:
                 else:
                     print(f"    cenario: {cenario} || modelo: {str_modelo} -> rodada ja esta cadastrada porem sem id_chuva, será cadastrado com id_chuva: {new_chuva_id}")
                     df_prev_chuva.loc[df_prev_chuva['cenario']== cenario,'id_chuva'] = new_chuva_id
-                    
+
 
             if insert_cadastro_values: CadastroRodadas.inserir_cadastro_rodadas(insert_cadastro_values)
             Chuva.inserir_prev_chuva(df_prev_chuva.round(2))
