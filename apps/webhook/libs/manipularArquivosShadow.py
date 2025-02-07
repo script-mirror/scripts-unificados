@@ -11,7 +11,7 @@ import pandas as pd
 import requests as r
 from dotenv import load_dotenv
 
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     handlers=[
@@ -55,9 +55,7 @@ DIR_TOOLS = rz_dir_tools.DirTools()
 
 def resultados_preliminares_consistidos(dadosProduto):
 
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     dst = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(filename)[:-4])
@@ -69,8 +67,7 @@ def resultados_preliminares_consistidos(dadosProduto):
     
 
 def entrada_saida_previvaz(dadosProduto):
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     dtInicial, dtFinal = dadosProduto["dataProduto"].split(' - ')
@@ -78,8 +75,7 @@ def entrada_saida_previvaz(dadosProduto):
 
 
 def arquivos_modelo_pdp(dadosProduto):
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     dtRef = datetime.datetime.strptime(
@@ -88,34 +84,23 @@ def arquivos_modelo_pdp(dadosProduto):
     
     #rodar smap
     SmapTools.organizar_chuva_vazao_files(pdp_file_zip=filename,files_to_copy=['AJUSTE','PlanilhaUSB'], flag_db=True)
-    
-    for modelo in ["pconjunto","pconjunto2","pmedia"]:
-        for fonte in ['ons','rz']:
-            airflow_tools.trigger_airflow_dag(
-                dag_id="PREV_SMAP",
-                json_produtos={
-                    "modelos":[
-                            [f"{modelo}-{fonte}",0,dtRef.strftime("%Y-%m-%d")],
-                        ],
-                    "prev_estendida":True
-                })
-
-    SmapTools.resultado_cv_obs(
-        dtRef.date(),
-        fonte_referencia='pdp',
-        dst_path= os.path.join(PATH_CV,dtRef.strftime("%Y%m%d"),'fontes')
-        )
+    # SmapTools.trigger_dag_SMAP(dtRef)
+    # SmapTools.resultado_cv_obs(
+    #     dtRef.date(),
+    #     fonte_referencia='pdp',
+    #     dst_path= os.path.join(PATH_CV,dtRef.strftime("%Y%m%d"),'fontes')
+    #     )
 
     #gerar Produto
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
         "produto":"DIFERENCA_CV",
         "data":dtRef,
     })
 
 
 def arquivo_acomph(dadosProduto):
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
@@ -138,7 +123,8 @@ def arquivo_acomph(dadosProduto):
             dadosProduto["dataProduto"], "%d/%m/%Y"
         )
     #gerar Produto
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
         "produto":"ACOMPH",
         "data" : dtRef,
         "path":filename,
@@ -146,10 +132,8 @@ def arquivo_acomph(dadosProduto):
 
     })
 
-
 def arquivo_rdh(dadosProduto):
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
@@ -161,7 +145,8 @@ def arquivo_rdh(dadosProduto):
     vazao.importRdh(filename)
 
     #gerar Produto
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
         "produto":"RDH",
         "data":dtRef,
         "path":filename
@@ -169,8 +154,7 @@ def arquivo_rdh(dadosProduto):
 
 def historico_preciptacao(dadosProduto):
     
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     dtRef = datetime.datetime.strptime(
@@ -187,39 +171,32 @@ def historico_preciptacao(dadosProduto):
     )
 
     chuva.importar_chuva_psath(filename)
-
-    for modelo in ["pconjunto","pconjunto2","pmedia"]:
-        for fonte in ['ons','rz']:
-            airflow_tools.trigger_airflow_dag(
-                dag_id="PREV_SMAP",
-                json_produtos={
-                    "modelos":[
-                            [f"{modelo}-{fonte}",0,dtRef.strftime("%Y-%m-%d")],
-                        ],
-                    "prev_estendida":True
-                })
     
-    SmapTools.resultado_cv_obs(
-        dtRef.date(),
-        fonte_referencia='psat',
-        dst_path= os.path.join(PATH_CV,dtRef.strftime("%Y%m%d"),'fontes')
-        )
+    #rodar smap
+    # SmapTools.trigger_dag_SMAP(dtRef)
+
+    # SmapTools.resultado_cv_obs(
+    #     dtRef.date(),
+    #     fonte_referencia='psat',
+    #     dst_path= os.path.join(PATH_CV,dtRef.strftime("%Y%m%d"),'fontes')
+    #     )
 
     #gerar Produto
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
         "produto":"PSATH_DIFF",
         "path":filename,
     })
     #gerar Produto
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
         "produto":"DIFERENCA_CV",
         "data":dtRef,
     })
 
 
 def modelo_eta(dadosProduto):
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     dst = os.path.join(PATH_ROTINA_CONJUNTO, 'Arq_Entrada', 'ETA40')
@@ -250,12 +227,13 @@ def modelo_eta(dadosProduto):
 
 
 def carga_patamar(dadosProduto):
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
+
     logger.info(filename)
     
     # gerar Produto
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
         "produto":"REVISAO_CARGA",
         "path":filename,
     })
@@ -270,7 +248,8 @@ def carga_patamar(dadosProduto):
 def deck_preliminar_decomp(dadosProduto):
 
     path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     # dst_copia = os.path.join('/WX2TB/Documentos/fontes/PMO/converte_dc/input', os.path.basename(filename))
@@ -287,16 +266,21 @@ def deck_preliminar_decomp(dadosProduto):
     # decomp.importar_deck_entrada(path_copia_tmp, True)
 
     #gerar Produto
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
         "produto":"CMO_DC_PRELIMINAR",
         "path":filename,
     })
+    airflow_tools.trigger_airflow_dag(
+        dag_id="2.0-BACKTEST-DECOMP",
+        json_produtos={
+            'dt_ref':dadosProduto['dataProduto']
+            })
 
     
 def deck_entrada_saida_dessem(dadosProduto):
 
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     dtRef = datetime.datetime.strptime(dadosProduto["dataProduto"], '%d/%m/%Y')
@@ -311,7 +295,8 @@ def deck_entrada_saida_dessem(dadosProduto):
     deck_ds.importar_ds_bloco_dp(filename,dtRef,str_fonte='ons')
     deck_ds.importar_pdo_cmosist_ds(path_file=filename, dt_ref=dtRef, str_fonte='ons')
 
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
         "produto":"RESULTADO_DESSEM",
         "data":dtRef,
     })
@@ -327,7 +312,8 @@ def deck_entrada_saida_dessem(dadosProduto):
     
     deck_ds.importar_renovaveis_ds(path_file=filename, dt_ref=dtRef, str_fonte='ons')
     
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
         "produto":"PREVISAO_CARGA_DESSEM",
         "data":dtRef,
     })
@@ -336,8 +322,7 @@ def deck_entrada_saida_dessem(dadosProduto):
     
 def previsao_carga_dessem(dadosProduto):
     
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     nome_arquivo = os.path.basename(filename)
@@ -359,7 +344,8 @@ def previsao_carga_dessem(dadosProduto):
         deck_ds.importar_ds_bloco_tm(filename,dtRef)
 
     #gerar Produto
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
         "produto":"PREVISAO_CARGA_DESSEM",
         "data":dtRef,
     })
@@ -367,8 +353,8 @@ def previsao_carga_dessem(dadosProduto):
  
 def prevCarga_dessem(dadosProduto):
 
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
+
     logger.info(filename)
 
     dtRef = datetime.datetime.strptime(dadosProduto["dataProduto"], "%d/%m/%Y")
@@ -392,8 +378,7 @@ def prevCarga_dessem(dadosProduto):
 def carga_patamar_nw(dadosProduto):
     
 
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
@@ -413,7 +398,8 @@ def carga_patamar_nw(dadosProduto):
         str_fonte = id_fonte)
 
     #gerar Produto
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
         "produto":"REVISAO_CARGA_NW",
         "path":filename,
     })
@@ -428,8 +414,7 @@ def carga_patamar_nw(dadosProduto):
 def carga_IPDO(dadosProduto):
     
 
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
@@ -442,7 +427,8 @@ def carga_IPDO(dadosProduto):
     carga_ons.importar_carga_ipdo(filename,dtRef)
 
     #gerar Produto
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
         "produto":"IPDO",
         "data":dtRef,
         "path": filename,
@@ -451,8 +437,7 @@ def carga_IPDO(dadosProduto):
     
     
 def modelo_ECMWF(dadosProduto):
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
     
     dst = os.path.join(PATH_ROTINA_CONJUNTO, 'Arq_Entrada', 'ECMWF')
@@ -474,8 +459,7 @@ def modelo_ECMWF(dadosProduto):
             
 def dados_geracaoEolica(dadosProduto):
 
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
     
     #arquivo copia
@@ -489,8 +473,7 @@ def dados_geracaoEolica(dadosProduto):
     
 def prevCarga_dessem_saida(dadosProduto):
 
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     dtReferente = datetime.datetime.strptime(dadosProduto["dataProduto"], '%d/%m/%Y')
@@ -504,8 +487,7 @@ def prevCarga_dessem_saida(dadosProduto):
 
 def modelo_gefs(dadosProduto):
 
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
     
     dst = os.path.join(PATH_ROTINA_CONJUNTO, 'Arq_Entrada', 'GEFS')
@@ -527,8 +509,7 @@ def modelo_gefs(dadosProduto):
 
 def vazoes_observadas(dadosProduto):
 
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     # Data dp relatorio hidrologico vem sempre com a data do dia anterior, portanto e necessario adicionar um dia
@@ -538,30 +519,18 @@ def vazoes_observadas(dadosProduto):
 
     #novo smap
     vazao.process_planilha_vazoes_obs(filename)
-    
-    for modelo in ["pconjunto","pconjunto2","pmedia"]:
-        for fonte in ['ons','rz']:
-            airflow_tools.trigger_airflow_dag(
-                dag_id="PREV_SMAP",
-                json_produtos={
-                    "modelos":[
-                            [f"{modelo}-{fonte}",0,dtRef.strftime("%Y-%m-%d")],
-                        ],
-                    "prev_estendida":True
-                })
-
-    SmapTools.resultado_cv_obs(
-        dtRef.date(),
-        fonte_referencia='psat',
-        dst_path= os.path.join(PATH_CV,dtRef.strftime("%Y%m%d"),'fontes')
-        )
+    # SmapTools.trigger_dag_SMAP(dtRef)
+    # SmapTools.resultado_cv_obs(
+    #     dtRef.date(),
+    #     fonte_referencia='psat',
+    #     dst_path= os.path.join(PATH_CV,dtRef.strftime("%Y%m%d"),'fontes')
+    #     )
     
 
 
 def psat_file(dadosProduto):
 
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     path_pconjunto_psat = os.path.join(PATH_ROTINA_CONJUNTO,"Arq_Entrada","Observado")
@@ -580,8 +549,7 @@ def psat_file(dadosProduto):
 
 def resultados_nao_consistidos_semanal(dadosProduto):
 
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     path_decomp_downloads = '/WX2TB/Documentos/fontes/PMO/monitora_ONS/DECOMP/downloads'
@@ -593,19 +561,14 @@ def resultados_nao_consistidos_semanal(dadosProduto):
     cmd = f"cp {filename} /WX/SERVER_NW/WX4TB/Documentos/fontes/PMO/decomp/entradas/DC_preliminar/;"
     os.system(cmd)
 
-    airflow_tools.trigger_airflow_dag(
-        dag_id="DECOMP",
-        json_produtos={
-            'dt_ref':dadosProduto['dataProduto']
-            })
+
 
     
     
 
 def relatorio_resutados_finais_consistidos(dadosProduto):
 
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
@@ -619,14 +582,14 @@ def relatorio_resutados_finais_consistidos(dadosProduto):
     dtPrevisao = datetime.datetime(anoPrevisao, mesPrevisao, diaPrevisao)
 
     revisao.importar_prev_ena_consistido(filename)
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
     "produto":"PREVISAO_ENA_SUBMERCADO",
     "data":dtPrevisao,
     })
 
 def niveis_partida_dessem(dadosProduto):
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
@@ -637,8 +600,7 @@ def niveis_partida_dessem(dadosProduto):
 
 def dadvaz_vaz_prev(dadosProduto):
 
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     dtReferente = datetime.datetime.strptime(dadosProduto["dataProduto"], '%d/%m/%Y')
@@ -648,8 +610,7 @@ def dadvaz_vaz_prev(dadosProduto):
     
 def deck_resultados_decomp(dadosProduto):
 
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     dtInicial, dtFinal = dadosProduto["dataProduto"].split(' - ')
@@ -663,8 +624,7 @@ def deck_resultados_decomp(dadosProduto):
 
 def resultados_finais_consistidos(dadosProduto):
 
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
 
     dtInicial = dadosProduto["dataProduto"]
@@ -676,12 +636,11 @@ def resultados_finais_consistidos(dadosProduto):
 
 
 def carga_newave_preliminar(dadosProduto):
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    filename = get_filename(dadosProduto)
     logger.info(filename)
     logger.info(dadosProduto)
     
-    DIR_TOOLS.extract(filename,path_download)
+    DIR_TOOLS.extract(filename,filename[:filename.rfind("/")])
         
     path_decks = "/WX2TB/Documentos/fontes/PMO/decks/ons/nw"
     
@@ -694,7 +653,8 @@ def carga_newave_preliminar(dadosProduto):
     dtRef = datetime.datetime.strptime(f"01/{mes}/{ano}", "%d/%m/%Y")
     
     #gerar Produto
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
         "produto":"REVISAO_CARGA_NW_PRELIMINAR",
         "path":filename,
         "data":dtRef,
@@ -785,26 +745,25 @@ def deck_prev_eolica_semanal_weol(dadosProduto:dict):
     
 def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
     data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto'), "%d/%m/%Y")
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
         "produto":"TABELA_WEOL_MENSAL",
         "data":data_produto.date(),
     })
-    GERAR_PRODUTO.enviar({
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
         "produto":"TABELA_WEOL_SEMANAL",
         "data":data_produto.date(),
     })
 
-def relatorio_limites_intercambio(dadosProduto):
-    
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
-    logger.info(filename)
-
-    return {
-        "file_path": filename,
-        "trigger_dag_id":"PROSPEC_UPDATER",
-        "task_to_execute": "revisao_restricao"
-    }
+def get_filename(dadosProduto:dict):
+    filename:str
+    if dadosProduto.get('origem') == "botSintegre":
+        filename = dadosProduto['url']
+    else:
+        path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
+        filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    return filename
 
 
 
