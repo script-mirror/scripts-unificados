@@ -14,6 +14,7 @@ from app.schemas import PesquisaPrevisaoChuva, RodadaSmap, ChuvaObsReq
 from app.utils import cache
 from app.crud import ons_crud
 from app.utils.graphs import get_color
+from app.utils.graphs import get_access_token
 from app.utils.airflow import airflow_tools 
 # from app.utils.airflow.airflow_tools import trigger_dag_SMAP
 from app.database.wx_dbClass import db_mysql_master
@@ -377,7 +378,7 @@ class Chuva:
             "data": data,
         }
         
-        accessToken = get_accessToken();
+        accessToken = get_access_token();
         
         res = r.post('https://tradingenergiarz.com/backend/api/map', verify=False, json=body, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {accessToken}'})
         
