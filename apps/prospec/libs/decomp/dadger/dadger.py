@@ -1,9 +1,10 @@
 import re
-import pandas as pd
+import codecs
 import logging
+import pandas as pd
 from unidecode import unidecode
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     handlers=[
@@ -86,8 +87,9 @@ info_blocos['DP'] = {'campos':[
                                 'mwmed_p3',
                                 'horas_p3',
                         ],
-                        'regex':'(.{2})  (.{2})   (.{2})  (.{3})   (.{010})(.{10})(.{10})(.{10})(.{10})(.{10})(.*)',
-                        'formatacao':'{:>2}  {:>2}   {:>2}  {:>3}   {:>10}{:>10}{:>10}{:>10}{:>10}{:>10}'}
+                        'regex':'(.{2})  (.{2})   (.{2})   (.{1})    (.{010})(.{10})(.{10})(.{10})(.{10})(.{10})(.*)',
+                        'formatacao':'{:>2}  {:>2}   {:>2}   {:>1}    {:>10}{:>10}{:>10}{:>10}{:>10}{:>10}'}
+
 info_blocos['CD'] = {'campos':[
                                 'mnemonico',
                                 'num',
@@ -305,8 +307,8 @@ info_blocos['LU'] = {'campos':[
                                 'gmin_p3',
                                 'gmax_p3',
                         ],
-                        'regex':'(.{2})  (.{4}) (.{2})   (.{10})(.{10})(.{10})(.{10})(.{0,10})(.{0,10})(.*)',
-                        'formatacao':'{:>2}  {:<4} {:>2}   {:>10}{:>10}{:>10}{:>10}{:>10}{:>10}'}
+                        'regex':'(.{2})  (.{3})  (.{2})   (.{10})(.{10})(.{10})(.{10})(.{0,10})(.{0,10})(.*)',
+                        'formatacao':'{:>2}  {:>3}  {:>2}   {:>10}{:>10}{:>10}{:>10}{:>10}{:>10}'}
 
 info_blocos['FU'] = {'campos':[
                                 'mnemonico',
@@ -646,7 +648,7 @@ info_blocos['VA'] = {'campos':[
                 'fator',
             ],
             'regex':'(.{2})  (.{4})  (.{4})  (.{1,15})(.*)',
-            'formatacao':'{:>2}  {:>4}  {:>4}  {:>15}'}
+            'formatacao':'{:>2}  {:>4}  {:>4}  {:<15}'}
             
 
 info_blocos['CX'] = {'campos':[
@@ -655,7 +657,14 @@ info_blocos['CX'] = {'campos':[
                 'acoplamento_dc',
             ],
             'regex':'(.{2})  (.{4}) (.{4})(.*)',
-            'formatacao':'{:>2}   {:>4} {:>4}'}
+            'formatacao':'{:>2}  {:>4} {:>4}'}
+
+info_blocos['FA'] = {'campos':[
+                'mnemonico',
+                'arquivo',
+            ],
+            'regex':'(.{2})  (.{11})(.*)',
+            'formatacao':'{:>2}  {:<11}'}
             
 
 
@@ -677,6 +686,7 @@ def leituraArquivo(filePath):
             continue
         else:
             mnemonico = line.split()[0]
+
             if mnemonico not in info_blocos:
                 logger.warning(f'Mnemonico {mnemonico} nao encontrado.')
                 continue
@@ -744,3 +754,95 @@ def sobrescreve_bloco(path_to_modify:str,mnemonico_bloco:str, values:list,skip_l
 
     with open(path_to_modify, 'w') as file:
         file.writelines(new_lines)
+
+def escrever_bloco_restricoes(lines, df_dadger, mnemonico_restricao, submnemonicos_restricao, comentarios):
+    
+    if mnemonico_restricao == 'HE':
+        for index, row in df_dadger[mnemonico_restricao].iterrows():
+            if index in comentarios[mnemonico_restricao]:
+                for coment in comentarios[mnemonico_restricao][index]:
+                    lines.append(coment)
+            lines.append('{}\n'.format(info_blocos[mnemonico_restricao]['formatacao'].format(*row.values).strip()))
+
+            row_cm = df_dadger["CM"].loc[df_dadger["CM"]['id_restricao'].astype('int') ==  int(row['id_restricao'])].loc[index]
+            lines.append('{}\n'.format(info_blocos['CM']['formatacao'].format(*row_cm.values).strip()))
+
+        # Escrita do ultimo comentário, se existir
+        if index+1 in comentarios['CM']:
+            for coment in comentarios['CM'][index+1]:
+                lines.append(coment)
+    else:
+        for index, row in df_dadger[mnemonico_restricao].iterrows():
+        
+            if index in comentarios[mnemonico_restricao]:
+                for coment in comentarios[mnemonico_restricao][index]:
+                    lines.append(coment)
+            lines.append('{}\n'.format(info_blocos[mnemonico_restricao]['formatacao'].format(*row.values).strip()))
+            
+            for mnemon in submnemonicos_restricao:
+                restricoes_mnemon = df_dadger[mnemon].loc[df_dadger[mnemon]['id_restricao'].astype('int') == int(row['id_restricao'])]
+                
+                for index, row in restricoes_mnemon.iterrows():
+                    if index in comentarios[mnemon]:
+                        for coment in comentarios[mnemon][index]:
+                            lines.append(coment)
+                    lines.append('{}\n'.format(info_blocos[mnemon]['formatacao'].format(*row.values).strip()))
+    
+    return lines
+
+def escrever_dadger(df_dadger, comentarios, filePath):
+    
+    blocos_restricoes = {}
+    blocos_restricoes['RE'] = ['LU', 'FU', 'FT', 'FI']
+    blocos_restricoes['HQ'] = ['LQ', 'CQ']
+    blocos_restricoes['HV'] = ['LV', 'CV']
+    blocos_restricoes['HE'] = ['CM']
+    
+    # # Aproveitando a funcao de restricao para inserir a Influência de 
+    # # vazões laterais
+    # blocos_restricoes['VL'] = ['VU']
+    
+    bloco_dependentes = {}
+    bloco_dependentes['VL'] = ['VU']
+    
+    
+    blocos_infos_restricoes = []
+    for mnemonico_rest in blocos_restricoes:
+        blocos_infos_restricoes += blocos_restricoes[mnemonico_rest]
+
+    lines = []
+
+    for mnemonico in df_dadger:
+        
+        if mnemonico in blocos_restricoes:
+            lines = escrever_bloco_restricoes(lines, df_dadger, mnemonico, blocos_restricoes[mnemonico], comentarios)
+
+        elif mnemonico in blocos_infos_restricoes:
+            continue
+        
+        else:
+            for index, row in df_dadger[mnemonico].iterrows():
+                if index in comentarios[mnemonico]:
+                    for coment in comentarios[mnemonico][index]:
+                        lines.append(coment)
+                
+                lines.append('{}\n'.format(info_blocos[mnemonico]['formatacao'].format(*row.values).strip()))
+                
+                if mnemonico in bloco_dependentes:
+                    for dep in bloco_dependentes[mnemonico]:
+                        
+                        mnemon_depend = df_dadger[dep].loc[df_dadger[dep]['id'].astype('int') == int(row['id'])]
+                        df_dadger[dep].drop(mnemon_depend.index, inplace=True)
+                
+                        for index, row in mnemon_depend.iterrows():
+                            if index in comentarios[dep]:
+                                for coment in comentarios[dep][index]:
+                                    lines.append(coment)
+                            lines.append('{}\n'.format(info_blocos[dep]['formatacao'].format(*row.values).strip()))
+    
+    with codecs.open(filePath, 'w', 'utf-8') as fileOut:
+        fileOut.writelines(lines)
+        
+    print(filePath)
+    return filePath
+

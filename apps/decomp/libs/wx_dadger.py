@@ -666,11 +666,13 @@ def leituraArquivo(filePath):
             mnemonico = line.split()[0]
             if mnemonico not in info_blocos:
                 print(mnemonico)
-                pdb.set_trace()
+                continue
+                
             infosLinha = re.split(info_blocos[mnemonico]['regex'], line)
             if len(infosLinha) < 2:
-                pdb.set_trace()
-            
+                print(mnemonico)
+                continue
+
             if mnemonico not in blocos:
                 blocos[mnemonico] = []
                 comentarios[mnemonico] = {}
@@ -932,8 +934,8 @@ if __name__ == '__main__':
     path_dadger = os.path.abspath(r"C:\Users\cs341052\Downloads\deck_202207_r3\PMO_deck_preliminar\DEC_ONS_072022_RV3_VE\dadger.rv3")
     # path_novo_dadger = path_dadger.replace('dadger.rv', 'dadger_rz2.rv')
     # df_dadger, comentarios = leituraArquivo(path_dadger)
-    # df_dadger, comentarios = comentar_dadger_ons_ccee(df_dadger, comentarios)
     # escrever_dadger(df_dadger, comentarios, path_novo_dadger)
+    # df_dadger, comentarios = comentar_dadger_ons_ccee(df_dadger, comentarios)
     
     path_dadger = os.path.abspath(r"C:\Users\cs341052\Downloads\decks_ds\PMO_deck_preliminar(1)\DEC_ONS_082022_RV1_VE\dadger.rv1")
     data_deck = datetime.datetime(2022,8,6)

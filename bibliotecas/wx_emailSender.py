@@ -184,15 +184,19 @@ def api_html_to_image(html_str,path_save='out_put.png'):
     __API_KEY_HCTI4 = os.getenv('API_KEY_HCTI4') 
     __USER_HCTI4 = os.getenv('USER_HCTI4') 
 
+    __API_KEY_HCTI5 = os.getenv('API_KEY_HCTI5') 
+    __USER_HCTI5 = os.getenv('USER_HCTI5') 
+
 
     data = { 'html': html_str,
             'google_fonts': "Roboto" 
             }
-
+    
     imagem=None
-    for user, token in [(__USER_HCTI,__API_KEY_HCTI),(__USER_HCTI2, __API_KEY_HCTI2),(__USER_HCTI3,__API_KEY_HCTI3),(__USER_HCTI4,__API_KEY_HCTI4)]:
+    for user, token in [(__USER_HCTI,__API_KEY_HCTI),(__USER_HCTI2, __API_KEY_HCTI2),(__USER_HCTI3,__API_KEY_HCTI3),(__USER_HCTI4,__API_KEY_HCTI4),(__USER_HCTI5,__API_KEY_HCTI5)]:
         image = requests.post(url = __API_URL_HCTI, data = data, auth=(user, token))
         if image.status_code != 200:
+            print(image.content)
             continue
         resposta = requests.get(image.json()['url'])
         imagem = Image.open(BytesIO(resposta.content))
@@ -204,7 +208,7 @@ def api_html_to_image(html_str,path_save='out_put.png'):
         return None
         
     imagem.save(path_save)
-
+    print(f"Salvo em: {os.path.abspath(path_save)}")
     return os.path.abspath(path_save)
 
 def apply_html_table_style(dfs, columns_to_apply=None, format = "{:.1f}"):
@@ -273,17 +277,19 @@ def get_image_base64(path):
 
 if __name__ == '__main__':
 
-    # Exemplo de como utilizar os
-    serv_email = WxEmail()
-    serv_email.username = 'thiago@wxe.com.br'
-    serv_email.password = 'mud@r123'
-    # serv_email.send_to = ['thiago.scher@gmail.com']
-    serv_email.send_to = ['thiago@wxe.com.br']
-    anexos = ['C:/Users/thiag/Desktop/tmp/20200508/ENA_GFS.PRELIMINAR_r06z.PNG', 'C:/Users/thiag/Desktop/tmp/20200508/smap_nat_GEFS.PRELIMINAR_r06z.txt']
+    api_html_to_image("html_str",path_save='out_put.png')
 
-    html = '<html> <head> <style type="text/css"> table {font-family: arial, sans-serif;border-collapse: collapse;width: 1000px;} td, th {border: 1px solid #dddddd;text-align: center;padding: 8px;} tr:nth-child(4n + 2) td, tr:nth-child(4n + 3)td {background-color: #F2ECEC;} .umaLinha tr:nth-child(odd) td{ background-color: #F2ECEC;} .umaLinha tr:nth-child(even) td{ background-color: #ffffff;} </style> </head> <body> <b>ENERGIAS NATURAIS AFLUENTES PREVISTAS POR SUBSISTEMA (MWmed)</b><br>Previsao Semanal - Nao Consitido<br><br> <table class="umaLinha" class="dataframe"> <tbody> <tr> <td></td> <td>23/05/2020</td> <td></td> <td>Revisão da</td> <td></td> <td>Previsão</td> <td></td> </tr> <tr> <td></td> <td>a</td> <td></td> <td>Previsão Mensal</td> <td></td> <td>Mensal Inicial</td> <td></td> </tr> <tr> <td>REGIÕES</td> <td>29/05/2020</td> <td></td> <td>Incluindo Verificado</td> <td></td> <td>MAIO/2020</td> <td></td> </tr> <tr> <td></td> <td>(Mwmed)</td> <td>% MLT</td> <td>(Mwmed)</td> <td>MLT%</td> <td>(Mwmed)</td> <td>% MLT</td> </tr> <tr> <td>SUDESTE</td> <td>28222.4</td> <td>70.6074</td> <td>31129.2</td> <td>77.8797</td> <td>35249.7</td> <td>88.1886</td> </tr> <tr> <td>SUL</td> <td>1226.79</td> <td>14.3089</td> <td>1038.86</td> <td>12.117</td> <td>1587.7</td> <td>18.5185</td> </tr> <tr> <td>NORDESTE</td> <td>4009.53</td> <td>57.1074</td> <td>5583.8</td> <td>79.5295</td> <td>5526.6</td> <td>78.7149</td> </tr> <tr> <td>NORTE</td> <td>18976</td> <td>92.9322</td> <td>23549.8</td> <td>115.332</td> <td>24938.9</td> <td>122.134</td> </tr> </tbody> </table> <br><br>Envio por WX </body></html>'
-    # serv_email.sendEmail(texto=html, assunto='Teste', anexos=anexos)
-    serv_email.sendEmail(texto=html, assunto='Teste')
+    # Exemplo de como utilizar os
+    # serv_email = WxEmail()
+    # serv_email.username = 'thiago@wxe.com.br'
+    # serv_email.password = 'mud@r123'
+    # # serv_email.send_to = ['thiago.scher@gmail.com']
+    # serv_email.send_to = ['thiago@wxe.com.br']
+    # anexos = ['C:/Users/thiag/Desktop/tmp/20200508/ENA_GFS.PRELIMINAR_r06z.PNG', 'C:/Users/thiag/Desktop/tmp/20200508/smap_nat_GEFS.PRELIMINAR_r06z.txt']
+
+    # html = '<html> <head> <style type="text/css"> table {font-family: arial, sans-serif;border-collapse: collapse;width: 1000px;} td, th {border: 1px solid #dddddd;text-align: center;padding: 8px;} tr:nth-child(4n + 2) td, tr:nth-child(4n + 3)td {background-color: #F2ECEC;} .umaLinha tr:nth-child(odd) td{ background-color: #F2ECEC;} .umaLinha tr:nth-child(even) td{ background-color: #ffffff;} </style> </head> <body> <b>ENERGIAS NATURAIS AFLUENTES PREVISTAS POR SUBSISTEMA (MWmed)</b><br>Previsao Semanal - Nao Consitido<br><br> <table class="umaLinha" class="dataframe"> <tbody> <tr> <td></td> <td>23/05/2020</td> <td></td> <td>Revisão da</td> <td></td> <td>Previsão</td> <td></td> </tr> <tr> <td></td> <td>a</td> <td></td> <td>Previsão Mensal</td> <td></td> <td>Mensal Inicial</td> <td></td> </tr> <tr> <td>REGIÕES</td> <td>29/05/2020</td> <td></td> <td>Incluindo Verificado</td> <td></td> <td>MAIO/2020</td> <td></td> </tr> <tr> <td></td> <td>(Mwmed)</td> <td>% MLT</td> <td>(Mwmed)</td> <td>MLT%</td> <td>(Mwmed)</td> <td>% MLT</td> </tr> <tr> <td>SUDESTE</td> <td>28222.4</td> <td>70.6074</td> <td>31129.2</td> <td>77.8797</td> <td>35249.7</td> <td>88.1886</td> </tr> <tr> <td>SUL</td> <td>1226.79</td> <td>14.3089</td> <td>1038.86</td> <td>12.117</td> <td>1587.7</td> <td>18.5185</td> </tr> <tr> <td>NORDESTE</td> <td>4009.53</td> <td>57.1074</td> <td>5583.8</td> <td>79.5295</td> <td>5526.6</td> <td>78.7149</td> </tr> <tr> <td>NORTE</td> <td>18976</td> <td>92.9322</td> <td>23549.8</td> <td>115.332</td> <td>24938.9</td> <td>122.134</td> </tr> </tbody> </table> <br><br>Envio por WX </body></html>'
+    # # serv_email.sendEmail(texto=html, assunto='Teste', anexos=anexos)
+    # serv_email.sendEmail(texto=html, assunto='Teste')
 
 
 

@@ -319,6 +319,37 @@ def update_weol_sistema_nw_estudo(data_produto:datetime.date, ids_to_modify:List
 
         logger.info(f"============================================")
         
+def update_restricoes_dadger_dc_estudo(file_path:str, ids_to_modify:List[int] = None):
+    
+    info_restricoes = info_external_files.read_table(file_path, "Tabela 4-1: Resultados dos Limites Elétricos")
+    logger.info(f"UPDATE DADGER RESTRICOES (bloco LU)")
+    tag = [f'RE {datetime.datetime.now().strftime("%d/%m %H:%M")}']
+
+    if not ids_to_modify:
+        ids_to_modify = get_ids_to_modify()
+
+    for id_estudo in ids_to_modify:
+        logger.info("\n\n")
+        logger.info(f"Modificando estudo {id_estudo}")
+
+        path_estudo = api.downloadEstudoPorId(id_estudo)
+
+        extracted_zip_estudo = utils.extract_file_estudo(
+            path_estudo,
+            )
+
+        dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
+        arquivos_filtrados = [arquivo for arquivo in dadgers_to_modify if not re.search(r'\.0+$', arquivo)]
+
+        dadger_updater.update_restricoes_eletricas_DC(
+            info_restricoes,
+            arquivos_filtrados
+        )
+
+        send_files_to_api(id_estudo, arquivos_filtrados, tag)
+
+        logger.info(f"============================================")
+        
 
 
 if __name__ == "__main__":

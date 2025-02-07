@@ -11,7 +11,7 @@ import pandas as pd
 import requests as r
 from dotenv import load_dotenv
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     handlers=[
@@ -88,7 +88,18 @@ def arquivos_modelo_pdp(dadosProduto):
     
     #rodar smap
     SmapTools.organizar_chuva_vazao_files(pdp_file_zip=filename,files_to_copy=['AJUSTE','PlanilhaUSB'], flag_db=True)
-    SmapTools.trigger_dag_SMAP(dtRef)
+    
+    for modelo in ["pconjunto","pconjunto2","pmedia"]:
+        for fonte in ['ons','rz']:
+            airflow_tools.trigger_airflow_dag(
+                dag_id="PREV_SMAP",
+                json_produtos={
+                    "modelos":[
+                            [f"{modelo}-{fonte}",0,dtRef.strftime("%Y-%m-%d")],
+                        ],
+                    "prev_estendida":True
+                })
+
     SmapTools.resultado_cv_obs(
         dtRef.date(),
         fonte_referencia='pdp',
@@ -176,10 +187,18 @@ def historico_preciptacao(dadosProduto):
     )
 
     chuva.importar_chuva_psath(filename)
-    
-    #rodar smap
-    SmapTools.trigger_dag_SMAP(dtRef)
 
+    for modelo in ["pconjunto","pconjunto2","pmedia"]:
+        for fonte in ['ons','rz']:
+            airflow_tools.trigger_airflow_dag(
+                dag_id="PREV_SMAP",
+                json_produtos={
+                    "modelos":[
+                            [f"{modelo}-{fonte}",0,dtRef.strftime("%Y-%m-%d")],
+                        ],
+                    "prev_estendida":True
+                })
+    
     SmapTools.resultado_cv_obs(
         dtRef.date(),
         fonte_referencia='psat',
@@ -519,7 +538,18 @@ def vazoes_observadas(dadosProduto):
 
     #novo smap
     vazao.process_planilha_vazoes_obs(filename)
-    SmapTools.trigger_dag_SMAP(dtRef)
+    
+    for modelo in ["pconjunto","pconjunto2","pmedia"]:
+        for fonte in ['ons','rz']:
+            airflow_tools.trigger_airflow_dag(
+                dag_id="PREV_SMAP",
+                json_produtos={
+                    "modelos":[
+                            [f"{modelo}-{fonte}",0,dtRef.strftime("%Y-%m-%d")],
+                        ],
+                    "prev_estendida":True
+                })
+
     SmapTools.resultado_cv_obs(
         dtRef.date(),
         fonte_referencia='psat',
@@ -763,6 +793,18 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
         "produto":"TABELA_WEOL_SEMANAL",
         "data":data_produto.date(),
     })
+
+def relatorio_limites_intercambio(dadosProduto):
+    
+    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
+    filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    logger.info(filename)
+
+    return {
+        "file_path": filename,
+        "trigger_dag_id":"PROSPEC_UPDATER",
+        "task_to_execute": "revisao_restricao"
+    }
 
 
 

@@ -17,7 +17,7 @@ from PMO.scripts_unificados.apps.prospec.libs.decomp.dadger import dadger
 from PMO.scripts_unificados.apps.prospec.libs.info_arquivos_externos import info_external_files
 
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     handlers=[
@@ -147,6 +147,42 @@ def update_eolica_DC(paths_to_modify:List[str], data_produto:datetime.date):
             logger.error(f"Erro ao tentar sobrescrever bloco {path_dadger}: {str(e)}")
             continue    
 
+def update_restricoes_eletricas_DC(info_restricoes:pd.DataFrame,paths_to_modify:List[str]):
+
+    codigos_restricoes = info_restricoes.index.tolist()
+    
+    for i, path_dadger in enumerate(paths_to_modify):
+
+        df_dadger, comentarios = dadger.leituraArquivo(path_dadger)
+        df_restricoes_re = df_dadger['RE'].set_index('id_restricao')
+        df_restricoes_re.index = df_restricoes_re.index.str.strip().astype(int)
+
+        df_dadger['LU']['id_restricao'] = df_dadger['LU']['id_restricao'].str.strip().astype(int)
+
+        for codigo in codigos_restricoes:
+            estagio_final = int(df_restricoes_re.loc[codigo]['estag_final'].strip())
+
+            print(codigo)
+            flag_append_LU = True
+
+            for index,row in df_dadger['LU'][df_dadger['LU']['id_restricao'] == codigo].iterrows(): 
+                if int(row['est']) != estagio_final:
+                    new_values = info_restricoes.loc[codigo][['1º Mês Pesada','1º Mês Média','1º Mês Leve']].values.tolist()
+                else:
+                    new_values = info_restricoes.loc[codigo][['2º Mês Pesada','2º Mês Média','2º Mês Leve']].values.tolist()
+                    flag_append_LU = False
+                    
+                df_dadger['LU'].loc[index, ['gmax_p1', 'gmax_p2', 'gmax_p3']] = new_values
+
+            if flag_append_LU:
+                new_values = info_restricoes.loc[codigo][['2º Mês Pesada','2º Mês Média','2º Mês Leve']].values.tolist()
+                new_values = [estagio_final] + new_values
+
+                df_dadger['LU'] = pd.concat([df_dadger['LU'],df_dadger['LU'].loc[[index]]],ignore_index=True)
+                df_dadger['LU'].loc[df_dadger['LU'].index[-1], ['est','gmax_p1', 'gmax_p2', 'gmax_p3']] = new_values
+                
+        dadger.escrever_dadger(df_dadger, comentarios, path_dadger)
+
 if __name__ == "__main__":
 
     # update_eolica_DC([
@@ -163,11 +199,11 @@ if __name__ == "__main__":
     #     )
 
     # ORGANIZA INFORMACOES DE CVU
-    info_cvu = info_external_files.organizar_info_cvu(
-        ano_referencia=2025,    
-        mes_referencia=1,
-        path_saida=path_saida
-        )
+    # info_cvu = info_external_files.organizar_info_cvu(
+    #     ano_referencia=2025,    
+    #     mes_referencia=1,
+    #     path_saida=path_saida
+    #     )
 
     # #ALTERAR CVU EM DECKS DC
     # paths_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
@@ -203,3 +239,11 @@ if __name__ == "__main__":
     #     info_eolica,
     #     paths_to_modify
     # )
+
+    #RESTRICOES
+    # file_path = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/webhook/arquivos/tmp/PRELIMINAR - RELATÓRIO MENSAL DE LIMITES DE INTERCÂMBIO/Preliminar - RT-ONS DPL 0037-2025_Limites PMO_Fevereiro-2025.pdf"
+    # info_restricoes = info_external_files.read_table(file_path, "Tabela 4-1: Resultados dos Limites Elétricos")
+    # update_restricoes_eletricas_DC(
+    #     info_restricoes=info_restricoes,
+    #     paths_to_modify=["/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_22971/DC202502-sem1/dadger.rv0"]
+    #     )

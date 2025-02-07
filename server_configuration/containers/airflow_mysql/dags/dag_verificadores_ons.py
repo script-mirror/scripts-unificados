@@ -54,7 +54,7 @@ def cmd_command(**kwargs):
     kwargs['ti'].xcom_push(key='command', value=cmd)
     
 with DAG(
-    dag_id='DOWNALOD-EC-CLUST-ONS',
+    dag_id='DOWNLOAD-EC-CLUST-ONS',
     tags=["Verificador","ONS","SMAP","Chuva Prevista"],
     start_date= datetime.datetime(2024, 4, 28),
     catchup=False,
