@@ -3,7 +3,7 @@ from sys import path
 import diskcache as dc
 from typing import Callable
 
-cache = dc.Cache(f'{path[1]}/app/cache')
+cache = dc.Cache(f'{path[0]}/app/cache')
 
 def get_key(function_key, *args):
     key = str(args).replace('(', '').replace(')', '').replace(',', ':').replace('\'', '')

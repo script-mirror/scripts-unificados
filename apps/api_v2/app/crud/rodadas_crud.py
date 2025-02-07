@@ -312,10 +312,10 @@ class Chuva:
         model_base = df_model_base.to_dict('records')[0]
     
         rodada = model_base['hr_rodada']
-        rodada_time = datetime.time(rodada, 0)
-        data_rodada = model_base['dt_rodada']
-        data_rodada_str = datetime.datetime.combine(data_rodada, rodada_time)
-        data_rodada_str = data_rodada_str.strftime('%Y-%m-%dT%H:%M:%S.000+00:00')
+        rodada_time = datetime.time(rodada, 0, 0, 0)
+        data_rodada_date = datetime.datetime.combine(model_base['dt_rodada'], rodada_time)
+        data_rodada_str = data_rodada_date.isoformat()
+        data_rodada_str = f'{data_rodada_str}.000Z'
         modelo = model_base['modelo']
         grupo = "ONS" if 'ons' in model_base["modelo"].lower() else "RZ"
         viez = False if 'remvies' in model_base["modelo"].lower() else True
@@ -340,7 +340,6 @@ class Chuva:
                 valorAgrupamento = value['nome'] if tipo == 'subbacia' else value['nome'] if tipo == 'bacia' else value['str_sigla']
                 
                 data_referente_date = datetime.datetime.strptime(value['dt_prevista'], '%Y-%m-%d')
-                data_referente_str = datetime.datetime.strftime(data_referente_date, '%Y-%m-%d')
                 
                 chave_agrupamento = (valorAgrupamento, tipo)
                 
@@ -362,7 +361,7 @@ class Chuva:
                 
                 if data_final is None or data_referente_date > data_final:
                     data_final = data_referente_date
-                    data_final_str = data_referente_str
+                    data_final_str = value['dt_prevista']
                     
 
         body = {
@@ -378,7 +377,10 @@ class Chuva:
             "data": data,
         }
         
-        res = r.post('https://tradingenergiarz.com/backend/api/map', verify=False, json=body, headers={'Content-Type': 'application/json', 'Authorization': 'Bearer eyJraWQiOiJnbHlJWXFDck5tT3JQSFkyOHNHZGxJUVpkUExHUlFMMnBXbWJ6eDA3VEdFPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJiNDQ4ODQ4OC04MDExLTcwZmUtMDM2OS04ZjU4NTE5NmNiZmYiLCJjb2duaXRvOmdyb3VwcyI6WyJ1cy1lYXN0LTFfNWpSQkxEaFNkX2F6dXJlLWFkLXJpcy1wcmQiXSwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tXC91cy1lYXN0LTFfNWpSQkxEaFNkIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoia2JiNzhsODA2NmJ2YWhjMWxraHVobG1laCIsIm9yaWdpbl9qdGkiOiI5NzA2ZTYwNy1hYWMyLTQ2YjUtOWMxNC04ZDIwYmYzNjY3MzgiLCJ0b2tlbl91c2UiOiJhY2Nlc3MiLCJzY29wZSI6ImRlZmF1bHRcL3Rva2VuIHBob25lIG9wZW5pZCBwcm9maWxlIGVtYWlsIiwiYXV0aF90aW1lIjoxNzM4OTQwMjA5LCJleHAiOjE3Mzg5NDM4MDksImlhdCI6MTczODk0MDIwOSwianRpIjoiMWYxMWRkZDQtOWZmZi00MTNiLWI4N2EtMjJiYTVhODAzZTUxIiwidXNlcm5hbWUiOiJhenVyZS1hZC1yaXMtcHJkX0NTNDI0NTIyQE1pbmhhVEkuY29tLmJyIn0.bWx9MmAK_-arU6jeKW696ArnYkzLkiE3-K3lDP6fAboYM9UR022jw9qcAqTqqAyzhsGqLjLBvqvuTEAbCPv5eA9jQNm6lI1lt7AumNhf5Nvr4PyUi51lBCb0e84qH0Wo6q_pahF0nMKrRRBUFdGz9fwby7fwQFCbSKRMBVXGciwWmzVI9nBCxF4rWPtRkfbVRhItaSlfRmgZjuAudZfzKoJAJPQ3Ld1A6Fez7tBZ2FBd2D6b15rvwR3wP_PuSGA02qs5Uo57CZ3gmpd8MtzYz1jpQLqa4srH0O0GYe4Ysoho9Xx20PnOjxDZ47BM2odtC4mzHkabWJPy2LmfcOuCWA'})
+        accessToken = get_accessToken();
+        
+        res = r.post('https://tradingenergiarz.com/backend/api/map', verify=False, json=body, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {accessToken}'})
+        
         try:
             res.raise_for_status()  
         except HTTPError as http_err:
@@ -387,14 +389,16 @@ class Chuva:
             logger.error(f"Other error: {err}")
         else:
             if res.status_code == 201:
-                logger.info(f"Modelo {modelo} do dia {data_rodada} inserido na API de visualizacao")
+                logger.info(f"Modelo {modelo} do dia {data_rodada_str} inserido na API de visualizacao")
             else:
-                logger.warning(f"Erro ao tentar inserir o modelo {modelo} do dia {data_rodada} na API de visualizacao")
+                logger.warning(f"Erro ao tentar inserir o modelo {modelo} do dia {data_rodada_str} na API de visualizacao")
         
         
     
     @staticmethod
     def post_chuva_modelo_combinados(chuva_prev:List[ChuvaPrevisaoCriacao], rodar_smap:bool, prev_estendida:bool) -> None:
+        
+        return Chuva.export_rain(17003)
         prevs:List[dict] = []
         for prev in chuva_prev:
             prevs.append(prev.model_dump())
@@ -415,7 +419,7 @@ class Chuva:
         
         id_chuva = Chuva.inserir_chuva_modelos(df, rodar_smap, prev_estendida)
         
-        Chuva.export_rain(id_chuva)
+        
 
     
         return None

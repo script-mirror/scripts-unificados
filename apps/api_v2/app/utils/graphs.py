@@ -1,3 +1,12 @@
+import os
+import requests as r
+from dotenv import load_dotenv
+
+load_dotenv()
+
+URL_COGNITO = os.getenv('URL_COGNITO')
+CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
+
 def get_color(modelo:str):
     cores = {
             'RV': '#6a5acd',
@@ -18,3 +27,12 @@ def get_color(modelo:str):
         }
     
     return cores.get(modelo, "#FF4444")
+
+def get_access_token() -> str:
+    response = r.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
+ 
