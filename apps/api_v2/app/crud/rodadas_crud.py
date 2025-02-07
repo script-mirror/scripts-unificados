@@ -379,7 +379,6 @@ class Chuva:
         }
         
         res = r.post('https://tradingenergiarz.com/backend/api/map', verify=False, json=body, headers={'Content-Type': 'application/json', 'Authorization': 'Bearer eyJraWQiOiJnbHlJWXFDck5tT3JQSFkyOHNHZGxJUVpkUExHUlFMMnBXbWJ6eDA3VEdFPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJiNDQ4ODQ4OC04MDExLTcwZmUtMDM2OS04ZjU4NTE5NmNiZmYiLCJjb2duaXRvOmdyb3VwcyI6WyJ1cy1lYXN0LTFfNWpSQkxEaFNkX2F6dXJlLWFkLXJpcy1wcmQiXSwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tXC91cy1lYXN0LTFfNWpSQkxEaFNkIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoia2JiNzhsODA2NmJ2YWhjMWxraHVobG1laCIsIm9yaWdpbl9qdGkiOiJlNDNkOTA4Mi00YjFkLTQ3NjMtYmYzOC04ODczOGIxOWM2NTEiLCJ0b2tlbl91c2UiOiJhY2Nlc3MiLCJzY29wZSI6ImRlZmF1bHRcL3Rva2VuIHBob25lIG9wZW5pZCBwcm9maWxlIGVtYWlsIiwiYXV0aF90aW1lIjoxNzM4OTM5NzY2LCJleHAiOjE3Mzg5NDMzNjYsImlhdCI6MTczODkzOTc2NiwianRpIjoiMmU1NTU5MzctMWFjNi00Y2ZmLTljYWMtZDJiZjQwYTdlODgzIiwidXNlcm5hbWUiOiJhenVyZS1hZC1yaXMtcHJkX0NTNDI0NTIyQE1pbmhhVEkuY29tLmJyIn0.NXPEi3kQZRMMaT-0_R3iWksGqM2kRebBj5yVZ2Pk05ji77F-4MqbBaed-HQA0BuVO92mcT-PVOsSdkhXyzBhws9Pw5vXNw4BqmuD_3uNYUrFNHOA07pTa3-4nei2oTN8y8l9wcrHErDohYusCsu-t9-i70RiAj15j3jmC84fzw1C9zVWikN1IGCJMAdbUDLi8R7U4UjmBOznj0JszY6rDoReIP5rw5nRq9iVkq2ziloi4WXONU0Hup13-M5ihzoHBsTjTOyVDzk8DXrqPH0rqIEmBlif-IU2axezl7MeBY3ODIa__jqlplPLhfAnuBnwSy7mGEluW6OGY4cRtO8NDg'})
-        pdb.set_trace() 
         try:
             res.raise_for_status()  
         except HTTPError as http_err:
