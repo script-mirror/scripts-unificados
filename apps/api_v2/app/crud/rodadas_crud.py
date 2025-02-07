@@ -398,7 +398,6 @@ class Chuva:
     @staticmethod
     def post_chuva_modelo_combinados(chuva_prev:List[ChuvaPrevisaoCriacao], rodar_smap:bool, prev_estendida:bool) -> None:
         
-        return Chuva.export_rain(17003)
         prevs:List[dict] = []
         for prev in chuva_prev:
             prevs.append(prev.model_dump())
@@ -419,9 +418,8 @@ class Chuva:
         
         id_chuva = Chuva.inserir_chuva_modelos(df, rodar_smap, prev_estendida)
         
+        Chuva.export_rain(id_chuva)
         
-
-    
         return None
     
     @staticmethod
