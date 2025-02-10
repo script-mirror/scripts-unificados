@@ -1,4 +1,5 @@
 import re
+import pdb
 import codecs
 import logging
 import pandas as pd
@@ -38,9 +39,10 @@ info_blocos['UH'] = {'campos':[
 				'vmortoini',
 				'limsup',
 				'fator',
+                'coment'
 			],
 			'regex':'(.{2})  (.{3})  (.{2})   (.{10})(.{10})     (.{1}) {0,4}(.{0,2}) {0,3}(.{0,10})(.{0,10})(.{0,1})(.*)',
-			'formatacao':'{:>2}  {:>3}  {:>2}   {:>10}{:>10}     {:>1}    {:>2}   {:>10}{:>10}{:>1}'}
+			'formatacao':'{:>2}  {:>3}  {:>2}   {:>10}{:>10}     {:>1}    {:>2}   {:>10}{:>10}{:>1}{:>2}'}
 
 info_blocos['CT'] = {'campos':[
                                 'mnemonico',
@@ -690,7 +692,7 @@ def leituraArquivo(filePath):
             if mnemonico not in info_blocos:
                 logger.warning(f'Mnemonico {mnemonico} nao encontrado.')
                 continue
-                
+
             infosLinha = re.split(info_blocos[mnemonico]['regex'], line)
             if len(infosLinha) < 2:
                 logger.warning(f"Linha incorreta: {infosLinha}")
@@ -704,11 +706,14 @@ def leituraArquivo(filePath):
                 comentarios[mnemonico][len(blocos[mnemonico])] = coment
                 coment = []
             
-            blocos[mnemonico].append(infosLinha[1:-2])   # ultimo termo da lista e o que sobra da expressao regex (/n)
+            if mnemonico == 'UH':  # ultimo termo da lista e o que sobra da expressao regex (/n)
+                blocos[mnemonico].append(infosLinha[1:-1])   # ultimo termo da lista e o que sobra da expressao regex (/n)
+            else:
+                blocos[mnemonico].append(infosLinha[1:-2])
         
     if len(coment) > 0:
         comentarios[mnemonico][len(blocos[mnemonico])] = coment
-        
+    
     df_dadger = {}
     for mnemonico in blocos:
         df_dadger[mnemonico] = pd.DataFrame(blocos[mnemonico], columns=info_blocos[mnemonico]['campos'])

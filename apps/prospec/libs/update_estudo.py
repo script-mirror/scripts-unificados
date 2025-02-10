@@ -321,7 +321,7 @@ def update_weol_sistema_nw_estudo(data_produto:datetime.date, ids_to_modify:List
         
 def update_restricoes_dadger_dc_estudo(file_path:str, ids_to_modify:List[int] = None):
     
-    info_restricoes = info_external_files.read_table(file_path, "Tabela 4-1: Resultados dos Limites Elétricos")
+    info_restricoes = info_external_files.organizar_info_restricoes_eletricas_dc(file_path)
     logger.info(f"UPDATE DADGER RESTRICOES (bloco LU)")
     tag = [f'RE {datetime.datetime.now().strftime("%d/%m %H:%M")}']
 
@@ -353,10 +353,10 @@ def update_restricoes_dadger_dc_estudo(file_path:str, ids_to_modify:List[int] = 
 
 
 if __name__ == "__main__":
-    update_weol_sistema_nw_estudo(
-        datetime.date(2025, 1, 22),
-        [22800]
-        )
+    # update_weol_sistema_nw_estudo(
+    #     datetime.date(2025, 1, 22),
+    #     [22800]
+    #     )
     # ids_to_modify = get_ids_to_modify()
 
     # for id_estudo in ids_to_modify:
@@ -373,3 +373,8 @@ if __name__ == "__main__":
 
     # update_cvu_estudo(ids_to_modify,ano_referencia_cvu,mes_referencia_cvu)
     # update_carga_estudo(ids_to_modify,file_path)
+
+    file_path = "C:/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/webhook/arquivos/tmp/PRELIMINAR - RELATÓRIO MENSAL DE LIMITES DE INTERCÂMBIO/Preliminar - RT-ONS DPL 0037-2025_Limites PMO_Fevereiro-2025.pdf"
+    update_restricoes_dadger_dc_estudo(file_path, ids_to_modify=[23188])
+
+    
