@@ -1188,7 +1188,7 @@ def gerarTabelasEmailAcomph(data):
 		tabelaDifEnaSub.append(enaAux)
 
 	header = ['Submercado']+list(diferencaSubmercadoEnaFormatado.columns.strftime('%d/%m/%Y'))
-	html += "<h3>Diferenças ACOMPH do dia {} com o comph do dia {}</h3>".format(data.strftime('%d/%m/%Y'), (data-datetime.timedelta(days=1)).strftime('%d/%m/%Y'))
+	html += "<h3>Diferenças ACOMPH do dia {} com o acomph do dia {}</h3>".format(data.strftime('%d/%m/%Y'), (data-datetime.timedelta(days=1)).strftime('%d/%m/%Y'))
 	html += "<h4>Submercados</h4>"
 	html += wx_emailSender.gerarTabela(body=tabelaDifEnaSub, header=header)
 
