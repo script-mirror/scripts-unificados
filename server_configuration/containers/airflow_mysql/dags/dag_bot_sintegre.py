@@ -11,9 +11,9 @@ with DAG(
     catchup=False,
     schedule="0 23 * * *"
 ) as dag:
-    inicio = SSHOperator(
+    start_bot = SSHOperator(
         task_id='start_bot',
         ssh_conn_id='ssh_master',
         command='/WX2TB/Documentos/fontes/PMO/raizen-power-trading-middle-bot-sintegre/env/bin/python main.py',
     )
-
+start_bot
