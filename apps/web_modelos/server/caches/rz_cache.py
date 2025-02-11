@@ -33,7 +33,7 @@ def cache_rodadas_modelos(prefixo,rodadas,reset=False, dias=7):
   dt_rodada = rodadas['dt_rodada']
   search_list = list(rodadas['rodadas'].keys())
 
-  key = prefixo+f':{granularidade}:{dt_rodada}'
+  key = f'{prefixo}:{granularidade}:{dt_rodada}'
 
   ids_in_cache = []
   send_cache_data = []
