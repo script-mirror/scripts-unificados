@@ -105,17 +105,17 @@ def arquivo_acomph(dadosProduto):
 
     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
     logger.info(path_copia_tmp)
-
-    airflow_tools.trigger_airflow_dag(
-        dag_id="1.8-PROSPEC_GRUPOS-ONS",
-        json_produtos={}
-        )
-    
-    airflow_tools.trigger_airflow_dag(
-        dag_id="1.1-PROSPEC_PCONJUNTO_DEFINITIVO",
-        json_produtos={
-            'dt_ref':dadosProduto['dataProduto']
-            })
+    if dadosProduto.get('enviar', True) == True:
+        airflow_tools.trigger_airflow_dag(
+            dag_id="1.8-PROSPEC_GRUPOS-ONS",
+            json_produtos={}
+            )
+        
+        airflow_tools.trigger_airflow_dag(
+            dag_id="1.1-PROSPEC_PCONJUNTO_DEFINITIVO",
+            json_produtos={
+                'dt_ref':dadosProduto['dataProduto']
+                })
     
     vazao.importAcomph(filename)
 
@@ -218,12 +218,12 @@ def modelo_eta(dadosProduto):
         date_format='%d%m%y',
         dst=dst)
     logger.info(extracted_files)
-
-    airflow_tools.trigger_airflow_dag(
-        dag_id="PCONJUNTO",
-        json_produtos={
-            'dt_ref':dadosProduto['dataProduto']
-            })
+    if dadosProduto.get('enviar', True) == True:
+        airflow_tools.trigger_airflow_dag(
+            dag_id="PCONJUNTO",
+            json_produtos={
+                'dt_ref':dadosProduto['dataProduto']
+                })
 
 
 def carga_patamar(dadosProduto):
@@ -271,11 +271,12 @@ def deck_preliminar_decomp(dadosProduto):
         "produto":"CMO_DC_PRELIMINAR",
         "path":filename,
     })
-    airflow_tools.trigger_airflow_dag(
-        dag_id="2.0-BACKTEST-DECOMP",
-        json_produtos={
-            'dt_ref':dadosProduto['dataProduto']
-            })
+    if dadosProduto.get('enviar', True) == True:
+        airflow_tools.trigger_airflow_dag(
+            dag_id="2.0-BACKTEST-DECOMP",
+            json_produtos={
+                'dt_ref':dadosProduto['dataProduto']
+                })
 
     
 def deck_entrada_saida_dessem(dadosProduto):
@@ -303,12 +304,12 @@ def deck_entrada_saida_dessem(dadosProduto):
     
     dessem.organizarArquivosOns(dtRef, path_arquivos_ds, importarDb=False, enviarEmail=True)
     logger.info(f"Triggering DESSEM_convertido, dt_ref: {dadosProduto['dataProduto']}")
-    
-    airflow_tools.trigger_airflow_dag(
-        dag_id="DESSEM_convertido",
-        json_produtos={
-            'dt_ref':dadosProduto['dataProduto']
-            })
+    if dadosProduto.get('enviar', True) == True:
+        airflow_tools.trigger_airflow_dag(
+            dag_id="DESSEM_convertido",
+            json_produtos={
+                'dt_ref':dadosProduto['dataProduto']
+                })
     
     deck_ds.importar_renovaveis_ds(path_file=filename, dt_ref=dtRef, str_fonte='ons')
     
@@ -449,12 +450,12 @@ def modelo_ECMWF(dadosProduto):
         dst=dst,
         extracted_files=[])
     logger.info(extracted_files)
-
-    airflow_tools.trigger_airflow_dag(
-        dag_id="PCONJUNTO",
-        json_produtos={
-            'dt_ref':dadosProduto['dataProduto']
-            })
+    if dadosProduto.get('enviar', True) == True:
+        airflow_tools.trigger_airflow_dag(
+            dag_id="PCONJUNTO",
+            json_produtos={
+                'dt_ref':dadosProduto['dataProduto']
+                })
 
             
 def dados_geracaoEolica(dadosProduto):
@@ -499,12 +500,12 @@ def modelo_gefs(dadosProduto):
         dst=dst,
         extracted_files=[])
     logger.info(extracted_files)
-
-    airflow_tools.trigger_airflow_dag(
-        dag_id="PCONJUNTO",
-        json_produtos={
-            'dt_ref':dadosProduto['dataProduto']
-            })
+    if dadosProduto.get('enviar', True) == True:
+        airflow_tools.trigger_airflow_dag(
+            dag_id="PCONJUNTO",
+            json_produtos={
+                'dt_ref':dadosProduto['dataProduto']
+                })
 
 
 def vazoes_observadas(dadosProduto):
@@ -556,11 +557,21 @@ def resultados_nao_consistidos_semanal(dadosProduto):
     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_decomp_downloads)
     logger.info(path_copia_tmp)
 
-    wx_libs_preco.nao_consistido_rv(filename)
+    titulo, html = wx_libs_preco.nao_consistido_rv(filename)
+    
+    data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto'), "%d/%m/%Y")
+    
     # manda arquivo .zip para maquina newave'
     cmd = f"cp {filename} /WX/SERVER_NW/WX4TB/Documentos/fontes/PMO/decomp/entradas/DC_preliminar/;"
     os.system(cmd)
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
+    "produto":"PREV_ENA_CONSISTIDO",
+    "data":data_produto,
+    "titulo":titulo,
+    "html":html
 
+    })
 
 
     
@@ -586,6 +597,7 @@ def relatorio_resutados_finais_consistidos(dadosProduto):
         GERAR_PRODUTO.enviar({
     "produto":"PREVISAO_ENA_SUBMERCADO",
     "data":dtPrevisao,
+    
     })
 
 def niveis_partida_dessem(dadosProduto):
@@ -755,6 +767,7 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
         "produto":"TABELA_WEOL_SEMANAL",
         "data":data_produto.date(),
     })
+    
 
 def get_filename(dadosProduto:dict):
     filename:str

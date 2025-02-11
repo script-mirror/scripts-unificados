@@ -159,7 +159,7 @@ def processar_produto_RESULTADO_DESSEM(parametros):
     resultado.corpoEmail, resultado.file = rz_aux_libs.gerarResultadoDessem(parametros["data"])
     resultado.assuntoEmail = '[DESSEM] Rodada DESSEM {}'.format(parametros["data"].strftime('%d/%m/%Y'))
     resultado.remetenteEmail = 'dessem@climenergy.com'
-    resultado.destinatarioEmail = ['middle@wxe.com.br', 'front@wxe.com.br','mateus.dias2@raizen.com']
+    resultado.destinatarioEmail = ['middle@wxe.com.br', 'front@wxe.com.br']
     resultado.flagEmail = True
 
     resultado.msgWhats = 'CMO {}'.format(parametros["data"].strftime('%d/%m/%Y'))
@@ -251,7 +251,7 @@ def processar_produto_RESULTADOS_PROSPEC(parametros):
         resultado.corpoEmail = corpoE
         resultado.remetenteEmail = 'rodadas@climenergy.com'
         resultado.assuntoEmail = assuntoE
-        resultado.destinatarioEmail = ['front@wxe.com.br', 'middle@wxe.com.br', 'mateus.dias2@raizen.com']
+        resultado.destinatarioEmail = ['front@wxe.com.br', 'middle@wxe.com.br']
         resultado.flagEmail = True
         
     if msg_whats != '' and parametros['enviar_whats']:
@@ -324,7 +324,7 @@ def processar_produto_REVISAO_CARGA(parametros):
         elif difCargaREV.isin([0, pd.np.nan]).all().all():
             html = diferencaCarga_estilizada.to_html()
             resultado.flagEmail = True
-            resultado.destinatarioEmail = ['middle@wxe.com.br', 'front@wxe.com.br','fabio.Marcelino@raizen.com','camila.Lourenco@raizen.com','eder.Freitas@raizen.com']
+            resultado.destinatarioEmail = ['middle@wxe.com.br', 'front@wxe.com.br']
             resultado.flagWhats = True
             resultado.destinatarioWhats = 'PMO'
         
@@ -334,7 +334,7 @@ def processar_produto_REVISAO_CARGA(parametros):
             html += diferencaCarga_estilizada_PMO.to_html()
 
             resultado.flagEmail = True
-            resultado.destinatarioEmail = ['middle@wxe.com.br', 'front@wxe.com.br','fabio.Marcelino@raizen.com','camila.Lourenco@raizen.com','eder.Freitas@raizen.com']
+            resultado.destinatarioEmail = ['middle@wxe.com.br', 'front@wxe.com.br']
             resultado.flagWhats = True
             resultado.destinatarioWhats = 'PMO'
 
@@ -579,7 +579,7 @@ def processar_produto_TABELA_WEOL_MENSAL(parametros):
     resultado = Resultado(parametros)
     data:datetime.date = parametros['data']
     
-    res = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average/month/table", params={"dataProduto":str(data), "quantidadeProdutos":10})
+    res = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average/month/table", params={"dataProduto":str(data), "quantidadeProdutos":15})
     html = res.json()["html"]
     path_fig = wx_emailSender.api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'weol_mensal_{data}.png'))
 
@@ -595,7 +595,7 @@ def processar_produto_TABELA_WEOL_SEMANAL(parametros):
     resultado = Resultado(parametros)
     data:datetime.date = parametros['data']
     
-    res = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average/week/table", params={"dataProduto":str(data), "quantidadeProdutos":10})
+    res = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average/week/table", params={"dataProduto":str(data), "quantidadeProdutos":15})
     html = res.json()["html"]
     path_fig = wx_emailSender.api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'weol_mensal_{data}.png'))
 
@@ -606,3 +606,17 @@ def processar_produto_TABELA_WEOL_SEMANAL(parametros):
 
     return resultado
 
+def processar_produto_prev_ena_consistido(parametros):
+    resultado = Resultado(parametros)
+    data:datetime.date = parametros['data']
+    titulo = parametros['titulo']
+    html = parametros['html']
+    
+    path_fig = wx_emailSender.api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'prev_ena_consistido_{data}.png'))
+    resultado.fileWhats = path_fig
+
+    resultado.msgWhats = titulo
+    resultado.flagWhats = True
+    resultado.destinatarioWhats = "Condicao Hidrica"
+
+    return resultado

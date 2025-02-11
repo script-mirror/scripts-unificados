@@ -54,7 +54,8 @@ PRODUTCS_MAPPING = {
         'SITUACAO_RESERVATORIOS': "processar_produto_SITUACAO_RESERVATORIOS",
         'REVISAO_CARGA_NW_PRELIMINAR': "processar_produto_REVISAO_CARGA_NW_preliminar",
         'TABELA_WEOL_MENSAL': "processar_produto_TABELA_WEOL_MENSAL",
-        'TABELA_WEOL_SEMANAL': "processar_produto_TABELA_WEOL_SEMANAL"
+        'TABELA_WEOL_SEMANAL': "processar_produto_TABELA_WEOL_SEMANAL",
+        'PREV_ENA_CONSISTIDO':"processar_produto_prev_ena_consistido"
         
     } 
 
