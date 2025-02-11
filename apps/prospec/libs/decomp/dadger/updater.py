@@ -149,38 +149,75 @@ def update_eolica_DC(paths_to_modify:List[str], data_produto:datetime.date):
 
 def update_restricoes_eletricas_DC(info_restricoes:pd.DataFrame,paths_to_modify:List[str]):
 
-    codigos_restricoes = info_restricoes.index.tolist()
-    
+    colunas_primeiro_mes = ['1º Mês Pesada','1º Mês Média','1º Mês Leve']
+    colunas_segundo_mes = ['2º Mês Pesada','2º Mês Média','2º Mês Leve']
+    primeiro_mes, segundo_mes = sorted(info_restricoes.keys()) 
+    codigos_restricoes = info_restricoes[primeiro_mes].index.tolist()
+
     for i, path_dadger in enumerate(paths_to_modify):
+
+        #LEITURA DO DECK 
+        folder_name = os.path.basename(os.path.dirname(path_dadger))
+        padrao_folder = r"DC(\d{4})(\d{2})-sem(\d{1})"
+
+        match = re.match(padrao_folder, folder_name)
+        if match:
+            ano = match.group(1)
+            mes = match.group(2)
+            dt_referente = f"{ano}{mes}"
+
+        else:
+            quit(f"Erro ao tentar extrair ano e mes do nome da pasta {folder_name}")
 
         df_dadger, comentarios = dadger.leituraArquivo(path_dadger)
         df_restricoes_re = df_dadger['RE'].set_index('id_restricao')
         df_restricoes_re.index = df_restricoes_re.index.str.strip().astype(int)
-
         df_dadger['LU']['id_restricao'] = df_dadger['LU']['id_restricao'].str.strip().astype(int)
+
+        if info_restricoes.get(dt_referente,pd.DataFrame()).empty:
+            continue
 
         for codigo in codigos_restricoes:
             estagio_final = int(df_restricoes_re.loc[codigo]['estag_final'].strip())
-
-            print(codigo)
             flag_append_LU = True
 
             for index,row in df_dadger['LU'][df_dadger['LU']['id_restricao'] == codigo].iterrows(): 
-                if int(row['est']) != estagio_final:
-                    new_values = info_restricoes.loc[codigo][['1º Mês Pesada','1º Mês Média','1º Mês Leve']].values.tolist()
-                else:
-                    new_values = info_restricoes.loc[codigo][['2º Mês Pesada','2º Mês Média','2º Mês Leve']].values.tolist()
-                    flag_append_LU = False
-                    
+
+                if primeiro_mes == dt_referente:
+
+                    if int(row['est']) != estagio_final:
+                        new_values = info_restricoes[dt_referente].loc[codigo][colunas_primeiro_mes].values.tolist()
+                    else:
+                        new_values = info_restricoes[dt_referente].loc[codigo][colunas_segundo_mes].values.tolist()
+                        flag_append_LU = False
+                
+                elif segundo_mes==dt_referente:
+
+                    if int(row['est']) != estagio_final:
+                        if int(row['est']) == 1: 
+                            copy_primeiro_estagio = df_dadger['LU'].loc[index, ['gmax_p1', 'gmax_p2', 'gmax_p3']].values.tolist()
+
+                        new_values = info_restricoes[dt_referente].loc[codigo][colunas_segundo_mes].values.tolist()
+                    else:
+                        new_values = df_dadger['LU'].loc[index, ['gmax_p1', 'gmax_p2', 'gmax_p3']].values.tolist()
+                        flag_append_LU = False
+
                 df_dadger['LU'].loc[index, ['gmax_p1', 'gmax_p2', 'gmax_p3']] = new_values
 
+            #caso a linha do ultimo estagio não esteja escrita no dadger
             if flag_append_LU:
-                new_values = info_restricoes.loc[codigo][['2º Mês Pesada','2º Mês Média','2º Mês Leve']].values.tolist()
-                new_values = [estagio_final] + new_values
 
                 df_dadger['LU'] = pd.concat([df_dadger['LU'],df_dadger['LU'].loc[[index]]],ignore_index=True)
-                df_dadger['LU'].loc[df_dadger['LU'].index[-1], ['est','gmax_p1', 'gmax_p2', 'gmax_p3']] = new_values
+
+                if primeiro_mes == dt_referente:
+                    new_values = info_restricoes[dt_referente].loc[codigo][colunas_segundo_mes].values.tolist()
+                    df_dadger['LU'].loc[df_dadger['LU'].index[-1], ['est','gmax_p1', 'gmax_p2', 'gmax_p3']] = [estagio_final] + new_values
                 
+                elif segundo_mes==dt_referente:
+                    new_values = copy_primeiro_estagio
+
+                df_dadger['LU'].loc[df_dadger['LU'].index[-1], ['est','gmax_p1', 'gmax_p2', 'gmax_p3']] = [estagio_final] + new_values
+
         dadger.escrever_dadger(df_dadger, comentarios, path_dadger)
 
 if __name__ == "__main__":

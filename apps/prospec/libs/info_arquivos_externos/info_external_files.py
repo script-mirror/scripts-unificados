@@ -8,7 +8,6 @@ import datetime
 import pdfplumber
 import numpy as np
 import pandas as pd
-from dateutil.relativedelta import relativedelta
 
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
@@ -320,7 +319,7 @@ def organizar_info_carga_nw(path_carga_zip):
 
     if 'carga_mensal' in os.path.basename(path_carga_zip).lower():
         mes_referencia_inicial = datetime.datetime.strptime(os.path.basename(extracted_zip_carga[0]).lower(),"cargamensal_pmo-%B%Y.xlsx")
-        result_df = result_df[(result_df['DATE'] >= mes_referencia_inicial) & (result_df['DATE'] <= (mes_referencia_inicial + relativedelta(months=1)))]
+        result_df = result_df[(result_df['DATE'] >= mes_referencia_inicial) & (result_df['DATE'] <= (mes_referencia_inicial + pd.DateOffset(months=1) ))]
 
     result_dict = {}
     result_df["YearMonth"] = result_df["DATE"].dt.strftime("%Y%m")
@@ -382,25 +381,40 @@ def organizar_info_eolica_nw(paths_sistema:List[str], data_produto:datetime.date
 #===================================RESTRICOES ELETRICAS=====================================
 
 # Caminho do arquivo PDF
-def read_table(pdf_path, table_name ):
+def organizar_info_restricoes_eletricas_dc(pdf_path, table_name="Tabela 4-1: Resultados dos Limites Elétricos" ):
     dict_num = {'IPU60':462,'IPU50':461, 'Ger. MAD': 401, 'RNE': 403,'FNS':405,'FNESE':409,
                 'FNNE':413, 'FNEN':415, 'EXPNE':417,'SE/CO→FIC':419,'EXPN':427, 'FNS+FNESE':429,'FSENE':431,'FSUL':437,
                 'RSUL':439, 'RSE':441, '-RSE':443, 'FETXG+FTRXG':445,'FXGET+FXGTR':447 }
+
+    info_restricoes={}
+
+    file_pattern = re.compile(r".*_Limites PMO_(.*)\.pdf$")
+    match = file_pattern.match(pdf_path)
+    if not match:
+        logger.info(f"Nome do arquivo PDF {pdf_path} não corresponde ao padrão esperado.")
+        return {}
+        
+    primeiro_mes = pd.to_datetime(match.group(1),format="%B-%Y") 
+    segundo_mes = primeiro_mes + pd.DateOffset(months=1) 
  
     table_page = find_table_page(pdf_path, table_name)
 
     if table_page is None:
-        print("Tabela não encontrada no PDF.")
+        logger.info("Tabela não encontrada no PDF.")
+        return {}
     else:      
         df = extract_table_from_pdf(pdf_path, table_page)
-        return  reformat_dataframe(df,dict_num)
+        df_reformated = reformat_dataframe(df,dict_num)
+        info_restricoes[primeiro_mes.strftime("%Y%m")] = df_reformated.copy()
+        info_restricoes[segundo_mes.strftime("%Y%m")] = df_reformated[["Limite","2º Mês Pesada", "2º Mês Média", "2º Mês Leve"]].copy()
+        return  info_restricoes
 
  # Função para processar a tabela do PDF
 def extract_table_from_pdf(pdf_path, table_page):
 
     with pdfplumber.open(pdf_path) as pdf:
 
-        page = pdf.pages[table_page - 1]  # Índice zero-based
+        page = pdf.pages[table_page - 1]  
         tables = page.extract_tables()
         
         if tables:
@@ -410,7 +424,7 @@ def extract_table_from_pdf(pdf_path, table_page):
             df.reset_index(drop=True, inplace=True)
             return df
         else:
-            print("Nenhuma tabela encontrada na página especificada.")
+            logger.info("Nenhuma tabela encontrada na página especificada.")
             return None
 
  # Função para localizar a página pelo nome da tabela
@@ -423,6 +437,8 @@ def find_table_page(pdf_path, table_name):
     return None
 
 def reformat_dataframe(df, dict_num):
+
+    info_restricoes = {}
 
     reformatted_df = pd.DataFrame()
     reformatted_df["Item"] = df.iloc[2:, 0].str.strip()  # Coluna 0: Item
@@ -441,8 +457,9 @@ def reformat_dataframe(df, dict_num):
     reformatted_df.drop('Item', axis=1, inplace=True)
     reformatted_df.set_index("RE", inplace=True)
     columns_to_multiply = ["1º Mês Pesada", "1º Mês Média", "1º Mês Leve",  "2º Mês Pesada", "2º Mês Média", "2º Mês Leve" ]
-    reformatted_df[columns_to_multiply] = reformatted_df[columns_to_multiply].apply(pd.to_numeric, errors='coerce')  # Garantir que as colunas sejam numérica
+    reformatted_df[columns_to_multiply] = reformatted_df[columns_to_multiply].apply(pd.to_numeric, errors='coerce')
     reformatted_df[columns_to_multiply] *= 1000  # Multiplicar por 1000
+    
     return reformatted_df
 
 #============================================================================================
