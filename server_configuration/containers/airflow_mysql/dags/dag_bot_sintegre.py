@@ -7,7 +7,7 @@ from airflow.providers.ssh.operators.ssh import SSHOperator
 with DAG(
     dag_id='BOT_SINTEGRE',
     tags=["WEBHOOK", "SINTEGRE"],
-    start_date= datetime.datetime(2025, 2, 11),
+    start_date= datetime.date(2025, 2, 10),
     catchup=False,
     schedule="0 23 * * *"
 ) as dag:
