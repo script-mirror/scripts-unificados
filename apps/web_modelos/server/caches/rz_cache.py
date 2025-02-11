@@ -411,6 +411,6 @@ if __name__ == '__main__':
   # rodadas.build_modelo_info_dict(granularidade = 'submercado', build_all_models=True)
 
   # teste = cache_rodadas_modelos('PREVISAO_ENA', rodadas)
-    # runWithParams()
-  import_acomph_visualization_api(datetime.datetime(2025,2,6))
+    runWithParams()
+  # import_acomph_visualization_api(datetime.datetime(2025,2,6))
 
