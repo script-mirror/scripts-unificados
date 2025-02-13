@@ -14,6 +14,6 @@ with DAG(
     start_bot = SSHOperator(
         task_id='start_bot',
         ssh_conn_id='ssh_master',
-        command='/WX2TB/Documentos/fontes/PMO/raizen-power-trading-middle-bot-sintegre/env/bin/python /WX2TB/Documentos/fontes/PMO/raizen-power-trading-middle-bot-sintegre/app/main.py',
+        command='cd /WX2TB/Documentos/fontes/PMO/raizen-power-trading-middle-bot-sintegre/app; ../env/bin/python ./main.py',
     )
 start_bot
