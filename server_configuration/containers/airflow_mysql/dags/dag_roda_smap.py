@@ -7,7 +7,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.providers.ssh.operators.ssh import SSHOperator
 
 
-sys.path.insert(1, "/WX2TB/Documentos/fontes/outros/raizen-power-trading-previsao-hidrologia/smap")
+sys.path.insert(1, "/WX2TB/Documentos/fontes/PMO/raizen-power-trading-previsao-hidrologia/smap")
 from main import SMAP
 
 
@@ -73,7 +73,7 @@ with DAG(
     t_run = SSHOperator(
         task_id='run_container',
         ssh_conn_id='ssh_master',
-        command='cd /WX2TB/Documentos/fontes/outros/raizen-power-trading-previsao-hidrologia/smap; docker-compose up',
+        command='cd /WX2TB/Documentos/fontes/PMO/raizen-power-trading-previsao-hidrologia/smap; docker-compose up',
         get_pty=True,
         conn_timeout = 36000,
         cmd_timeout = 28800,
