@@ -767,7 +767,16 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
         "produto":"TABELA_WEOL_SEMANAL",
         "data":data_produto.date(),
     })
+        
+def relatorio_limites_intercambio(dadosProduto):
     
+    filename = get_filename(dadosProduto)
+    logger.info(filename)
+    return {
+        "file_path": filename,
+        "trigger_dag_id":"PROSPEC_UPDATER",
+        "task_to_execute": "revisao_restricao"
+    }
 
 def get_filename(dadosProduto:dict):
     filename:str
@@ -781,10 +790,8 @@ def get_filename(dadosProduto:dict):
 
 
 if __name__ == '__main__':
-    # deck_prev_eolica_semanal_patamares({"dataProduto":"28/11/2024"})
-    deck_prev_eolica_semanal_previsao_final({"dataProduto":"16/11/2024"})
-    # Copiar os parametros no airflow e colar aqui para testar
-    # params = {"product_details": {"nome": "Arquivos dos modelos de previs\u00e3o de vaz\u00f5es di\u00e1rias - PDP", "processo": "Previs\u00e3o de Vaz\u00f5es Di\u00e1rias - PDP", "dataProduto": "22/07/2024", "macroProcesso": "Programa\u00e7\u00e3o da Opera\u00e7\u00e3o", "periodicidade": "2024-07-22T00:00:00", "periodicidadeFinal": "2024-07-22T23:59:59", "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy84Mi9Qcm9kdXRvcy8yMzgvTW9kZWxvc19DaHV2YV9WYXphb18yMDI0MDcyMi56aXAiLCJ1c2VybmFtZSI6InRoaWFnby5zY2hlckByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJBcnF1aXZvcyBkb3MgbW9kZWxvcyBkZSBwcmV2aXPDo28gZGUgdmF6w7VlcyBkacOhcmlhcyAtIFBEUCIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzIxODIzNjgxLCJuYmYiOjE3MjE3MzcwNDF9.jvsi4HOIZsme-EqFHlgocqTZe4W2DDuL13E3NCBqoGY"}, "function_name": "arquivos_modelo_pdp"}
-    # function_name = params.get('function_name')
-    # product_details = params.get('product_details')
-    # arquivos_modelo_pdp(product_details)
+    psat_file({'dataProduto': '12/02/2025',
+                      'enviar': False,
+                      'nome': 'Precipitação por Satélite.',
+                      'origem': 'botSintegre',
+                      'url': '/WX2TB/Documentos/fontes/PMO/raizen-power-trading-middle-bot-sintegre/app/tmp/psat_12022025.txt'})
