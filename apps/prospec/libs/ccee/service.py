@@ -10,39 +10,40 @@ from .constants import (
     URL_PAGE,
     )
 
+import locale
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+
 def get_date_atualizacao(title_name):
 
-    for title_name in MAPPING.keys():
+    serach_url = f"{URL_PAGE}/{title_name}"
 
-        serach_url = f"{URL_PAGE}/{title_name}"
+    response = requests.get(serach_url)
 
-        response = requests.get(serach_url)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, "html.parser")
+        
+        section = soup.find("section", class_="additional-info")
+        tabela = section.find("tbody")
 
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, "html.parser")
+        if tabela:
+            linhas_tabela = tabela.find_all("th")
             
-            section = soup.find("section", class_="additional-info")
-            tabela = section.find("tbody")
-
-            if tabela:
-                linhas_tabela = tabela.find_all("th")
-                
-                for i, linha in enumerate(linhas_tabela):
-                    if "atualização" in linha.text.lower():
-                
-                        text_atualizacao = linha.text
-                
-                        date_atualizacao = datetime.datetime.strptime(
-                            tabela.find_all("tr")[i].find("span").text.strip(),
-                            "%B %d, %Y, %H:%M (BRT)"
-                            )
-                
-                        print(f"Data de atualização: {date_atualizacao.strftime('%d de %B de %Y')}")
-                        return date_atualizacao
-            else:
-                print("❌ Nenhuma tabela encontrada com a classe 'additional-info'.")
+            for i, linha in enumerate(linhas_tabela):
+                if "atualização" in linha.text.lower():
+            
+                    text_atualizacao = linha.text
+            
+                    date_atualizacao = datetime.datetime.strptime(
+                        tabela.find_all("tr")[i].find("span").text.strip(),
+                        "%B %d, %Y, %H:%M (BRT)"
+                        )
+            
+                    print(f"Data de atualização: {date_atualizacao.strftime('%d de %B de %Y')}")
+                    return date_atualizacao
         else:
-            print(f"❌ Erro ao acessar a página: {response.status_code}")
+            print("❌ Nenhuma tabela encontrada com a classe 'additional-info'.")
+    else:
+        print(f"❌ Erro ao acessar a página: {response.status_code}")
 
 
 def get_data(resource_id, limit=32000, init_offset=0):

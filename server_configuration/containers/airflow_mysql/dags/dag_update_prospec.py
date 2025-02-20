@@ -12,9 +12,11 @@ from PMO.scripts_unificados.apps.prospec.libs import update_estudo
 
 
 def trigger_task_sequence(**kwargs):
-    kwargs.get('dag_run').conf['ids_to_modify'] =  update_estudo.get_ids_to_modify()
-    print(kwargs.get('dag_run').conf['ids_to_modify'])
-    # kwargs.get('dag_run').conf['ids_to_modify'] =  [22662]
+    kwargs.get('dag_run').conf['ids_to_modify'] = kwargs.get('dag_run').conf.get('external_params').get('ids_to_modify',[])
+
+    if not kwargs.get('dag_run').conf.get('ids_to_modify'):
+        kwargs.get('dag_run').conf['ids_to_modify'] =  update_estudo.get_ids_to_modify()
+
     print(kwargs.get('dag_run').conf['ids_to_modify'])
 
     task_name = kwargs.get('dag_run').conf.get('external_params').get('task_to_execute')
@@ -47,18 +49,18 @@ with DAG(
     revisao_carga_nw = DummyOperator(
         task_id='revisao_carga_nw',
     )
+    revisao_restricao = DummyOperator(
+        task_id='revisao_restricao',
+    )
 
     cvu_dadger_decomp = PythonOperator(
         task_id='cvu_dadger_decomp',
         python_callable=update_estudo.update_cvu_dadger_dc_estudo,
         provide_context=True,
         op_kwargs={
-            "ano_referencia_cvu": '{{ dag_run.conf.get("external_params").get("ano_referencia_cvu")}}',
-            "mes_referencia_cvu": '{{ dag_run.conf.get("external_params").get("mes_referencia_cvu")}}',
+            "titles_cvu_ccee": '{{ dag_run.conf.get("external_params").get("titles_to_search")}}',
             "ids_to_modify":'{{ dag_run.conf.get("ids_to_modify") }}'
             },
-        
-        
     )
 
     carga_dadger_decomp = PythonOperator(
@@ -84,18 +86,16 @@ with DAG(
 
     )
 
-    # cvu_clast_newave = PythonOperator(
-    #     task_id='cvu_clast_newave',
-    #     python_callable=update_estudo.update_cvu_clast_nw_estudo,
-    #     provide_context=True,
-    #     op_kwargs={
-    #         "ano_referencia_cvu": '{{ dag_run.conf.get("external_params").get("ano_referencia_cvu")}}',
-    #         "mes_referencia_cvu": '{{ dag_run.conf.get("external_params").get("mes_referencia_cvu")}}',
-    #         "ids_to_modify":'{{ dag_run.conf.get("ids_to_modify") }}'
-    #         },
+    cvu_clast_newave = PythonOperator(
+        task_id='cvu_clast_newave',
+        python_callable=update_estudo.update_cvu_clast_nw_estudo,
+        provide_context=True,
+        op_kwargs={
+            "titles_cvu_ccee": '{{ dag_run.conf.get("external_params").get("titles_to_search")}}',
+            "ids_to_modify":'{{ dag_run.conf.get("ids_to_modify") }}'
+            },
         
-
-    # )
+    )
 
     carga_c_adic_newave = PythonOperator(
         task_id='carga_c_adic_newave',
@@ -105,7 +105,6 @@ with DAG(
             "file_path": '{{ dag_run.conf.get("external_params").get("file_path")}}',
             "ids_to_modify":'{{ dag_run.conf.get("ids_to_modify") }}'
             },
-        
 
     )
 
@@ -120,14 +119,25 @@ with DAG(
         
     )
 
+    restricao_dadger_decomp = PythonOperator(
+        task_id='restricao_dadger_decomp',
+        python_callable=update_estudo.update_restricoes_dadger_dc_estudo,
+        provide_context=True,
+        op_kwargs={
+            "file_path": '{{ dag_run.conf.get("external_params").get("file_path")}}',
+            "ids_to_modify":'{{ dag_run.conf.get("ids_to_modify") }}'
+            },
+    )
+
     fim = DummyOperator(
         task_id='fim',
     )
 
 
 # Definindo dependências com base na decisão
-# inicio >> revisao_cvu >> cvu_dadger_decomp >> cvu_clast_newave >> fim
+inicio >> revisao_cvu >> cvu_dadger_decomp >> cvu_clast_newave >> fim
 inicio >> revisao_cvu >> cvu_dadger_decomp >> fim
 inicio >> revisao_carga_dc >> carga_dadger_decomp  >> fim
 inicio >> revisao_eolica >> eolica_dadger_decomp >> fim
 inicio >> revisao_carga_nw >> carga_c_adic_newave >> carga_sistema_newave >> fim
+inicio >> revisao_restricao >> restricao_dadger_decomp >> fim
