@@ -12,10 +12,11 @@ import pandas as pd
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.bibliotecas import rz_dir_tools,wx_opweek
-from PMO.scripts_unificados.apps.verificadores.ccee import rz_download_cvu
+from PMO.scripts_unificados.apps.prospec.libs.ccee import service as ccee_api
 from PMO.scripts_unificados.apps.prospec.libs.decomp.dadger import dadger
 from PMO.scripts_unificados.apps.prospec.libs.newave.sistema import sistema
 from PMO.scripts_unificados.apps.prospec.libs import utils
+
 from typing import List
 import logging
 import requests as r
@@ -36,72 +37,45 @@ __HOST_SERVIDOR = os.getenv('HOST_SERVIDOR')
 PATH_DOWNLOAD_TMP = os.path.join(os.path.dirname(__file__),"tmp")
 
 
-def organizar_info_cvu(ano_referencia, mes_referencia,path_saida=PATH_DOWNLOAD_TMP):
+def organizar_info_cvu(titles_cvu_ccee:list):
 
-    info_cvu={}
+    df_out = pd.DataFrame()
 
-    extracted_files = rz_download_cvu.download_cvu_acervo_ccee(
-        ano_referencia,
-        mes_referencia,
-        path_saida
-        )
+    for title in set(titles_cvu_ccee):
 
+        print(f"Buscando dados para: {title}")
+        df_search = ccee_api.search_info(title)
+        dt_atualizacao = ccee_api.get_date_atualizacao(title)
+        
+        if "merchant" in title:
+            
+            df_conjuntural = df_search.copy()
+            df_conjuntural['TIPO_CVU'] = 'conjuntural'
+            
+            df_estrutural = df_search.copy()
+            df_estrutural = df_estrutural.loc[df_estrutural.index.repeat(5)].reset_index(drop=True)
+            df_estrutural['TIPO_CVU'] = 'estrutural'
 
-    for file in extracted_files:
+            ano_inicial=int(df_search['MES_REFERENCIA'].unique()[0][:4])
+            ordem_anos_repetidos = list(range(ano_inicial, ano_inicial+5)) * (len(df_estrutural) // 5)
+            df_estrutural['ANO_HORIZONTE'] = ordem_anos_repetidos
 
-        dt_referente = f"{file['anoReferencia']}{file['mesReferencia']}"
-        info_cvu[dt_referente] = {} if dt_referente not in info_cvu.keys() else info_cvu[dt_referente]
+            df_search = pd.concat([df_conjuntural,df_estrutural])
 
-        df = pd.read_excel(file['extractedPathFile'], sheet_name=0, skiprows=4)
+        elif "conjuntural" in title:
+            df_search['TIPO_CVU'] = 'conjuntural'
+        
+        elif "estrutural" in title:
+            df_search['TIPO_CVU'] = 'estrutural'
+            df_search.insert(4, "ANO_HORIZONTE", df_search.pop("ANO_HORIZONTE"))
+            
+        df_search.columns = ['CÓDIGO','MES_REFERENCIA','VL_CVU','TIPO_CVU'] + df_search.columns[4:].tolist()
+        df_search['DT_ATUALIZACAO'] = dt_atualizacao
 
-        #busca a coluna conjuntural nos arquivos nao merchant
-        try:
-            df_conjuntural = df[['CÓDIGO','CVU CONJUNTURAL']].replace('-',np.NaN).dropna()
-            info_cvu[dt_referente]['conjuntural'] = df_conjuntural
-        except:
-            pass
+        df_out = df_search if df_out.empty else pd.concat([df_out,df_search])
 
-        #busca a coluna estrutural nos arquivos nao merchant, pode ser que nao tenha essa coluna
-        try:
-            info_cvu[dt_referente]['estrutural'] = {}
-            for ano in range(1,6):
-                df_estrutural = df[['CÓDIGO',f'CVU ESTRUTURAL ANO {ano}']].replace('-',np.NaN).dropna()
-                info_cvu[dt_referente]['estrutural'][ano] = df_estrutural
-        except:
-            pass
+    return df_out
 
-
-        #busca a coluna conjuntural e estrutural (as duas usam a mesma coluna), nos arquivos merchant. Aqui ainda vem uma verificação para saber se pega a coluna com custo fixo ou sem custo fixo
-        # por enquanto manter a coluna com custo fixo
-
-        try:
-            df = pd.read_excel(file['extractedPathFile'], sheet_name=0, skiprows=3)
-
-            df_conjuntural = df[['CVU CF [R$/MWh]','Código']].copy()
-            df_conjuntural.columns = ['CVU CONJUNTURAL','CÓDIGO']
-            df_conjuntural_completo = pd.concat([info_cvu[dt_referente]['conjuntural'],df_conjuntural],axis=0)
-            info_cvu[dt_referente]['conjuntural'] = df_conjuntural_completo
-
-
-            df_estrutural = df[['CVU CF [R$/MWh]','Código']].copy()
-            info_cvu[dt_referente]['estrutural'] = {}
-            for ano in range(1,6):
-                df_estrutural.columns = [f'CVU ESTRUTURAL ANO {ano}','CÓDIGO']
-                info_cvu[dt_referente]['estrutural'][ano] = df_estrutural
-        except:
-            pass
-
-        try:
-            info_cvu[dt_referente]['conjuntural']['CÓDIGO'] = info_cvu[dt_referente]['conjuntural']['CÓDIGO'].astype(int).astype(str)
-            for ano in range(1,6):
-                info_cvu[dt_referente]['estrutural'][ano]['CÓDIGO'] = info_cvu[dt_referente]['estrutural'][ano]['CÓDIGO'].astype(int).astype(str)
-        except:
-            pass
-
-        os.remove(file['pathFile'])
-        os.remove(file['extractedPathFile'])
-
-    return info_cvu
 
 
 def extract_carga_decomp_ons(path_carga,path_saida=PATH_DOWNLOAD_TMP):

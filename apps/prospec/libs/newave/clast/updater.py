@@ -29,11 +29,11 @@ def atualizar_cvu_NW(info_cvu,paths_to_modify):
         else:
             quit(f"Erro ao tentar extrair ano e mes do nome da pasta {folder_name}")
 
-        if not info_cvu.get(dt_referente):
-            dt_ref_anterior = (datetime.strptime(dt_referente,'%Y%m') - relativedelta(months=1)).strftime("%Y%m")
-            info_cvu[dt_referente] = info_cvu.get(dt_ref_anterior)
-
         print(f"\n\n\nModificando arquivo {path_clast}")
+
+        if dt_referente not in info_cvu['MES_REFERENCIA'].unique():
+           dt_referente = max(info_cvu['MES_REFERENCIA'])
+
 
         #SEPARANDO BLOCOS DE CLAST
         df_clast_completo = pd.read_fwf(path_clast,sep=';',encoding='latin1')
@@ -42,13 +42,21 @@ def atualizar_cvu_NW(info_cvu,paths_to_modify):
 
         #COMPLETANDO BLOCO DE CLAST ESTRUTURAL
         df_clast_estrutural = df_clast_completo.iloc[:index_separacao_blocos].copy()
+
+        info_cvu['CÓDIGO'] = info_cvu['CÓDIGO'].astype(str)
+
+        df_cvu_map = info_cvu.set_index(['MES_REFERENCIA','TIPO_CVU']).loc[(dt_referente,'estrutural')]
+        df_cvu_map = df_cvu_map.pivot_table(index=['MES_REFERENCIA', 'TIPO_CVU', 'CÓDIGO', 'DT_ATUALIZACAO'], 
+                            columns='ANO_HORIZONTE', 
+                            values='VL_CVU').reset_index()
+
         for i,col in enumerate(["CUSTO", "CUSTO.1", "CUSTO.2", "CUSTO.3", "CUSTO.4"]):
-            cvu_map = info_cvu[dt_referente]['estrutural'][i+1].set_index("CÓDIGO")[f"CVU ESTRUTURAL ANO {i+1}"].round(2).to_dict()
+            cvu_map = df_cvu_map.set_index('CÓDIGO')[df_cvu_map.columns[-5:][i]].round(2).to_dict()
             df_clast_estrutural[col].update(df_clast_estrutural["NUM"].map(cvu_map))
 
         #COMPLETANDO BLOCO DE CLAST CONJUNTURAL
         df_clast_conjuntural = pd.read_fwf(path_clast, skiprows = index_separacao_blocos + 2)
-        cvu_map = info_cvu[dt_referente]['conjuntural'].set_index("CÓDIGO")["CVU CONJUNTURAL"].round(2).to_dict()
+        cvu_map = info_cvu.set_index(['MES_REFERENCIA','TIPO_CVU']).loc[(dt_referente,'conjuntural')].set_index("CÓDIGO")["VL_CVU"].round(2).to_dict()
         for col in ["CUSTO"]:
             df_clast_conjuntural[col].update(df_clast_conjuntural["NUM"].map(cvu_map))
 
@@ -75,13 +83,18 @@ if __name__ == "__main__":
     #     path_saida,
     #     )
 
-    extracted_zip_estudo = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_22971"
+    # extracted_zip_estudo = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_22971"
     # ORGANIZA INFORMACOES DE CVU
     info_cvu = info_external_files.organizar_info_cvu(
-        ano_referencia=2025,    
-        mes_referencia=1,
-        path_saida=path_saida
+        titles_cvu_ccee=[
+            'custo_variavel_unitario_conjuntural_revisado',
+            'custo_variavel_unitario_estrutural',
+            'custo_variavel_unitario_conjuntural',
+            'custo_variavel_unitario_merchant'
+            ],
         )
+
+    extracted_zip_estudo="C:/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_23188_Entrada"
 
     #ALTERAR CVU EM DECKS DC
     paths_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*clast*"),recursive=True)
