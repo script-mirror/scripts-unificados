@@ -71,7 +71,7 @@ def send_files_to_api(id_estudo:int, paths_modified:List[str], tag:str):
             logger.info(f'Falha ao enviar estudo {id_estudo}')
 
 #DECOMP
-def update_cvu_dadger_dc_estudo(ano_referencia_cvu:int,mes_referencia_cvu:int,ids_to_modify:List[int]=None):
+def update_cvu_dadger_dc_estudo(titles_cvu_ccee:List[str],ids_to_modify:List[int]=None):
 
     tag = [f'CVU {datetime.datetime.now().strftime("%d/%m %H:%M")}']
     if not ids_to_modify:
@@ -79,8 +79,7 @@ def update_cvu_dadger_dc_estudo(ano_referencia_cvu:int,mes_referencia_cvu:int,id
 
     # ORGANIZA INFORMACOES DE CVU
     info_cvu = info_external_files.organizar_info_cvu(
-        ano_referencia=int(ano_referencia_cvu),    
-        mes_referencia=int(mes_referencia_cvu),
+        titles_cvu_ccee=titles_cvu_ccee,
         )
 
     for id_estudo in ids_to_modify:
@@ -170,7 +169,7 @@ def update_weol_dadger_dc_estudo(data_produto:datetime.date, ids_to_modify:List[
 
         logger.info(f"============================================")
 #NEWAVE
-def update_cvu_clast_nw_estudo(ano_referencia_cvu:int,mes_referencia_cvu:int,ids_to_modify:List[int]=None):
+def update_cvu_clast_nw_estudo(titles_cvu_ccee:List[str],ids_to_modify:List[int]=None):
 
     tag = [f'CVU {datetime.datetime.now().strftime("%d/%m %H:%M")}']
     if not ids_to_modify:
@@ -178,8 +177,7 @@ def update_cvu_clast_nw_estudo(ano_referencia_cvu:int,mes_referencia_cvu:int,ids
 
     # ORGANIZA INFORMACOES DE CVU
     info_cvu = info_external_files.organizar_info_cvu(
-        ano_referencia=ano_referencia_cvu,    
-        mes_referencia=mes_referencia_cvu,
+        titles_cvu_ccee=titles_cvu_ccee,
         )
 
     for id_estudo in ids_to_modify:
