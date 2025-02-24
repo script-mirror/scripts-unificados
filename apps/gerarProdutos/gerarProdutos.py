@@ -74,6 +74,7 @@ import rz_deck_dc_preliminar
 import rz_relatorio_bbce
 import rz_produtos_chuva
 
+from .utils import get_access_token
 
 def baixarProduto(data, produto):
 	""" Faz o download de produtos externos a WX
@@ -1438,12 +1439,18 @@ def enviar(parametros):
 				files={
 					"arquivo": (os.path.basename(fileWhats), open(fileWhats, "rb"))
 				}
-			response = requests.post(os.getenv('WHATSAPP_API'), data=fields, files=files)
+			response = requests.post(
+				os.getenv('WHATSAPP_API'), 
+				data=fields, 
+				files=files,
+				headers={
+					'Content-Type': 'application/json',
+					'Authorization': f'Bearer {get_access_token()}'
+					})
 			print("Status Code:", response.status_code)
 				
 
 			flagWhats = False
-    
 
 	elif parametros["produto"] == 'PREVISAO_GEADA':
 
