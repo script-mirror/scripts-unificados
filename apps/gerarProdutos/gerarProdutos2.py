@@ -19,16 +19,16 @@ except:
     locale.setlocale(locale.LC_ALL, '')
 
 
-from .config import (
-    PRODUTCS_MAPPING,
-    WHATSAPP_API,
-    NUM_GILSEU
-    )
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.gerarProdutos import rz_processar_produtos
 from PMO.scripts_unificados.bibliotecas import wx_emailSender,wx_opweek
 from PMO.scripts_unificados.apps.bot_whatsapp.whatsapp_bot import WhatsappBot
 from PMO.scripts_unificados.apps.gerarProdutos.utils import get_access_token
+from PMO.scripts_unificados.apps.gerarProdutos.config import (
+    PRODUTCS_MAPPING,
+    WHATSAPP_API,
+    NUM_GILSEU
+    )
 
 
 class GerardorProdutos(WhatsappBot):

@@ -1,7 +1,7 @@
 import os
 import requests
 
-from .config import (
+from PMO.scripts_unificados.apps.gerarProdutos.config import (
     URL_COGNITO,
     CONFIG_COGNITO,
     )

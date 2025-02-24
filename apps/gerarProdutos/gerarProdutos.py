@@ -74,7 +74,8 @@ import rz_deck_dc_preliminar
 import rz_relatorio_bbce
 import rz_produtos_chuva
 
-from .utils import get_access_token
+sys.path.insert(1,"/WX2TB/Documentos/fontes/")
+from PMO.scripts_unificados.apps.gerarProdutos.utils import get_access_token
 
 def baixarProduto(data, produto):
 	""" Faz o download de produtos externos a WX
