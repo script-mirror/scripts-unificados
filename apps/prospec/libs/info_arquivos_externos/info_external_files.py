@@ -378,7 +378,7 @@ def organizar_info_restricoes_eletricas_dc(pdf_path, table_name="Tabela 4-1: Res
         return {}
     else:      
         df = extract_table_from_pdf(pdf_path, table_page)
-        df_reformated = reformat_dataframe(df,dict_num)
+        df_reformated = reformat_dataframe(df,dict_num).round(1)
         info_restricoes[primeiro_mes.strftime("%Y%m")] = df_reformated.copy()
         info_restricoes[segundo_mes.strftime("%Y%m")] = df_reformated[["Limite","2º Mês Pesada", "2º Mês Média", "2º Mês Leve"]].copy()
         return  info_restricoes
