@@ -45,8 +45,7 @@ def cmd_command(**kwargs):
 
     # na ons o arquivo que sai no dia é na verdade o do dia anterior
     if not dt_rodada:
-        dt_rodada = datetime.datetime.now().replace(hour=0,minute=0,second=0) - datetime.timedelta(days=1)
-
+        dt_rodada = (datetime.datetime.now() - datetime.timedelta(days=1)).date()
 
     cmd = f'''. /WX2TB/pythonVersions/myVenv38/bin/activate;cd /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/verificadores/ons; python verificador_ecmwf.py data_rodada {dt_rodada}'''
         
@@ -61,7 +60,7 @@ with DAG(
     schedule="30 6 * * *",
     default_args={
         'retries': 10,
-        'retry_delay': datetime.timedelta(minutes=15) 
+        'retry_delay': datetime.timedelta(minutes=30) 
     },
 ) as dag:
 
