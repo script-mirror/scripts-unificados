@@ -1,6 +1,8 @@
 import os
+import sys
 import requests
 
+sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.gerarProdutos.config import (
     URL_COGNITO,
     CONFIG_COGNITO,

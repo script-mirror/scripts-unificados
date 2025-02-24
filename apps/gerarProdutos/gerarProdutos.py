@@ -1445,7 +1445,6 @@ def enviar(parametros):
 				data=fields, 
 				files=files,
 				headers={
-					'Content-Type': 'application/json',
 					'Authorization': f'Bearer {get_access_token()}'
 					})
 			print("Status Code:", response.status_code)

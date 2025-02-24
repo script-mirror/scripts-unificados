@@ -53,7 +53,6 @@ class GerardorProdutos(WhatsappBot):
             data=fields,
             files=files,
             headers={
-                'Content-Type': 'application/json',
                 'Authorization': f'Bearer {get_access_token()}'
                 }
             )
