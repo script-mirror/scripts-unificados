@@ -9,16 +9,16 @@ import datetime
 import tabulate
 import pandas as pd
 import requests as r
-from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
-__HOST_SERVIDOR = os.getenv('HOST_SERVIDOR')
-
+from .config import (
+    __HOST_SERVIDOR,
+    __USER_EMAIL_CV,
+    __PASSWORD_EMAIL_CV
+    )
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.gerarProdutos.libs import wx_resultadosProspec ,wx_previsaoGeadaInmet ,rz_cargaPatamar ,rz_deck_dc_preliminar ,rz_aux_libs ,rz_produtos_chuva
 from PMO.scripts_unificados.bibliotecas import  wx_dbLib, wx_emailSender, wx_opweek
 from PMO.scripts_unificados.apps.rodadas import rz_rodadasModelos
-
 
 diretorioApp = os.path.dirname(os.path.abspath(__file__))
 pathArquivos = os.path.join(diretorioApp,'arquivos')
@@ -26,9 +26,6 @@ pathArquivos = os.path.join(diretorioApp,'arquivos')
 path_fontes = "/WX2TB/Documentos/fontes"
 PATH_WEBHOOK_TMP = os.path.join(path_fontes,"PMO","scripts_unificados","apps","webhook","arquivos","tmp")
 PATH_CV = os.path.abspath("/WX2TB/Documentos/chuva-vazao")
-
-__USER_EMAIL_CV = os.getenv('USER_EMAIL_CV') 
-__PASSWORD_EMAIL_CV = os.getenv('PASSWORD_EMAIL_CV')  
 
 
 
