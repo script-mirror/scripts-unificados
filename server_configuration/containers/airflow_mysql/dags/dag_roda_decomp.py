@@ -4,7 +4,7 @@ from airflow.providers.ssh.operators.ssh import SSHOperator
 
 
 with DAG(
-    dag_id = 'DECOMP', 
+    dag_id = '2.0-BACKTEST-DECOMP', 
     start_date=datetime(2024, 4, 28), 
     schedule_interval=None, 
     catchup=False
@@ -20,7 +20,7 @@ with DAG(
         get_pty=True,
     )
 
-
+'''
 
 with DAG(
     dag_id = '1.8-PROSPEC_GRUPOS-ONS', 
@@ -39,10 +39,10 @@ with DAG(
         get_pty=True,
         execution_timeout=timedelta(hours=20),
     )
-    
+''' 
 
 with DAG(
-    dag_id = 'PROSPEC_PCONJUNTO_PREL_PRECIPITACAO', 
+    dag_id = '1.9-PROSPEC_PCONJUNTO_PREL_PRECIPITACAO', 
     start_date=datetime(2024, 7, 30), 
     schedule_interval='00 07 * * 1-5', 
     catchup=False
