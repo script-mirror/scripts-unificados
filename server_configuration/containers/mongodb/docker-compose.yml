@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - '27017:27017'
+    volumes:
+      - data:/data/db
+    networks:
+      - server_database_network
+
+volumes:
+  data:
+
+networks:
+  server_database_network:
+    external: true
+
