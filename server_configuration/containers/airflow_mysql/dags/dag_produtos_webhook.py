@@ -76,15 +76,14 @@ def enviar_whatsapp(context):
     task_instance = context['task_instance']
     dag_id = context['dag'].dag_id
     task_id = task_instance.task_id
-    error_msg = str(context.get('exception'))
     
-    msg = f"Falha na DAG: {dag_id}\nTarefa: {task_id}"
+    msg = f"Falha na DAG: {dag_id}\nProduto: {context['params']['product_details']['nome']}\nTarefa: {task_id}"
     fields = {
         "destinatario": "Airflow",
         "mensagem": msg
     }
-    print(context)
-    response = requests.post(WHATSAPP_API, data=fields, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {get_access_token()}'})
+    headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
+    response = requests.post(WHATSAPP_API, data=fields, headers=headers)
     print("Status Code:", response.status_code)
     
     

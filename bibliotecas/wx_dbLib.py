@@ -296,7 +296,7 @@ def getPrevisaoCargaDs(data:datetime):
         ).where(
             db.and_(
             tb_cadastro_dessem.c.dt_referente == data,
-            tb_cadastro_dessem.c.id_fonte.in_([1, 2])
+            tb_cadastro_dessem.c.id_fonte.in_([1])
             )
         )
 
