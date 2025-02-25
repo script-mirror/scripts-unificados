@@ -698,7 +698,7 @@ with DAG(
     'Mapas_ECMWF-NOVARES',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='0 4 * * *',
+    schedule='0 8 * * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -1265,7 +1265,7 @@ with DAG(
     'Mapas_ECMWF_MENSAL',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='30 7 6 * *',
+    schedule='30 6 6 * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -1562,7 +1562,7 @@ with DAG(
     'PREV_VENTO_GFS',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='0 3 * * *', # 0 2,8,14,20 * * *
+    schedule='0 2,8,14,20 * * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -1575,6 +1575,33 @@ with DAG(
         do_xcom_push=False,
         task_id='roda_produtos_gfs_wind',
         command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/gfs_wind/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+with DAG(
+    'PREV_VENTO_GEFS_15D',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 3,8,15,20 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'VentoSemanal']
+
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        do_xcom_push=False,
+        task_id='roda_produtos_gefs_15d_wind',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/gefs_15d_wind/produtos.sh'}}",
         dag=dag,
         ssh_conn_id='ssh_master',
         conn_timeout = TIME_OUT,

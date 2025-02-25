@@ -24,3 +24,4 @@ xlrd==2.0.1
 Flask-Bcrypt
 loguru
 workalendar
+pydantic

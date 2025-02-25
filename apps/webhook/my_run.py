@@ -84,7 +84,7 @@ PRODUCT_MAPPING = {
     "Arquivos de Previsão de Carga para o DESSEM - PrevCargaDESSEM": "prevCarga_dessem_saida",
     'Deck NEWAVE Preliminar':"carga_newave_preliminar",
     "DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM":"deck_prev_eolica_semanal_weol",
-    "PRELIMINAR - RELATÓRIO MENSAL DE LIMITES DE INTERCÂMBIO":"relatorio_limites_intercambio",
+    "Preliminar - Relatório Mensal de Limites de Intercâmbio":"relatorio_limites_intercambio",
     "Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP":"relatorio_limites_intercambio",
 }
 
@@ -144,14 +144,14 @@ def webhook():
             print(e)
             return jsonify(success=True)
 
-
+        data['enviar'] = True
         produto = data["nome"]
         product_function = PRODUCT_MAPPING.get(produto,None)
 
         # Verifica se o nome do produto está no mapeamento e inicia a DAG correspondente se estiver
         if produto in PRODUCT_MAPPING:
             
-            dag_id = 'WEEBHOOK'
+            dag_id = 'WEBHOOK'
             json_produtos = { "product_details": data,"function_name": product_function}
 
             response = airflow_tools.trigger_airflow_dag(dag_id=dag_id,json_produtos =json_produtos )
