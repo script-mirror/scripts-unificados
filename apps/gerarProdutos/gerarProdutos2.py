@@ -31,11 +31,11 @@ from PMO.scripts_unificados.apps.gerarProdutos.config import (
     )
 
 
-class GerardorProdutos(WhatsappBot):
+class GerardorProdutos():
 
     def __init__(self) -> None:
         self.num_whatsapp = NUM_GILSEU
-        WhatsappBot.__init__(self)
+
         # pass
 
     def send_whatsapp_message(self, destinatarioWhats,msgWhats,fileWhats=None):  
