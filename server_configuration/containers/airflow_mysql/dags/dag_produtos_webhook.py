@@ -1,14 +1,18 @@
 
 import datetime
 import sys
-
+from dotenv import load_dotenv
 from airflow.exceptions import AirflowException
 from airflow.models.dag import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-
-
+import requests
+import os
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+WHATSAPP_API = os.getenv("WHATSAPP_API")
+URL_COGNITO = os.getenv("URL_COGNITO")
+CONFIG_COGNITO = os.getenv("CONFIG_COGNITO")
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.webhook.my_run import PRODUCT_MAPPING
@@ -59,18 +63,44 @@ def trigger_function(**kwargs):
 
     return ['fim']
     
+def get_access_token() -> str:
+    response = requests.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
+ 
+def enviar_whatsapp(context):
+    # O context contém informações sobre a falha
+    task_instance = context['task_instance']
+    dag_id = context['dag'].dag_id
+    task_id = task_instance.task_id
+    error_msg = str(context.get('exception'))
+    
+    msg = f"Falha na DAG: {dag_id}\nTarefa: {task_id}"
+    fields = {
+        "destinatario": "Airflow",
+        "mensagem": msg
+    }
+    print(context)
+    response = requests.post(WHATSAPP_API, data=fields, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {get_access_token()}'})
+    print("Status Code:", response.status_code)
+    
     
 with DAG(
-    dag_id='WEEBHOOK',
+    dag_id='WEBHOOK',
     start_date=datetime.datetime(2024, 4, 28),
     catchup=False,
     schedule=None,
     tags=['webhook'],
     default_args={
         'retries': 4,
-        'retry_delay': datetime.timedelta(minutes=5) 
+        'retry_delay': datetime.timedelta(minutes=5),
+        'on_failure_callback':enviar_whatsapp
+        
     },
-    render_template_as_native_obj=True, 
+    render_template_as_native_obj=True
 
 ) as dag:
 
@@ -102,6 +132,7 @@ with DAG(
             trigger_rule="none_failed_min_one_success",
             python_callable = trigger_function,
             provide_context=True,
+            on_failure_callback=enviar_whatsapp
         )
 
         inicio >> produtoEscolhido
