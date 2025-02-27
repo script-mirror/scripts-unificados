@@ -45,15 +45,14 @@ def convert_to_clean_name(**kwargs):
 def trigger_function(**kwargs):
 
     params = kwargs.get('dag_run').conf
-    function_name = params.get('function_name')
     product_details = params.get('product_details')
     product_name = product_details.get('nome')
+    function_name = PRODUCT_MAPPING.get(product_name)
     
     try:
-        # Obtendo a função do módulo importado baseada no nome
+        
         func = getattr(manipularArquivosShadow, function_name, None)
         aditional_params = func(product_details)
-        print(product_name)
         if aditional_params != None:
             kwargs.get('dag_run').conf.update(aditional_params)	
             return['trigger_external_dag']
