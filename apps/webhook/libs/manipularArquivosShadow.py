@@ -2,6 +2,7 @@ import os
 import sys
 import pdb
 import glob
+import base64
 import datetime
 import io
 import csv
@@ -52,6 +53,26 @@ PATH_PLAN_ACOMPH_RDH = os.path.join(path_fontes,"PMO","monitora_ONS","plan_acomp
 GERAR_PRODUTO = gerarProdutos2.GerardorProdutos()
 DIR_TOOLS = rz_dir_tools.DirTools()
 
+
+def get_filename(dadosProduto:dict):
+    filename:str
+    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
+    if not os.path.exists(path_download):
+        os.makedirs(path_download)    
+    if dadosProduto.get('origem') == "botSintegre" :
+        filename = os.path.join(path_download, dadosProduto['filename'])
+        file_bytes = base64.b64decode(dadosProduto['base64'])
+        with open(filename, 'wb') as file:
+            file.write(file_bytes)
+    elif dadosProduto.get('origem') == "sqsSintegre" :
+        filename = f"{path_download}{dadosProduto['filename']}"
+        file_bytes = base64.b64decode(dadosProduto['base64'])
+
+        with open(filename, 'wb') as file:
+            file.write(file_bytes)    
+    else:
+        filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+    return filename
 
 def resultados_preliminares_consistidos(dadosProduto):
 
@@ -237,7 +258,7 @@ def carga_patamar(dadosProduto):
         "produto":"REVISAO_CARGA",
         "path":filename,
     })
-
+    
     return {
         "file_path": filename,
         "trigger_dag_id":"PROSPEC_UPDATER",
@@ -778,20 +799,16 @@ def relatorio_limites_intercambio(dadosProduto):
         "task_to_execute": "revisao_restricao"
     }
 
-def get_filename(dadosProduto:dict):
-    filename:str
-    if dadosProduto.get('origem') == "botSintegre":
-        filename = dadosProduto['url']
-    else:
-        path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-        filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
-    return filename
-
-
 
 if __name__ == '__main__':
-    psat_file({'dataProduto': '12/02/2025',
-                      'enviar': False,
-                      'nome': 'Precipitação por Satélite.',
-                      'origem': 'botSintegre',
-                      'url': '/WX2TB/Documentos/fontes/PMO/raizen-power-trading-middle-bot-sintegre/app/tmp/psat_12022025.txt'})
+    
+    path_base = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/webhook/libs/psath_08012025.zip"
+    with open(path_base, "rb") as f:
+        data = f.read()
+    
+    get_filename({
+        "nome":"psath",
+        "filename":"psath_08012025.zip",
+        "base64":base64.b64encode(data).decode('utf-8'),
+        "origem":"botSintegre"
+    })
