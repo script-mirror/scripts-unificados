@@ -11,7 +11,8 @@ import pandas as pd
 import requests as r
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.gerarProdutos.libs import wx_resultadosProspec ,wx_previsaoGeadaInmet ,rz_cargaPatamar ,rz_deck_dc_preliminar ,rz_aux_libs ,rz_produtos_chuva
+from PMO.scripts_unificados.apps.gerarProdutos.libs import wx_resultadosProspec ,wx_previsaoGeadaInmet ,rz_cargaPatamar ,rz_deck_dc_preliminar ,rz_aux_libs ,rz_produtos_chuva, html_to_image
+from PMO.scripts_unificados.apps.gerarProdutos.libs.html_to_image import api_html_to_image
 from PMO.scripts_unificados.bibliotecas import  wx_dbLib, wx_emailSender, wx_opweek
 from PMO.scripts_unificados.apps.rodadas import rz_rodadasModelos
 from PMO.scripts_unificados.apps.gerarProdutos.config import (
@@ -344,7 +345,7 @@ def processar_produto_REVISAO_CARGA(parametros):
         
         # path_file = os.path.join("/WX2TB/Documentos/fontes/outros/webhook/arquivos/tmp/","Carga por patamar - DECOMP")
         path_saida = os.path.join(PATH_WEBHOOK_TMP,f'revisaoCarga_{dataRvAtual.atualRevisao}.png')
-        path_fig = wx_emailSender.api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'revisaoCarga_{dataRvAtual.atualRevisao}.png'))
+        path_fig = api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'revisaoCarga_{dataRvAtual.atualRevisao}.png'))
     
         print(path_saida)
         
@@ -578,7 +579,7 @@ def processar_produto_TABELA_WEOL_MENSAL(parametros):
     
     res = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average/month/table", params={"dataProduto":str(data), "quantidadeProdutos":15})
     html = res.json()["html"]
-    path_fig = wx_emailSender.api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'weol_mensal_{data}.png'))
+    path_fig = api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'weol_mensal_{data}.png'))
 
     resultado.fileWhats = path_fig
     resultado.msgWhats = f"WEOL Mensal ({(data + datetime.timedelta(days=1)).strftime('%d/%m/%Y')})"
@@ -594,7 +595,7 @@ def processar_produto_TABELA_WEOL_SEMANAL(parametros):
     
     res = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average/week/table", params={"dataProduto":str(data), "quantidadeProdutos":15})
     html = res.json()["html"]
-    path_fig = wx_emailSender.api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'weol_mensal_{data}.png'))
+    path_fig = api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'weol_mensal_{data}.png'))
 
     resultado.fileWhats = path_fig
     resultado.msgWhats = f"WEOL Semanal ({(data + datetime.timedelta(days=1)).strftime('%d/%m/%Y')})"
@@ -609,7 +610,7 @@ def processar_produto_prev_ena_consistido(parametros):
     titulo = parametros['titulo']
     html = parametros['html']
     
-    path_fig = wx_emailSender.api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'prev_ena_consistido_{data}.png'))
+    path_fig = api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'prev_ena_consistido_{data}.png'))
     resultado.fileWhats = path_fig
 
     resultado.msgWhats = titulo

@@ -168,49 +168,6 @@ def get_css_df_style(html):
     template.replace('\n','')
     return template
 
-
-def api_html_to_image(html_str,path_save='out_put.png'):
-
-    __API_URL_HCTI = os.getenv('API_URL_HCTI') 
-    __USER_HCTI = os.getenv('USER_HCTI') 
-    __API_KEY_HCTI = os.getenv('API_KEY_HCTI') 
-
-    __API_KEY_HCTI2 = os.getenv('API_KEY_HCTI2') 
-    __USER_HCTI2 = os.getenv('USER_HCTI2') 
-
-    __API_KEY_HCTI3 = os.getenv('API_KEY_HCTI3') 
-    __USER_HCTI3 = os.getenv('USER_HCTI3') 
-
-    __API_KEY_HCTI4 = os.getenv('API_KEY_HCTI4') 
-    __USER_HCTI4 = os.getenv('USER_HCTI4') 
-
-    __API_KEY_HCTI5 = os.getenv('API_KEY_HCTI5') 
-    __USER_HCTI5 = os.getenv('USER_HCTI5') 
-
-
-    data = { 'html': html_str,
-            'google_fonts': "Roboto" 
-            }
-    
-    imagem=None
-    for user, token in [(__USER_HCTI,__API_KEY_HCTI),(__USER_HCTI2, __API_KEY_HCTI2),(__USER_HCTI3,__API_KEY_HCTI3),(__USER_HCTI4,__API_KEY_HCTI4),(__USER_HCTI5,__API_KEY_HCTI5)]:
-        image = requests.post(url = __API_URL_HCTI, data = data, auth=(user, token))
-        if image.status_code != 200:
-            print(image.content)
-            continue
-        resposta = requests.get(image.json()['url'])
-        imagem = Image.open(BytesIO(resposta.content))
-        if image.status_code == 200:
-            break
-
-    if not imagem:
-        print('Erro ao gerar imagem')
-        return None
-        
-    imagem.save(path_save)
-    print(f"Salvo em: {os.path.abspath(path_save)}")
-    return os.path.abspath(path_save)
-
 def apply_html_table_style(dfs, columns_to_apply=None, format = "{:.1f}"):
 
     from matplotlib.colors import LinearSegmentedColormap
@@ -277,8 +234,7 @@ def get_image_base64(path):
 
 if __name__ == '__main__':
 
-    api_html_to_image("html_str",path_save='out_put.png')
-
+    pass
     # Exemplo de como utilizar os
     # serv_email = WxEmail()
     # serv_email.username = 'thiago@wxe.com.br'

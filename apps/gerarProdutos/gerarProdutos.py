@@ -73,6 +73,7 @@ import rz_cargaPatamar
 import rz_deck_dc_preliminar
 import rz_relatorio_bbce
 import rz_produtos_chuva
+from html_to_image import api_html_to_image
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.gerarProdutos.utils import get_access_token
@@ -1430,7 +1431,7 @@ def enviar(parametros):
 			tabela = soup.find('table')
 			print('Enviado whatsapp para o destinatario:', destinatarioWhats)
 			
-			fileWhats = wx_emailSender.api_html_to_image(str(tabela),path_save='out_put.png')
+			fileWhats = api_html_to_image(str(tabela),path_save='out_put.png')
 			fields={
 					"destinatario": destinatarioWhats,
 					"mensagem": parametros['assuntoemail'],
