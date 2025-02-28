@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
 
-URL_COGNITO = os.getenv('CONFIG_COGNITO')
+URL_COGNITO = os.getenv('URL_COGNITO')
 CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
 URL_HTML_TO_IMAGE_WAZE = os.getenv('URL_HTML_TO_IMAGE_WAZE')
 
