@@ -330,7 +330,6 @@ def update_weol_sistema_nw_estudo(data_produto:datetime.date, ids_to_modify:List
 def update_restricoes_dadger_dc_estudo(file_path:str, ids_to_modify:List[int] = None):
     
     info_restricoes = info_external_files.organizar_info_restricoes_eletricas_dc(file_path)
-    pdb.set_trace()
     logger.info(f"UPDATE DADGER RESTRICOES (bloco LU)")
     tag = [f'RE {datetime.datetime.now().strftime("%d/%m %H:%M")}']
 
