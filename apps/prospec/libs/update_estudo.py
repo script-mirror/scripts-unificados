@@ -71,7 +71,11 @@ def send_files_to_api(id_estudo:int, paths_modified:List[str], tag:str):
             logger.info(f'Falha ao enviar estudo {id_estudo}')
 
 #DECOMP
-def update_cvu_dadger_dc_estudo(titles_cvu_ccee:List[str],ids_to_modify:List[int]=None):
+def update_cvu_dadger_dc_estudo(
+    fontes_to_search:List[str],
+    dt_atualizacao:datetime.datetime,
+    ids_to_modify:List[int]=None
+    ):
 
     tag = [f'CVU {datetime.datetime.now().strftime("%d/%m %H:%M")}']
     if not ids_to_modify:
@@ -79,7 +83,8 @@ def update_cvu_dadger_dc_estudo(titles_cvu_ccee:List[str],ids_to_modify:List[int
 
     # ORGANIZA INFORMACOES DE CVU
     info_cvu = info_external_files.organizar_info_cvu(
-        titles_cvu_ccee=titles_cvu_ccee,
+        fontes_to_search=fontes_to_search,
+        dt_atualizacao=dt_atualizacao
         )
 
     for id_estudo in ids_to_modify:
@@ -169,15 +174,20 @@ def update_weol_dadger_dc_estudo(data_produto:datetime.date, ids_to_modify:List[
 
         logger.info(f"============================================")
 #NEWAVE
-def update_cvu_clast_nw_estudo(titles_cvu_ccee:List[str],ids_to_modify:List[int]=None):
-
+def update_cvu_clast_nw_estudo(
+    fontes_to_search:List[str],
+    dt_atualizacao:datetime.datetime,
+    ids_to_modify:List[int]=None
+    ):
+    
     tag = [f'CVU {datetime.datetime.now().strftime("%d/%m %H:%M")}']
     if not ids_to_modify:
         ids_to_modify = get_ids_to_modify()
 
     # ORGANIZA INFORMACOES DE CVU
     info_cvu = info_external_files.organizar_info_cvu(
-        titles_cvu_ccee=titles_cvu_ccee,
+        fontes_to_search=fontes_to_search,
+        dt_atualizacao=dt_atualizacao
         )
 
     for id_estudo in ids_to_modify:
@@ -372,7 +382,7 @@ if __name__ == "__main__":
     # update_cvu_estudo(ids_to_modify,ano_referencia_cvu,mes_referencia_cvu)
     # update_carga_estudo(ids_to_modify,file_path)
 
-    file_path = "C:/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/webhook/arquivos/tmp/PRELIMINAR - RELATÓRIO MENSAL DE LIMITES DE INTERCÂMBIO/Preliminar - RT-ONS DPL 0037-2025_Limites PMO_Fevereiro-2025.pdf"
+    file_path = r"C:\Users\CS399274\Downloads\Preliminar - RT-ONS DPL 0075-2025_Limites PMO_Março-2025.pdf"
     update_restricoes_dadger_dc_estudo(file_path, ids_to_modify=[23188])
 
     

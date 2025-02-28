@@ -37,44 +37,28 @@ __HOST_SERVIDOR = os.getenv('HOST_SERVIDOR')
 PATH_DOWNLOAD_TMP = os.path.join(os.path.dirname(__file__),"tmp")
 
 
-def organizar_info_cvu(titles_cvu_ccee:list):
+def organizar_info_cvu(fontes_to_search:List[str], dt_atualizacao:datetime.date):
 
-    df_out = pd.DataFrame()
+    URL_API_RAIZEN = f'http://{__HOST_SERVIDOR}:8000/api/v2'
 
-    for title in set(titles_cvu_ccee):
-
-        print(f"Buscando dados para: {title}")
-        df_search = ccee_api.search_info(title)
-        dt_atualizacao = ccee_api.get_date_atualizacao(title)
+    df_aux = pd.DataFrame()
+    for title_fonte in fontes_to_search:
+        response = r.get(
+            params = {
+                'dt_atualizacao': dt_atualizacao,
+                'fonte': title_fonte
+            },
+            url = f"{URL_API_RAIZEN}/decks/cvu",
+            verify=False,
+        )
+        answer = response.json()
+        df_result = pd.DataFrame(answer)
         
-        if "merchant" in title:
-            
-            df_conjuntural = df_search.copy()
-            df_conjuntural['TIPO_CVU'] = 'conjuntural'
-            
-            df_estrutural = df_search.copy()
-            df_estrutural = df_estrutural.loc[df_estrutural.index.repeat(5)].reset_index(drop=True)
-            df_estrutural['TIPO_CVU'] = 'estrutural'
+        df_result['dt_atualizacao'] = pd.to_datetime(df_result['dt_atualizacao']).dt.strftime('%Y-%m-%d')
+        df_result[df_result['dt_atualizacao'] == dt_atualizacao.strftime('%Y-%m-%d')]
 
-            ano_inicial=int(df_search['MES_REFERENCIA'].unique()[0][:4])
-            ordem_anos_repetidos = list(range(ano_inicial, ano_inicial+5)) * (len(df_estrutural) // 5)
-            df_estrutural['ANO_HORIZONTE'] = ordem_anos_repetidos
-
-            df_search = pd.concat([df_conjuntural,df_estrutural])
-
-        elif "conjuntural" in title:
-            df_search['TIPO_CVU'] = 'conjuntural'
-        
-        elif "estrutural" in title:
-            df_search['TIPO_CVU'] = 'estrutural'
-            df_search.insert(4, "ANO_HORIZONTE", df_search.pop("ANO_HORIZONTE"))
-            
-        df_search.columns = ['CÓDIGO','MES_REFERENCIA','VL_CVU','TIPO_CVU'] + df_search.columns[4:].tolist()
-        df_search['DT_ATUALIZACAO'] = dt_atualizacao
-
-        df_out = df_search if df_out.empty else pd.concat([df_out,df_search])
-
-    return df_out
+        df_aux = pd.concat([df_aux,df_result]) if not df_aux.empty else df_result
+    return df_aux
 
 
 
@@ -441,9 +425,9 @@ def reformat_dataframe(df, dict_num):
 
 
 if __name__ == "__main__":
-    organizar_info_eolica_nw([
-        '/home/arthur-moraes/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_22805/NW202503/sistema.dat'
-        ], datetime.date(2025,1,22))
+    # organizar_info_eolica_nw([
+    #     '/home/arthur-moraes/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_22805/NW202503/sistema.dat'
+    #     ], datetime.date(2025,1,22))
 #     rvs = ['2024-11-30',
 #  '2024-12-07',
 #  '2024-12-14',
@@ -454,3 +438,8 @@ if __name__ == "__main__":
 #     for rv in rvs:
 #         print(wx_opweek.ElecData(datetime.datetime.strptime(rv, "%Y-%m-%d")).atualRevisao)
     # teste = ler_csv_para_dicionario("/home/arthur-moraes/Downloads/Deck_PrevMes_20241128/Arquivos Saida/Previsoes Subsistemas Finais/Total/Prev_20241128_Semanas_20241130_20250103.csv")
+
+    info_cvu = organizar_info_cvu(
+        titles_fonte_to_search=['CCEE_conjuntural_revisado','CCEE_merchant'],
+        dt_atualizacao=datetime.date(2025,2,7)
+        )

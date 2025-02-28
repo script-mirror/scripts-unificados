@@ -13,7 +13,6 @@ from PMO.scripts_unificados.apps.prospec.libs.newave.clast import clast
 
 def atualizar_cvu_NW(info_cvu,paths_to_modify):
 
-
     paths_modified = []
     for path_clast in paths_to_modify:
 
@@ -31,8 +30,8 @@ def atualizar_cvu_NW(info_cvu,paths_to_modify):
 
         print(f"\n\n\nModificando arquivo {path_clast}")
 
-        if dt_referente not in info_cvu['MES_REFERENCIA'].unique():
-           dt_referente = max(info_cvu['MES_REFERENCIA'])
+        if dt_referente not in info_cvu['mes_referencia'].unique():
+           dt_referente = max(info_cvu['mes_referencia'])
 
 
         #SEPARANDO BLOCOS DE CLAST
@@ -43,20 +42,20 @@ def atualizar_cvu_NW(info_cvu,paths_to_modify):
         #COMPLETANDO BLOCO DE CLAST ESTRUTURAL
         df_clast_estrutural = df_clast_completo.iloc[:index_separacao_blocos].copy()
 
-        info_cvu['CÓDIGO'] = info_cvu['CÓDIGO'].astype(str)
+        info_cvu['cd_usina'] = info_cvu['cd_usina'].astype(str)
 
-        df_cvu_map = info_cvu.set_index(['MES_REFERENCIA','TIPO_CVU']).loc[(dt_referente,'estrutural')]
-        df_cvu_map = df_cvu_map.pivot_table(index=['MES_REFERENCIA', 'TIPO_CVU', 'CÓDIGO', 'DT_ATUALIZACAO'], 
-                            columns='ANO_HORIZONTE', 
-                            values='VL_CVU').reset_index()
+        df_cvu_map = info_cvu.set_index(['mes_referencia','tipo_cvu']).loc[(dt_referente,'estrutural')]
+        df_cvu_map = df_cvu_map.pivot_table(index=['mes_referencia', 'tipo_cvu', 'cd_usina', 'dt_atualizacao'], 
+                            columns='ano_horizonte', 
+                            values='vl_cvu').reset_index()
 
         for i,col in enumerate(["CUSTO", "CUSTO.1", "CUSTO.2", "CUSTO.3", "CUSTO.4"]):
-            cvu_map = df_cvu_map.set_index('CÓDIGO')[df_cvu_map.columns[-5:][i]].round(2).to_dict()
+            cvu_map = df_cvu_map.set_index('cd_usina')[df_cvu_map.columns[-5:][i]].round(2).to_dict()
             df_clast_estrutural[col].update(df_clast_estrutural["NUM"].map(cvu_map))
 
         #COMPLETANDO BLOCO DE CLAST CONJUNTURAL
         df_clast_conjuntural = pd.read_fwf(path_clast, skiprows = index_separacao_blocos + 2)
-        cvu_map = info_cvu.set_index(['MES_REFERENCIA','TIPO_CVU']).loc[(dt_referente,'conjuntural')].set_index("CÓDIGO")["VL_CVU"].round(2).to_dict()
+        cvu_map = info_cvu.set_index(['mes_referencia','tipo_cvu']).loc[(dt_referente,'conjuntural')].set_index("cd_usina")["vl_cvu"].round(2).to_dict()
         for col in ["CUSTO"]:
             df_clast_conjuntural[col].update(df_clast_conjuntural["NUM"].map(cvu_map))
 

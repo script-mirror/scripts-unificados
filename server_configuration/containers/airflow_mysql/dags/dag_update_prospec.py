@@ -58,7 +58,8 @@ with DAG(
         python_callable=update_estudo.update_cvu_dadger_dc_estudo,
         provide_context=True,
         op_kwargs={
-            "titles_cvu_ccee": '{{ dag_run.conf.get("external_params").get("titles_to_search")}}',
+            "fontes_to_search": '{{ dag_run.conf.get("external_params").get("fontes_to_search")}}',
+            "dt_atualizacao": '{{ dag_run.conf.get("external_params").get("dt_atualizacao")}}',
             "ids_to_modify":'{{ dag_run.conf.get("ids_to_modify") }}'
             },
     )
@@ -91,7 +92,8 @@ with DAG(
         python_callable=update_estudo.update_cvu_clast_nw_estudo,
         provide_context=True,
         op_kwargs={
-            "titles_cvu_ccee": '{{ dag_run.conf.get("external_params").get("titles_to_search")}}',
+            "fontes_to_search": '{{ dag_run.conf.get("external_params").get("fontes_to_search")}}',
+            "dt_atualizacao": '{{ dag_run.conf.get("external_params").get("dt_atualizacao")}}',
             "ids_to_modify":'{{ dag_run.conf.get("ids_to_modify") }}'
             },
         

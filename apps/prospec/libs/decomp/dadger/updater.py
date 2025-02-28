@@ -47,13 +47,13 @@ def atualizar_cvu_DC(info_cvu,paths_to_modify):
         else:
             quit(f"Erro ao tentar extrair ano e mes do nome da pasta {folder_name}")
 
-        if dt_referente not in info_cvu['MES_REFERENCIA'].unique():
-           dt_referente = max(info_cvu['MES_REFERENCIA'])
+        if dt_referente not in info_cvu['mes_referencia'].unique():
+           dt_referente = max(info_cvu['mes_referencia'])
 
         logger.info(f"\n\n\nModificando arquivo {path_dadger}")
 
 
-        cvu_map = info_cvu.set_index(['MES_REFERENCIA','TIPO_CVU']).loc[(dt_referente,'conjuntural')].set_index('CÓDIGO')['VL_CVU'].to_dict()
+        cvu_map = info_cvu.set_index(['mes_referencia','tipo_cvu']).loc[(dt_referente,'conjuntural')].set_index('cd_usina')['vl_cvu'].to_dict()
 
         df_dadger['CT'] = utils.trim_df(df_dadger['CT'])
         df_dadger['CT']['cod'] = df_dadger['CT']['cod'].str.strip().astype(int)
