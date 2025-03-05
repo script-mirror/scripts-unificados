@@ -18,14 +18,14 @@ def get_access_token() -> str:
     return response.json()['access_token']
 
 
-def api_html_to_image_waze(html_str,path_save='out_put.jpg'):
+def api_html_to_image_waze(html_str,path_save='out_put.png'):
     headers = {
     'Authorization': f'Bearer {get_access_token()}'
     }
     payload = {
     "html": html_str,
     "options": {
-        "type": "jpg",
+        "type": "png",
         "quality": 100
         }
     }
