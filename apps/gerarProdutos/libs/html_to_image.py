@@ -37,7 +37,7 @@ def api_html_to_image_waze(html_str,path_save='out_put.png'):
 
 
 
-def api_html_to_image(html_str,path_save='out_put.jpg'):
+def api_html_to_image(html_str,path_save='out_put.png'):
     
     return api_html_to_image_waze(html_str, path_save)
 
