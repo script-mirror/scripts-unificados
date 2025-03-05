@@ -70,13 +70,13 @@ def get_access_token() -> str:
     )
     return response.json()['access_token']
  
-def enviar_whatsapp(context):
+def enviar_whatsapp_erro(context):
     # O context contém informações sobre a falha
     task_instance = context['task_instance']
     dag_id = context['dag'].dag_id
     task_id = task_instance.task_id
     
-    msg = f"Falha na DAG: {dag_id}\nProduto: {context['params']['product_details']['nome']}\nTarefa: {task_id}"
+    msg = f"❌ Erro no Produto: {context['params']['product_details']['nome']}\nTask: {task_id}"
     fields = {
         "destinatario": "Airflow",
         "mensagem": msg
@@ -84,7 +84,21 @@ def enviar_whatsapp(context):
     headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
     response = requests.post(WHATSAPP_API, data=fields, headers=headers)
     print("Status Code:", response.status_code)
+ 
+def enviar_whatsapp_sucesso(context):
+    # O context contém informações sobre a falha
+    task_instance = context['task_instance']
+    dag_id = context['dag'].dag_id
+    task_id = task_instance.task_id
     
+    msg = f"✅ Sucesso no Produto: {context['params']['product_details']['nome']}\nTask: {task_id}"
+    fields = {
+        "destinatario": "Airflow",
+        "mensagem": msg
+    }
+    headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
+    response = requests.post(WHATSAPP_API, data=fields, headers=headers)
+    print("Status Code:", response.status_code)
     
 with DAG(
     dag_id='WEBHOOK',
@@ -95,7 +109,6 @@ with DAG(
     default_args={
         'retries': 4,
         'retry_delay': datetime.timedelta(minutes=5),
-        'on_failure_callback':enviar_whatsapp
         
     },
     render_template_as_native_obj=True
@@ -130,7 +143,8 @@ with DAG(
             trigger_rule="none_failed_min_one_success",
             python_callable = trigger_function,
             provide_context=True,
-            on_failure_callback=enviar_whatsapp
+            on_failure_callback=enviar_whatsapp_erro,
+            on_success_callback=enviar_whatsapp_sucesso
         )
 
         inicio >> produtoEscolhido
