@@ -169,7 +169,9 @@ def cargaPatamar(pathZip):
   difCarga = dfCargaAtual_txt - dfCargaAnt_txt
   difCarga.dropna(inplace=True)
   
-  difCarga_xlsx = dfCargaAtual_xlsx - dfCargaAnt_xlsx
+  difCarga_xlsx = dfCargaAtual_xlsx.copy()
+  for i in range(len(dfCargaAtual_xlsx.columns)):
+    difCarga_xlsx.iloc[:, i] = dfCargaAtual_xlsx.iloc[:, i] - dfCargaAnt_xlsx.iloc[:, i]
 
   difCarga_xlsx = difCarga_xlsx[list(difCarga_xlsx.columns[1:]) + ['Mensal']]
   difCarga_xlsx.rename(columns={'Mensal':'Mensal [M1]'}, inplace=True)
