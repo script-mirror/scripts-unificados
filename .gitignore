@@ -22,11 +22,27 @@ Thumbs.db
 *.db
 *out_put.png
 
+# PLUVIA 
+apps/pluvia/libs/.pluvia
+apps/pluvia/log*
+*/tmp/*
+
 #CONTAINERS
 .env
 
 #NGINX
 server_configuration/containers/nginx/tradingenergiarz*
+*.key
+*.csr
+
+apps/verificadores/aneel/verificador_pauta/*
+apps/gerarProdutos/libs/arquivos
+apps/dbUpdater/config.json
+apps/dessem/config.json
+apps/gerarProdutos/config.json
+apps/ec_clust/Arq_Entrada/*
+bibliotecas/config.json
+
 
 # Bot Whatsapp
 apps/bot_whatsapp/.wwebjs_auth/
