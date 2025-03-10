@@ -1,0 +1,11 @@
+{
+    "paths": {
+        "arquivosHidrologia": "/WX2TB/Documentos/fontes/PMO/monitora_ONS/plan_acomph_rdh",
+        "listaProdutosBbce": "",
+        "pastaTmp": "/WX2TB/Documentos/fontes/PMO/enviar_produtos/arquivos/tmp"
+    },
+    "whatsapp": {
+        "destinatario": "WX - Meteorologia",
+        "scriptEnviaMsg": "/WX2TB/Documentos/fontes/outros/bot_whatsapp"
+    }
+}
