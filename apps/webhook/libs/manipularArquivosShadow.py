@@ -9,8 +9,11 @@ import csv
 import logging
 import zipfile
 import pandas as pd
-import requests as r
+import requests as req
+import hashlib
+
 from dotenv import load_dotenv
+from airflow.exceptions import AirflowSkipException
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
@@ -23,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 __HOST_SERVIDOR = os.getenv('HOST_SERVIDOR')
+__URL_COGNITO = os.getenv('URL_COGNITO')
+__CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
 
 path_libs = os.path.dirname(os.path.abspath(__file__))
 path_webhook = os.path.dirname(path_libs)
@@ -54,25 +59,89 @@ GERAR_PRODUTO = gerarProdutos2.GerardorProdutos()
 DIR_TOOLS = rz_dir_tools.DirTools()
 
 
-def get_filename(dadosProduto:dict):
-    filename:str
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-    if not os.path.exists(path_download):
-        os.makedirs(path_download)    
-    if dadosProduto.get('origem') == "botSintegre" :
-        filename = os.path.join(path_download, dadosProduto['filename'])
-        file_bytes = base64.b64decode(dadosProduto['base64'])
-        with open(filename, 'wb') as file:
-            file.write(file_bytes)
-    elif dadosProduto.get('origem') == "sqsSintegre" :
-        filename = f"{path_download}{dadosProduto['filename']}"
-        file_bytes = base64.b64decode(dadosProduto['base64'])
+def hex_hash(s):
+    h = hashlib.new('sha512')
+    h.update(s.encode())
+    hx = h.hexdigest()
+    return hx
 
-        with open(filename, 'wb') as file:
-            file.write(file_bytes)    
+
+def get_auth():
+    response = req.post(
+        __URL_COGNITO,
+        data=__CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    headers = {
+        'Authorization': f"Bearer {response.json()['access_token']}"
+    }
+    
+    return headers
+
+
+def get_filename(dadosProduto:dict):
+    path_download = os.path.join(PATH_WEBHOOK_TMP, dadosProduto['nome'])
+    os.makedirs(path_download, exist_ok=True)
+
+    if dadosProduto.get('origem') == "botSintegre":
+        filename = _handle_bot_sintegre_file(dadosProduto, path_download)
+    elif dadosProduto.get('origem') == "sqsSintegre":
+        filename = _handle_sqs_sintegre_file(dadosProduto, path_download)
+    elif dadosProduto.get('webhookId'):
+        filename = _handle_webhook_file(dadosProduto, path_download)
     else:
         filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+
+    if dadosProduto.get('origem') != "botSintegre":
+        _verify_file_is_new(filename, dadosProduto['nome'])
+
     return filename
+
+def _handle_bot_sintegre_file(dadosProduto: dict, path_download: str) -> str:
+    source_file = dadosProduto['base64']
+    dest_file = os.path.join(path_download, dadosProduto['filename'])
+    os.system(f"cp -r {source_file} {path_download}")
+    return dest_file
+
+def _handle_sqs_sintegre_file(dadosProduto: dict, path_download: str) -> str:
+    filename = os.path.join(path_download, dadosProduto['filename'])
+    file_bytes = base64.b64decode(dadosProduto['base64'])
+    with open(filename, 'wb') as file:
+        file.write(file_bytes)
+    return filename
+
+def _handle_webhook_file(dadosProduto: dict, path_download: str) -> str:
+    filename = os.path.join(path_download, dadosProduto['filename'])
+    auth = get_auth()
+    
+    res = req.get(
+        f"https://tradingenergiarz.com/new-webhook/api/webhooks/{dadosProduto['webhookId']}/download", 
+        headers=auth
+    )
+    if res.status_code != 200:
+        raise Exception(f"Erro ao baixar arquivo do S3: {res.text}")
+        
+    file_content = req.get(res.json()['url'])
+    with open(filename, 'wb') as f:
+        f.write(file_content.content)
+    return filename
+
+def _verify_file_is_new(filename: str, product_name: str) -> None:
+    try:
+        with open(filename, "rb") as f:
+            data = f.read()
+    except:
+        print(f"erro ao escrever arquivo no manipularArquivosShadow ")
+        raise
+
+    file_hash = hex_hash(base64.b64encode(data).decode('utf-8'))
+    is_new = req.post(
+        "https://tradingenergiarz.com/api/v2/bot-sintegre/verify",
+        json={"nome": product_name, "fileHash": file_hash}
+    ).json()
+
+    if not is_new:
+        raise AirflowSkipException("Produto ja inserido")
 
 def resultados_preliminares_consistidos(dadosProduto):
 
@@ -126,17 +195,7 @@ def arquivo_acomph(dadosProduto):
 
     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
     logger.info(path_copia_tmp)
-    if dadosProduto.get('enviar', True) == True:
-        airflow_tools.trigger_airflow_dag(
-            dag_id="1.8-PROSPEC_GRUPOS-ONS",
-            json_produtos={}
-            )
-        
-        airflow_tools.trigger_airflow_dag(
-            dag_id="1.1-PROSPEC_PCONJUNTO_DEFINITIVO",
-            json_produtos={
-                'dt_ref':dadosProduto['dataProduto']
-                })
+
     
     vazao.importAcomph(filename)
 
@@ -152,6 +211,17 @@ def arquivo_acomph(dadosProduto):
         "destinatarioWhats": ["Condicao Hidrica"]
 
     })
+    if dadosProduto.get('enviar', True) == True:
+        airflow_tools.trigger_airflow_dag(
+            dag_id="1.8-PROSPEC_GRUPOS-ONS",
+            json_produtos={}
+            )
+        
+        airflow_tools.trigger_airflow_dag(
+            dag_id="1.1-PROSPEC_PCONJUNTO_DEFINITIVO",
+            json_produtos={
+                'dt_ref':dadosProduto['dataProduto']
+                })
 
 def arquivo_rdh(dadosProduto):
     filename = get_filename(dadosProduto)
@@ -717,8 +787,12 @@ def ler_csv_prev_weol_para_dicionario(file):
     
     
 def deck_prev_eolica_semanal_patamares(dadosProduto):
-    res  = r.get(dadosProduto["url"])
-    zip_file = zipfile.ZipFile(io.BytesIO(res.content))
+    try:
+        res  = req.get(dadosProduto["url"])
+        zip_file = zipfile.ZipFile(io.BytesIO(res.content))
+    except:
+        zip_file = zipfile.ZipFile(dadosProduto["base64"])
+        
     
     patamates_csv_path = [x for x in zip_file.namelist() if "Arquivos Entrada/Dados Cadastrais/Patamares_" in x and ".csv" in x]
     patamates_csv_path = patamates_csv_path[0]
@@ -729,15 +803,19 @@ def deck_prev_eolica_semanal_patamares(dadosProduto):
         df_patamares = pd.read_csv(io.StringIO(content.decode("latin-1")), sep=";")
         df_patamares.columns = [x[0].lower() + x[1:] for x in df_patamares.columns]
     df_patamares.columns = ['inicio','patamar','cod_patamar','dia_semana','dia_tipico','tipo_dia','intervalo','dia','semana','mes']
-    post_patamates = r.post(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares", json=df_patamares.to_dict("records"))
+    post_patamates = req.post(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares", json=df_patamares.to_dict("records"))
     if post_patamates.status_code == 200:
         logger.info("Patamares inseridos com sucesso")
     else:
         logger.error(f"Erro ao inserir patamares. status code: {post_patamates.status_code}")
 
 def deck_prev_eolica_semanal_previsao_final(dadosProduto):
-    res  = r.get(dadosProduto["url"])
-    zip_file = zipfile.ZipFile(io.BytesIO(res.content))
+    res  = req.get(dadosProduto["url"])
+    try:
+        res  = req.get(dadosProduto["url"])
+        zip_file = zipfile.ZipFile(io.BytesIO(res.content))
+    except:
+        zip_file = zipfile.ZipFile(dadosProduto["base64"])
     
     ## puxando arquivo baixado locakmente ##
     # zip_file = zipfile.ZipFile("/home/arthur-moraes/Downloads/Deck_PrevMes_20241116.zip")
@@ -764,13 +842,14 @@ def deck_prev_eolica_semanal_previsao_final(dadosProduto):
                         "valor":info_weol[data][submercado][patamar],
                         "data_produto":str(datetime.datetime.strptime(dadosProduto['dataProduto'], "%d/%m/%Y").date())})
         
-    post_decks_weol = r.post(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol", json=body_weol)
+    post_decks_weol = req.post(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol", json=body_weol)
     if post_decks_weol.status_code == 200:
         logger.info("WEOL inserido com sucesso")
     else:
         logger.error(f"Erro ao inserir WEOL. status code: {post_decks_weol.status_code}")
         
 def deck_prev_eolica_semanal_weol(dadosProduto:dict):
+    filename = get_filename(dadosProduto)
     airflow_tools.trigger_airflow_dag(
         dag_id="webhook_deck_prev_eolica_semanal_weol",
         json_produtos=dadosProduto

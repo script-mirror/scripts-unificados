@@ -9,7 +9,7 @@ with DAG(
     tags=["WEBHOOK", "SINTEGRE"],
     start_date= datetime.datetime(2025, 2, 10),
     catchup=False,
-    schedule="0 23 * * *"
+    schedule="*/5 4-23 * * *"
 ) as dag:
     start_bot = SSHOperator(
         task_id='start_bot',
