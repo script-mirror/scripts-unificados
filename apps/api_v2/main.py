@@ -3,7 +3,7 @@ from sys import path
 import os
 
 from fastapi import FastAPI, Depends
-from app.routers import rodadas_controller, ons_controller, bbce_controller, decks_controller
+from app.routers import rodadas_controller, ons_controller, bbce_controller, decks_controller, back_viz_controller
 from app.utils.cache import cache
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -33,6 +33,8 @@ app.include_router(rodadas_controller.router, prefix="/api/v2")
 app.include_router(ons_controller.router, prefix="/api/v2")
 app.include_router(bbce_controller.router, prefix="/api/v2")
 app.include_router(decks_controller.router, prefix="/api/v2")
+app.include_router(back_viz_controller.router, prefix="/api/v2")
+
 # app.include_router(testes_controller.router, prefix='/api')
 
 @app.on_event("shutdown")
