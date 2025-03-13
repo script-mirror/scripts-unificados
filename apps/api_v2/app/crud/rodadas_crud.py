@@ -240,8 +240,10 @@ class Chuva:
             df = pd.DataFrame(cache.get_cached(Chuva.get_chuva_por_id_subbacia, id_chuva, atualizar=atualizar))
         if df.empty:
             return df
-        if dt_inicio_previsao != None:
+        if dt_inicio_previsao != None & dt_fim_previsao != None:
             df = df[(df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')) & (df['dt_prevista'] <= dt_fim_previsao.strftime('%Y-%m-%d'))]
+        elif dt_inicio_previsao != None:
+            df = df[df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')]
         df = df.sort_values(['dt_prevista', 'id'])
         if granularidade == 'subbacia':
             df.rename(columns={'id':'cd_subbacia'}, inplace=True)
@@ -535,7 +537,7 @@ class ChuvaMembro:
         
         body = df.to_dict("records")
         ChuvaMembro.inserir(body)
-        ChuvaMembro.media_membros(chuva_prev[0].dt_hr_rodada.replace(minute=0, second=0, microsecond=0), chuva_prev[0].modelo, inserir=rodar_smap)
+        ChuvaMembro.media_membros(chuva_prev[0].dt_hr_rodada.replace(minute=0, second=0, microsecond=0), chuva_prev[0].modelo, inserir=True, rodar_smap=rodar_smap)
         return None
     
     @staticmethod
@@ -563,7 +565,7 @@ class ChuvaMembro:
         print(f"{linhas_insert} linhas inseridas chuva membro")
 
     @staticmethod
-    def media_membros(dt_hr_rodada:datetime.datetime, modelo:str, inserir:bool = False, prev_estendida:bool = False) -> None:
+    def media_membros(dt_hr_rodada:datetime.datetime, modelo:str, inserir:bool = False, prev_estendida:bool = False, rodar_smap:bool = False) -> None:
         q_select = db.select(
             ChuvaMembro.tb.c['cd_subbacia'],
             ChuvaMembro.tb.c['dt_prevista'],
@@ -583,7 +585,7 @@ class ChuvaMembro:
         df['dt_rodada'] = dt_hr_rodada
         df['dt_rodada'] = pd.Series(df['dt_rodada'].dt.to_pydatetime(), dtype = object)
         if inserir:
-            Chuva.post_chuva_modelo_combinados([ChuvaPrevisaoCriacao.model_validate(x) for x in df.to_dict('records')], True, prev_estendida)
+            Chuva.post_chuva_modelo_combinados([ChuvaPrevisaoCriacao.model_validate(x) for x in df.to_dict('records')], rodar_smap, prev_estendida)
     @staticmethod
     def get_chuva_por_nome_modelo_dt_hr(nome_modelo, dt_hr_rodada):
         query = db.select(
@@ -625,8 +627,10 @@ class ChuvaMembro:
             df = pd.DataFrame(cache.get_cached(ChuvaMembro.get_chuva_por_nome_modelo_dt_hr, nome_modelo, dt_hr_rodada, atualizar=atualizar))
         if df.empty:
             return list()
-        if dt_inicio_previsao != None:
+        if dt_inicio_previsao != None & dt_fim_previsao != None:
             df = df[(df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')) & (df['dt_prevista'] <= dt_fim_previsao.strftime('%Y-%m-%d'))]
+        elif dt_inicio_previsao != None:
+            df = df[df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')]
         df = df.sort_values(['dt_prevista', 'id', 'membro'])
         if granularidade == 'subbacia':
             df.rename(columns={'id':'cd_subbacia'}, inplace=True)
@@ -789,8 +793,10 @@ class MembrosModelo:
             df = pd.DataFrame(cache.get_cached(Chuva.get_chuva_por_id_subbacia, id_chuva, atualizar=atualizar))
         if df.empty:
             return df
-        if dt_inicio_previsao != None:
+        if dt_inicio_previsao != None & dt_fim_previsao != None:
             df = df[(df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')) & (df['dt_prevista'] <= dt_fim_previsao.strftime('%Y-%m-%d'))]
+        elif dt_inicio_previsao != None:
+            df = df[df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')]
         df = df.sort_values(['dt_prevista', 'id'])
         if granularidade == 'subbacia':
             df.rename(columns={'id':'cd_subbacia'}, inplace=True)

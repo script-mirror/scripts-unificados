@@ -1,18 +1,23 @@
 
 import datetime
 import sys
-
-from airflow.exceptions import AirflowException
+from dotenv import load_dotenv
+from airflow.exceptions import AirflowException, AirflowFailException, AirflowSkipException
 from airflow.models.dag import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-
-
+import requests
+import traceback
+import os
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+WHATSAPP_API = os.getenv("WHATSAPP_API")
+URL_COGNITO = os.getenv("URL_COGNITO")
+CONFIG_COGNITO = os.getenv("CONFIG_COGNITO")
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.webhook.my_run import PRODUCT_MAPPING
-from PMO.scripts_unificados.apps.webhook.libs import manipularArquivosShadow
+from PMO.scripts_unificados.apps.webhook.my_run import PRODUCT_MAPPING, PRODUCT_MAPPING2
+from PMO.scripts_unificados.apps.webhook.libs import manipularArquivosShadow #comentario
 from PMO.scripts_unificados.apps.prospec.libs.update_estudo import update_weol_dadger_dc_estudo, update_weol_sistema_nw_estudo
 
 def remover_acentos_e_caracteres_especiais(texto):
@@ -41,36 +46,85 @@ def convert_to_clean_name(**kwargs):
 def trigger_function(**kwargs):
 
     params = kwargs.get('dag_run').conf
-    function_name = params.get('function_name')
     product_details = params.get('product_details')
     product_name = product_details.get('nome')
-    
+
+    function_name = params.get('function_name')
+
+    if not function_name or function_name == "WEBHOOK":
+        function_name = PRODUCT_MAPPING.get(product_name)
+        if function_name == None:
+            raise AirflowFailException("Produto nao mapeado")
     try:
-        # Obtendo a função do módulo importado baseada no nome
+
         func = getattr(manipularArquivosShadow, function_name, None)
         aditional_params = func(product_details)
-        print(product_name)
         if aditional_params != None:
             kwargs.get('dag_run').conf.update(aditional_params)	
             return['trigger_external_dag']
 
+    except AirflowSkipException:
+        raise AirflowSkipException("Produto ja inserido")
     except Exception as e:
-        raise AirflowException(f"Erro ao chamar a função {function_name}. {e}")
+        error_message = f"Erro ao chamar a função {function_name}.\nDetalhes do erro:\n{str(e)}\n\n\n{traceback.format_exc()}"
+        print(error_message)
+        raise AirflowException(error_message)
 
     return ['fim']
     
+def get_access_token() -> str:
+    response = requests.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
+ 
+def enviar_whatsapp_erro(context):
+    # O context contém informações sobre a falha
+    task_instance = context['task_instance']
+    dag_id = context['dag'].dag_id
+    task_id = task_instance.task_id
+    
+    msg = f"❌ Erro no Produto: *{context['params']['product_details']['nome']}*"
+    fields = {
+        "destinatario": "Airflow",
+        "mensagem": msg
+    }
+    headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
+    response = requests.post(WHATSAPP_API, data=fields, headers=headers)
+    print("Status Code:", response.status_code)
+ 
+def enviar_whatsapp_sucesso(context):
+    task_instance = context['task_instance']
+    if task_instance.state == 'skipped':
+        return
+    
+    task_instance = context['task_instance']
+    dag_id = context['dag'].dag_id
+    task_id = task_instance.task_id
+    
+    msg = f"✅ Sucesso no Produto: *{context['params']['product_details']['nome']}*"
+    fields = {
+        "destinatario": "Airflow",
+        "mensagem": msg
+    }
+    headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
+    response = requests.post(WHATSAPP_API, data=fields, headers=headers)
+    print("Status Code:", response.status_code)
     
 with DAG(
-    dag_id='WEEBHOOK',
+    dag_id='WEBHOOK',
     start_date=datetime.datetime(2024, 4, 28),
     catchup=False,
     schedule=None,
     tags=['webhook'],
     default_args={
         'retries': 4,
-        'retry_delay': datetime.timedelta(minutes=5) 
+        'retry_delay': datetime.timedelta(minutes=5),
+        
     },
-    render_template_as_native_obj=True, 
+    render_template_as_native_obj=True
 
 ) as dag:
 
@@ -102,6 +156,8 @@ with DAG(
             trigger_rule="none_failed_min_one_success",
             python_callable = trigger_function,
             provide_context=True,
+            on_failure_callback=enviar_whatsapp_erro,
+            on_success_callback=enviar_whatsapp_sucesso
         )
 
         inicio >> produtoEscolhido

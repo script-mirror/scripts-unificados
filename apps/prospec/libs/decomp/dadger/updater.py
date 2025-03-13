@@ -31,7 +31,7 @@ def atualizar_cvu_DC(info_cvu,paths_to_modify):
     paths_modified=[]
     for path_dadger in paths_to_modify:
 
-        extracted_blocos_dadger, headers = dadger.leituraArquivo(path_dadger)
+        df_dadger, comentarios = dadger.leituraArquivo(path_dadger)
 
         #LEITURA DO DECK 
         folder_name = os.path.basename(os.path.dirname(path_dadger))
@@ -47,34 +47,25 @@ def atualizar_cvu_DC(info_cvu,paths_to_modify):
         else:
             quit(f"Erro ao tentar extrair ano e mes do nome da pasta {folder_name}")
 
-        #if not info_cvu.get(dt_referente):
-        #    continue
+        if dt_referente not in info_cvu['mes_referencia'].unique():
+           dt_referente = max(info_cvu['mes_referencia'])
 
         logger.info(f"\n\n\nModificando arquivo {path_dadger}")
 
-        cvu_map = info_cvu[next(iter(info_cvu.keys()))]['conjuntural'].set_index("CÓDIGO")["CVU CONJUNTURAL"].to_dict()
-        cvu_map = {key : round(value,2) for key, value in cvu_map.items()}
-        extracted_blocos_dadger['CT'] = utils.trim_df(extracted_blocos_dadger['CT'])
+
+        cvu_map = info_cvu.set_index(['mes_referencia','tipo_cvu']).loc[(dt_referente,'conjuntural')].set_index('cd_usina')['vl_cvu'].to_dict()
+
+        df_dadger['CT'] = utils.trim_df(df_dadger['CT'])
+        df_dadger['CT']['cod'] = df_dadger['CT']['cod'].str.strip().astype(int)
 
         for col in ["cvu_p1", "cvu_p2", "cvu_pat3"]:
-            extracted_blocos_dadger['CT'][col].update(extracted_blocos_dadger['CT']["cod"].map(cvu_map))
+            df_dadger['CT'][col].update(df_dadger['CT']["cod"].map(cvu_map))
         
-        formatacao = '{:>2}  {:>3}  {:>2}   {:<10}{:>2}   {:>5}{:>5}{:>10}{:>5}{:>5}{:>10}{:>5}{:>5}{:>10}'
-        linhas_formatadas = extracted_blocos_dadger['CT'].apply(
-            lambda row: formatacao.format(*row), 
-            axis=1
-            ).tolist()
+        dadger.escrever_dadger(df_dadger, comentarios, path_dadger)
 
-        dadger.sobrescreve_bloco(
-            path_to_modify=path_dadger,
-            mnemonico_bloco='CT',
-            values=linhas_formatadas,
-            skip_lines=len(extracted_blocos_dadger['CT'])
-            )
         paths_modified.append(path_dadger)
 
     return paths_modified
-        
 
 def atualizar_carga_DC(info_cargas,paths_to_modify):
     
@@ -149,38 +140,75 @@ def update_eolica_DC(paths_to_modify:List[str], data_produto:datetime.date):
 
 def update_restricoes_eletricas_DC(info_restricoes:pd.DataFrame,paths_to_modify:List[str]):
 
-    codigos_restricoes = info_restricoes.index.tolist()
-    
+    colunas_primeiro_mes = ['1º Mês Pesada','1º Mês Média','1º Mês Leve']
+    colunas_segundo_mes = ['2º Mês Pesada','2º Mês Média','2º Mês Leve']
+    primeiro_mes, segundo_mes = sorted(info_restricoes.keys()) 
+    codigos_restricoes = info_restricoes[primeiro_mes].index.tolist()
+
     for i, path_dadger in enumerate(paths_to_modify):
+
+        #LEITURA DO DECK 
+        folder_name = os.path.basename(os.path.dirname(path_dadger))
+        padrao_folder = r"DC(\d{4})(\d{2})-sem(\d{1})"
+
+        match = re.match(padrao_folder, folder_name)
+        if match:
+            ano = match.group(1)
+            mes = match.group(2)
+            dt_referente = f"{ano}{mes}"
+
+        else:
+            quit(f"Erro ao tentar extrair ano e mes do nome da pasta {folder_name}")
 
         df_dadger, comentarios = dadger.leituraArquivo(path_dadger)
         df_restricoes_re = df_dadger['RE'].set_index('id_restricao')
         df_restricoes_re.index = df_restricoes_re.index.str.strip().astype(int)
-
         df_dadger['LU']['id_restricao'] = df_dadger['LU']['id_restricao'].str.strip().astype(int)
+
+        if info_restricoes.get(dt_referente,pd.DataFrame()).empty:
+            continue
 
         for codigo in codigos_restricoes:
             estagio_final = int(df_restricoes_re.loc[codigo]['estag_final'].strip())
-
-            print(codigo)
             flag_append_LU = True
 
             for index,row in df_dadger['LU'][df_dadger['LU']['id_restricao'] == codigo].iterrows(): 
-                if int(row['est']) != estagio_final:
-                    new_values = info_restricoes.loc[codigo][['1º Mês Pesada','1º Mês Média','1º Mês Leve']].values.tolist()
-                else:
-                    new_values = info_restricoes.loc[codigo][['2º Mês Pesada','2º Mês Média','2º Mês Leve']].values.tolist()
-                    flag_append_LU = False
-                    
+
+                if primeiro_mes == dt_referente:
+
+                    if int(row['est']) != estagio_final:
+                        new_values = info_restricoes[dt_referente].loc[codigo][colunas_primeiro_mes].values.tolist()
+                    else:
+                        new_values = info_restricoes[dt_referente].loc[codigo][colunas_segundo_mes].values.tolist()
+                        flag_append_LU = False
+                
+                elif segundo_mes==dt_referente:
+
+                    if int(row['est']) != estagio_final:
+                        if int(row['est']) == 1: 
+                            copy_primeiro_estagio = df_dadger['LU'].loc[index, ['gmax_p1', 'gmax_p2', 'gmax_p3']].values.tolist()
+
+                        new_values = info_restricoes[dt_referente].loc[codigo][colunas_segundo_mes].values.tolist()
+                    else:
+                        new_values = df_dadger['LU'].loc[index, ['gmax_p1', 'gmax_p2', 'gmax_p3']].values.tolist()
+                        flag_append_LU = False
+
                 df_dadger['LU'].loc[index, ['gmax_p1', 'gmax_p2', 'gmax_p3']] = new_values
 
+            #caso a linha do ultimo estagio não esteja escrita no dadger
             if flag_append_LU:
-                new_values = info_restricoes.loc[codigo][['2º Mês Pesada','2º Mês Média','2º Mês Leve']].values.tolist()
-                new_values = [estagio_final] + new_values
 
                 df_dadger['LU'] = pd.concat([df_dadger['LU'],df_dadger['LU'].loc[[index]]],ignore_index=True)
-                df_dadger['LU'].loc[df_dadger['LU'].index[-1], ['est','gmax_p1', 'gmax_p2', 'gmax_p3']] = new_values
+
+                if primeiro_mes == dt_referente:
+                    new_values = info_restricoes[dt_referente].loc[codigo][colunas_segundo_mes].values.tolist()
+                    df_dadger['LU'].loc[df_dadger['LU'].index[-1], ['est','gmax_p1', 'gmax_p2', 'gmax_p3']] = [estagio_final] + new_values
                 
+                elif segundo_mes==dt_referente:
+                    new_values = copy_primeiro_estagio
+
+                df_dadger['LU'].loc[df_dadger['LU'].index[-1], ['est','gmax_p1', 'gmax_p2', 'gmax_p3']] = [estagio_final] + new_values
+
         dadger.escrever_dadger(df_dadger, comentarios, path_dadger)
 
 if __name__ == "__main__":
@@ -190,7 +218,7 @@ if __name__ == "__main__":
     #     '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_21904_Entrada/DC202411-sem5/dadger.rv4',
     #     '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_21904_Entrada/DC202412-sem1/dadger.rv0'
     #     ], datetime.date(2025,11,16))
-    path_saida = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp"
+    # path_saida = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp"
     # #EXTRAINDO ZIP
     # file_estudo = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/verificadores/ccee/Estudo_21904_Entrada.zip"
     # extracted_zip_estudo = utils.extract_file_estudo(
@@ -199,18 +227,22 @@ if __name__ == "__main__":
     #     )
 
     # ORGANIZA INFORMACOES DE CVU
-    # info_cvu = info_external_files.organizar_info_cvu(
-    #     ano_referencia=2025,    
-    #     mes_referencia=1,
-    #     path_saida=path_saida
-    #     )
+    info_cvu = info_external_files.organizar_info_cvu(
+        titles_cvu_ccee=[
+            'custo_variavel_unitario_conjuntural_revisado',
+            'custo_variavel_unitario_estrutural',
+            'custo_variavel_unitario_conjuntural',
+            'custo_variavel_unitario_merchant'
+            ],
+        )
 
+    extracted_zip_estudo="C:/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_23188_Entrada"
     # #ALTERAR CVU EM DECKS DC
-    # paths_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
-    # atualizar_cvu_DC(
-    #     info_cvu,
-    #     paths_to_modify
-    #     )
+    paths_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
+    atualizar_cvu_DC(
+        info_cvu,
+        paths_to_modify
+        )
 
     # #ORGANIZA INFORMACOES DE CARGA
     # path_carga_zip= "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/verificadores/ccee/RV3_PMO_Novembro_2024_carga_semanal.zip"

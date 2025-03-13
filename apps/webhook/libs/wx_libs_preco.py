@@ -260,12 +260,12 @@ def nao_consistido_rv(arquivo):
     # pdb.set_trace()
     
     envia_email_wx(send_from, send_to, assunto, texto, anexo, server, port, username, password, isTls=True)
-    
     for i in glob.glob(path + '/Nao_Consistido/*'):
         try:
             os.remove(i)
         except:
             print('Nao foi possivel deletar o arquivo' + i)
+    return [assunto, texto]
 
 def dadvaz_pdp(arquivo,str_data):
     sheet = 'Diária_6'

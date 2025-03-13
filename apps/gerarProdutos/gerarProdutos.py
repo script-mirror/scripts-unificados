@@ -73,7 +73,10 @@ import rz_cargaPatamar
 import rz_deck_dc_preliminar
 import rz_relatorio_bbce
 import rz_produtos_chuva
+from html_to_image import api_html_to_image
 
+sys.path.insert(1,"/WX2TB/Documentos/fontes/")
+from PMO.scripts_unificados.apps.gerarProdutos.utils import get_access_token
 
 def baixarProduto(data, produto):
 	""" Faz o download de produtos externos a WX
@@ -1188,7 +1191,7 @@ def gerarTabelasEmailAcomph(data):
 		tabelaDifEnaSub.append(enaAux)
 
 	header = ['Submercado']+list(diferencaSubmercadoEnaFormatado.columns.strftime('%d/%m/%Y'))
-	html += "<h3>Diferenças ACOMPH do dia {} com o comph do dia {}</h3>".format(data.strftime('%d/%m/%Y'), (data-datetime.timedelta(days=1)).strftime('%d/%m/%Y'))
+	html += "<h3>Diferenças ACOMPH do dia {} com o acomph do dia {}</h3>".format(data.strftime('%d/%m/%Y'), (data-datetime.timedelta(days=1)).strftime('%d/%m/%Y'))
 	html += "<h4>Submercados</h4>"
 	html += wx_emailSender.gerarTabela(body=tabelaDifEnaSub, header=header)
 
@@ -1428,7 +1431,7 @@ def enviar(parametros):
 			tabela = soup.find('table')
 			print('Enviado whatsapp para o destinatario:', destinatarioWhats)
 			
-			fileWhats = wx_emailSender.api_html_to_image(str(tabela),path_save='out_put.png')
+			fileWhats = api_html_to_image(str(tabela),path_save='out_put.png')
 			fields={
 					"destinatario": destinatarioWhats,
 					"mensagem": parametros['assuntoemail'],
@@ -1438,12 +1441,17 @@ def enviar(parametros):
 				files={
 					"arquivo": (os.path.basename(fileWhats), open(fileWhats, "rb"))
 				}
-			response = requests.post(os.getenv('WHATSAPP_API'), data=fields, files=files)
+			response = requests.post(
+				os.getenv('WHATSAPP_API'), 
+				data=fields, 
+				files=files,
+				headers={
+					'Authorization': f'Bearer {get_access_token()}'
+					})
 			print("Status Code:", response.status_code)
 				
 
 			flagWhats = False
-    
 
 	elif parametros["produto"] == 'PREVISAO_GEADA':
 

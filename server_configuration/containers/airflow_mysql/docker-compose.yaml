@@ -15,6 +15,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__WEBSERVER__BASE_URL: 'http://localhost:8080/airflow'
     AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
     NEW_RELIC_INSERT_KEY: '7fbf1e391a7b4ca633fb6d9d176b810dFFFFNRAL'
+    AIRFLOW__CORE__LOGGING_LEVEL: INFO
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
@@ -115,7 +116,7 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib
     environment:
-      - OTEL_LOG_LEVEL=DEBUG
+      - OTEL_LOG_LEVEL=INFO
       - OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp.nr-data.net
       - OTEL_EXPORTER_OTLP_HEADERS=7fbf1e391a7b4ca633fb6d9d176b810dFFFFNRAL
     volumes:

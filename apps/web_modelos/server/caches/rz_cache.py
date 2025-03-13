@@ -6,11 +6,13 @@ import datetime
 import pandas as pd
 import requests as r
 from typing import Callable
-
+from dotenv import load_dotenv
 sys.path.insert(1,"/WX2TB/Documentos/fontes")
 from PMO.scripts_unificados.apps.rodadas import rz_rodadasModelos
 from PMO.scripts_unificados.apps.web_modelos.server.server import cache
 from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_ena, rz_chuva,rz_dbLib,db_decks,db_meteorologia,db_ons
+
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
 logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
@@ -22,13 +24,16 @@ logger = logging.getLogger(__name__)
 
 
 
+URL_COGNITO = os.getenv('URL_COGNITO')
+CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
+
 def cache_rodadas_modelos(prefixo,rodadas,reset=False, dias=7):
 
   granularidade = rodadas['granularidade']
   dt_rodada = rodadas['dt_rodada']
   search_list = list(rodadas['rodadas'].keys())
 
-  key = prefixo+f':{granularidade}:{dt_rodada}'
+  key = f'{prefixo}:{granularidade}:{dt_rodada}'
 
   ids_in_cache = []
   send_cache_data = []
@@ -263,6 +268,16 @@ def cache_previsao_modelos(key:str, dts_rodada_list:list,granularidade:str='subm
 
     return df_to_cache[df_to_cache['dt_rodada'].isin(dts_rodada_list)].to_dict('records')
 
+
+def get_token_cognito() -> str:
+    response = r.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
+  
 def import_acomph_visualization_api(data_rodada:datetime.date):
   body:dict = {
   "dataRodada": f"{data_rodada}",
@@ -307,9 +322,9 @@ def import_acomph_visualization_api(data_rodada:datetime.date):
       data['agrupamento']['valorAgrupamento'] = col
       data['agrupamento']['tipo'] = granularidade
       body["data"].append(data)
-      
-  res = r.post('http://0.0.0.0:6001/backend/api/map', json=body)
-  
+
+  res = r.post('https://tradingenergiarz.com/backend/api/map',verify=False, json=body, headers={'Content-Type': 'application/json', "Authorization":f"Bearer {get_token_cognito()}"})
+  pdb.set_trace()
   
   if res.status_code == 201:
     logger.info(f"acomph {data_rodada} inserido na API de visualizacao")
@@ -397,5 +412,5 @@ if __name__ == '__main__':
 
   # teste = cache_rodadas_modelos('PREVISAO_ENA', rodadas)
     runWithParams()
-
+  # import_acomph_visualization_api(datetime.datetime(2025,2,6))
 

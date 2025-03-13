@@ -22,50 +22,22 @@ except:
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.gerarProdutos import rz_processar_produtos
 from PMO.scripts_unificados.bibliotecas import wx_emailSender,wx_opweek
-from PMO.scripts_unificados.apps.bot_whatsapp.whatsapp_bot import WhatsappBot
+from PMO.scripts_unificados.apps.gerarProdutos.utils import get_access_token
+from PMO.scripts_unificados.apps.gerarProdutos.config import (
+    PRODUTCS_MAPPING,
+    WHATSAPP_API,
+    NUM_GILSEU
+    )
 
-WHATSAPP_API = os.getenv('WHATSAPP_API')
 
-
-PATH_BOT_WHATS = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/bot_whatsapp"
-
-PRODUTCS_MAPPING = {
-
-        'SST': "processar_produto_SST",
-        'PRECIPTACAO_MODELO': "processar_produto_PRECIPTACAO_MODELO",
-        'IPDO': "processar_produto_IPDO",
-        'ACOMPH': "processar_produto_ACOMPH",
-        'RDH': "processar_produto_RDH",
-        'RELATORIO_BBCE': "processar_produto_RELATORIO_BBCE",
-        'RESULTADO_DESSEM': "processar_produto_RESULTADO_DESSEM",
-        'PREVISAO_ENA_SUBMERCADO': "processar_produto_PREVISAO_ENA_SUBMERCADO",
-        'PREVISAO_CARGA_DESSEM': "processar_produto_PREVISAO_CARGA_DESSEM",
-        'RESULTADO_CV': "processar_produto_RESULTADO_CV",
-        'RELATORIO_CV': "processar_produto_RELATORIO_CV",
-        'DIFERENCA_CV': "processar_produto_DIFERENCA_CV",
-        'RESULTADO_PREVS': "processar_produto_RESULTADO_PREVS",
-        'RESULTADOS_PROSPEC': "processar_produto_RESULTADOS_PROSPEC",
-        'PREVISAO_GEADA': "processar_produto_PREVISAO_GEADA",
-        'REVISAO_CARGA': "processar_produto_REVISAO_CARGA",
-        'CMO_DC_PRELIMINAR': "processar_produto_CMO_DC_PRELIMINAR",
-        'GERA_DIFCHUVA': "processar_produto_GERA_DIFCHUVA",
-        'REVISAO_CARGA_NW': "processar_produto_REVISAO_CARGA_NW",
-        'PSATH_DIFF': "processar_produto_PSATH_DIFF",
-        'SITUACAO_RESERVATORIOS': "processar_produto_SITUACAO_RESERVATORIOS",
-        'REVISAO_CARGA_NW_PRELIMINAR': "processar_produto_REVISAO_CARGA_NW_preliminar",
-        'TABELA_WEOL_MENSAL': "processar_produto_TABELA_WEOL_MENSAL",
-        'TABELA_WEOL_SEMANAL': "processar_produto_TABELA_WEOL_SEMANAL"
-        
-    } 
-
-class GerardorProdutos(WhatsappBot):
+class GerardorProdutos():
 
     def __init__(self) -> None:
-        self.num_whatsapp = os.getenv('NUM_GILSEU')
-        WhatsappBot.__init__(self)
+        self.num_whatsapp = NUM_GILSEU
+
         # pass
 
-    def send_whatsapp_message(self, destinatarioWhats,msgWhats,fileWhats=None):   
+    def send_whatsapp_message(self, destinatarioWhats,msgWhats,fileWhats=None):  
         fields={
             "destinatario": destinatarioWhats,
             "mensagem": msgWhats,
@@ -75,14 +47,18 @@ class GerardorProdutos(WhatsappBot):
             files={
                 "arquivo": (os.path.basename(fileWhats), open(fileWhats, "rb"))
             }
-        response = requests.post(WHATSAPP_API, data=fields, files=files)
+        response = requests.post(
+            WHATSAPP_API,
+            data=fields,
+            files=files,
+            headers={
+                'Authorization': f'Bearer {get_access_token()}'
+                }
+            )
         print("Status Code:", response.status_code)
 
 
     def enviar(self,parametros):
-
-        # confgs = configs.getConfiguration()
-
 
         dt = datetime.datetime.now()
         print("Tentativa as {}".format(dt.strftime('%d/%m/%Y %H:%M:%S')))

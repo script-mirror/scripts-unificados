@@ -84,8 +84,41 @@ PRODUCT_MAPPING = {
     "Arquivos de Previsão de Carga para o DESSEM - PrevCargaDESSEM": "prevCarga_dessem_saida",
     'Deck NEWAVE Preliminar':"carga_newave_preliminar",
     "DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM":"deck_prev_eolica_semanal_weol",
-    "PRELIMINAR - RELATÓRIO MENSAL DE LIMITES DE INTERCÂMBIO":"relatorio_limites_intercambio",
+    "Preliminar - Relatório Mensal de Limites de Intercâmbio":"relatorio_limites_intercambio",
     "Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP":"relatorio_limites_intercambio",
+}
+
+PRODUCT_MAPPING2 = {
+    "Relatorio_de_Acompanhamento_Hidrologico":"vazoes_observadas",
+    "Precipitacao_por_Satelite":"psat_file",
+    "Modelo_GEFS":"modelo_gefs",
+    "Resultados_preliminares_nao_consistidos_vazoes_semanais_PMO":"resultados_nao_consistidos_semanal",
+    "Relatorio_dos_resultados_finais_consistidos_da_previsao_diaria_PDP":"relatorio_resutados_finais_consistidos",
+    "Niveis_de_Partida_para_o_DESSEM":"niveis_partida_dessem",
+    "DADVAZ_Arquivo_de_Previsao_de_Vazoes_Diarias_PDP":"dadvaz_vaz_prev",
+    "Deck_e_Resultados_DECOMP_Valor_Esperado":"deck_resultados_decomp",
+    "Resultados_finais_consistidos_vazoes_diarias_PDP":"resultados_finais_consistidos",
+    "Resultados_preliminares_consistidos_vazoes_semanais_PMO":"resultados_preliminares_consistidos",
+    "Arquivos_dos_modelos_de_previsao_de_vazoes_semanais_PMO":"entrada_saida_previvaz",
+    "Arquivos_dos_modelos_de_previsao_de_vazoes_diarias_PDP":"arquivos_modelo_pdp",
+    "Acomph":"arquivo_acomph",
+    "RDH":"arquivo_rdh",
+    "Historico_de_Precipitacao_por_Satelite":"historico_preciptacao",
+    "Modelo_ETA":"modelo_eta",
+    "Carga_por_patamar_DECOMP":"carga_patamar",
+    "Deck_Preliminar_DECOMP_Valor_Esperado":"deck_preliminar_decomp",
+    "Decks_de_entrada_e_saida_Modelo_DESSEM":"deck_entrada_saida_dessem",
+    "Arquivos_de_Previsao_de_Carga_para_o_DESSEM":"previsao_carga_dessem",
+    "Decks_de_entrada_do_PrevCargaDESSEM":"prevCarga_dessem",
+    "Previsoes_de_carga_mensal_e_por_patamar_NEWAVE":"carga_patamar_nw",
+    "IPDO_Informativo_Preliminar_Diario_da_Operacao":"carga_IPDO",
+    "Modelo_ECMWF":"modelo_ECMWF",
+    "Dados_utilizados_na_previsao_de_geracao_eolica":"dados_geracaoEolica",
+    "Arquivos_de_Previsao_de_Carga_para_o_DESSEM_PrevCargaDESSEM":"prevCarga_dessem_saida",
+    "Deck_NEWAVE_Preliminar":"carga_newave_preliminar",
+    "DECKS_DA_PREVISAO_DE_GERACAO_EOLICA_SEMANAL_WEOLSM":"deck_prev_eolica_semanal_weol",
+    "Preliminar_Relatorio_Mensal_de_Limites_de_Intercambio":"relatorio_limites_intercambio",
+    "Relatorio_Mensal_de_Limites_de_Intercambio_para_o_Modelo_DECOMP":"relatorio_limites_intercambio",
 }
 
 
@@ -144,14 +177,14 @@ def webhook():
             print(e)
             return jsonify(success=True)
 
-
+        data['enviar'] = True
         produto = data["nome"]
         product_function = PRODUCT_MAPPING.get(produto,None)
 
         # Verifica se o nome do produto está no mapeamento e inicia a DAG correspondente se estiver
         if produto in PRODUCT_MAPPING:
             
-            dag_id = 'WEEBHOOK'
+            dag_id = 'WEBHOOK'
             json_produtos = { "product_details": data,"function_name": product_function}
 
             response = airflow_tools.trigger_airflow_dag(dag_id=dag_id,json_produtos =json_produtos )

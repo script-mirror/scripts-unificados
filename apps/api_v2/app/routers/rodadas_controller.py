@@ -75,7 +75,7 @@ def post_chuva_modelo_combinados(
 @router.post('/chuva/previsao/membros', tags=['Rodadas'])
 def post_chuva_membros(
     chuva_prev: List[ChuvaPrevisaoCriacaoMembro],
-    rodar_smap:bool = True
+    rodar_smap:bool = False
 ):  
     return rodadas_crud.ChuvaMembro.post_chuva_membro(chuva_prev, rodar_smap)
 

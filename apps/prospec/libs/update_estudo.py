@@ -71,7 +71,11 @@ def send_files_to_api(id_estudo:int, paths_modified:List[str], tag:str):
             logger.info(f'Falha ao enviar estudo {id_estudo}')
 
 #DECOMP
-def update_cvu_dadger_dc_estudo(ano_referencia_cvu:int,mes_referencia_cvu:int,ids_to_modify:List[int]=None):
+def update_cvu_dadger_dc_estudo(
+    fontes_to_search:List[str],
+    dt_atualizacao:datetime.datetime,
+    ids_to_modify:List[int]=None
+    ):
 
     tag = [f'CVU {datetime.datetime.now().strftime("%d/%m %H:%M")}']
     if not ids_to_modify:
@@ -79,8 +83,8 @@ def update_cvu_dadger_dc_estudo(ano_referencia_cvu:int,mes_referencia_cvu:int,id
 
     # ORGANIZA INFORMACOES DE CVU
     info_cvu = info_external_files.organizar_info_cvu(
-        ano_referencia=int(ano_referencia_cvu),    
-        mes_referencia=int(mes_referencia_cvu),
+        fontes_to_search=fontes_to_search,
+        dt_atualizacao=dt_atualizacao
         )
 
     for id_estudo in ids_to_modify:
@@ -170,16 +174,20 @@ def update_weol_dadger_dc_estudo(data_produto:datetime.date, ids_to_modify:List[
 
         logger.info(f"============================================")
 #NEWAVE
-def update_cvu_clast_nw_estudo(ano_referencia_cvu:int,mes_referencia_cvu:int,ids_to_modify:List[int]=None):
-
+def update_cvu_clast_nw_estudo(
+    fontes_to_search:List[str],
+    dt_atualizacao:datetime.datetime,
+    ids_to_modify:List[int]=None
+    ):
+    
     tag = [f'CVU {datetime.datetime.now().strftime("%d/%m %H:%M")}']
     if not ids_to_modify:
         ids_to_modify = get_ids_to_modify()
 
     # ORGANIZA INFORMACOES DE CVU
     info_cvu = info_external_files.organizar_info_cvu(
-        ano_referencia=ano_referencia_cvu,    
-        mes_referencia=mes_referencia_cvu,
+        fontes_to_search=fontes_to_search,
+        dt_atualizacao=dt_atualizacao
         )
 
     for id_estudo in ids_to_modify:
@@ -321,7 +329,7 @@ def update_weol_sistema_nw_estudo(data_produto:datetime.date, ids_to_modify:List
         
 def update_restricoes_dadger_dc_estudo(file_path:str, ids_to_modify:List[int] = None):
     
-    info_restricoes = info_external_files.read_table(file_path, "Tabela 4-1: Resultados dos Limites Elétricos")
+    info_restricoes = info_external_files.organizar_info_restricoes_eletricas_dc(file_path)
     logger.info(f"UPDATE DADGER RESTRICOES (bloco LU)")
     tag = [f'RE {datetime.datetime.now().strftime("%d/%m %H:%M")}']
 
@@ -353,10 +361,10 @@ def update_restricoes_dadger_dc_estudo(file_path:str, ids_to_modify:List[int] = 
 
 
 if __name__ == "__main__":
-    update_weol_sistema_nw_estudo(
-        datetime.date(2025, 1, 22),
-        [22800]
-        )
+    # update_weol_sistema_nw_estudo(
+    #     datetime.date(2025, 1, 22),
+    #     [22800]
+    #     )
     # ids_to_modify = get_ids_to_modify()
 
     # for id_estudo in ids_to_modify:
@@ -373,3 +381,8 @@ if __name__ == "__main__":
 
     # update_cvu_estudo(ids_to_modify,ano_referencia_cvu,mes_referencia_cvu)
     # update_carga_estudo(ids_to_modify,file_path)
+
+    file_path = r"C:\Users\CS399274\Downloads\Preliminar - RT-ONS DPL 0075-2025_Limites PMO_Março-2025.pdf"
+    update_restricoes_dadger_dc_estudo(file_path, ids_to_modify=[23188])
+
+    

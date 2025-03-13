@@ -8,15 +8,15 @@ import datetime
 import pdfplumber
 import numpy as np
 import pandas as pd
-from dateutil.relativedelta import relativedelta
 
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.bibliotecas import rz_dir_tools,wx_opweek
-from PMO.scripts_unificados.apps.verificadores.ccee import rz_download_cvu
+from PMO.scripts_unificados.apps.prospec.libs.ccee import service as ccee_api
 from PMO.scripts_unificados.apps.prospec.libs.decomp.dadger import dadger
 from PMO.scripts_unificados.apps.prospec.libs.newave.sistema import sistema
 from PMO.scripts_unificados.apps.prospec.libs import utils
+
 from typing import List
 import logging
 import requests as r
@@ -37,72 +37,29 @@ __HOST_SERVIDOR = os.getenv('HOST_SERVIDOR')
 PATH_DOWNLOAD_TMP = os.path.join(os.path.dirname(__file__),"tmp")
 
 
-def organizar_info_cvu(ano_referencia, mes_referencia,path_saida=PATH_DOWNLOAD_TMP):
+def organizar_info_cvu(fontes_to_search:List[str], dt_atualizacao:datetime.date):
 
-    info_cvu={}
+    URL_API_RAIZEN = f'http://{__HOST_SERVIDOR}:8000/api/v2'
 
-    extracted_files = rz_download_cvu.download_cvu_acervo_ccee(
-        ano_referencia,
-        mes_referencia,
-        path_saida
+    df_aux = pd.DataFrame()
+    for title_fonte in fontes_to_search:
+        response = r.get(
+            params = {
+                'dt_atualizacao': dt_atualizacao,
+                'fonte': title_fonte
+            },
+            url = f"{URL_API_RAIZEN}/decks/cvu",
+            verify=False,
         )
+        answer = response.json()
+        df_result = pd.DataFrame(answer)
+        
+        df_result['dt_atualizacao'] = pd.to_datetime(df_result['dt_atualizacao']).dt.strftime('%Y-%m-%d')
+        df_result[df_result['dt_atualizacao'] == pd.to_datetime(dt_atualizacao).strftime('%Y-%m-%d')]
 
+        df_aux = pd.concat([df_aux,df_result]) if not df_aux.empty else df_result
+    return df_aux
 
-    for file in extracted_files:
-
-        dt_referente = f"{file['anoReferencia']}{file['mesReferencia']}"
-        info_cvu[dt_referente] = {} if dt_referente not in info_cvu.keys() else info_cvu[dt_referente]
-
-        df = pd.read_excel(file['extractedPathFile'], sheet_name=0, skiprows=4)
-
-        #busca a coluna conjuntural nos arquivos nao merchant
-        try:
-            df_conjuntural = df[['CÓDIGO','CVU CONJUNTURAL']].replace('-',np.NaN).dropna()
-            info_cvu[dt_referente]['conjuntural'] = df_conjuntural
-        except:
-            pass
-
-        #busca a coluna estrutural nos arquivos nao merchant, pode ser que nao tenha essa coluna
-        try:
-            info_cvu[dt_referente]['estrutural'] = {}
-            for ano in range(1,6):
-                df_estrutural = df[['CÓDIGO',f'CVU ESTRUTURAL ANO {ano}']].replace('-',np.NaN).dropna()
-                info_cvu[dt_referente]['estrutural'][ano] = df_estrutural
-        except:
-            pass
-
-
-        #busca a coluna conjuntural e estrutural (as duas usam a mesma coluna), nos arquivos merchant. Aqui ainda vem uma verificação para saber se pega a coluna com custo fixo ou sem custo fixo
-        # por enquanto manter a coluna com custo fixo
-
-        try:
-            df = pd.read_excel(file['extractedPathFile'], sheet_name=0, skiprows=3)
-
-            df_conjuntural = df[['CVU CF [R$/MWh]','Código']].copy()
-            df_conjuntural.columns = ['CVU CONJUNTURAL','CÓDIGO']
-            df_conjuntural_completo = pd.concat([info_cvu[dt_referente]['conjuntural'],df_conjuntural],axis=0)
-            info_cvu[dt_referente]['conjuntural'] = df_conjuntural_completo
-
-
-            df_estrutural = df[['CVU CF [R$/MWh]','Código']].copy()
-            info_cvu[dt_referente]['estrutural'] = {}
-            for ano in range(1,6):
-                df_estrutural.columns = [f'CVU ESTRUTURAL ANO {ano}','CÓDIGO']
-                info_cvu[dt_referente]['estrutural'][ano] = df_estrutural
-        except:
-            pass
-
-        try:
-            info_cvu[dt_referente]['conjuntural']['CÓDIGO'] = info_cvu[dt_referente]['conjuntural']['CÓDIGO'].astype(int).astype(str)
-            for ano in range(1,6):
-                info_cvu[dt_referente]['estrutural'][ano]['CÓDIGO'] = info_cvu[dt_referente]['estrutural'][ano]['CÓDIGO'].astype(int).astype(str)
-        except:
-            pass
-
-        os.remove(file['pathFile'])
-        os.remove(file['extractedPathFile'])
-
-    return info_cvu
 
 
 def extract_carga_decomp_ons(path_carga,path_saida=PATH_DOWNLOAD_TMP):
@@ -320,7 +277,7 @@ def organizar_info_carga_nw(path_carga_zip):
 
     if 'carga_mensal' in os.path.basename(path_carga_zip).lower():
         mes_referencia_inicial = datetime.datetime.strptime(os.path.basename(extracted_zip_carga[0]).lower(),"cargamensal_pmo-%B%Y.xlsx")
-        result_df = result_df[(result_df['DATE'] >= mes_referencia_inicial) & (result_df['DATE'] <= (mes_referencia_inicial + relativedelta(months=1)))]
+        result_df = result_df[(result_df['DATE'] >= mes_referencia_inicial) & (result_df['DATE'] <= (mes_referencia_inicial + pd.DateOffset(months=1) ))]
 
     result_dict = {}
     result_df["YearMonth"] = result_df["DATE"].dt.strftime("%Y%m")
@@ -382,25 +339,40 @@ def organizar_info_eolica_nw(paths_sistema:List[str], data_produto:datetime.date
 #===================================RESTRICOES ELETRICAS=====================================
 
 # Caminho do arquivo PDF
-def read_table(pdf_path, table_name ):
+def organizar_info_restricoes_eletricas_dc(pdf_path, table_name="Tabela 4-1: Resultados dos Limites Elétricos" ):
     dict_num = {'IPU60':462,'IPU50':461, 'Ger. MAD': 401, 'RNE': 403,'FNS':405,'FNESE':409,
                 'FNNE':413, 'FNEN':415, 'EXPNE':417,'SE/CO→FIC':419,'EXPN':427, 'FNS+FNESE':429,'FSENE':431,'FSUL':437,
                 'RSUL':439, 'RSE':441, '-RSE':443, 'FETXG+FTRXG':445,'FXGET+FXGTR':447 }
+
+    info_restricoes={}
+
+    file_pattern = re.compile(r".*_Limites PMO_(.*)\.pdf$")
+    match = file_pattern.match(pdf_path)
+    if not match:
+        logger.info(f"Nome do arquivo PDF {pdf_path} não corresponde ao padrão esperado.")
+        return {}
+        
+    primeiro_mes = pd.to_datetime(match.group(1),format="%B-%Y") 
+    segundo_mes = primeiro_mes + pd.DateOffset(months=1) 
  
     table_page = find_table_page(pdf_path, table_name)
 
     if table_page is None:
-        print("Tabela não encontrada no PDF.")
+        logger.info("Tabela não encontrada no PDF.")
+        return {}
     else:      
         df = extract_table_from_pdf(pdf_path, table_page)
-        return  reformat_dataframe(df,dict_num)
+        df_reformated = reformat_dataframe(df,dict_num).round(1)
+        info_restricoes[primeiro_mes.strftime("%Y%m")] = df_reformated.copy()
+        info_restricoes[segundo_mes.strftime("%Y%m")] = df_reformated[["Limite","2º Mês Pesada", "2º Mês Média", "2º Mês Leve"]].copy()
+        return  info_restricoes
 
  # Função para processar a tabela do PDF
 def extract_table_from_pdf(pdf_path, table_page):
 
     with pdfplumber.open(pdf_path) as pdf:
 
-        page = pdf.pages[table_page - 1]  # Índice zero-based
+        page = pdf.pages[table_page - 1]  
         tables = page.extract_tables()
         
         if tables:
@@ -410,7 +382,7 @@ def extract_table_from_pdf(pdf_path, table_page):
             df.reset_index(drop=True, inplace=True)
             return df
         else:
-            print("Nenhuma tabela encontrada na página especificada.")
+            logger.info("Nenhuma tabela encontrada na página especificada.")
             return None
 
  # Função para localizar a página pelo nome da tabela
@@ -423,6 +395,8 @@ def find_table_page(pdf_path, table_name):
     return None
 
 def reformat_dataframe(df, dict_num):
+
+    info_restricoes = {}
 
     reformatted_df = pd.DataFrame()
     reformatted_df["Item"] = df.iloc[2:, 0].str.strip()  # Coluna 0: Item
@@ -441,8 +415,9 @@ def reformat_dataframe(df, dict_num):
     reformatted_df.drop('Item', axis=1, inplace=True)
     reformatted_df.set_index("RE", inplace=True)
     columns_to_multiply = ["1º Mês Pesada", "1º Mês Média", "1º Mês Leve",  "2º Mês Pesada", "2º Mês Média", "2º Mês Leve" ]
-    reformatted_df[columns_to_multiply] = reformatted_df[columns_to_multiply].apply(pd.to_numeric, errors='coerce')  # Garantir que as colunas sejam numérica
+    reformatted_df[columns_to_multiply] = reformatted_df[columns_to_multiply].apply(pd.to_numeric, errors='coerce')
     reformatted_df[columns_to_multiply] *= 1000  # Multiplicar por 1000
+    
     return reformatted_df
 
 #============================================================================================
@@ -450,9 +425,9 @@ def reformat_dataframe(df, dict_num):
 
 
 if __name__ == "__main__":
-    organizar_info_eolica_nw([
-        '/home/arthur-moraes/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_22805/NW202503/sistema.dat'
-        ], datetime.date(2025,1,22))
+    # organizar_info_eolica_nw([
+    #     '/home/arthur-moraes/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_22805/NW202503/sistema.dat'
+    #     ], datetime.date(2025,1,22))
 #     rvs = ['2024-11-30',
 #  '2024-12-07',
 #  '2024-12-14',
@@ -463,3 +438,8 @@ if __name__ == "__main__":
 #     for rv in rvs:
 #         print(wx_opweek.ElecData(datetime.datetime.strptime(rv, "%Y-%m-%d")).atualRevisao)
     # teste = ler_csv_para_dicionario("/home/arthur-moraes/Downloads/Deck_PrevMes_20241128/Arquivos Saida/Previsoes Subsistemas Finais/Total/Prev_20241128_Semanas_20241130_20250103.csv")
+
+    info_cvu = organizar_info_cvu(
+        titles_fonte_to_search=['CCEE_conjuntural_revisado','CCEE_merchant'],
+        dt_atualizacao=datetime.date(2025,2,7)
+        )

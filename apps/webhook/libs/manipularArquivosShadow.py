@@ -2,14 +2,18 @@ import os
 import sys
 import pdb
 import glob
+import base64
 import datetime
 import io
 import csv
 import logging
 import zipfile
 import pandas as pd
-import requests as r
+import requests as req
+import hashlib
+
 from dotenv import load_dotenv
+from airflow.exceptions import AirflowSkipException
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
@@ -22,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 __HOST_SERVIDOR = os.getenv('HOST_SERVIDOR')
+__URL_COGNITO = os.getenv('URL_COGNITO')
+__CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
 
 path_libs = os.path.dirname(os.path.abspath(__file__))
 path_webhook = os.path.dirname(path_libs)
@@ -52,6 +58,90 @@ PATH_PLAN_ACOMPH_RDH = os.path.join(path_fontes,"PMO","monitora_ONS","plan_acomp
 GERAR_PRODUTO = gerarProdutos2.GerardorProdutos()
 DIR_TOOLS = rz_dir_tools.DirTools()
 
+
+def hex_hash(s):
+    h = hashlib.new('sha512')
+    h.update(s.encode())
+    hx = h.hexdigest()
+    return hx
+
+
+def get_auth():
+    response = req.post(
+        __URL_COGNITO,
+        data=__CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    headers = {
+        'Authorization': f"Bearer {response.json()['access_token']}"
+    }
+    
+    return headers
+
+
+def get_filename(dadosProduto:dict):
+    path_download = os.path.join(PATH_WEBHOOK_TMP, dadosProduto['nome'])
+    os.makedirs(path_download, exist_ok=True)
+
+    if dadosProduto.get('origem') == "botSintegre":
+        filename = _handle_bot_sintegre_file(dadosProduto, path_download)
+    elif dadosProduto.get('origem') == "sqsSintegre":
+        filename = _handle_sqs_sintegre_file(dadosProduto, path_download)
+    elif dadosProduto.get('webhookId'):
+        filename = _handle_webhook_file(dadosProduto, path_download)
+    else:
+        filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
+
+    if dadosProduto.get('origem') != "botSintegre":
+        _verify_file_is_new(filename, dadosProduto['nome'])
+
+    return filename
+
+def _handle_bot_sintegre_file(dadosProduto: dict, path_download: str) -> str:
+    source_file = dadosProduto['base64']
+    dest_file = os.path.join(path_download, dadosProduto['filename'])
+    os.system(f"cp -r {source_file} {path_download}")
+    return dest_file
+
+def _handle_sqs_sintegre_file(dadosProduto: dict, path_download: str) -> str:
+    filename = os.path.join(path_download, dadosProduto['filename'])
+    file_bytes = base64.b64decode(dadosProduto['base64'])
+    with open(filename, 'wb') as file:
+        file.write(file_bytes)
+    return filename
+
+def _handle_webhook_file(dadosProduto: dict, path_download: str) -> str:
+    filename = os.path.join(path_download, dadosProduto['filename'])
+    auth = get_auth()
+    
+    res = req.get(
+        f"https://tradingenergiarz.com/new-webhook/api/webhooks/{dadosProduto['webhookId']}/download", 
+        headers=auth
+    )
+    if res.status_code != 200:
+        raise Exception(f"Erro ao baixar arquivo do S3: {res.text}")
+        
+    file_content = req.get(res.json()['url'])
+    with open(filename, 'wb') as f:
+        f.write(file_content.content)
+    return filename
+
+def _verify_file_is_new(filename: str, product_name: str) -> None:
+    try:
+        with open(filename, "rb") as f:
+            data = f.read()
+    except:
+        print(f"erro ao escrever arquivo no manipularArquivosShadow ")
+        raise
+
+    file_hash = hex_hash(base64.b64encode(data).decode('utf-8'))
+    is_new = req.post(
+        "https://tradingenergiarz.com/api/v2/bot-sintegre/verify",
+        json={"nome": product_name, "fileHash": file_hash}
+    ).json()
+
+    if not is_new:
+        raise AirflowSkipException("Produto ja inserido")
 
 def resultados_preliminares_consistidos(dadosProduto):
 
@@ -106,16 +196,6 @@ def arquivo_acomph(dadosProduto):
     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
     logger.info(path_copia_tmp)
 
-    airflow_tools.trigger_airflow_dag(
-        dag_id="1.8-PROSPEC_GRUPOS-ONS",
-        json_produtos={}
-        )
-    
-    airflow_tools.trigger_airflow_dag(
-        dag_id="1.1-PROSPEC_PCONJUNTO_DEFINITIVO",
-        json_produtos={
-            'dt_ref':dadosProduto['dataProduto']
-            })
     
     vazao.importAcomph(filename)
 
@@ -131,6 +211,17 @@ def arquivo_acomph(dadosProduto):
         "destinatarioWhats": ["Condicao Hidrica"]
 
     })
+    if dadosProduto.get('enviar', True) == True:
+        airflow_tools.trigger_airflow_dag(
+            dag_id="1.8-PROSPEC_GRUPOS-ONS",
+            json_produtos={}
+            )
+        
+        airflow_tools.trigger_airflow_dag(
+            dag_id="1.1-PROSPEC_PCONJUNTO_DEFINITIVO",
+            json_produtos={
+                'dt_ref':dadosProduto['dataProduto']
+                })
 
 def arquivo_rdh(dadosProduto):
     filename = get_filename(dadosProduto)
@@ -218,12 +309,12 @@ def modelo_eta(dadosProduto):
         date_format='%d%m%y',
         dst=dst)
     logger.info(extracted_files)
-
-    airflow_tools.trigger_airflow_dag(
-        dag_id="PCONJUNTO",
-        json_produtos={
-            'dt_ref':dadosProduto['dataProduto']
-            })
+    if dadosProduto.get('enviar', True) == True:
+        airflow_tools.trigger_airflow_dag(
+            dag_id="PCONJUNTO",
+            json_produtos={
+                'dt_ref':dadosProduto['dataProduto']
+                })
 
 
 def carga_patamar(dadosProduto):
@@ -237,7 +328,7 @@ def carga_patamar(dadosProduto):
         "produto":"REVISAO_CARGA",
         "path":filename,
     })
-
+    
     return {
         "file_path": filename,
         "trigger_dag_id":"PROSPEC_UPDATER",
@@ -271,11 +362,12 @@ def deck_preliminar_decomp(dadosProduto):
         "produto":"CMO_DC_PRELIMINAR",
         "path":filename,
     })
-    airflow_tools.trigger_airflow_dag(
-        dag_id="2.0-BACKTEST-DECOMP",
-        json_produtos={
-            'dt_ref':dadosProduto['dataProduto']
-            })
+    if dadosProduto.get('enviar', True) == True:
+        airflow_tools.trigger_airflow_dag(
+            dag_id="2.0-BACKTEST-DECOMP",
+            json_produtos={
+                'dt_ref':dadosProduto['dataProduto']
+                })
 
     
 def deck_entrada_saida_dessem(dadosProduto):
@@ -303,12 +395,12 @@ def deck_entrada_saida_dessem(dadosProduto):
     
     dessem.organizarArquivosOns(dtRef, path_arquivos_ds, importarDb=False, enviarEmail=True)
     logger.info(f"Triggering DESSEM_convertido, dt_ref: {dadosProduto['dataProduto']}")
-    
-    airflow_tools.trigger_airflow_dag(
-        dag_id="DESSEM_convertido",
-        json_produtos={
-            'dt_ref':dadosProduto['dataProduto']
-            })
+    if dadosProduto.get('enviar', True) == True:
+        airflow_tools.trigger_airflow_dag(
+            dag_id="DESSEM_convertido",
+            json_produtos={
+                'dt_ref':dadosProduto['dataProduto']
+                })
     
     deck_ds.importar_renovaveis_ds(path_file=filename, dt_ref=dtRef, str_fonte='ons')
     
@@ -449,12 +541,12 @@ def modelo_ECMWF(dadosProduto):
         dst=dst,
         extracted_files=[])
     logger.info(extracted_files)
-
-    airflow_tools.trigger_airflow_dag(
-        dag_id="PCONJUNTO",
-        json_produtos={
-            'dt_ref':dadosProduto['dataProduto']
-            })
+    if dadosProduto.get('enviar', True) == True:
+        airflow_tools.trigger_airflow_dag(
+            dag_id="PCONJUNTO",
+            json_produtos={
+                'dt_ref':dadosProduto['dataProduto']
+                })
 
             
 def dados_geracaoEolica(dadosProduto):
@@ -499,12 +591,12 @@ def modelo_gefs(dadosProduto):
         dst=dst,
         extracted_files=[])
     logger.info(extracted_files)
-
-    airflow_tools.trigger_airflow_dag(
-        dag_id="PCONJUNTO",
-        json_produtos={
-            'dt_ref':dadosProduto['dataProduto']
-            })
+    if dadosProduto.get('enviar', True) == True:
+        airflow_tools.trigger_airflow_dag(
+            dag_id="PCONJUNTO",
+            json_produtos={
+                'dt_ref':dadosProduto['dataProduto']
+                })
 
 
 def vazoes_observadas(dadosProduto):
@@ -556,11 +648,21 @@ def resultados_nao_consistidos_semanal(dadosProduto):
     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_decomp_downloads)
     logger.info(path_copia_tmp)
 
-    wx_libs_preco.nao_consistido_rv(filename)
+    titulo, html = wx_libs_preco.nao_consistido_rv(filename)
+    
+    data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto'), "%d/%m/%Y")
+    
     # manda arquivo .zip para maquina newave'
     cmd = f"cp {filename} /WX/SERVER_NW/WX4TB/Documentos/fontes/PMO/decomp/entradas/DC_preliminar/;"
     os.system(cmd)
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
+    "produto":"PREV_ENA_CONSISTIDO",
+    "data":data_produto,
+    "titulo":titulo,
+    "html":html
 
+    })
 
 
     
@@ -586,6 +688,7 @@ def relatorio_resutados_finais_consistidos(dadosProduto):
         GERAR_PRODUTO.enviar({
     "produto":"PREVISAO_ENA_SUBMERCADO",
     "data":dtPrevisao,
+    
     })
 
 def niveis_partida_dessem(dadosProduto):
@@ -684,8 +787,12 @@ def ler_csv_prev_weol_para_dicionario(file):
     
     
 def deck_prev_eolica_semanal_patamares(dadosProduto):
-    res  = r.get(dadosProduto["url"])
-    zip_file = zipfile.ZipFile(io.BytesIO(res.content))
+    try:
+        res  = req.get(dadosProduto["url"])
+        zip_file = zipfile.ZipFile(io.BytesIO(res.content))
+    except:
+        zip_file = zipfile.ZipFile(dadosProduto["base64"])
+        
     
     patamates_csv_path = [x for x in zip_file.namelist() if "Arquivos Entrada/Dados Cadastrais/Patamares_" in x and ".csv" in x]
     patamates_csv_path = patamates_csv_path[0]
@@ -696,15 +803,19 @@ def deck_prev_eolica_semanal_patamares(dadosProduto):
         df_patamares = pd.read_csv(io.StringIO(content.decode("latin-1")), sep=";")
         df_patamares.columns = [x[0].lower() + x[1:] for x in df_patamares.columns]
     df_patamares.columns = ['inicio','patamar','cod_patamar','dia_semana','dia_tipico','tipo_dia','intervalo','dia','semana','mes']
-    post_patamates = r.post(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares", json=df_patamares.to_dict("records"))
+    post_patamates = req.post(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares", json=df_patamares.to_dict("records"))
     if post_patamates.status_code == 200:
         logger.info("Patamares inseridos com sucesso")
     else:
         logger.error(f"Erro ao inserir patamares. status code: {post_patamates.status_code}")
 
 def deck_prev_eolica_semanal_previsao_final(dadosProduto):
-    res  = r.get(dadosProduto["url"])
-    zip_file = zipfile.ZipFile(io.BytesIO(res.content))
+    res  = req.get(dadosProduto["url"])
+    try:
+        res  = req.get(dadosProduto["url"])
+        zip_file = zipfile.ZipFile(io.BytesIO(res.content))
+    except:
+        zip_file = zipfile.ZipFile(dadosProduto["base64"])
     
     ## puxando arquivo baixado locakmente ##
     # zip_file = zipfile.ZipFile("/home/arthur-moraes/Downloads/Deck_PrevMes_20241116.zip")
@@ -731,13 +842,14 @@ def deck_prev_eolica_semanal_previsao_final(dadosProduto):
                         "valor":info_weol[data][submercado][patamar],
                         "data_produto":str(datetime.datetime.strptime(dadosProduto['dataProduto'], "%d/%m/%Y").date())})
         
-    post_decks_weol = r.post(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol", json=body_weol)
+    post_decks_weol = req.post(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol", json=body_weol)
     if post_decks_weol.status_code == 200:
         logger.info("WEOL inserido com sucesso")
     else:
         logger.error(f"Erro ao inserir WEOL. status code: {post_decks_weol.status_code}")
         
 def deck_prev_eolica_semanal_weol(dadosProduto:dict):
+    filename = get_filename(dadosProduto)
     airflow_tools.trigger_airflow_dag(
         dag_id="webhook_deck_prev_eolica_semanal_weol",
         json_produtos=dadosProduto
@@ -755,23 +867,27 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
         "produto":"TABELA_WEOL_SEMANAL",
         "data":data_produto.date(),
     })
-
-def get_filename(dadosProduto:dict):
-    filename:str
-    if dadosProduto.get('origem') == "botSintegre":
-        filename = dadosProduto['url']
-    else:
-        path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-        filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
-    return filename
-
+        
+def relatorio_limites_intercambio(dadosProduto):
+    
+    filename = get_filename(dadosProduto)
+    logger.info(filename)
+    return {
+        "file_path": filename,
+        "trigger_dag_id":"PROSPEC_UPDATER",
+        "task_to_execute": "revisao_restricao"
+    }
 
 
 if __name__ == '__main__':
-    # deck_prev_eolica_semanal_patamares({"dataProduto":"28/11/2024"})
-    deck_prev_eolica_semanal_previsao_final({"dataProduto":"16/11/2024"})
-    # Copiar os parametros no airflow e colar aqui para testar
-    # params = {"product_details": {"nome": "Arquivos dos modelos de previs\u00e3o de vaz\u00f5es di\u00e1rias - PDP", "processo": "Previs\u00e3o de Vaz\u00f5es Di\u00e1rias - PDP", "dataProduto": "22/07/2024", "macroProcesso": "Programa\u00e7\u00e3o da Opera\u00e7\u00e3o", "periodicidade": "2024-07-22T00:00:00", "periodicidadeFinal": "2024-07-22T23:59:59", "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy84Mi9Qcm9kdXRvcy8yMzgvTW9kZWxvc19DaHV2YV9WYXphb18yMDI0MDcyMi56aXAiLCJ1c2VybmFtZSI6InRoaWFnby5zY2hlckByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJBcnF1aXZvcyBkb3MgbW9kZWxvcyBkZSBwcmV2aXPDo28gZGUgdmF6w7VlcyBkacOhcmlhcyAtIFBEUCIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzIxODIzNjgxLCJuYmYiOjE3MjE3MzcwNDF9.jvsi4HOIZsme-EqFHlgocqTZe4W2DDuL13E3NCBqoGY"}, "function_name": "arquivos_modelo_pdp"}
-    # function_name = params.get('function_name')
-    # product_details = params.get('product_details')
-    # arquivos_modelo_pdp(product_details)
+    
+    path_base = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/webhook/libs/psath_08012025.zip"
+    with open(path_base, "rb") as f:
+        data = f.read()
+    
+    get_filename({
+        "nome":"psath",
+        "filename":"psath_08012025.zip",
+        "base64":base64.b64encode(data).decode('utf-8'),
+        "origem":"botSintegre"
+    })
