@@ -157,9 +157,11 @@ class db_mysql_master():
         elif table_name.lower() == 'tb_smap':
             table_schema = db.Table('tb_smap', self.meta,
                 db.Column('id', db.Integer),
+                db.Column('id_pk', db.Integer),
                 db.Column('cd_posto', db.Integer),
                 db.Column('dt_prevista', db.Date),
-                db.Column('vl_vazao', db.Float),
+                db.Column('vl_vazao_vna', db.Float),
+                db.Column('vl_vazao_prevs', db.Float)
             )
             
         elif table_name.lower() == 'tb_prevs':

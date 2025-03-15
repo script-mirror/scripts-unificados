@@ -18,7 +18,7 @@ def get_ena_smap(id,data,df_smap_result_aux,df_pluviaBaciasinteresse,granularida
     data = datetime.datetime.strptime(data, '%Y-%m-%d')
     primeiro_dia = df_smap_result_aux['dt_prevista'].min()
     # pdb.set_trace()
-    df_pivot = df_smap_result_aux.pivot(index='dt_prevista', columns='cd_posto', values='vl_vazao').T
+    df_pivot = df_smap_result_aux.pivot(index='dt_prevista', columns='cd_posto', values='vl_vazao_vna').T
     # pdb.set_trace()
     INCREMENTAL_ITAIPU = df_pivot.loc[266].copy()
     vazao =wx_calcEna.propagarCalcularNaturais(data,df_pivot, dias=dias)
@@ -156,11 +156,11 @@ def query_smap_df(ids_cadastro_rodadas):
 
     ids_smap = ids_smap[~np.isnan(ids_smap)]
 
-    query_tb_smap = db.select(tb_smap.c.id, tb_smap.c.cd_posto, tb_smap.c.dt_prevista, tb_smap.c.vl_vazao)\
+    query_tb_smap = db.select(tb_smap.c.id, tb_smap.c.cd_posto, tb_smap.c.dt_prevista, tb_smap.c.vl_vazao_vna)\
                 .where(tb_smap.c.id.in_(ids_smap))
     result_tb_smap = dataBase.conn.execute(query_tb_smap)
     
-    df_tb_smap = pd.DataFrame(result_tb_smap.fetchall(), columns=['id', 'cd_posto', 'dt_prevista', 'vl_vazao'])
+    df_tb_smap = pd.DataFrame(result_tb_smap.fetchall(), columns=['id', 'cd_posto', 'dt_prevista', 'vl_vazao_vna'])
 
     # Juntar os DataFrames utilizando a coluna id e id_smap
     df_smap_result = pd.merge(df_tb_rodadas, df_tb_smap, left_on='id_smap', right_on='id', how='inner')
@@ -310,7 +310,7 @@ def calc_previsao_smap(df_modelos:pd.DataFrame,granularidade:str='submercado'):
     for cenario in df_modelos['cenario'].unique():
         print(cenario)
         df_cenario = df_modelos[df_modelos['cenario']==cenario]
-        df_pivot = df_cenario.pivot(index='dt_prevista', columns='cd_posto', values='vl_vazao').T
+        df_pivot = df_cenario.pivot(index='dt_prevista', columns='cd_posto', values='vl_vazao_vna').T
         data = df_cenario['dt_rodada'].unique()[0]
 
         acomph[data] = getAcomph(data-datetime.timedelta(days=7)) if not acomph.get(data) else acomph[data]
