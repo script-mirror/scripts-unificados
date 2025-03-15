@@ -38,7 +38,7 @@ def get_historico_rodadas_por_nome(
 @router.get('/chuva/previsao', tags=['Rodadas'])
 def get_chuva_previsao_por_id_data_entre_granularidade(
     nome_modelo:Optional[str] = None,
-    dt_hr_rodada:Optional[datetime.datetime] = None,
+    dt_hr_rodada:Optional[datetime.datetime] = None,                                                                                                                                                                                                                                            
     granularidade:Optional[GranularidadeEnum] = GranularidadeEnum.subbacia,
     id_chuva:Optional[int] = None,
     dt_inicio_previsao:Optional[datetime.date] = None,
@@ -123,10 +123,16 @@ def get_chuva_por_nome_modelo_data_entre_granularidade(
     granularidade:Optional[GranularidadeEnum] = GranularidadeEnum.subbacia,
     dt_inicio_previsao:Optional[datetime.date] = None,
     dt_fim_previsao:Optional[datetime.date] = None,
-    no_cache:Optional[bool] = False,
+    no_cache:Optional[bool] = False,            
     atualizar:Optional[bool] = False
 ):
     return rodadas_crud.ChuvaMembro.get_chuva_por_nome_modelo_data_entre_granularidade(nome_modelo,dt_hr_rodada,granularidade,dt_inicio_previsao,dt_fim_previsao,no_cache,atualizar)
+    
+    
+@router.get('/vazao/previsao', tags=['Rodadas'])
+def get_vazao_smap():
+    return rodadas_crud.Vazao.get_vazao_smap()
+    
     
 
 # @router.get("/protected-endpoint")

@@ -18,6 +18,7 @@ from app.utils.graphs import get_access_token
 from app.utils.airflow import airflow_tools 
 # from app.utils.airflow.airflow_tools import trigger_dag_SMAP
 from app.database.wx_dbClass import db_mysql_master
+import os
 
 
 prod = True
@@ -290,14 +291,32 @@ class Chuva:
         return df.to_dict('records')
     
     @staticmethod
-    def export_rain(id_rain: int) -> dict:
+    def get_vazao_por_id_entre_granularidade(
+        id_flow: int,
+        granularidade: str   
+    ):
+        query = db.select()
+    
+    
+    @staticmethod
+    def export_flow(
+        id_flow: int
+    ) -> dict:
+        def get_data_grouped(id_flow: int, granularidade: str):
+            return pd.DataFrame(Chuva.get_vazao_por_id_entre_granularidade(id_flow, granularidade))
         
-        def get_data_grouped(id_rain: int, granularidade: str):
-            return pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(id_rain, granularidade))
+    
+    @staticmethod
+    def export_rain(
+        id_type: int
+    ) -> dict:
         
-        df_map_grouped_by_subbacia = get_data_grouped(id_rain, 'subbacia')
-        df_map_grouped_by_bacia = get_data_grouped(id_rain, 'bacia')
-        df_map_grouped_by_submercado = get_data_grouped(id_rain, 'submercado')
+        def get_data_grouped(id_type: int, granularidade: str):
+            return pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(id_type, granularidade))
+        
+        df_map_grouped_by_subbacia = get_data_grouped(id_type, 'subbacia')
+        df_map_grouped_by_bacia = get_data_grouped(id_type, 'bacia')
+        df_map_grouped_by_submercado = get_data_grouped(id_type, 'submercado')
         
         df_subbacias = pd.DataFrame(Subbacia.get_subbacia())
         df_bacias = pd.DataFrame(ons_crud.tb_bacias.get_bacias('tb_chuva'))
@@ -319,70 +338,79 @@ class Chuva:
         data_rodada_date = datetime.datetime.combine(model_base['dt_rodada'], rodada_time)
         data_rodada_str = data_rodada_date.isoformat()
         data_rodada_str = f'{data_rodada_str}.000Z'
+        data_final = None
         modelo = model_base['modelo']
         grupo = "ONS" if 'ons' in model_base["modelo"].lower() else "RZ"
         viez = False if 'remvies' in model_base["modelo"].lower() else True
-        cor = get_color(modelo.upper())
         
         subbacia_values = df_map_grouped_by_subbacia[['dt_prevista', 'vl_chuva', 'nome']].to_dict('records')
         bacia_values = df_map_grouped_by_bacia[['dt_prevista', 'vl_chuva', 'nome']].to_dict('records')
         submercado_values = df_map_grouped_by_submercado[['dt_prevista', 'vl_chuva', 'str_sigla']].to_dict('records')
         
-        agrupamentos = {
-            "subbacia": subbacia_values,
-            "bacia": bacia_values,
-            "submercado": submercado_values
-        }
-        
         data = []
-        data_final = None
-        agrupamento_dict = {}
+        agrupamentos = {
+            'subbacia': {'valoresMapa': [], 'agrupamento': 'subbacia'},
+            'bacia': {'valoresMapa': [], 'agrupamento': 'bacia'},
+            'submercado': {'valoresMapa': [], 'agrupamento': 'submercado'}
+        }
 
-        for tipo, values in agrupamentos.items():
+        for tipo, values in [
+            ('subbacia', subbacia_values.to_dict('records')),
+            ('bacia', bacia_values.to_dict('records')),
+            ('submercado', submercado_values.to_dict('records'))
+        ]:
+            
             for value in values:
-                valorAgrupamento = value['nome'] if tipo == 'subbacia' else value['nome'] if tipo == 'bacia' else value['str_sigla']
-                
+                valorAgrupamento = value['nome'] if tipo in ['subbacia', 'bacia'] else value['str_sigla']
                 data_referente_date = datetime.datetime.strptime(value['dt_prevista'], '%Y-%m-%d')
-                
-                chave_agrupamento = (valorAgrupamento, tipo)
-                
-                if chave_agrupamento not in agrupamento_dict:
-                    agrupamento_dict[chave_agrupamento] = {
-                        "valoresMapa": [],
-                        "measuringUnit": "MWh",
-                        "agrupamento": {
-                            "valorAgrupamento": valorAgrupamento,
-                            "tipo": tipo
-                        }
-                    }
-                    data.append(agrupamento_dict[chave_agrupamento])
-                
-                agrupamento_dict[chave_agrupamento]["valoresMapa"].append({
+            
+                agrupamentos[tipo]['valoresMapa'].append({
                     "valor": value['vl_chuva'],
-                    "dataReferente": value['dt_prevista']
+                    "dataReferente": value['dt_prevista'],
+                    "valorAgrupamento": valorAgrupamento
                 })
-                
+            
                 if data_final is None or data_referente_date > data_final:
                     data_final = data_referente_date
                     data_final_str = value['dt_prevista']
-                    
+
+        data = [agrup for agrup in agrupamentos.values() if agrup['valoresMapa']]
 
         body = {
             "dataRodada": data_rodada_str,
             "dataFinal": data_final_str,
-            "mapName": f"{grupo}_{modelo}_{'comvies' if viez else 'semvies'}_{rodada}",
-            "modelo": modelo,
+            "mapType": "chuva",
+            "idType": str(id_type),
+            "modelo": model_base['modelo'],
+            "priority": None,
             "grupo": grupo,
-            "rodada": rodada.__str__(),
+            "rodada": str(model_base['hr_rodada']),
             "viez": viez,
             "membro": "0",
-            "color": cor,
-            "data": data,
+            "measuringUnit": "mm",
+            "propagationBase": None,
+            "generationProcess": "SMAP",
+            "data": data
         }
         
-        accessToken = get_access_token();
+        access_token = get_access_token();
+        api_url = os.getenv('API_URL', 'http://localhost:3000/api/map')
         
-        res = r.post('https://tradingenergiarz.com/backend/api/map', verify=False, json=body, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {accessToken}'})
+        
+        check_url = f"{api_url}/id_type/{id_type}"
+        res_check = r.get(check_url, verify=False, headers={'Authorization': f'Bearer {access_token}'})
+
+        if res_check.status_code == 200 and res_check.json():
+            existing_id = res_check.json().get('idType')
+            if existing_id:
+                delete_url = f"{api_url}/{existing_id}"
+                res_delete = r.delete(delete_url, verify=False, headers={'Authorization': f'Bearer {access_token}'})
+                if res_delete.status_code == 204:
+                    logger.info(f"Modelo {modelo} do dia {data_rodada_str} deletado com sucesso")
+                else:
+                    logger.warning(f"Erro ao tentar deletar o modelo {modelo} do dia {data_rodada_str}")
+                    
+        res = r.post(api_url, verify=False, json=body, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {access_token}'})
         
         try:
             res.raise_for_status()  
@@ -395,6 +423,7 @@ class Chuva:
                 logger.info(f"Modelo {modelo} do dia {data_rodada_str} inserido na API de visualizacao")
             else:
                 logger.warning(f"Erro ao tentar inserir o modelo {modelo} do dia {data_rodada_str} na API de visualizacao")
+                
         
         
     
@@ -647,6 +676,20 @@ class Subbacia:
          
 class Smap:
     tb:db.Table = __DB__.getSchema('tb_smap')
+    
+    @staticmethod
+    def get_vazao_smap():
+        query = db.select(
+            Smap.tb.c['id'],
+            Smap.tb.c['cd_posto'],
+            Smap.tb.c['dt_prevista'],
+            Smap.tb.c['vl_vazao']
+        )
+        result = __DB__.db_execute(query, commit=prod)
+        df = pd.DataFrame(result, columns=['id', 'cd_subbacia', 'dt_prevista', 'vl_vazao'])
+        return df.to_dict('records')
+    
+    
     @staticmethod
     def post_rodada_smap(rodada:RodadaSmap, prev_estendida:bool):
         momento_req:datetime.datetime = datetime.datetime.now()
