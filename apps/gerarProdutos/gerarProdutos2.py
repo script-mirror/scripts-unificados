@@ -55,6 +55,7 @@ class GerardorProdutos():
                 'Authorization': f'Bearer {get_access_token()}'
                 }
             )
+
         print("Status Code:", response.status_code)
 
 
