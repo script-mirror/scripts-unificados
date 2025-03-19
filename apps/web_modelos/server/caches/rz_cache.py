@@ -278,58 +278,62 @@ def get_token_cognito() -> str:
     )
     return response.json()['access_token']
   
+  
 def import_acomph_visualization_api(data_rodada:datetime.date):
+  
+  data_rodada_date = datetime.datetime.combine(data_rodada, datetime.time(0))
+  data_rodada_str = data_rodada_date.isoformat()
+  data_rodada_str = f'{data_rodada_str}.000Z'
+  
   body:dict = {
-  "dataRodada": f"{data_rodada}",
-  "mapName": "Acomph",
+  "dataRodada": data_rodada_str,
+  "dataFinal": data_rodada_str,
+  "mapType": "vazao",
+  "idType": "",
   "modelo": "Acomph",
+  "priority": None,
   "grupo": "ONS",
-  "viez": "false",
+  "rodada": "0",
+  "viez": True,
   "membro":"0",
+  "measuringUnit": "m3/s",
+  "propagationBase": "VNA",
+  "generationProcess": "SMAP",
   "data": []
   }
   
 
   for granularidade in ['submercado','bacia']:
-    acomph_cache = cache_acomph(prefixo="ACOMPH",granularidade=granularidade,dataInicial=datetime.datetime(2013,1, 1))
-    df = pd.DataFrame(acomph_cache).reset_index()
-    df.rename(columns={'index':'dataReferente'}, inplace=True)
-    
-    df['dataReferente'] = pd.to_datetime(df['dataReferente'])
-    df['dataReferente'] = df['dataReferente'].dt.strftime('%Y-%m-%d')
-    
-    colunas_agrupamento = df.columns.to_list()[1:]
-
-    for col in colunas_agrupamento:
-      df_ = df[['dataReferente', col]]
-      df_.rename(columns={col:'valor'}, inplace=True)
+        acomph_cache = cache_acomph(prefixo="ACOMPH",granularidade=granularidade,
+                                  dataInicial=data_rodada-datetime.timedelta(days=30))
+        
+        df = pd.DataFrame(acomph_cache).reset_index()
+        df.rename(columns={'index':'dataReferente'}, inplace=True)
+        
+        df['dataReferente'] = pd.to_datetime(df['dataReferente'])
+        df['dataReferente'] = df['dataReferente'].dt.strftime('%Y-%m-%d')
+        
+        valores_mapa = []
+        for idx, row in df.iterrows():
+            data = row['dataReferente']
+            for col in df.columns[1:]:  # Skip dataReferente column
+                valores_mapa.append({
+                    'dataReferente': data,
+                    'valor': row[col],
+                    'valorAgrupamento': col
+                })
+        
+        body["data"].append({
+            "valoresMapa": valores_mapa,
+            "agrupamento": granularidade
+        })
       
-      data =  {
-      "valoresMapa": [
-        {
-          "valor": "0",
-          "dataReferente": ""
-        }
-      ],
-      "measuringUnit": "ENA",
-      "agrupamento": {
-        "valorAgrupamento": "",
-        "tipo": ""
-      }
-    }
-      data['valoresMapa'] = df_.to_dict('records')
-      
-      data['agrupamento']['valorAgrupamento'] = col
-      data['agrupamento']['tipo'] = granularidade
-      body["data"].append(data)
-
   res = r.post('https://tradingenergiarz.com/backend/api/map',verify=False, json=body, headers={'Content-Type': 'application/json', "Authorization":f"Bearer {get_token_cognito()}"})
-  pdb.set_trace()
   
   if res.status_code == 201:
-    logger.info(f"acomph {data_rodada} inserido na API de visualizacao")
+    logger.info(f"Modelo do ACOMPH da data {data_rodada} inserido na API de visualizacao")
   else:
-    logger.warning(f"Erro ao tentar inserir acomph {data_rodada} na API de visualizacao")
+    logger.warning(f"Erro ao tentar inserir modelo do ACOMPH da data {data_rodada} na API de visualizacao")
     
 
 def printHelper():
@@ -411,6 +415,5 @@ if __name__ == '__main__':
   # rodadas.build_modelo_info_dict(granularidade = 'submercado', build_all_models=True)
 
   # teste = cache_rodadas_modelos('PREVISAO_ENA', rodadas)
-    runWithParams()
-  # import_acomph_visualization_api(datetime.datetime(2025,2,6))
-
+  runWithParams()
+  

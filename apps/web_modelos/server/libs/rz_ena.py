@@ -238,7 +238,7 @@ def getAcomph(data_inicial, data_final=None):
     .cte('cte_groups')
     )
     query = (
-        db.select([cte])
+        db.select(cte)
         .where(cte.c.row_num == 1)
         .order_by(cte.c.cd_posto, cte.c.dt_referente)
     )
