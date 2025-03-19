@@ -9,6 +9,16 @@ services:
       - data:/data/db
     networks:
       - server_database_network
+ 
+  mongosh:
+    image: mongodb/mongodb-community-server:latest
+    container_name: mongosh
+    entrypoint: mongosh
+    command: "mongodb://mongodb:27017/"
+    depends_on:
+      - mongodb
+    networks:
+      - server_database_network
 
 volumes:
   data:

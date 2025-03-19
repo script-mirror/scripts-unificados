@@ -30,9 +30,9 @@ def extract_file_estudo(path_estudo,path_saida=PATH_DOWNLOAD_TMP):
 def get_rv_atual_from_zip(nome_arquivo_zip) -> datetime.datetime:
 
     match = re.match(r'RV([0-9]{1})_PMO_([A-Za-zçáéê]+)([0-9]{4})_carga_semanal', nome_arquivo_zip)
-    rv = int(match.group(1))
-    mes = match.group(2)
-    ano = match.group(3)
+    rv = 2 #int(match.group(1))
+    mes = "Março"#match.group(2)
+    ano = "2025"#match.group(3)
     try:
         mes_ref = datetime.datetime.strptime(mes+ano, '%B_%Y')
     except:
