@@ -7,12 +7,14 @@ import pandas as pd
 import xarray as xr 
 import sqlalchemy as db
 from datetime import datetime, timedelta
-
+import requests
 path_fontes = "/WX2TB/Documentos/fontes/"
 sys.path.insert(1,path_fontes)
 from PMO.scripts_unificados.bibliotecas import wx_dbClass
 from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_chuva
 
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
 dirArqCoordenadasPsat = os.path.abspath('/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/tempo/arquivos/auxiliares/CV/')
 dirPrevisoesModelosRaizen = os.path.abspath('/WX4TB/Documentos/saidas-modelos/')
@@ -159,6 +161,17 @@ def leitura_chuva_netcdf(modelo,dt_rodada,rodada=""):
 
     return df_chuva
 
+def get_access_token() -> str:
+    URL_COGNITO = os.getenv('URL_COGNITO')
+    CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
+    
+    response = requests.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
+
 def importar_chuva_observada(modelo,dt_final_observado):
 
     if type(dt_final_observado) == datetime:
@@ -195,6 +208,22 @@ def importar_chuva_observada(modelo,dt_final_observado):
     print(f"{num_linhas_inseridas} Linhas inseridas na tb_chuva_obs")
 
     print(f"Dados do modelo {modelo} inseridos!")
+    WHATSAPP_API = os.getenv('WHATSAPP_API')
+    NUMERO_TESTE = os.getenv('NUMERO_TESTE')
+    fields={
+            "destinatario": NUMERO_TESTE,
+            "mensagem": f"Dados do modelo {modelo} inseridos!",
+        }
+    
+    response = requests.post(
+        WHATSAPP_API,
+        data=fields,
+        headers={
+            'Authorization': f'Bearer {get_access_token()}'
+            }
+        )
+    
+    print("Status Code:", response.status_code)
 
     return values_to_insert
 

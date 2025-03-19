@@ -7,6 +7,7 @@ from airflow.providers.ssh.operators.ssh import SSHOperator
 from airflow.providers.ssh.hooks.ssh import SSHHook
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.exceptions import AirflowSkipException
+import requests 
 
 import datetime
 import os
@@ -15,8 +16,49 @@ load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+WHATSAPP_API = os.getenv("WHATSAPP_API")
+URL_COGNITO = os.getenv("URL_COGNITO")
+CONFIG_COGNITO = os.getenv("CONFIG_COGNITO")
 
 TIME_OUT = 60*60*30
+
+def get_access_token() -> str:
+    response = requests.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
+
+def enviar_whatsapp_erro(context):
+    task_instance = context['task_instance']
+    dag_id = context['dag'].dag_id
+    task_id = task_instance.task_id
+    if task_id == "start_ec2":
+        return
+    msg = f"❌ Erro {dag_id}: *{task_id}*"
+    fields = {
+        "destinatario": "Airflow - Metereologia",
+        "mensagem": msg
+    }
+    headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
+    response = requests.post(WHATSAPP_API, data=fields, headers=headers)
+    print("Status Code:", response.status_code)
+ 
+def enviar_whatsapp_sucesso(context):
+    task_instance = context['task_instance']
+    dag_id = context['dag'].dag_id
+    task_id = task_instance.task_id
+    if task_instance.state == 'skipped' or task_id == "start_ec2":
+        return
+    msg = f"✅ Sucesso {dag_id}: *{task_id}*"
+    fields = {
+        "destinatario": "Airflow - Metereologia",
+        "mensagem": msg
+    }
+    headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
+    response = requests.post(WHATSAPP_API, data=fields, headers=headers)
+    print("Status Code:", response.status_code)
 
 def create_ec2_client(region):
     return boto3.client('ec2',
@@ -164,7 +206,11 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia']
+    tags=['Metereologia'],
+    default_args={
+        'on_failure_callback':enviar_whatsapp_erro,
+        'on_success_callback':enviar_whatsapp_sucesso
+    }
 ) as dag:
         
     start_ec2_task = BranchPythonOperator(
@@ -226,7 +272,11 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia']
+    tags=['Metereologia'],
+    default_args={
+        'on_failure_callback':enviar_whatsapp_erro,
+        'on_success_callback':enviar_whatsapp_sucesso
+    }
 ) as dag:
         
     start_ec2_task = PythonOperator(
@@ -276,7 +326,11 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia']
+    tags=['Metereologia'],
+    default_args={
+        'on_failure_callback':enviar_whatsapp_erro,
+        'on_success_callback':enviar_whatsapp_sucesso
+    }
 ) as dag:
         
     start_ec2_task = PythonOperator(
@@ -319,6 +373,61 @@ with DAG(
 ##################################################################################################
 
 with DAG(
+    'PREV_CHUVA_DB_ECMWF-AIFS',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule='0 4,16 * * *',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia'],
+    default_args={
+        'on_failure_callback':enviar_whatsapp_erro,
+        'on_success_callback':enviar_whatsapp_sucesso
+    }
+) as dag:
+        
+    start_ec2_task = PythonOperator(
+        task_id='start_ec2',
+        python_callable=start_instance,
+        # provide_context=True,
+    )
+    
+     # Task to run a command on the remote server
+    
+    run_forecast = SSHOperator(
+        do_xcom_push=False,
+        task_id='vl_chuva_to_db',
+        remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
+        ssh_conn_id='ssh_ecmwf',
+        command="{{ '/home/admin/enviMetereologia/bin/python /home/admin/rotinas/gera_forecast_to_db.py ecmwf-aifs' }}",
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+        trigger_rule=TriggerRule.ALL_DONE,
+
+        
+    )
+
+    stop_ec2_task = PythonOperator(
+        task_id='stop_ec2',
+        python_callable=stop_instance,
+        op_kwargs={'instance_id': 'i-0edbeb5435710d5f3', 'region': 'us-east-1'},
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    fim = DummyOperator(
+        task_id='fim',
+        trigger_rule="none_failed_min_one_success",
+    )
+    
+    start_ec2_task >> [run_forecast]  >> stop_ec2_task >> fim    
+
+
+##################################################################################################
+
+with DAG(
     'PREV_CHUVA_DB_GEFS-EST',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
@@ -326,7 +435,11 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia']
+    tags=['Metereologia'],
+    default_args={
+        'on_failure_callback':enviar_whatsapp_erro,
+        'on_success_callback':enviar_whatsapp_sucesso
+    }
 ) as dag:
         
     start_ec2_task = PythonOperator(
@@ -376,7 +489,11 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia']
+    tags=['Metereologia'],
+    default_args={
+        'on_failure_callback':enviar_whatsapp_erro,
+        'on_success_callback':enviar_whatsapp_sucesso
+    }
 ) as dag:
         
     start_ec2_task = PythonOperator(
@@ -426,7 +543,11 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia']
+    tags=['Metereologia'],
+    default_args={
+        'on_failure_callback':enviar_whatsapp_erro,
+        'on_success_callback':enviar_whatsapp_sucesso
+    }
 ) as dag:
         
     start_ec2_task = PythonOperator(
@@ -476,7 +597,11 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=['Metereologia']
+    tags=['Metereologia'],
+    default_args={
+        'on_failure_callback':enviar_whatsapp_erro,
+        'on_success_callback':enviar_whatsapp_sucesso
+    }
 ) as dag:
         
     start_ec2_task = PythonOperator(
@@ -806,7 +931,7 @@ with DAG(
     'Mapas_ECMWF-AIFS',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='0 5,10,18,23 * * *',
+    schedule='0 5,18 * * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -1211,7 +1336,7 @@ with DAG(
     'Mapas_PSAT',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='10 14 * * *',
+    schedule=None,
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -1636,5 +1761,39 @@ with DAG(
         execution_timeout = datetime.timedelta(hours=30),
         get_pty=True,
     )
+
+##################################################################################################
+
+with DAG(
+    'PREV_CHUVA_DB_MANUAL',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule=None,
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia']
+) as dag:
+         
+    start_ec2_task = PythonOperator(
+        task_id='start_ec2',
+        python_callable=start_instance,
+    )
+    
+    # Task to run a command on the remote server
+    chuva_db_manual = SSHOperator(
+        do_xcom_push=False,
+        task_id='task_teste',
+        remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
+        ssh_conn_id='ssh_ecmwf',
+        command="/home/admin/enviMetereologia/bin/python /home/admin/rotinas/gera_forecast_to_db_manual.py {{ dag_run.conf['modelo'] }} {{ dag_run.conf['data'] }} {{ dag_run.conf['hora'] }}",
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    start_ec2_task >> [chuva_db_manual]
 
 ##################################################################################################

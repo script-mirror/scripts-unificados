@@ -87,10 +87,11 @@ def organizar_info_carga(path_carga_zip,path_deck):
     bloco_dp['ip'] = bloco_dp['ip'].astype(int)
 
     nome_arquivo_zip = os.path.basename(path_carga_zip).split('.')[0]
-    inicio_rv_atual = utils.get_rv_atual_from_zip(nome_arquivo_zip)
+    inicio_rv_atual = datetime.date(int(df_dadger_novo['DT']['ano'].iloc[0]),int(df_dadger_novo['DT']['mes'].iloc[0]),int(df_dadger_novo['DT']['dia'].iloc[0]))
+    
 
-    semana_eletrica_atual = wx_opweek.ElecData(inicio_rv_atual.date())
-    semana_eletrica = wx_opweek.ElecData(inicio_rv_atual.date())
+    semana_eletrica_atual = wx_opweek.ElecData(inicio_rv_atual)
+    semana_eletrica = wx_opweek.ElecData(inicio_rv_atual)
     semanas_a_remover = 0
 
     novo_bloco = {}

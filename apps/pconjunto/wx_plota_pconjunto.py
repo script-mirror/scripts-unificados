@@ -45,7 +45,10 @@ def cria_xarray_etabase(df):
 				coord = coord.split(',')
 				lon = float(coord[0])
 				lat = float(coord[1])
-				ds.loc[dict(time=dt,lon=lon,lat=lat)] = df.loc[subBac,dt]
+				try:
+					ds.loc[dict(time=dt,lon=lon,lat=lat)] = df.loc[subBac,dt]
+				except:
+					print(f"subbacia {subBac} nao mapeada")
 
 	return ds
 

@@ -1,6 +1,8 @@
 import os
 import requests as req
 from dotenv import load_dotenv
+from random import randint
+import uuid
 
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
@@ -18,7 +20,7 @@ def get_access_token() -> str:
     return response.json()['access_token']
 
 
-def api_html_to_image_waze(html_str,path_save='out_put.png'):
+def api_html_to_image_waze(html_str,path_save=f'output{uuid.uuid4().hex}.png'):
     headers = {
     'Authorization': f'Bearer {get_access_token()}'
     }
@@ -29,7 +31,10 @@ def api_html_to_image_waze(html_str,path_save='out_put.png'):
         "quality": 100
         }
     }
+    
     response = req.post(URL_HTML_TO_IMAGE_WAZE, headers=headers, json=payload)
+    if response.status_code < 200 and response.status_code >= 300:
+        raise Exception(f"Erro ao gerar imagem: {response.status_code}")
     with open(path_save, 'wb') as f:
         f.write(response.content)
     print(f"Salvo em: {os.path.abspath(path_save)}")

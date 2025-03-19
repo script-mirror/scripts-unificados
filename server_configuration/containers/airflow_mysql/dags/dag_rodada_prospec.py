@@ -59,6 +59,7 @@ with DAG(
 
     run_script_task >> run_prospec_on_host
 
+# python /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script/mainRodadaAutoProspec.py prevs PREVS_PLUVIA_2_RV rvs 2 preliminar 0 nome_estudo CVU-ATUALIZADO
 # Definindo a DAG para '1.1-PROSPEC_PCONJUNTO_DEFINITIVO'
 with DAG(
     default_args=default_args,
@@ -98,7 +99,7 @@ with DAG(
         get_pty=True,
     )
 
-
+ # 
 # Definindo a DAG para '1.3-PROSPEC_1RV'
 with DAG(
     default_args=default_args,

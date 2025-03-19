@@ -1,22 +1,32 @@
 import os
 import boto3
 from airflow import DAG
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.providers.ssh.operators.ssh import SSHOperator
 from airflow.operators.python_operator import PythonOperator
-
-
-
 from dotenv import load_dotenv
+import requests
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+
+HOST_SERVIDOR = os.getenv("HOST_SERVIDOR")
+URL_COGNITO = os.getenv("URL_COGNITO")
+CONFIG_COGNITO = os.getenv("CONFIG_COGNITO")
 
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 
 TIME_OUT = 60*60*30
 
+def get_access_token() -> str:
+    response = requests.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
+ 
 
 def create_ec2_client(region):
     return boto3.client('ec2',
@@ -216,7 +226,10 @@ def cmd_command(**kwargs):
     print(f"Comando: {cmd}")
     kwargs['ti'].xcom_push(key='command', value=cmd)
 
-
+def export_to_api():
+    headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
+    requests.post(f"{HOST_SERVIDOR}:8000/api/v2/rodadas/export-rain-obs", params={"data":f"{date.today()}", "qtd_dias":30}, headers=headers)
+    return None
 with DAG(
     'OBS_CHUVA_DB_MERGE-CPTEC-DAILY',
     start_date= datetime(2024, 4, 28),
@@ -254,6 +267,12 @@ with DAG(
         do_xcom_push=False,
         
     )
+    
+    export_to_api = PythonOperator(
+        task_id = 'export_to_api',
+        python_callable = export_to_api,
+        trigger_rule=TriggerRule.ALL_DONE
+    )
 
 
     fim = DummyOperator(
@@ -261,4 +280,4 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
     )
     
-    start_ec2_task >> inicio >> run >> fim
+    start_ec2_task >> inicio >> run >> export_to_api >> fim

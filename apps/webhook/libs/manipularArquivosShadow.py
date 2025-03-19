@@ -262,7 +262,8 @@ def historico_preciptacao(dadosProduto):
     )
 
     chuva.importar_chuva_psath(filename)
-    
+    airflow_tools.trigger_airflow_dag(
+            dag_id="Mapas_PSAT")
     #rodar smap
     # SmapTools.trigger_dag_SMAP(dtRef)
 
@@ -278,12 +279,14 @@ def historico_preciptacao(dadosProduto):
         "produto":"PSATH_DIFF",
         "path":filename,
     })
-    #gerar Produto
-    if dadosProduto.get('enviar', True) == True:
         GERAR_PRODUTO.enviar({
         "produto":"DIFERENCA_CV",
         "data":dtRef,
     })
+    
+    #gerar Produto
+
+        
 
 
 def modelo_eta(dadosProduto):
@@ -636,7 +639,12 @@ def psat_file(dadosProduto):
 
     #cria figuras
     plot.plotPrevDiaria(modelo="psat",dataPrevisao=dtRef,rodada=0)
-    wx_plota_pconjunto.plota_psat(dtRef)
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
+    "produto":"MAPA_PSAT",
+    "data":dtRef.date()
+    })
+    # wx_plota_pconjunto.plota_psat(dtRef)
 
 
 def resultados_nao_consistidos_semanal(dadosProduto):
@@ -882,12 +890,23 @@ def relatorio_limites_intercambio(dadosProduto):
 if __name__ == '__main__':
     
     path_base = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/webhook/libs/psath_08012025.zip"
-    with open(path_base, "rb") as f:
-        data = f.read()
+    # with open(path_base, "rb") as f:
+        # data = f.read()
+    # 
+    # get_filename({
+        # "nome":"psath",
+        # "filename":"psath_08012025.zip",
+        # "base64":base64.b64encode(data).decode('utf-8'),
+        # "origem":"botSintegre"
+    # })
+    psat_file({
+        "base64": "/WX2TB/Documentos/fontes/PMO/raizen-power-trading-bot-sintegre/app/products/psat_12032025.txt",
+        "dataProduto": "12/03/2025",
+        "enviar": True,
+        "file_hash": "cba4273bac993ae1baa10d8268f72657d255db88cef936d1a57ec2b1f6fc4fec1dd13606179b653216d1d18ac60ab9486fa144e0632e66deb91878962f622afc",
+        "filename": "psat_12032025.txt",
+        "nome": "Precipitacao_por_Satelite",
+        "origem": "botSintegre"
+    }
+)
     
-    get_filename({
-        "nome":"psath",
-        "filename":"psath_08012025.zip",
-        "base64":base64.b64encode(data).decode('utf-8'),
-        "origem":"botSintegre"
-    })
