@@ -266,10 +266,10 @@ def api_html_to_image_waze(html_str,path_save=f'output{uuid.uuid4().hex}.png'):
     return os.path.abspath(path_save)
 
 
-
-def api_html_to_image(html_str,path_save='out_put.png'):
+from random import randint
+def api_html_to_image(html_str,path_save=f'output{randint(0, 9999)}.png'):
     
-    return api_html_to_image_waze(html_str, path_save)
+    # return api_html_to_image_waze(html_str, path_save)
 
     __API_URL_HCTI = os.getenv('API_URL_HCTI') 
     __USER_HCTI = os.getenv('USER_HCTI') 

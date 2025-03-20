@@ -44,7 +44,7 @@ def api_html_to_image_waze(html_str,path_save=f'output{uuid.uuid4().hex}.png'):
 
 def api_html_to_image(html_str,path_save='out_put.png'):
     
-    return api_html_to_image_waze(html_str, path_save)
+    # return api_html_to_image_waze(html_str, path_save)
 
     __API_URL_HCTI = os.getenv('API_URL_HCTI') 
     __USER_HCTI = os.getenv('USER_HCTI') 
