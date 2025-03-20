@@ -325,6 +325,7 @@ def post_prev_chuva(df_previsao_modelos):
     for modelo in df_previsao_modelos['modelo'].unique():
         previsao_modelos = df_previsao_modelos[df_previsao_modelos['modelo']==modelo][['cd_subbacia','dt_prevista','vl_chuva','modelo','dt_rodada']]
         previsao_modelos = previsao_modelos.dropna()
+        previsao_modelos['modelo'] = previsao_modelos['modelo'].str.replace('eta40-ons', 'eta-ons') #mudança no nome do modelo para padronizar com os outros
         response = requests.post(
                 'https://tradingenergiarz.com/api/v2/rodadas/chuva/previsao/modelos?prev_estendida=true',
                 verify=False,
