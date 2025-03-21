@@ -19,6 +19,7 @@ PRODUTCS_MAPPING = {
         'PRECIPTACAO_MODELO': "processar_produto_PRECIPTACAO_MODELO",
         'IPDO': "processar_produto_IPDO",
         'ACOMPH': "processar_produto_ACOMPH",
+        'ACOMPH_TABELA': "processar_produto_ACOMPH_tabelas_whatsapp",
         'RDH': "processar_produto_RDH",
         'RELATORIO_BBCE': "processar_produto_RELATORIO_BBCE",
         'RESULTADO_DESSEM': "processar_produto_RESULTADO_DESSEM",
