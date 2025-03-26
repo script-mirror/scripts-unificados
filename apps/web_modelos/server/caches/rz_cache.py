@@ -222,7 +222,7 @@ def import_ena_visualization_api(dt_rodada,):
           for row_index in range(1, len(row.index)):
               valores_mapa.append({
                   "valor": row.values[row_index],
-                  "dataReferente": f"{row['dt_prevista'].max()}.000Z".replace(' ', 'T'),
+                  "dataReferente": f"{row['dt_prevista']}.000Z".replace(' ', 'T'),
                   "valorAgrupamento": row.index[row_index]
               })
       payload['data'].append({'valoresMapa': valores_mapa, 'agrupamento': granularidade})
