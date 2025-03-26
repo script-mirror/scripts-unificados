@@ -105,6 +105,15 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
 
     )
+    atualizar_cache = SSHOperator(
+        task_id='atualizar_cache',
+        ssh_conn_id='ssh_master',
+        command='{{". /WX2TB/pythonVersions/myVenv38/bin/activate;cd /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/web_modelos/server/caches;python rz_cache.py import_ena_visualization_api"}}',
+        conn_timeout = None,
+        cmd_timeout = None,
+        get_pty=True,
+        trigger_rule="all_done",
+    )
     
     # Definindo a sequência
     t_create_smap >> t_build_arq_entrada >> t_run_smap >> t_import_vazao_prevista >> t_run_previvaz

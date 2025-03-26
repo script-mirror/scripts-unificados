@@ -4,7 +4,7 @@ import pdb
 import logging
 import datetime
 import pandas as pd
-import requests as r
+import requests as req
 from typing import Callable
 from dotenv import load_dotenv
 sys.path.insert(1,"/WX2TB/Documentos/fontes")
@@ -157,9 +157,86 @@ def atualizar_cache_acomph(dt_inicial, reset=False):
 
   cache_acomph(prefixo="ACOMPH",granularidade='submercado',dataInicial=dt_inicial,flag_atualizar=True,reset=reset)
   cache_acomph(prefixo="ACOMPH",granularidade='bacia',dataInicial=dt_inicial,flag_atualizar=True,reset=reset)
-  # import_acomph_visualization_api(dt_inicial)
+  import_acomph_visualization_api(dt_inicial)
 
   print("CACHE ACOMPH ATUALIZADO!")
+  
+  
+def import_ena_visualization_api(dt_rodada,): 
+  print(dt_rodada)
+  rodadas = rz_rodadasModelos.Rodadas(dt_rodada = dt_rodada)
+  params = rodadas.build_modelo_info_dict(granularidade = "submercado", build_all_models=True)
+  
+  for id_rodada in params['rodadas']:
+    
+    rodada = params.copy()
+    rodada_info = params['rodadas'][id_rodada]
+    rodada['rodadas'] = {id_rodada: rodada_info}
+    
+    info_rodada = req.get(f"https://tradingenergiarz.com/api/v2/rodadas/por-id/{id_rodada}").json()
+    viez = 'remvies' not in info_rodada['str_modelo'].lower()
+
+    if 'ons' in info_rodada['str_modelo'].lower(): grupo = 'ons'
+    elif 'rz' in info_rodada['str_modelo'].lower(): grupo = 'rz'
+    else: grupo = 'rz'
+
+    if info_rodada['fl_preliminar']: prioridade = 'preliminar'
+    elif info_rodada['fl_pdp']: prioridade = 'pdp'
+    elif info_rodada['fl_psat']: prioridade = 'psat'
+    else: prioridade = None
+
+    modelos = ['ECMWF-AIFS','ECMWF-ENS','ECMWF-EST','ECMWF','ETA','GEFS-EST','GEFS','GFS','PCONJUNTO2','PCONJUNTO','PMEDIA']
+    modelo:str
+    for modelo_base in modelos:
+        if modelo_base in info_rodada['str_modelo'].upper():
+            modelo = modelo_base
+            break
+
+    
+    payload = {
+            "dataRodada": f"{info_rodada['dt_rodada']}T00:00:00.000Z",
+            "dataFinal":  None,
+            "mapType": 'ena',
+            "idType": f"{info_rodada['id']}",
+            "modelo": modelo,
+            "grupo": grupo,
+            "rodada": str(int(info_rodada['hr_rodada'])),
+            "viez": viez,
+            "membro": "0",
+            "propagationBase": "VNA",
+            "priority": prioridade,
+            "measuringUnit": "MWm",
+            "generationProcess": "SMAP",
+            "data": []
+        }
+    
+
+    for granularidade in ['submercado','bacia']:
+      
+      ena = cache_rodadas_modelos("PREVISAO_ENA",params,False)[0]['valores']
+      df = pd.DataFrame(ena).reset_index().rename(columns={'index': 'dt_prevista'})
+      df = df.astype({'dt_prevista': 'datetime64[ns]'})
+      valores_mapa = []
+      
+      for i, row in df.iterrows():
+          for row_index in range(1, len(row.index)):
+              valores_mapa.append({
+                  "valor": row.values[row_index],
+                  "dataReferente": f"{row['dt_prevista'].max()}.000Z".replace(' ', 'T'),
+                  "valorAgrupamento": row.index[row_index]
+              })
+      payload['data'].append({'valoresMapa': valores_mapa, 'agrupamento': granularidade})
+
+    payload['dataFinal'] = f"{df['dt_prevista'].max()}.000Z".replace(' ', 'T')
+    res = req.post('https://tradingenergiarz.com/backend/api/map', json=payload, headers={'Content-Type': 'application/json', "Authorization":f"Bearer {get_token_cognito()}"})
+
+    if res.status_code == 201:
+      logger.info(f"Rodada id {id_rodada} inserido na API de visualizacao")
+    else:
+      logger.warning(f"Erro ao tentar inserir rodada {id_rodada} na API de visualizacao")
+    
+    # cache_data_chuva = cache_rodadas_modelos("PREVISAO_CHUVA",params,reset)
+    # print(f"Cache CHUVA {granularidade} ({dt_rodada}), atualizado!")
 
 def cache_rdh(ano: str, tipo:str, atualizar:bool = False):
   key = f'{tipo}:{ano}'
@@ -270,7 +347,7 @@ def cache_previsao_modelos(key:str, dts_rodada_list:list,granularidade:str='subm
 
 
 def get_token_cognito() -> str:
-    response = r.post(
+    response = req.post(
         URL_COGNITO,
         data=CONFIG_COGNITO,
 
@@ -328,7 +405,7 @@ def import_acomph_visualization_api(data_rodada:datetime.date):
             "agrupamento": granularidade
         })
       
-  res = r.post('https://tradingenergiarz.com/backend/api/map',verify=False, json=body, headers={'Content-Type': 'application/json', "Authorization":f"Bearer {get_token_cognito()}"})
+  res = req.post('https://tradingenergiarz.com/backend/api/map', json=body, headers={'Content-Type': 'application/json', "Authorization":f"Bearer {get_token_cognito()}"})
   
   if res.status_code == 201:
     logger.info(f"Modelo do ACOMPH da data {data_rodada} inserido na API de visualizacao")
@@ -351,7 +428,11 @@ def printHelper():
               sys.argv[0], 
               hoje.strftime("%Y-%m-%d"),
               ))
-
+  print("python {} import_ena_visualization_api dt_rodada {}".format(
+              sys.argv[0], 
+              hoje.strftime("%Y-%m-%d"),
+              ))
+  
   print("python {} atualizar_cache_comparativo_carga_newave data {}".format(
               sys.argv[0], 
               hoje.strftime("%Y-%m-%d")
@@ -393,7 +474,10 @@ def runWithParams():
       #funções
       if sys.argv[1].lower() == 'atualizar_cache_rodada_modelos':
         atualizar_cache_rodada_modelos(data.strftime("%Y-%m-%d"),reset= reset)
-
+        
+      if sys.argv[1].lower() == 'import_ena_visualization_api':
+        import_ena_visualization_api(data.strftime("%Y-%m-%d"))
+        
       elif sys.argv[1].lower() == 'atualizar_cache_acomph':
         atualizar_cache_acomph(data, reset= reset)
 
