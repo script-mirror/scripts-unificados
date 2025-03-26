@@ -162,13 +162,13 @@ def atualizar_cache_acomph(dt_inicial, reset=False):
   print("CACHE ACOMPH ATUALIZADO!")
   
   
-def import_ena_visualization_api(dt_rodada,): 
+def import_ena_visualization_api(dt_rodada, id_nova_rodada): 
   print(dt_rodada)
   rodadas = rz_rodadasModelos.Rodadas(dt_rodada = dt_rodada)
   params = rodadas.build_modelo_info_dict(granularidade = "submercado", build_all_models=True)
-  
+
+  params['rodadas'] = [x for x in params['rodadas'] if x['id_rodada'] == id_nova_rodada]
   for id_rodada in params['rodadas']:
-    
     rodada = params.copy()
     rodada_info = params['rodadas'][id_rodada]
     rodada['rodadas'] = {id_rodada: rodada_info}
@@ -192,7 +192,6 @@ def import_ena_visualization_api(dt_rodada,):
             modelo = modelo_base
             break
 
-    
     payload = {
             "dataRodada": f"{info_rodada['dt_rodada']}T00:00:00.000Z",
             "dataFinal":  None,
