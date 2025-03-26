@@ -128,6 +128,25 @@ def processar_produto_ACOMPH(parametros):
     return resultado
 
 
+def processar_produto_ACOMPH_tabelas_whatsapp(parametros):
+    
+    resultado = Resultado(parametros)
+    
+    dtReferente = parametros["data"]
+
+    html_tabela_acomph = rz_aux_libs.gerarTabelasEmailAcomph(dtReferente)
+    path_fig = api_html_to_image(html_tabela_acomph,path_save=os.path.join(PATH_WEBHOOK_TMP,f'acomph_{datetime.date.today()}.png'))
+    
+    resultado.fileWhats = path_fig
+    resultado.msgWhats = 'Acomph ({})'.format(dtReferente.strftime('%d/%m/%Y'))
+    resultado.flagWhats = True
+    resultado.destinatarioWhats = "Condicao Hidrica"
+    
+    return resultado
+    
+    
+    
+
 def processar_produto_RDH(parametros):
     resultado = Resultado(parametros)
     dtReferente = parametros["data"]

@@ -212,6 +212,14 @@ def arquivo_acomph(dadosProduto):
 
     })
     if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
+        "produto":"ACOMPH_TABELA",
+        "data" : dtRef,
+        "path":filename,
+        "destinatarioWhats": ["Condicao Hidrica"]
+
+    })
+    if dadosProduto.get('enviar', True) == True:
         airflow_tools.trigger_airflow_dag(
             dag_id="1.8-PROSPEC_GRUPOS-ONS",
             json_produtos={}

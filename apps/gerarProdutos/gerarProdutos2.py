@@ -96,6 +96,9 @@ class GerardorProdutos():
             elif parametros.get("teste_user") == 'tenorio':
                 resultado.destinatarioWhats='21981155829'
                 resultado.destinatarioEmail = ['rodrigo.tenorio@raizen.com']
+            elif parametros.get("teste_user") == 'diogo':
+                resultado.destinatarioWhats='11987354411'
+                resultado.destinatarioEmail = ['diogo.silva4@raizen.com']
                 
             if resultado.flagEmail:
 
