@@ -3,7 +3,8 @@ import requests as req
 from dotenv import load_dotenv
 from random import randint
 import uuid
-
+from PIL import Image
+from io import BytesIO
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
 
@@ -69,11 +70,11 @@ def api_html_to_image(html_str,path_save='out_put.png'):
     
     imagem=None
     for user, token in [(__USER_HCTI,__API_KEY_HCTI),(__USER_HCTI2, __API_KEY_HCTI2),(__USER_HCTI3,__API_KEY_HCTI3),(__USER_HCTI4,__API_KEY_HCTI4),(__USER_HCTI5,__API_KEY_HCTI5)]:
-        image = requests.post(url = __API_URL_HCTI, data = data, auth=(user, token))
+        image = req.post(url = __API_URL_HCTI, data = data, auth=(user, token))
         if image.status_code != 200:
             print(image.content)
             continue
-        resposta = requests.get(image.json()['url'])
+        resposta = req.get(image.json()['url'])
         imagem = Image.open(BytesIO(resposta.content))
         if image.status_code == 200:
             break
