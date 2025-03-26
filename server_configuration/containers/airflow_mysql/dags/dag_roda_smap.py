@@ -116,4 +116,4 @@ with DAG(
     )
     
     # Definindo a sequência
-    t_create_smap >> t_build_arq_entrada >> t_run_smap >> t_import_vazao_prevista >> t_run_previvaz
+    t_create_smap >> t_build_arq_entrada >> t_run_smap >> t_import_vazao_prevista >> atualizar_cache >> t_run_previvaz
