@@ -108,7 +108,7 @@ with DAG(
     atualizar_cache = SSHOperator(
         task_id='atualizar_cache',
         ssh_conn_id='ssh_master',
-        command='{{". /WX2TB/pythonVersions/myVenv38/bin/activate;cd /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/web_modelos/server/caches;python rz_cache.py import_ena_visualization_api"}}',
+        command=". /WX2TB/pythonVersions/myVenv38/bin/activate;cd /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/web_modelos/server/caches;python rz_cache.py import_ena_visualization_api id_nova_rodada {{ dag_run.conf.get('cenario')['id'] }}",
         conn_timeout = None,
         cmd_timeout = None,
         get_pty=True,

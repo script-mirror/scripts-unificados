@@ -162,12 +162,12 @@ def atualizar_cache_acomph(dt_inicial, reset=False):
   print("CACHE ACOMPH ATUALIZADO!")
   
   
-def import_ena_visualization_api(dt_rodada, id_nova_rodada): 
+def import_ena_visualization_api(dt_rodada, id_nova_rodada:str): 
   print(dt_rodada)
   rodadas = rz_rodadasModelos.Rodadas(dt_rodada = dt_rodada)
   params = rodadas.build_modelo_info_dict(granularidade = "submercado", build_all_models=True)
 
-  params['rodadas'] = [x for x in params['rodadas'] if x['id_rodada'] == id_nova_rodada]
+  params['rodadas'] = [x for x in params['rodadas'] if str(x['id_rodada']) == id_nova_rodada]
   for id_rodada in params['rodadas']:
     rodada = params.copy()
     rodada_info = params['rodadas'][id_rodada]
@@ -470,12 +470,15 @@ def runWithParams():
         if argumento == 'atualizar':
           atualizar = True
 
+        if argumento == 'id_nova_rodada':
+          id_nova_rodada = sys.argv[i+1]
+
       #funções
       if sys.argv[1].lower() == 'atualizar_cache_rodada_modelos':
         atualizar_cache_rodada_modelos(data.strftime("%Y-%m-%d"),reset= reset)
         
       if sys.argv[1].lower() == 'import_ena_visualization_api':
-        import_ena_visualization_api(data.strftime("%Y-%m-%d"))
+        import_ena_visualization_api(data.strftime("%Y-%m-%d"), id_nova_rodada)
         
       elif sys.argv[1].lower() == 'atualizar_cache_acomph':
         atualizar_cache_acomph(data, reset= reset)
