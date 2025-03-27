@@ -167,7 +167,7 @@ def import_ena_visualization_api(dt_rodada, id_nova_rodada:str):
   rodadas = rz_rodadasModelos.Rodadas(dt_rodada = dt_rodada)
   params = rodadas.build_modelo_info_dict(granularidade = "submercado", build_all_models=True)
 
-  params['rodadas'] = [x for x in params['rodadas'] if str(x['id_rodada']) == id_nova_rodada]
+  params['rodadas'] = [x for x in params['rodadas'] if str(x) == id_nova_rodada]
   for id_rodada in params['rodadas']:
     rodada = params.copy()
     rodada_info = params['rodadas'][id_rodada]
