@@ -1918,7 +1918,7 @@ def runWithParams():
 
 
 if __name__ == '__main__':
-	geraRelatorioBbce(datetime.datetime.now())	
+	# geraRelatorioBbce(datetime.datetime.now())	
 	runWithParams()
 
 	# url = 'http://wxclima.ddns-intelbras.com.br:5000/ena_diaria_submercado'

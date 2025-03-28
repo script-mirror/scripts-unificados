@@ -11,7 +11,7 @@ from PMO.scripts_unificados.apps.prospec.libs.newave.clast import clast
 
 
 
-def atualizar_cvu_NW(info_cvu,paths_to_modify):
+def atualizar_cvu_NW(info_cvu,paths_to_modify, apenas_estrutural=False):
 
     paths_modified = []
     for path_clast in paths_to_modify:
@@ -55,9 +55,10 @@ def atualizar_cvu_NW(info_cvu,paths_to_modify):
 
         #COMPLETANDO BLOCO DE CLAST CONJUNTURAL
         df_clast_conjuntural = pd.read_fwf(path_clast, skiprows = index_separacao_blocos + 2)
-        cvu_map = info_cvu.set_index(['mes_referencia','tipo_cvu']).loc[(dt_referente,'conjuntural')].set_index("cd_usina")["vl_cvu"].round(2).to_dict()
-        for col in ["CUSTO"]:
-            df_clast_conjuntural[col].update(df_clast_conjuntural["NUM"].map(cvu_map))
+        if not apenas_estrutural:
+            cvu_map = info_cvu.set_index(['mes_referencia','tipo_cvu']).loc[(dt_referente,'conjuntural')].set_index("cd_usina")["vl_cvu"].round(2).to_dict()
+            for col in ["CUSTO"]:
+                df_clast_conjuntural[col].update(df_clast_conjuntural["NUM"].map(cvu_map))
 
         clast.sobrescreve_clast_file(
             output_path = path_clast,

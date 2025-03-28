@@ -75,7 +75,7 @@ def extract_carga_decomp_ons(path_carga,path_saida=PATH_DOWNLOAD_TMP):
         return extracted_zip_carga
 
 
-def organizar_info_carga(path_carga_zip,path_deck):
+def organizar_info_carga(path_carga_zip,path_deck, data_revisao:datetime.date = datetime.date.today()):
 
     carga_decomp_txt = extract_carga_decomp_ons(
         path_carga_zip
@@ -87,11 +87,12 @@ def organizar_info_carga(path_carga_zip,path_deck):
     bloco_dp['ip'] = bloco_dp['ip'].astype(int)
 
     nome_arquivo_zip = os.path.basename(path_carga_zip).split('.')[0]
-    inicio_rv_atual = datetime.date(int(df_dadger_novo['DT']['ano'].iloc[0]),int(df_dadger_novo['DT']['mes'].iloc[0]),int(df_dadger_novo['DT']['dia'].iloc[0]))
+    # inicio_rv_atual = datetime.date(int(df_dadger_novo['DT']['ano'].iloc[0]),int(df_dadger_novo['DT']['mes'].iloc[0]),int(df_dadger_novo['DT']['dia'].iloc[0]))
     
-
-    semana_eletrica_atual = wx_opweek.ElecData(inicio_rv_atual)
-    semana_eletrica = wx_opweek.ElecData(inicio_rv_atual)
+    while data_revisao.weekday() != 6:
+        data_revisao = data_revisao + datetime.timedelta(days=1)
+    semana_eletrica_atual = wx_opweek.ElecData(data_revisao)
+    semana_eletrica = wx_opweek.ElecData(data_revisao)
     semanas_a_remover = 0
 
     novo_bloco = {}

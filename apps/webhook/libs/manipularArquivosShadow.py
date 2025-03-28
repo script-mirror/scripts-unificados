@@ -78,9 +78,17 @@ def get_auth():
     
     return headers
 
-
+def remover_acentos_e_caracteres_especiais(texto):
+    import re
+    import unicodedata
+    texto_norm = unicodedata.normalize('NFD', texto)
+    texto_limpo = re.sub(r'[^\w\s]', '', texto_norm)
+    texto_limpo = re.sub(r'\W+', '_', texto_limpo)
+    
+    return texto_limpo
 def get_filename(dadosProduto:dict):
     path_download = os.path.join(PATH_WEBHOOK_TMP, dadosProduto['nome'])
+    
     os.makedirs(path_download, exist_ok=True)
 
     if dadosProduto.get('origem') == "botSintegre":
@@ -92,8 +100,8 @@ def get_filename(dadosProduto:dict):
     else:
         filename = DIR_TOOLS.downloadFile(dadosProduto['url'], path_download)
 
-    if dadosProduto.get('origem') != "botSintegre":
-        _verify_file_is_new(filename, dadosProduto['nome'])
+    # if dadosProduto.get('origem') != "botSintegre":
+    #     _verify_file_is_new(filename, dadosProduto['nome'])
 
     return filename
 
@@ -270,8 +278,7 @@ def historico_preciptacao(dadosProduto):
     )
 
     chuva.importar_chuva_psath(filename)
-    airflow_tools.trigger_airflow_dag(
-            dag_id="Mapas_PSAT")
+
     #rodar smap
     # SmapTools.trigger_dag_SMAP(dtRef)
 
@@ -282,6 +289,8 @@ def historico_preciptacao(dadosProduto):
     #     )
 
     #gerar Produto
+    airflow_tools.trigger_airflow_dag(
+            dag_id="Mapas_PSAT")
     if dadosProduto.get('enviar', True) == True:
         GERAR_PRODUTO.enviar({
         "produto":"PSATH_DIFF",
@@ -291,6 +300,7 @@ def historico_preciptacao(dadosProduto):
         "produto":"DIFERENCA_CV",
         "data":dtRef,
     })
+
     
     #gerar Produto
 

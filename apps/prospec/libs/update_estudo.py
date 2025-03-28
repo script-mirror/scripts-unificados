@@ -102,7 +102,8 @@ def update_cvu_dadger_dc_estudo(
         #ALTERAR CVU EM DECKS DC
         dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
         arquivos_filtrados = [arquivo for arquivo in dadgers_to_modify if not re.search(r'\.0+$', arquivo)]
-        
+        if arquivos_filtrados == []:
+            raise Exception(f"Não foi encontrado nenhum arquivo dadger no estudo {id_estudo}")
         paths_modified = dadger_updater.atualizar_cvu_DC(
             info_cvu,
             arquivos_filtrados
@@ -136,7 +137,8 @@ def update_carga_dadger_dc_estudo(file_path,ids_to_modify:List[int]=None):
         # #ALTERAR CARGA EM DECKS DC
         dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
         arquivos_filtrados = [arquivo for arquivo in dadgers_to_modify if not re.search(r'\.0+$', arquivo)]
-
+        if arquivos_filtrados == []:
+            raise Exception(f"Não foi encontrado nenhum arquivo dadger no estudo {id_estudo}")
         paths_modified = dadger_updater.atualizar_carga_DC(
             info_cargas,
             arquivos_filtrados
@@ -164,7 +166,8 @@ def update_weol_dadger_dc_estudo(data_produto:datetime.date, ids_to_modify:List[
 
         dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
         arquivos_filtrados = [arquivo for arquivo in dadgers_to_modify if not re.search(r'\.0+$', arquivo)]
-
+        if arquivos_filtrados == []:
+            raise Exception(f"Não foi encontrado nenhum arquivo dadger no estudo {id_estudo}")
         dadger_updater.update_eolica_DC(
             arquivos_filtrados,
             data_produto
@@ -179,7 +182,9 @@ def update_cvu_clast_nw_estudo(
     dt_atualizacao:datetime.datetime,
     ids_to_modify:List[int]=None
     ):
-    
+    apenas_estrutural = False
+    if apenas_estrutural:
+        fontes_to_search = [x for x in fontes_to_search if "estrutural" in x.lower()]
     tag = [f'CVU {datetime.datetime.now().strftime("%d/%m %H:%M")}']
     if not ids_to_modify:
         ids_to_modify = get_ids_to_modify()
@@ -204,10 +209,12 @@ def update_cvu_clast_nw_estudo(
 
         clast_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*clast*"),recursive=True)
         arquivos_filtrados = [arquivo for arquivo in clast_to_modify if not re.search(r'\.0+$', arquivo)]
-
+        if arquivos_filtrados == []:
+            raise Exception(f"Não foi encontrado nenhum arquivo clas no estudo {id_estudo}")
         paths_modified = clast_updater.atualizar_cvu_NW(
             info_cvu,
-            clast_to_modify
+            clast_to_modify,
+            apenas_estrutural
             )
         send_files_to_api(id_estudo, paths_modified, tag)
 
@@ -235,7 +242,8 @@ def update_carga_c_adic_nw_estudo(file_path:str,ids_to_modify:List[int]=None):
             ) 
 
         c_adic_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*c_adic*"),recursive=True)
-
+        if c_adic_to_modify == []:
+            raise Exception(f"Não foi encontrado nenhum arquivo cadic no estudo {id_estudo}")
         if 'carga_mensal' in os.path.basename(file_path).lower():
 
             intial_deck_date = sorted([os.path.basename(os.path.dirname(dir))[2:] for dir in c_adic_to_modify])[0] 
@@ -277,7 +285,8 @@ def update_carga_sistema_nw_estudo(file_path:str,ids_to_modify:List[int]=None):
             path_to_modify,
             ) 
         paths_sistema_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*sistema*"),recursive=True)
-
+        if paths_sistema_to_modify == []:
+            raise Exception(f"Não foi encontrado nenhum arquivo sistema no estudo {id_estudo}")
         if 'carga_mensal' in os.path.basename(file_path).lower():
 
             intial_deck_date = sorted([os.path.basename(os.path.dirname(dir))[2:] for dir in paths_sistema_to_modify])[0] 
@@ -319,6 +328,8 @@ def update_weol_sistema_nw_estudo(data_produto:datetime.date, ids_to_modify:List
             )
 
         paths_sistema_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*sistema*"),recursive=True)
+        if paths_sistema_to_modify == []:
+            raise Exception(f"Não foi encontrado nenhum arquivo sistema no estudo {id_estudo}")
         sistema_updater.update_weol_sistema(
             data_produto,
             paths_sistema_to_modify
@@ -348,6 +359,8 @@ def update_restricoes_dadger_dc_estudo(file_path:str, ids_to_modify:List[int] = 
 
         dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
         arquivos_filtrados = [arquivo for arquivo in dadgers_to_modify if not re.search(r'\.0+$', arquivo)]
+        if arquivos_filtrados == []:
+            raise Exception(f"Não foi encontrado nenhum arquivo dadger no estudo {id_estudo}")
 
         dadger_updater.update_restricoes_eletricas_DC(
             info_restricoes,

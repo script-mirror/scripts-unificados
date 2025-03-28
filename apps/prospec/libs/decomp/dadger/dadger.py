@@ -610,8 +610,8 @@ info_blocos['CM'] = {'campos':[
 				'indice_ree',
 				'coef',
 			],
-			'regex':'(.{2})  (.{3})  (.{3})  (.{10})(.*)',
-			'formatacao':'{:>2}  {:>3}  {:>3}  {:>10}'}
+			'regex':'(.{3}) (.{3})  (.{3})  (.{10})(.*)',
+			'formatacao':'{:>3} {:>3}  {:>3}  {:>10}'}
 
 info_blocos['CM'] = {'campos':[
 				'mnemonico',
@@ -769,9 +769,13 @@ def escrever_bloco_restricoes(lines, df_dadger, mnemonico_restricao, submnemonic
                 for coment in comentarios[mnemonico_restricao][index]:
                     lines.append(coment)
             lines.append('{}\n'.format(info_blocos[mnemonico_restricao]['formatacao'].format(*row.values).strip()))
-
-            row_cm = df_dadger["CM"].loc[df_dadger["CM"]['id_restricao'].astype('int') ==  int(row['id_restricao'])].loc[index]
-            lines.append('{}\n'.format(info_blocos['CM']['formatacao'].format(*row_cm.values).strip()))
+            try:
+                row_cm = df_dadger["CM"].loc[df_dadger["CM"]['id_restricao'].astype('int') ==  int(row['id_restricao'])].loc[index]
+                lines.append('{}\n'.format(info_blocos['CM']['formatacao'].format(*row_cm.values).strip()))
+            except Exception:
+                print(f"""df_dadger["CM"]['id_restricao'].astype('int'): {df_dadger["CM"]['id_restricao'].astype('int')}""")
+                print(f"int(row['id_restricao']): {int(row['id_restricao'])}")
+                print(f"index: {index}")
 
         # Escrita do ultimo comentário, se existir
         if index+1 in comentarios['CM']:
