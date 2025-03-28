@@ -86,6 +86,7 @@ PRODUCT_MAPPING = {
     "DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM":"deck_prev_eolica_semanal_weol",
     "Preliminar - Relatório Mensal de Limites de Intercâmbio":"relatorio_limites_intercambio",
     "Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP":"relatorio_limites_intercambio",
+    "Notas Técnicas - Medio Prazo":"notas_tecnicas_medio_prazo",
 }
 
 PRODUCT_MAPPING2 = {

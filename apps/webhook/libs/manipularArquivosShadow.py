@@ -904,27 +904,44 @@ def relatorio_limites_intercambio(dadosProduto):
         "task_to_execute": "revisao_restricao"
     }
 
+def notas_tecnicas_medio_prazo(dadosProduto):
+    
+    arquivo_zip = get_filename(dadosProduto)
+    logger.info(arquivo_zip)
+    
+    path_arquivo = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(arquivo_zip)[:-4])
+    arquivos = glob.glob(os.path.join(path_arquivo, "*.xls*"))
+    if not arquivos:
+        logger.error(f"Nenhum arquivo Excel encontrado em {path_arquivo}")
+        return
+    arquivo_xls = arquivos[0]  
+    
+    GERAR_PRODUTO.enviar({
+        "produto":"NOTAS_TECNICAS",
+        "data": datetime.datetime.strptime(dadosProduto.get('dataProduto'), "%m/%Y"),
+        "arquivo": arquivo_xls
+    })
+    
+    
+    
+    
+    
 
 if __name__ == '__main__':
     
-    path_base = "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/webhook/libs/psath_08012025.zip"
-    # with open(path_base, "rb") as f:
-        # data = f.read()
-    # 
-    # get_filename({
-        # "nome":"psath",
-        # "filename":"psath_08012025.zip",
-        # "base64":base64.b64encode(data).decode('utf-8'),
-        # "origem":"botSintegre"
-    # })
-    psat_file({
-        "base64": "/WX2TB/Documentos/fontes/PMO/raizen-power-trading-bot-sintegre/app/products/psat_12032025.txt",
-        "dataProduto": "12/03/2025",
+    dadosProduto = {
+        "dataProduto":"04/2025",
         "enviar": True,
-        "file_hash": "cba4273bac993ae1baa10d8268f72657d255db88cef936d1a57ec2b1f6fc4fec1dd13606179b653216d1d18ac60ab9486fa144e0632e66deb91878962f622afc",
-        "filename": "psat_12032025.txt",
-        "nome": "Precipitacao_por_Satelite",
-        "origem": "botSintegre"
+        "filename":"Notas Técnicas - Medio Prazo.zip",
+        "macroProcesso":"Programação da Operação",
+        "nome":"Notas Técnicas - Medio Prazo",
+        "periodicidade":"2025-04-01T03:00:00.000Z",
+        "periodicidadeFinal":"2025-05-01T02:59:59.000Z",
+        "processo":"Médio Prazo",
+        "s3Key":"webhooks/Notas Técnicas - Medio Prazo/67e69b2cbb45b3a3c8bf58b5_Notas Técnicas - Medio Prazo.zip",
+        "url":"https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODgvMjQtMDMtMjAyNV8xNDU2MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiTm90YXMgVMOpY25pY2FzIC0gTWVkaW8gUHJhem8iLCJJc0ZpbGUiOiJGYWxzZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NDMyNTI4OTEsIm5iZiI6MTc0MzE2NjI1MX0.brumPi4TGD6TRynHafjDyxaQonn9GLrSZh20jVbXw-c",
+        "webhookId":"67e69b2cbb45b3a3c8bf58b5"
     }
-)
+
+    notas_tecnicas_medio_prazo(dadosProduto)
     
