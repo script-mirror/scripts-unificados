@@ -650,3 +650,24 @@ def processar_produto_MAPA_PSAT(parametros):
     resultado.destinatarioWhats = "Condicao Hidrica"
 
     return resultado
+
+def processar_produto_NOTAS_TECNICAS(parametros):
+    resultado = Resultado(parametros)
+    data:datetime.date = parametros['data']
+    arq_xls= parametros['arquivo']
+    
+    resultado.fileWhats = arq_xls
+    resultado.msgWhats = f"Notas Técnicas - Médio Prazo({data.strftime('%m/%Y')})"
+    resultado.flagWhats = True
+    resultado.destinatarioWhats = "Notificacoes Produtos" 
+
+    return resultado
+
+
+if __name__ == '__main__':
+    parametros = {
+        "produto":"CMO_DC_PRELIMINAR",
+        "destinatarioWhats": 'PMO',
+    }
+    
+    processar_produto_CMO_DC_PRELIMINAR(parametros)
