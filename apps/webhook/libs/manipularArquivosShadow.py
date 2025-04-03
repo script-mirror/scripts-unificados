@@ -910,10 +910,18 @@ def notas_tecnicas_medio_prazo(dadosProduto):
     logger.info(arquivo_zip)
     
     path_arquivo = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(arquivo_zip)[:-4])
-    arquivos = glob.glob(os.path.join(path_arquivo, "*.xls*"))
+    
+    arquivos = DIR_TOOLS.extract_specific_files_from_zip(
+        path=arquivo_zip,
+        files_name_template= ["GTMIN_CCEE_{}_definitivo.xlsx"],
+        date_format='%m%Y',
+        dst= path_arquivo
+    )
+    
     if not arquivos:
         logger.error(f"Nenhum arquivo Excel encontrado em {path_arquivo}")
         return
+    
     arquivo_xls = arquivos[0]  
     
     GERAR_PRODUTO.enviar({
