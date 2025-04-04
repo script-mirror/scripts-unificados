@@ -6,23 +6,31 @@ from email.mime.text import MIMEText
 from email.utils import formatdate
 from email import encoders
 from pathlib import Path
-import uuid
-
+import datetime
 import pdb
 import os
 import base64
 
-import requests
+import requests as req
+import logging
+import time
 from PIL import Image
 from io import BytesIO
 
+logging.basicConfig(level=logging.INFO,
+                    format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    handlers=[
+                        logging.StreamHandler()
+                    ])
+logger = logging.getLogger(__name__)
 
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
 URL_COGNITO = os.getenv('URL_COGNITO')
 CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
-URL_HTML_TO_IMAGE_WAZE = os.getenv('URL_HTML_TO_IMAGE_WAZE')
+URL_HTML_TO_IMAGE = os.getenv('URL_HTML_TO_IMAGE')
 
 class WxEmail:
     """Classe para envios de email"""
@@ -56,12 +64,12 @@ class WxEmail:
         if send_to == []:
             send_to = self.send_to
 
-        print("Enviando email: {}".format(assunto))
-        print("De: {}".format(self.username))
-        print("Destinatario(s): {}".format(str(send_to)[1:-1]))
+        logger.info("Enviando email: {}".format(assunto))
+        logger.info("De: {}".format(self.username))
+        logger.info("Destinatario(s): {}".format(str(send_to)[1:-1]))
         if len(anexos) > 0:
             for i, anexo in enumerate(anexos):
-                print("Anexo {}: {}".format(i, anexo))
+                logger.info("Anexo {}: {}".format(i, anexo))
 
         msg = MIMEMultipart()
 
@@ -85,7 +93,7 @@ class WxEmail:
 
         answer = smtp.login(self.username,self.password)
         answer = smtp.sendmail(self.username, send_to, msg.as_string())
-        print("Email enviado")
+        logger.info("Email enviado")
         smtp.quit()
 
 
@@ -235,7 +243,9 @@ def get_image_base64(path):
     return encoded_string
 
 
-
+headers = {
+    'Authorization': None
+}
 def get_access_token() -> str:
     response = req.post(
         URL_COGNITO,
@@ -245,29 +255,56 @@ def get_access_token() -> str:
     return response.json()['access_token']
 
 
-def api_html_to_image_waze(html_str,path_save=f'output{uuid.uuid4().hex}.png'):
-    headers = {
-    'Authorization': f'Bearer {get_access_token()}'
-    }
+def get_auth_header():
+    if not headers['Authorization']:
+        headers['Authorization'] = f'Bearer {get_access_token()}'
+    
+    return headers
+
+def check_image_generation_status(job_id):
+    response = req.get(f"{URL_HTML_TO_IMAGE}/job/{job_id}", headers=get_auth_header)
+    return response
+
+def get_image(job_id):
+    response = req.get(f"{URL_HTML_TO_IMAGE}/job/{job_id}/image", headers=get_auth_header)
+    logger.info(f"get image {response.status_code}")
+    if response.status_code < 200 or response.status_code > 299:
+        return None
+    return response.content
+
+def api_html_to_image(html_str,path_save=f'output{datetime.datetime.now().strftime("%Y%m%d%H%M%s")}.png'):
     payload = {
     "html": html_str,
-    "options": {
-        "type": "png",
-        "quality": 100
+        "options": {
+            "type": "png",
+            "quality": 100,
+            "trim": True,
+            "deviceScaleFactor": 10,
+            "background": True
         }
     }
     
-    response = req.post(URL_HTML_TO_IMAGE_WAZE, headers=headers, json=payload)
+    response = req.post(URL_HTML_TO_IMAGE, headers=headers, json=payload)
+    job_id = response.json()['jobId']
+
+    while check_image_generation_status(job_id).json()['status'] != 'completed':
+        time.sleep(1)
+        logger.info(f"Aguardando processamento da imagem {job_id}")
+    
     if response.status_code < 200 and response.status_code >= 300:
         raise Exception(f"Erro ao gerar imagem: {response.status_code}")
+    
+    image = get_image(job_id)
+    if not image:
+        return None
+    
     with open(path_save, 'wb') as f:
-        f.write(response.content)
-    print(f"Salvo em: {os.path.abspath(path_save)}")
+        f.write(image)
+    logger.info(f"Salvo em: {os.path.abspath(path_save)}")
     return os.path.abspath(path_save)
 
 
-from random import randint
-def api_html_to_image(html_str,path_save=f'output{randint(0, 9999)}.png'):
+def _api_html_to_image(html_str,path_save=f'output{datetime.datetime.now().strftime("%Y%m%d%H%M%s")}.png'):
     
     # return api_html_to_image_waze(html_str, path_save)
 
@@ -294,21 +331,21 @@ def api_html_to_image(html_str,path_save=f'output{randint(0, 9999)}.png'):
     
     imagem=None
     for user, token in [(__USER_HCTI,__API_KEY_HCTI),(__USER_HCTI2, __API_KEY_HCTI2),(__USER_HCTI3,__API_KEY_HCTI3),(__USER_HCTI4,__API_KEY_HCTI4),(__USER_HCTI5,__API_KEY_HCTI5)]:
-        image = requests.post(url = __API_URL_HCTI, data = data, auth=(user, token))
+        image = req.post(url = __API_URL_HCTI, data = data, auth=(user, token))
         if image.status_code != 200:
-            print(image.content)
+            logger.info(image.content)
             continue
-        resposta = requests.get(image.json()['url'])
+        resposta = req.get(image.json()['url'])
         imagem = Image.open(BytesIO(resposta.content))
         if image.status_code == 200:
             break
 
     if not imagem:
-        print('Erro ao gerar imagem')
+        logger.info('Erro ao gerar imagem')
         return None
         
     imagem.save(path_save)
-    print(f"Salvo em: {os.path.abspath(path_save)}")
+    logger.info(f"Salvo em: {os.path.abspath(path_save)}")
     return os.path.abspath(path_save)
 
 if __name__ == '__main__':
