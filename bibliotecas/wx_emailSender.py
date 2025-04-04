@@ -243,9 +243,7 @@ def get_image_base64(path):
     return encoded_string
 
 
-headers = {
-    'Authorization': None
-}
+
 def get_access_token() -> str:
     response = req.post(
         URL_COGNITO,
@@ -255,18 +253,16 @@ def get_access_token() -> str:
     return response.json()['access_token']
 
 
-def get_auth_header():
-    if not headers['Authorization']:
-        headers['Authorization'] = f'Bearer {get_access_token()}'
-    
-    return headers
-
 def check_image_generation_status(job_id):
-    response = req.get(f"{URL_HTML_TO_IMAGE}/job/{job_id}", headers=get_auth_header)
+    response = req.get(f"{URL_HTML_TO_IMAGE}/job/{job_id}", headers={
+    'Authorization': f'Bearer {get_access_token()}'
+    })
     return response
 
 def get_image(job_id):
-    response = req.get(f"{URL_HTML_TO_IMAGE}/job/{job_id}/image", headers=get_auth_header)
+    response = req.get(f"{URL_HTML_TO_IMAGE}/job/{job_id}/image", headers={
+    'Authorization': f'Bearer {get_access_token()}'
+    })
     logger.info(f"get image {response.status_code}")
     if response.status_code < 200 or response.status_code > 299:
         return None
@@ -284,7 +280,9 @@ def api_html_to_image(html_str,path_save=f'output{datetime.datetime.now().strfti
         }
     }
     
-    response = req.post(URL_HTML_TO_IMAGE, headers=headers, json=payload)
+    response = req.post(URL_HTML_TO_IMAGE, headers={
+    'Authorization': f'Bearer {get_access_token()}'
+    }, json=payload)
     job_id = response.json()['jobId']
 
     while check_image_generation_status(job_id).json()['status'] != 'completed':
