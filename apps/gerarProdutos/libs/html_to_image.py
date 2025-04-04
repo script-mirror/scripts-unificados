@@ -60,7 +60,9 @@ def api_html_to_image(html_str,path_save=f'output{datetime.datetime.now().strfti
         }
     }
     
-    response = req.post(URL_HTML_TO_IMAGE, headers=headers, json=payload)
+    response = req.post(URL_HTML_TO_IMAGE,headers={
+    'Authorization': f'Bearer {get_access_token()}'
+    }, json=payload)
     job_id = response.json()['jobId']
 
     while check_image_generation_status(job_id).json()['status'] != 'completed':
