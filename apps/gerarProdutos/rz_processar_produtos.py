@@ -8,8 +8,10 @@ import zipfile
 import datetime
 import tabulate
 import pandas as pd
-import requests as r
+import requests as req
+from dotenv import load_dotenv
 
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.gerarProdutos.libs import wx_resultadosProspec ,wx_previsaoGeadaInmet ,rz_cargaPatamar ,rz_deck_dc_preliminar ,rz_aux_libs ,rz_produtos_chuva, html_to_image
 from PMO.scripts_unificados.apps.gerarProdutos.libs.html_to_image import api_html_to_image
@@ -28,7 +30,16 @@ path_fontes = "/WX2TB/Documentos/fontes"
 PATH_WEBHOOK_TMP = os.path.join(path_fontes,"PMO","scripts_unificados","apps","webhook","arquivos","tmp")
 PATH_CV = os.path.abspath("/WX2TB/Documentos/chuva-vazao")
 
+URL_COGNITO = os.getenv('URL_COGNITO')
+CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
 
+def get_access_token() -> str:
+    response = req.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
 
 try:
     locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
@@ -596,7 +607,11 @@ def processar_produto_TABELA_WEOL_MENSAL(parametros):
     resultado = Resultado(parametros)
     data:datetime.date = parametros['data']
     
-    res = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average/month/table", params={"dataProduto":str(data), "quantidadeProdutos":15})
+    res = req.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average/month/table",
+                params={"dataProduto":str(data), "quantidadeProdutos":15},
+                headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            })
     html = res.json()["html"]
     path_fig = api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'weol_mensal_{data}.png'))
 
@@ -612,7 +627,11 @@ def processar_produto_TABELA_WEOL_SEMANAL(parametros):
     resultado = Resultado(parametros)
     data:datetime.date = parametros['data']
     
-    res = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average/week/table", params={"dataProduto":str(data), "quantidadeProdutos":15})
+    res = req.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average/week/table",
+                  params={"dataProduto":str(data), "quantidadeProdutos":15},
+                  headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            })
     html = res.json()["html"]
     path_fig = api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'weol_mensal_{data}.png'))
 

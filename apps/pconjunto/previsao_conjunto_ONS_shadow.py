@@ -6,11 +6,22 @@ import pdb
 import glob
 import time
 import shutil
+import logging
 import datetime
-import requests
 import subprocess
 import pandas as pd
-# import sqlalchemy as db
+import requests as req
+from dotenv import load_dotenv
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    handlers=[
+                        logging.StreamHandler()
+                    ])
+logger = logging.getLogger(__name__)
+
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 # from PMO.scripts_unificados.apps.dbUpdater.libs import rodadas
@@ -37,6 +48,17 @@ MODELOS_COMPOSICAO_PCONJUNTO_RZ = {
     }
 
 MODELOS_DERIVADOS = ['pconjunto','pconjunto2']
+URL_COGNITO = os.getenv('URL_COGNITO')
+CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
+URL_HTML_TO_IMAGE = os.getenv('URL_HTML_TO_IMAGE')
+def get_access_token() -> str:
+    response = req.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
+
 
 def previsao_conjunto_ONS(param):
 
@@ -107,7 +129,7 @@ def task_conjunto_ons(dt_rodada_exec, forcar_rodar=False):
 
 def get_modelo_chuva_by_id(id_chuva:int,dt_ini:str=None,dt_fim:str=None):
 
-        response_rodadas = requests.get('https://tradingenergiarz.com/api/v2/rodadas/chuva/previsao',
+        response_rodadas = req.get('https://tradingenergiarz.com/api/v2/rodadas/chuva/previsao',
                     params = {
                         "id_chuva":id_chuva,
                         "granularidade":"subbacia",
@@ -119,7 +141,7 @@ def get_modelo_chuva_by_id(id_chuva:int,dt_ini:str=None,dt_fim:str=None):
         return response_rodadas.json()
 
 def get_rodadas_do_dia(dt_rodada):
-    response_rodadas = requests.get('https://tradingenergiarz.com/api/v2/rodadas',
+    response_rodadas = req.get('https://tradingenergiarz.com/api/v2/rodadas',
         params = {
             "dt": dt_rodada,
             "no_cache": "true",
@@ -183,7 +205,7 @@ def read_configs_file()-> pd.DataFrame:
     return df_configs
 
 def get_subbacias() -> pd.DataFrame:
-    res = requests.get("https://tradingenergiarz.com/api/v2/rodadas/subbacias", verify=False)
+    res = req.get("https://tradingenergiarz.com/api/v2/rodadas/subbacias", verify=False)
     df_response = pd.DataFrame(res.json()).rename(columns={"vl_lat":"Latitude","vl_lon":"Longitude",'id':"cd_subbacia","nome":"Codigo ANA"})
     df_configs = read_configs_file()
     df_subbacias_completo = pd.merge(df_configs[['Latitude','Longitude','Codigo ANA']],df_response[['Codigo ANA','cd_subbacia']])
@@ -326,10 +348,12 @@ def post_prev_chuva(df_previsao_modelos):
         previsao_modelos = df_previsao_modelos[df_previsao_modelos['modelo']==modelo][['cd_subbacia','dt_prevista','vl_chuva','modelo','dt_rodada']]
         previsao_modelos = previsao_modelos.dropna()
         previsao_modelos['modelo'] = previsao_modelos['modelo'].str.replace('eta40-ons', 'eta-ons') #mudança no nome do modelo para padronizar com os outros
-        response = requests.post(
+        response = req.post(
                 'https://tradingenergiarz.com/api/v2/rodadas/chuva/previsao/modelos?prev_estendida=true',
-                verify=False,
-                json=previsao_modelos.to_dict('records')
+                json=previsao_modelos.to_dict('records'),
+                headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            }
             )
         print(f'{modelo} - > Código POST: {response.status_code}')
 

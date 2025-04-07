@@ -17,6 +17,17 @@ from PMO.scripts_unificados.bibliotecas import wx_dbClass
 
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
+URL_COGNITO = os.getenv('URL_COGNITO')
+CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
+def get_access_token() -> str:
+    response = r.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
+
+
 def save():
     fplt.screenshot(open('screenshot.png', 'wb'))
 
@@ -105,7 +116,10 @@ def get_tabela_bbce(data:datetime.datetime):
 
 	tb_produtos = database.getSchema('tb_produtos')
 	tb_negociacoes = database.getSchema('tb_negociacoes')
-	produtos_bbce = tuple(pd.DataFrame(	r.get(f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse").json())["str_produto"].to_list())
+	produtos_bbce = tuple(pd.DataFrame(	r.get(f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse",
+                                           headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            }).json())["str_produto"].to_list())
 	
 	query_prod = db.select(
 		tb_produtos.c["id_produto"],
@@ -213,7 +227,10 @@ def get_tabela_bbce(data:datetime.datetime):
 	path_graficos = []
 	if data.weekday() == 4:
 		path_graficos = gerar_grafico(produtosOrdenados, df_negociacoes, produtos_bbce)
-	html = r.get(f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse/html?data={data.strftime('%Y-%m-%d')}").json()["html"]
+	html = r.get(f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse/html?data={data.strftime('%Y-%m-%d')}",
+              headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            }).json()["html"]
 	return html, path_graficos
 
 if __name__ == '__main__':

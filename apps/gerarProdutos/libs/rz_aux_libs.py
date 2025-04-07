@@ -10,7 +10,7 @@ import time
 import glob
 import locale
 import datetime
-import requests
+import requests as req
 import sqlalchemy as db
 from dateutil import relativedelta
 
@@ -29,6 +29,8 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 __HOST_SERVER = os.getenv('HOST_SERVIDOR') 
 
+URL_COGNITO = os.getenv('URL_COGNITO')
+CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
 try:
 	locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 except:
@@ -47,6 +49,13 @@ from PMO.scripts_unificados.apps.gerarProdutos.libs import rz_relatorio_bbce,con
 from PMO.scripts_unificados.apps.web_modelos.server.libs import wx_calcEna 
 
 
+def get_access_token() -> str:
+    response = req.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
 
 def baixarProduto(data, produto):
     """ Faz o download de produtos externos a WX
@@ -81,7 +90,7 @@ def baixarProduto(data, produto):
 
         # 20 tentativas de baixar o produto
         for i in range(20):
-            file = requests.get(url)
+            file = req.get(url)
             if file.status_code == 200:
                 filename = url.split('/')[-1]
                 filePath = '{}/{}'.format(pastaTmp, filename)
@@ -256,7 +265,11 @@ def geraRelatorioBbce(data = datetime.datetime.now()):
 
         dados_a_inserir = [{"str_produto": produto, "ordem":i} for i, produto in enumerate(lista_produtos)]
         
-        requests.post(f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse", json=dados_a_inserir)
+        req.post(f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse",
+                      json=dados_a_inserir,
+                      headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            })
         # insert_prod_interesse = 
         
   
