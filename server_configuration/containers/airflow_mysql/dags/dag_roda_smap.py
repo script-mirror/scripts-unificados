@@ -50,7 +50,8 @@ def import_vazao_prevista(**kwargs):
     """
     ti = kwargs['ti']
     smap_operator = ti.xcom_pull(task_ids='create_smap_object')
-    cenarios_inseridos = smap_operator.import_vazao_prevista()
+    id_dataviz_chuva = kwargs['dag_run'].conf.get('id_dataviz_chuva')
+    cenarios_inseridos = smap_operator.import_vazao_prevista(id_dataviz_chuva)
     cenario = cenarios_inseridos[0]
     
     if isinstance(cenario['dt_rodada'], datetime.date):
