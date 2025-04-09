@@ -171,7 +171,7 @@ def atualizar_cache_acomph(dt_inicial, reset=False):
   print("CACHE ACOMPH ATUALIZADO!")
   
   
-def import_ena_visualization_api(dt_rodada, id_nova_rodada:str): 
+def import_ena_visualization_api(dt_rodada, id_nova_rodada:str, id_dataviz_chuva:str): 
   print(dt_rodada)
   rodadas = rz_rodadasModelos.Rodadas(dt_rodada = dt_rodada)
   params = rodadas.build_modelo_info_dict(granularidade = "submercado", build_all_models=True)
@@ -220,7 +220,13 @@ def import_ena_visualization_api(dt_rodada, id_nova_rodada:str):
             "priority": prioridade,
             "measuringUnit": "MWm",
             "generationProcess": "SMAP",
-            "data": []
+            "data": [],
+            "relatedMaps": [
+              {
+                "type": "chuva",
+                "mapId": id_dataviz_chuva,
+              }
+            ]
         }
     
 
@@ -479,13 +485,16 @@ def runWithParams():
 
         if argumento == 'id_nova_rodada':
           id_nova_rodada = sys.argv[i+1]
+          
+        if argumento == 'id_dataviz_chuva':
+          id_dataviz_chuva = sys.argv[i+1]
 
       #funções
       if sys.argv[1].lower() == 'atualizar_cache_rodada_modelos':
         atualizar_cache_rodada_modelos(data.strftime("%Y-%m-%d"),reset= reset)
         
       if sys.argv[1].lower() == 'import_ena_visualization_api':
-        import_ena_visualization_api(data.strftime("%Y-%m-%d"), id_nova_rodada)
+        import_ena_visualization_api(data.strftime("%Y-%m-%d"), id_nova_rodada, id_dataviz_chuva)
         
       elif sys.argv[1].lower() == 'atualizar_cache_acomph':
         atualizar_cache_acomph(data, reset= reset)
