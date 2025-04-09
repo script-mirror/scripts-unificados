@@ -27,6 +27,15 @@ logger = logging.getLogger(__name__)
 URL_COGNITO = os.getenv('URL_COGNITO')
 CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
 
+def get_access_token() -> str:
+    response = req.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
+
 def cache_rodadas_modelos(prefixo,rodadas,reset=False, dias=7):
 
   granularidade = rodadas['granularidade']
@@ -174,7 +183,10 @@ def import_ena_visualization_api(dt_rodada, id_nova_rodada:str):
 
   for id_rodada in params['rodadas']:
     print(id_rodada)
-    info_rodada = req.get(f"https://tradingenergiarz.com/api/v2/rodadas/por-id/{id_rodada}").json()
+    info_rodada = req.get(f"https://tradingenergiarz.com/api/v2/rodadas/por-id/{id_rodada}", 
+                          headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            }).json()
     
     viez = 'remvies' not in info_rodada['str_modelo'].lower()
 
@@ -229,7 +241,7 @@ def import_ena_visualization_api(dt_rodada, id_nova_rodada:str):
       payload['data'].append({'valoresMapa': valores_mapa, 'agrupamento': granularidade})
 
     payload['dataFinal'] = f"{df['dt_prevista'].max()}.000Z".replace(' ', 'T')
-    res = req.post('https://tradingenergiarz.com/backend/api/map', json=payload, headers={'Content-Type': 'application/json', "Authorization":f"Bearer {get_token_cognito()}"})
+    res = req.post('https://tradingenergiarz.com/backend/api/map', json=payload, headers={'Content-Type': 'application/json', "Authorization":f"Bearer {get_access_token()}"})
 
     if res.status_code == 201:
       logger.info(f"Rodada id {id_rodada} inserido na API de visualizacao")
@@ -347,14 +359,6 @@ def cache_previsao_modelos(key:str, dts_rodada_list:list,granularidade:str='subm
     return df_to_cache[df_to_cache['dt_rodada'].isin(dts_rodada_list)].to_dict('records')
 
 
-def get_token_cognito() -> str:
-    response = req.post(
-        URL_COGNITO,
-        data=CONFIG_COGNITO,
-
-        headers={'Content-Type': 'application/x-www-form-urlencoded'}
-    )
-    return response.json()['access_token']
   
   
 def import_acomph_visualization_api(data_rodada:datetime.date):
@@ -406,7 +410,7 @@ def import_acomph_visualization_api(data_rodada:datetime.date):
             "agrupamento": granularidade
         })
       
-  res = req.post('https://tradingenergiarz.com/backend/api/map', json=body, headers={'Content-Type': 'application/json', "Authorization":f"Bearer {get_token_cognito()}"})
+  res = req.post('https://tradingenergiarz.com/backend/api/map', json=body, headers={'Content-Type': 'application/json', "Authorization":f"Bearer {get_access_token()}"})
   
   if res.status_code == 201:
     logger.info(f"Modelo do ACOMPH da data {data_rodada} inserido na API de visualizacao")

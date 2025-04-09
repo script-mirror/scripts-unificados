@@ -33,9 +33,18 @@ logger = logging.getLogger(__name__)
 
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 __HOST_SERVIDOR = os.getenv('HOST_SERVIDOR')
+URL_COGNITO = os.getenv('URL_COGNITO')
+CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
 
 PATH_DOWNLOAD_TMP = os.path.join(os.path.dirname(__file__),"tmp")
 
+def get_access_token() -> str:
+    response = r.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
 
 def organizar_info_cvu(fontes_to_search:List[str], dt_atualizacao:datetime.date):
 
@@ -49,7 +58,9 @@ def organizar_info_cvu(fontes_to_search:List[str], dt_atualizacao:datetime.date)
                 'fonte': title_fonte
             },
             url = f"{URL_API_RAIZEN}/decks/cvu",
-            verify=False,
+            headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            }
         )
         answer = response.json()
         df_result = pd.DataFrame(answer)
@@ -173,7 +184,11 @@ def df_pq_to_dadger(df: pd.DataFrame) -> str:
     return result.rstrip("&\n").rstrip("\n")
 
 def get_weol(data_produto:datetime.date, data_inicio_semana:datetime.datetime) -> pd.DataFrame:
-    weol_decomp = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol/start-week-date", params={"dataProduto":str(data_produto), "inicioSemana":str(data_inicio_semana)})
+    weol_decomp = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol/start-week-date",
+                        params={"dataProduto":str(data_produto), "inicioSemana":str(data_inicio_semana)},
+                        headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            })
     weol_decomp.raise_for_status()
     if weol_decomp.json() == []:
         logger.info("Nenhum dado encontrado")
@@ -297,7 +312,10 @@ def organizar_info_carga_nw(path_carga_zip):
 
 def organizar_info_eolica_nw(paths_sistema:List[str], data_produto:datetime.date):
     novos_blocos = {}
-    weol_decomp = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average", params={"dataProduto":str(data_produto)})
+    weol_decomp = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average", params={"dataProduto":str(data_produto)}, 
+                        headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            })
     weol_decomp.raise_for_status()
         
     df_weol = pd.DataFrame(weol_decomp.json())

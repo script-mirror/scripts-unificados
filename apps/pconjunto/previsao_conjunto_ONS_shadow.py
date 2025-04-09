@@ -136,7 +136,9 @@ def get_modelo_chuva_by_id(id_chuva:int,dt_ini:str=None,dt_fim:str=None):
                         "dt_inicio_previsao": dt_ini,
                         "dt_fim_previsao": dt_ini,
                     },
-                    verify=False
+                    headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            }
                 )
         return response_rodadas.json()
 
@@ -147,7 +149,9 @@ def get_rodadas_do_dia(dt_rodada):
             "no_cache": "true",
             "atualizar": "false"
         },
-        verify=False
+        headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            }
     )
     return response_rodadas.json()
 
@@ -205,7 +209,10 @@ def read_configs_file()-> pd.DataFrame:
     return df_configs
 
 def get_subbacias() -> pd.DataFrame:
-    res = req.get("https://tradingenergiarz.com/api/v2/rodadas/subbacias", verify=False)
+    res = req.get("https://tradingenergiarz.com/api/v2/rodadas/subbacias",
+                  headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            })
     df_response = pd.DataFrame(res.json()).rename(columns={"vl_lat":"Latitude","vl_lon":"Longitude",'id':"cd_subbacia","nome":"Codigo ANA"})
     df_configs = read_configs_file()
     df_subbacias_completo = pd.merge(df_configs[['Latitude','Longitude','Codigo ANA']],df_response[['Codigo ANA','cd_subbacia']])
