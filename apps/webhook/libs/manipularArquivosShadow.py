@@ -291,15 +291,21 @@ def historico_preciptacao(dadosProduto):
     #gerar Produto
     airflow_tools.trigger_airflow_dag(
             dag_id="Mapas_PSAT")
-    if dadosProduto.get('enviar', True) == True:
-        GERAR_PRODUTO.enviar({
-        "produto":"PSATH_DIFF",
-        "path":filename,
-    })
+    try:
+        if dadosProduto.get('enviar', True) == True:
+            GERAR_PRODUTO.enviar({
+            "produto":"PSATH_DIFF",
+            "path":filename,
+        })
+    except:
+        print("Erro PSATH_DIFF")
+    try:
         GERAR_PRODUTO.enviar({
         "produto":"DIFERENCA_CV",
         "data":dtRef,
     })
+    except:
+        print("Erro DIFERENCA_CV")
 
     
     #gerar Produto
