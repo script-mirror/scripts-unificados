@@ -154,10 +154,10 @@ def atualizar_cache_acomph(dt_inicial, reset=False):
   
   if reset:
     print("Resentando cache!")
-
   cache_acomph(prefixo="ACOMPH",granularidade='submercado',dataInicial=dt_inicial,flag_atualizar=True,reset=reset)
   cache_acomph(prefixo="ACOMPH",granularidade='bacia',dataInicial=dt_inicial,flag_atualizar=True,reset=reset)
   import_acomph_visualization_api(dt_inicial)
+  
 
   print("CACHE ACOMPH ATUALIZADO!")
   
@@ -166,14 +166,16 @@ def import_ena_visualization_api(dt_rodada, id_nova_rodada:str):
   print(dt_rodada)
   rodadas = rz_rodadasModelos.Rodadas(dt_rodada = dt_rodada)
   params = rodadas.build_modelo_info_dict(granularidade = "submercado", build_all_models=True)
+  print(params)
+  print(id_nova_rodada)
+  print(params['rodadas'][id_nova_rodada])
+  
+  params['rodadas'] = [{x:params['rodadas'][x]} for x in params['rodadas'] if str(x) == id_nova_rodada][0]
 
-  params['rodadas'] = [x for x in params['rodadas'] if str(x) == id_nova_rodada]
   for id_rodada in params['rodadas']:
-    rodada = params.copy()
-    rodada_info = params['rodadas'][id_rodada]
-    rodada['rodadas'] = {id_rodada: rodada_info}
-    
+    print(id_rodada)
     info_rodada = req.get(f"https://tradingenergiarz.com/api/v2/rodadas/por-id/{id_rodada}").json()
+    
     viez = 'remvies' not in info_rodada['str_modelo'].lower()
 
     if 'ons' in info_rodada['str_modelo'].lower(): grupo = 'ons'
@@ -211,7 +213,7 @@ def import_ena_visualization_api(dt_rodada, id_nova_rodada:str):
     
 
     for granularidade in ['submercado','bacia']:
-      
+      params['granularidade'] = granularidade
       ena = cache_rodadas_modelos("PREVISAO_ENA",params,False)[0]['valores']
       df = pd.DataFrame(ena).reset_index().rename(columns={'index': 'dt_prevista'})
       df = df.astype({'dt_prevista': 'datetime64[ns]'})
@@ -357,22 +359,22 @@ def get_token_cognito() -> str:
   
 def import_acomph_visualization_api(data_rodada:datetime.date):
   
-  data_rodada_date = datetime.datetime.combine(data_rodada, datetime.time(0))
+  data_rodada_date = datetime.datetime.combine(data_rodada + datetime.timedelta(days=1), datetime.time(0))
   data_rodada_str = data_rodada_date.isoformat()
   data_rodada_str = f'{data_rodada_str}.000Z'
   
   body:dict = {
   "dataRodada": data_rodada_str,
   "dataFinal": data_rodada_str,
-  "mapType": "vazao",
+  "mapType": "ena",
   "idType": "",
-  "modelo": "Acomph",
+  "modelo": "ACOMPH",
   "priority": None,
   "grupo": "ONS",
   "rodada": "0",
   "viez": True,
   "membro":"0",
-  "measuringUnit": "m3/s",
+  "measuringUnit": "MWm",
   "propagationBase": "VNA",
   "generationProcess": "SMAP",
   "data": []
@@ -409,6 +411,7 @@ def import_acomph_visualization_api(data_rodada:datetime.date):
   if res.status_code == 201:
     logger.info(f"Modelo do ACOMPH da data {data_rodada} inserido na API de visualizacao")
   else:
+    logger.warning(res.text)
     logger.warning(f"Erro ao tentar inserir modelo do ACOMPH da data {data_rodada} na API de visualizacao")
     
 
@@ -501,5 +504,6 @@ if __name__ == '__main__':
   # rodadas.build_modelo_info_dict(granularidade = 'submercado', build_all_models=True)
 
   # teste = cache_rodadas_modelos('PREVISAO_ENA', rodadas)
+  # import_acomph_visualization_api(datetime.date.today())
   runWithParams()
   
