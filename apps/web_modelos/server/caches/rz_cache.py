@@ -166,6 +166,7 @@ def atualizar_cache_acomph(dt_inicial, reset=False):
   cache_acomph(prefixo="ACOMPH",granularidade='submercado',dataInicial=dt_inicial,flag_atualizar=True,reset=reset)
   cache_acomph(prefixo="ACOMPH",granularidade='bacia',dataInicial=dt_inicial,flag_atualizar=True,reset=reset)
   import_acomph_visualization_api(dt_inicial)
+  import_acomph_consolidado(dt_inicial)
   
 
   print("CACHE ACOMPH ATUALIZADO!")
@@ -394,6 +395,7 @@ def import_acomph_visualization_api(data_rodada:datetime.date):
   for granularidade in ['submercado','bacia']:
         acomph_cache = cache_acomph(prefixo="ACOMPH",granularidade=granularidade,
                                   dataInicial=data_rodada-datetime.timedelta(days=30))
+        pdb.set_trace()
         
         df = pd.DataFrame(acomph_cache).reset_index()
         df.rename(columns={'index':'dataReferente'}, inplace=True)
@@ -425,32 +427,64 @@ def import_acomph_visualization_api(data_rodada:datetime.date):
     logger.warning(f"Erro ao tentar inserir modelo do ACOMPH da data {data_rodada} na API de visualizacao")
     
 
+def import_acomph_consolidado(data_rodada:datetime.date):
+    valores_mapa = []
+    for granularidade in ['submercado','bacia']:
+        acomph_cache = cache_acomph(prefixo="ACOMPH",granularidade=granularidade,
+                                  dataInicial=data_rodada-datetime.timedelta(days=30))
+        
+        df = pd.DataFrame(acomph_cache).reset_index()
+        df.rename(columns={'index':'dataReferente'}, inplace=True)
+        
+        df['dataReferente'] = pd.to_datetime(df['dataReferente'])
+        df['dataReferente'] = df['dataReferente'].dt.strftime('%Y-%m-%d')
+        
+        for idx, row in df.iterrows():
+            data = row['dataReferente']
+            for col in df.columns[1:]:  # Skip dataReferente column
+                valores_mapa.append({
+                    'data': data,
+                    'granularidade': granularidade,
+                    'ena': row[col],
+                    'localizacao': col
+                })
+    df = pd.DataFrame(valores_mapa)
+    df.sort_values(['data', 'granularidade', 'localizacao'])
+    res = req.post('http://0.0.0.0:8000/api/v2/ons/ena-acomph', json=df.to_dict('records'), headers={"Authorization":f"Bearer {get_access_token()}"})
+    if res.status_code >= 200 and res.status_code < 300:
+        logger.info(f"Modelo do ACOMPH da data {data_rodada} inserido na tabela ena_acomph")
+    else:
+        logger.warning(res.text)
+        logger.warning(f"Erro {res.status_code} ao tentar inserir modelo do ACOMPH da data {data_rodada} na tabela ena_acomph")
+                
+
+
 def printHelper():
 
-  hoje = datetime.datetime.now()
-  modelo = 'pconjunto'
-  horaRodada = '00'
-  atualizar = 'atualizar'
+    hoje = datetime.datetime.now()
+    modelo = 'pconjunto'
+    horaRodada = '00'
+    atualizar = 'atualizar'
 
-  print("python {} atualizar_cache_acomph data {}".format(
-              sys.argv[0], hoje.strftime("%Y-%m-%d")
+    print("python {} atualizar_cache_acomph data {}".format(
+            sys.argv[0], hoje.strftime("%Y-%m-%d")
               ))
 
-  print("python {} atualizar_cache_rodada_modelos dt_rodada {}".format(
-              sys.argv[0], 
+    print("python {} atualizar_cache_rodada_modelos dt_rodada {}".format(
+            sys.argv[0], 
               hoje.strftime("%Y-%m-%d"),
               ))
-  print("python {} import_ena_visualization_api dt_rodada {}".format(
-              sys.argv[0], 
+    print("python {} import_ena_visualization_api dt_rodada {}".format(
+            sys.argv[0], 
               hoje.strftime("%Y-%m-%d"),
               ))
   
-  print("python {} atualizar_cache_comparativo_carga_newave data {}".format(
-              sys.argv[0], 
+    print("python {} atualizar_cache_comparativo_carga_newave data {}".format(
+            sys.argv[0], 
               hoje.strftime("%Y-%m-%d")
               ))
   
-  print("python {} get_resultado_chuva {} {} {} atualizar".format(
+    print("python {} get_resultado_chuva {} {} {} atualizar".format(
             sys.argv[0], 
             hoje.strftime("%Y-%m-%d"),
             modelo,
