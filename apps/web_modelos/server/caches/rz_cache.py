@@ -395,7 +395,6 @@ def import_acomph_visualization_api(data_rodada:datetime.date):
   for granularidade in ['submercado','bacia']:
         acomph_cache = cache_acomph(prefixo="ACOMPH",granularidade=granularidade,
                                   dataInicial=data_rodada-datetime.timedelta(days=30))
-        pdb.set_trace()
         
         df = pd.DataFrame(acomph_cache).reset_index()
         df.rename(columns={'index':'dataReferente'}, inplace=True)
@@ -406,7 +405,7 @@ def import_acomph_visualization_api(data_rodada:datetime.date):
         valores_mapa = []
         for idx, row in df.iterrows():
             data = row['dataReferente']
-            for col in df.columns[1:]:  # Skip dataReferente column
+            for col in df.columns[1:]:
                 valores_mapa.append({
                     'dataReferente': data,
                     'valor': row[col],
@@ -441,7 +440,7 @@ def import_acomph_consolidado(data_rodada:datetime.date):
         
         for idx, row in df.iterrows():
             data = row['dataReferente']
-            for col in df.columns[1:]:  # Skip dataReferente column
+            for col in df.columns[1:]:
                 valores_mapa.append({
                     'data': data,
                     'granularidade': granularidade,
