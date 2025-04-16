@@ -15,10 +15,43 @@ HOST_SERVIDOR = os.getenv("HOST_SERVIDOR")
 URL_COGNITO = os.getenv("URL_COGNITO")
 CONFIG_COGNITO = os.getenv("CONFIG_COGNITO")
 
+WHATSAPP_API = os.getenv("WHATSAPP_API")
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 
 TIME_OUT = 60 * 60 * 30
+
+
+def enviar_whatsapp_erro(context):
+    task_instance = context['task_instance']
+    dag_id = context['dag'].dag_id
+    task_id = task_instance.task_id
+    if task_id == "start_ec2":
+        return
+    msg = f"❌ Erro {dag_id}: *{task_id}*"
+    fields = {
+        "destinatario": "Airflow - Metereologia",
+        "mensagem": msg
+    }
+    headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
+    response = requests.post(WHATSAPP_API, data=fields, headers=headers)
+    print("Status Code:", response.status_code)
+
+
+def enviar_whatsapp_sucesso(context):
+    task_instance = context['task_instance']
+    dag_id = context['dag'].dag_id
+    task_id = task_instance.task_id
+    if task_instance.state == 'skipped' or task_id == "start_ec2":
+        return
+    msg = f"✅ Sucesso {dag_id}: *{task_id}*"
+    fields = {
+        "destinatario": "Airflow - Metereologia",
+        "mensagem": msg
+    }
+    headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
+    response = requests.post(WHATSAPP_API, data=fields, headers=headers)
+    print("Status Code:", response.status_code)
 
 
 def get_access_token() -> str:
@@ -236,7 +269,7 @@ def export_to_api():
     headers = {'accept': 'application/json',
                'Authorization': f'Bearer {get_access_token()}'}
     requests.get(
-        f"{HOST_SERVIDOR}:8000/api/v2/rodadas/export-rain-obs",
+        f"http://{HOST_SERVIDOR}:8000/api/v2/rodadas/export-rain-obs",
         params={
             "data": f"{date.today()}",
             "qtd_dias": 30},
@@ -252,7 +285,12 @@ with DAG(
     catchup=False,
     max_active_runs=1,
     concurrency=1,
-    tags=["Chuva Observada", 'Metereologia']
+    tags=["Chuva Observada", 'Metereologia'],
+    default_args={
+        'on_failure_callback': enviar_whatsapp_erro,
+        'on_success_callback': enviar_whatsapp_sucesso
+    }
+
 ) as dag:
 
     start_ec2_task = PythonOperator(
