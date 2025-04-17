@@ -13,7 +13,7 @@ import requests as req
 import hashlib
 
 from dotenv import load_dotenv
-from airflow.exceptions import AirflowSkipException
+# from airflow.exceptions import AirflowSkipException
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
@@ -148,8 +148,8 @@ def _verify_file_is_new(filename: str, product_name: str) -> None:
         json={"nome": product_name, "fileHash": file_hash}
     ).json()
 
-    if not is_new:
-        raise AirflowSkipException("Produto ja inserido")
+    # if not is_new:
+    #     raise AirflowSkipException("Produto ja inserido")
 
 def resultados_preliminares_consistidos(dadosProduto):
 
@@ -676,7 +676,7 @@ def resultados_nao_consistidos_semanal(dadosProduto):
 
     titulo, html = wx_libs_preco.nao_consistido_rv(filename)
     
-    data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto'), "%d/%m/%Y")
+    data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto')[:10], "%d/%m/%Y")
     
     # manda arquivo .zip para maquina newave'
     cmd = f"cp {filename} /WX/SERVER_NW/WX4TB/Documentos/fontes/PMO/decomp/entradas/DC_preliminar/;"
@@ -938,18 +938,19 @@ def notas_tecnicas_medio_prazo(dadosProduto):
 if __name__ == '__main__':
     
     dadosProduto = {
-        "dataProduto":"04/2025",
-        "enviar": True,
-        "filename":"Notas Técnicas - Medio Prazo.zip",
+        "dataProduto":"19/04/2025 - 25/04/2025",
+        "enviar":True,
+        "filename":"Nao_Consistido_202504_REV3.zip",
         "macroProcesso":"Programação da Operação",
-        "nome":"Notas Técnicas - Medio Prazo",
-        "periodicidade":"2025-04-01T03:00:00.000Z",
-        "periodicidadeFinal":"2025-05-01T02:59:59.000Z",
-        "processo":"Médio Prazo",
-        "s3Key":"webhooks/Notas Técnicas - Medio Prazo/67e69b2cbb45b3a3c8bf58b5_Notas Técnicas - Medio Prazo.zip",
-        "url":"https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODgvMjQtMDMtMjAyNV8xNDU2MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiTm90YXMgVMOpY25pY2FzIC0gTWVkaW8gUHJhem8iLCJJc0ZpbGUiOiJGYWxzZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NDMyNTI4OTEsIm5iZiI6MTc0MzE2NjI1MX0.brumPi4TGD6TRynHafjDyxaQonn9GLrSZh20jVbXw-c",
-        "webhookId":"67e69b2cbb45b3a3c8bf58b5"
+        "nome":"Resultados preliminares não consistidos (vazões semanais - PMO)",
+        "periodicidade":"2025-04-19T03:00:00.000Z",
+        "periodicidadeFinal":"2025-04-26T02:59:59.000Z",
+        "processo":"Previsão de Vazões e Geração de Cenários - PMO",
+        "s3Key":"webhooks/Resultados preliminares não consistidos (vazões semanais - PMO)/680023a1b2f11f6ae1b8ee1c_Nao_Consistido_202504_REV3.zip",
+        "url":"https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy83OS9Qcm9kdXRvcy8yNDYvTmFvX0NvbnNpc3RpZG9fMjAyNTA0X1JFVjMuemlwIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IlJlc3VsdGFkb3MgcHJlbGltaW5hcmVzIG7Do28gY29uc2lzdGlkb3MgICh2YXrDtWVzIHNlbWFuYWlzIC0gUE1PKSIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzQ0OTI2MjI0LCJuYmYiOjE3NDQ4Mzk1ODR9.u4W1KcqVdvnpsdUGx9-ZntOZK2Q0z0OP87nv2sF89ww",
+        "webhookId":"680023a1b2f11f6ae1b8ee1c"
     }
 
-    notas_tecnicas_medio_prazo(dadosProduto)
+
+    resultados_nao_consistidos_semanal(dadosProduto)
     
