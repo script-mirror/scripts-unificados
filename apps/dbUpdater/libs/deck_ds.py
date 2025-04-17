@@ -121,12 +121,12 @@ def importar_id_deck_ds(dt_referente:datetime, str_fonte:str):
             tb_cadastro_dessem.c.dt_referente == dt_referente.strftime("%Y-%m-%d"), 
             tb_cadastro_dessem.c.id_fonte == dicionario_fonte[str_fonte.lower()]
             )
-    answer_tb_cadastro = db_decks.conn.execute(query_get_id_rodada).scalar()
+    answer_tb_cadastro = db_decks.db_execute(query_get_id_rodada).scalar()
 
     if not answer_tb_cadastro:
 
         query_get_max_id_rodada = db.select(db.func.max(tb_cadastro_dessem.c.id))
-        answer_tb_cadastro = db_decks.conn.execute(query_get_max_id_rodada).scalar()
+        answer_tb_cadastro = db_decks.db_execute(query_get_max_id_rodada).scalar()
         id_deck = answer_tb_cadastro + 1
         
         query_insert_id_rodada = tb_cadastro_dessem.insert().values(
@@ -138,14 +138,13 @@ def importar_id_deck_ds(dt_referente:datetime, str_fonte:str):
                 None
             ]
         )
-        answer = db_decks.conn.execute(query_insert_id_rodada).rowcount
+        answer = db_decks.db_execute(query_insert_id_rodada).rowcount
         if answer:
             print(f'Rodada {id_deck} cadastrada com sucesso')
     else:
         id_deck = answer_tb_cadastro
         print(f'Rodada já estava cadastrada no banco de dados com ID {answer_tb_cadastro}!')
 
-    db_decks.conn.close()
 
     return id_deck
 
@@ -165,11 +164,11 @@ def importar_renovaveis_ds(path_file:str,dt_ref:datetime, str_fonte:str='ons'):
     values_to_insert = df_valores_renovaveis[['id_deck','periodo', 'subm', 'UHE', 'UTE', 'CGH', 'PCH', 'UFV', 'UEE', 'MGD']].values.tolist()
 
     sql_delete = tb_ds_renovaveis.delete().where(tb_ds_renovaveis.c.id_deck == id_deck)
-    n_values = db_decks.conn.execute(sql_delete).rowcount
+    n_values = db_decks.db_execute(sql_delete).rowcount
     print(f"{n_values} Linhas deletadas na tb_ds_renovaveis!")
 
     sql_insert = tb_ds_renovaveis.insert().values(values_to_insert)
-    n_values = db_decks.conn.execute(sql_insert).rowcount
+    n_values = db_decks.db_execute(sql_insert).rowcount
     print(f"{n_values} Linhas inseridas na tb_ds_renovaveis!")
 
 
@@ -199,7 +198,7 @@ def importar_pdo_cmosist_ds(path_file:str, dt_ref:datetime, str_fonte:str):
     id_deck = importar_id_deck_ds(dt_referente=dt_ref, str_fonte=str_fonte)
 
     sql_select_submercado = tb_submercado.select()
-    answer = db_decks.conn.execute(sql_select_submercado).fetchall()
+    answer = db_decks.db_execute(sql_select_submercado).fetchall()
 
     idSubmercados = {}
     for row in answer:
@@ -218,11 +217,11 @@ def importar_pdo_cmosist_ds(path_file:str, dt_ref:datetime, str_fonte:str):
             values_to_insert.append((id_deck, submercadoId, horario, preco))
 
     sql_delete = tb_ds_pdo_cmosist.delete().where(tb_ds_pdo_cmosist.c.id_deck == id_deck)
-    n_values = db_decks.conn.execute(sql_delete).rowcount
+    n_values = db_decks.db_execute(sql_delete).rowcount
     print(f"{n_values} Linhas deletadas na tb_ds_pdo_cmosist!")
 
     sql_insert = tb_ds_pdo_cmosist.insert().values(values_to_insert)
-    n_values = db_decks.conn.execute(sql_insert).rowcount
+    n_values = db_decks.db_execute(sql_insert).rowcount
     print(f"{n_values} Linhas inseridas na tb_ds_pdo_cmosist!")
 
 
@@ -298,11 +297,11 @@ def importar_ds_bloco_dp(path_zip:str, dt_ref:datetime=None, str_fonte:str ='ons
     tb_ds_carga = db_decks.getSchema('tb_ds_carga')
 
     sql_delete = tb_ds_carga.delete().where(tb_ds_carga.c.id_deck == id_deck)
-    n_values = db_decks.conn.execute(sql_delete).rowcount
+    n_values = db_decks.db_execute(sql_delete).rowcount
     print(f"{n_values} Linhas deletadas na tb_ds_carga!")
 
     sql_insert = tb_ds_carga.insert().values(df_carga_dessem_list)
-    n_values = db_decks.conn.execute(sql_insert).rowcount
+    n_values = db_decks.db_execute(sql_insert).rowcount
     print(f"{n_values} Linhas inseridas na tb_ds_carga!")
 
 
@@ -362,11 +361,11 @@ def importar_ds_bloco_tm(path_zip:str, dt_ref:datetime):
             tb_ds_bloco_tm.c.dt_inicio_patamar >= dt_ref,
             tb_ds_bloco_tm.c.dt_inicio_patamar < dt_final,
             )
-        n_values = db_decks.conn.execute(sql_delete).rowcount
+        n_values = db_decks.db_execute(sql_delete).rowcount
         print(f"{n_values} Linhas deletadas na tb_ds_bloco_tm!")
 
         sql_insert = tb_ds_bloco_tm.insert().values(discretizacao)
-        n_values = db_decks.conn.execute(sql_insert).rowcount
+        n_values = db_decks.db_execute(sql_insert).rowcount
         print(f"{n_values} Linhas inseridas na tb_ds_bloco_tm!")
 
     else: 

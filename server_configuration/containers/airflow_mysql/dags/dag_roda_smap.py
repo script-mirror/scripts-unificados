@@ -50,7 +50,8 @@ def import_vazao_prevista(**kwargs):
     """
     ti = kwargs['ti']
     smap_operator = ti.xcom_pull(task_ids='create_smap_object')
-    cenarios_inseridos = smap_operator.import_vazao_prevista()
+    id_dataviz_chuva = kwargs['dag_run'].conf.get('id_dataviz_chuva')
+    cenarios_inseridos = smap_operator.import_vazao_prevista(id_dataviz_chuva)
     cenario = cenarios_inseridos[0]
     
     if isinstance(cenario['dt_rodada'], datetime.date):
@@ -108,7 +109,7 @@ with DAG(
     atualizar_cache = SSHOperator(
         task_id='atualizar_cache',
         ssh_conn_id='ssh_master',
-        command=". /WX2TB/pythonVersions/myVenv38/bin/activate;cd /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/web_modelos/server/caches;python rz_cache.py import_ena_visualization_api id_nova_rodada {{ dag_run.conf.get('cenario')['id'] }}",
+        command=". /WX2TB/pythonVersions/myVenv38/bin/activate;cd /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/web_modelos/server/caches;python rz_cache.py import_ena_visualization_api dt_rodada {{ dag_run.conf.get('cenario')['dt_rodada'] }} id_nova_rodada {{ dag_run.conf.get('cenario')['id'] }} id_dataviz_chuva {{ dag_run.conf.get('id_dataviz_chuva') }}",
         conn_timeout = None,
         cmd_timeout = None,
         get_pty=True,

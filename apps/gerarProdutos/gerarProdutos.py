@@ -295,7 +295,10 @@ def geraRelatorioBbce(data = datetime.datetime.now()):
 
         dados_a_inserir = [{'str_produto': produto} for produto in lista_produtos]
         dados_a_inserir = pd.DataFrame(dados_a_inserir).reset_index().rename(columns={'index':'ordem'}).to_dict('records')
-        requests.post(f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse", json=dados_a_inserir)
+        requests.post(
+            f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse",
+            json=dados_a_inserir,
+            headers={"Authorization": f"Bearer {get_access_token()}"})
         
   
 

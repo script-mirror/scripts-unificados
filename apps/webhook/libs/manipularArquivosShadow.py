@@ -78,6 +78,14 @@ def get_auth():
     
     return headers
 
+def get_access_token() -> str:
+    response = req.post(
+        __URL_COGNITO,
+        data=__CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
+
 def remover_acentos_e_caracteres_especiais(texto):
     import re
     import unicodedata
@@ -145,7 +153,10 @@ def _verify_file_is_new(filename: str, product_name: str) -> None:
     file_hash = hex_hash(base64.b64encode(data).decode('utf-8'))
     is_new = req.post(
         "https://tradingenergiarz.com/api/v2/bot-sintegre/verify",
-        json={"nome": product_name, "fileHash": file_hash}
+        json={"nome": product_name, "fileHash": file_hash},
+        headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            }
     ).json()
 
     if not is_new:
@@ -291,15 +302,21 @@ def historico_preciptacao(dadosProduto):
     #gerar Produto
     airflow_tools.trigger_airflow_dag(
             dag_id="Mapas_PSAT")
-    if dadosProduto.get('enviar', True) == True:
-        GERAR_PRODUTO.enviar({
-        "produto":"PSATH_DIFF",
-        "path":filename,
-    })
+    try:
+        if dadosProduto.get('enviar', True) == True:
+            GERAR_PRODUTO.enviar({
+            "produto":"PSATH_DIFF",
+            "path":filename,
+        })
+    except:
+        print("Erro PSATH_DIFF")
+    try:
         GERAR_PRODUTO.enviar({
         "produto":"DIFERENCA_CV",
         "data":dtRef,
     })
+    except:
+        print("Erro DIFERENCA_CV")
 
     
     #gerar Produto
@@ -829,7 +846,10 @@ def deck_prev_eolica_semanal_patamares(dadosProduto):
         df_patamares = pd.read_csv(io.StringIO(content.decode("latin-1")), sep=";")
         df_patamares.columns = [x[0].lower() + x[1:] for x in df_patamares.columns]
     df_patamares.columns = ['inicio','patamar','cod_patamar','dia_semana','dia_tipico','tipo_dia','intervalo','dia','semana','mes']
-    post_patamates = req.post(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares", json=df_patamares.to_dict("records"))
+    post_patamates = req.post(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares", json=df_patamares.to_dict("records"),
+        headers={
+        'Authorization': f'Bearer {get_access_token()}'
+    })
     if post_patamates.status_code == 200:
         logger.info("Patamares inseridos com sucesso")
     else:
@@ -868,7 +888,11 @@ def deck_prev_eolica_semanal_previsao_final(dadosProduto):
                         "valor":info_weol[data][submercado][patamar],
                         "data_produto":str(datetime.datetime.strptime(dadosProduto['dataProduto'], "%d/%m/%Y").date())})
         
-    post_decks_weol = req.post(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol", json=body_weol)
+    post_decks_weol = req.post(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol",
+                               json=body_weol,
+                               headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            })
     if post_decks_weol.status_code == 200:
         logger.info("WEOL inserido com sucesso")
     else:

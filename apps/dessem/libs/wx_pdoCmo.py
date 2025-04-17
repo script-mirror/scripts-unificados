@@ -20,17 +20,17 @@ def leituraArquivo(filePath):
 	filePath = DIR_TOOLS.get_name_insentive_name(filePath)
 	file = open(filePath, 'r')
 	arquivo = file.readlines()
- 
+	file.close()
 	dados = {'CMO':[]}
 	iLine = 0
 	while iLine != len(arquivo)-1:
 		line = arquivo[iLine]
 
-		if '------;-------;------;-----------;-----------;'  in line:
+		if re.search(r"[-]+;[-]+;[-]+;[-]+;[-]+;", line):
 			iLine += 3
 			line = arquivo[iLine]
 			bloco = []
-			while '------;-------;------;-----------;-----------;' not in line:
+			while not re.search(r"[-]+;[-]+;[-]+;[-]+;[-]+;", line):
 				bloco.append(line)
 				iLine += 1
 				line = arquivo[iLine]
@@ -39,7 +39,6 @@ def leituraArquivo(filePath):
 		else:
 			iLine += 1
 
-	file.close()
 	
 	return dados
 
@@ -53,7 +52,7 @@ def getInfoBlocos():
 						'cmarg',
 						'pi_demanda',
 				],
-				'regex':'(.{6});(.{7});(.{6});(.{11});(.{11});(.*)',
+				'regex':'\\s*([^;]*);\\s*([^;]*);\\s*([^;]*);\\s*([^;]*);\\s*([^;]*);(.*)',
 				'formatacao':'{:>6};{:>7};{:>6};{:>11};{:>11};'}
 	return blocos
 
