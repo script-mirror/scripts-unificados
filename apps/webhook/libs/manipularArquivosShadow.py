@@ -13,7 +13,7 @@ import requests as req
 import hashlib
 
 from dotenv import load_dotenv
-# from airflow.exceptions import AirflowSkipException
+from airflow.exceptions import AirflowSkipException
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
@@ -148,8 +148,8 @@ def _verify_file_is_new(filename: str, product_name: str) -> None:
         json={"nome": product_name, "fileHash": file_hash}
     ).json()
 
-    # if not is_new:
-    #     raise AirflowSkipException("Produto ja inserido")
+    if not is_new:
+        raise AirflowSkipException("Produto ja inserido")
 
 def resultados_preliminares_consistidos(dadosProduto):
 
