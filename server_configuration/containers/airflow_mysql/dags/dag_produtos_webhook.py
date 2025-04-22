@@ -231,6 +231,6 @@ with DAG(
     )
 
     inicio >> patamares
-    patamares >> previsao_final >> atualizar_estudos >> gerar_produtos >> fim
+    patamares >> previsao_final >> gerar_produtos >> atualizar_estudos >> fim
     
     
