@@ -919,7 +919,7 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
     })
         
 def relatorio_limites_intercambio(dadosProduto):
-    
+    Fno
     filename = get_filename(dadosProduto)
     logger.info(filename)
     return {
@@ -934,19 +934,27 @@ def notas_tecnicas_medio_prazo(dadosProduto):
     logger.info(arquivo_zip)
     
     path_arquivo = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(arquivo_zip)[:-4])
+    os.makedirs(path_arquivo, exist_ok=True)
     
-    arquivos = DIR_TOOLS.extract_specific_files_from_zip(
-        path=arquivo_zip,
-        files_name_template= ["GTMIN_CCEE_{}_definitivo.xlsx"],
-        date_format='%m%Y',
-        dst= path_arquivo
-    )
+    with zipfile.ZipFile(arquivo_zip, 'r') as zip_ref:
+        zip_contents = zip_ref.namelist()
+        logger.info(f"Conteúdo do zip: {zip_contents}")
+        
+        excel_files = [f for f in zip_contents if f.endswith('.xlsx') or f.endswith('.xls')]
+        for excel_file in excel_files:
+            zip_ref.extract(excel_file, path_arquivo)
+            logger.info(f"Arquivo extraído: {excel_file}")
     
-    if not arquivos:
+    arquivos_excel = glob.glob(os.path.join(path_arquivo, "**", "*.xlsx"), recursive=True)
+    arquivos_excel.extend(glob.glob(os.path.join(path_arquivo, "**", "*.xls"), recursive=True))
+    
+    logger.info(f"Arquivos Excel encontrados: {arquivos_excel}")
+    
+    if not arquivos_excel:
         logger.error(f"Nenhum arquivo Excel encontrado em {path_arquivo}")
         return
     
-    arquivo_xls = arquivos[0]  
+    arquivo_xls = arquivos_excel[-1]
     
     GERAR_PRODUTO.enviar({
         "produto":"NOTAS_TECNICAS",
@@ -962,19 +970,19 @@ def notas_tecnicas_medio_prazo(dadosProduto):
 if __name__ == '__main__':
     
     dadosProduto = {
-        "dataProduto":"19/04/2025 - 25/04/2025",
+        "dataProduto":"05/2025",
         "enviar":True,
-        "filename":"Nao_Consistido_202504_REV3.zip",
+        "filename":"Notas Técnicas - Medio Prazo.zip",
         "macroProcesso":"Programação da Operação",
-        "nome":"Resultados preliminares não consistidos (vazões semanais - PMO)",
-        "periodicidade":"2025-04-19T03:00:00.000Z",
-        "periodicidadeFinal":"2025-04-26T02:59:59.000Z",
-        "processo":"Previsão de Vazões e Geração de Cenários - PMO",
-        "s3Key":"webhooks/Resultados preliminares não consistidos (vazões semanais - PMO)/680023a1b2f11f6ae1b8ee1c_Nao_Consistido_202504_REV3.zip",
-        "url":"https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy83OS9Qcm9kdXRvcy8yNDYvTmFvX0NvbnNpc3RpZG9fMjAyNTA0X1JFVjMuemlwIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IlJlc3VsdGFkb3MgcHJlbGltaW5hcmVzIG7Do28gY29uc2lzdGlkb3MgICh2YXrDtWVzIHNlbWFuYWlzIC0gUE1PKSIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzQ0OTI2MjI0LCJuYmYiOjE3NDQ4Mzk1ODR9.u4W1KcqVdvnpsdUGx9-ZntOZK2Q0z0OP87nv2sF89ww",
-        "webhookId":"680023a1b2f11f6ae1b8ee1c"
+        "nome":"Notas Técnicas - Medio Prazo",
+        "periodicidade":"2025-05-01T03:00:00.000Z",
+        "periodicidadeFinal":"2025-06-01T02:59:59.000Z",
+        "processo":"Médio Prazo",
+        "s3Key":"webhooks/Notas Técnicas - Medio Prazo/6807b454b2f11f6ae1b8f193_Notas Técnicas - Medio Prazo.zip",
+        "url":"https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODgvMjItMDQtMjAyNV8xMjIwMDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiTm90YXMgVMOpY25pY2FzIC0gTWVkaW8gUHJhem8iLCJJc0ZpbGUiOiJGYWxzZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NDU0MjIwMjAsIm5iZiI6MTc0NTMzNTM4MH0.FH6mbJP84k92TUUu5AEiAWdZ0vep7LGULoaTB50GnP8",
+        "webhookId":"6807b454b2f11f6ae1b8f193"
     }
 
 
-    resultados_nao_consistidos_semanal(dadosProduto)
+    notas_tecnicas_medio_prazo(dadosProduto)
     
