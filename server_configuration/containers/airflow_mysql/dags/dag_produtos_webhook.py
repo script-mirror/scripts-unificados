@@ -140,13 +140,13 @@ with DAG(
         trigger_dag_id='{{ dag_run.conf.get("trigger_dag_id")}}',
         conf={'external_params': "{{dag_run.conf}}"},  
         wait_for_completion=False,  
-        trigger_rule="none_failed_min_one_success",
+        trigger_rule="one_success",
 
     )
 
     fim = DummyOperator(
         task_id='fim',
-        trigger_rule="none_failed_min_one_success",
+        trigger_rule="dummy",
     )
 
     for webhookProdut in PRODUCT_MAPPING.keys():
