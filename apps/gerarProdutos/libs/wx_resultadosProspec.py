@@ -67,7 +67,7 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 	compila_gapMensal = pd.DataFrame()
 
 	num_estudo = []
-
+	contem_nw = True
 	for i, compil in enumerate(pathCompilados):
 		pathCompilado = extractFiles(os.path.abspath(compil))
 		nomeEstudo = os.path.basename(pathCompilado)
@@ -78,6 +78,10 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 		
 		df = pd.read_csv(os.path.join(pathCompilado, 'compila_cmo_medio.csv'), sep=';')
 		df['Sensibilidade'] = df['Sensibilidade'].replace({'Original':nomeRodadaOriginal[i]})
+
+		if len(df[df['Deck'].str.contains('NW')]) == 0:
+			contem_nw = False	
+
 		df.loc[df['Deck'].str.contains('DC'), 'MEN=0-SEM=1'] = 1
 
 		df_mensal = df[df['MEN=0-SEM=1'] == 0].copy()
@@ -93,6 +97,8 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 				df.loc[df['Deck'] == '{}_s1'.format(deck_), 'NORTE'] = dados['NORTE']
 
 		compila_cmo_medio =pd.concat([compila_cmo_medio, df])
+
+
 
   
 		# Colocando o preco medio das 2000 do NW
@@ -316,6 +322,7 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 			gap_iter_resumo[dataRodadaHtml] = '-'
 
 	
+	gap_iter_resumo =  gap_iter_resumo.fillna('-')
 
 	tituloGrafico = 'PLD SE ({})'.format(datetime.datetime.now().strftime('%d/%m/%Y'))
 	fig = plt.figure(figsize=(12,6))
@@ -335,6 +342,11 @@ def gerarEmailResultadosProspec(pathCompiladoZip, nomeRodadaOriginal='', conside
 	resumoTabela1 = enasMensaisResumo+'<br>'+earResumo+'<br>'+enasResumo+'<br>'+gap_iter_resumo+'<br>'+precoNwResumo+'<br>'+cmoResumo
 	resumoTabela1.insert(0, "", ['ENA-Mês(%)<br>EAR(%)<br>ENA-S1(GW)<br>GAP-IT(NW/DC)<br>PLD NW(R$)<br>PLD DC(R$)']*resumoTabela1.shape[0])
 	
+	if contem_nw == False:
+		print('ESTUDO SERÁ ENVIDO SEM OS DADOS DO NEWAVE, POIS ALGUM DOS ESTUDOS CONTÉM APENAS DECOMP')
+		resumoTabela1 = enasMensaisResumo+'<br>'+earResumo+'<br>'+enasResumo+'<br>'+cmoResumo
+		resumoTabela1.insert(0, "", ['ENA-Mês(%)<br>EAR(%)<br>ENA-S1(GW)<br>PLD DC(R$)']*resumoTabela1.shape[0])
+
 	resumoTabela1 = resumoTabela1.fillna('-')
 	resumoTabela1 = resumoTabela1.applymap(lambda x: x.replace('nan-nan-nan-nan', '-') if isinstance(x, str) else x)
 		
