@@ -919,7 +919,7 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
     })
         
 def relatorio_limites_intercambio(dadosProduto):
-    Fno
+    
     filename = get_filename(dadosProduto)
     logger.info(filename)
     return {
