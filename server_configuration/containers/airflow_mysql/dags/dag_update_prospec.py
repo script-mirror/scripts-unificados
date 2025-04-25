@@ -44,9 +44,6 @@ with DAG(
     revisao_carga_dc = DummyOperator(
         task_id='revisao_carga_dc',
     )
-    revisao_eolica = DummyOperator(
-        task_id='revisao_eolica',
-    )
     revisao_carga_nw = DummyOperator(
         task_id='revisao_carga_nw',
     )
@@ -76,17 +73,6 @@ with DAG(
         
     )
 
-    eolica_dadger_decomp = PythonOperator(
-        task_id='eolica_dadger_decomp',
-        python_callable=update_estudo.update_weol_dadger_dc_estudo,
-        provide_context=True,
-        op_kwargs={
-            "file_path": '{{ dag_run.conf.get("external_params").get("file_path")}}',
-            "ids_to_modify":'{{ dag_run.conf.get("ids_to_modify") }}'
-            },
-        
-
-    )
 
     cvu_clast_newave = PythonOperator(
         task_id='cvu_clast_newave',
