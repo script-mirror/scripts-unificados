@@ -920,10 +920,9 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
         
 def relatorio_limites_intercambio(dadosProduto):
     
-<<<<<<< HEAD
     filename = get_filename(dadosProduto)
     logger.info(filename)
-=======
+    
     arquivo_zip = get_filename(dadosProduto)
     
     path_arquivo = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(arquivo_zip)[:-4])
@@ -953,7 +952,6 @@ def relatorio_limites_intercambio(dadosProduto):
                 logger.error("Nenhum arquivo no formato correto encontrado.")
                 return
             
->>>>>>> 5dd3b23c69be4a68567a10043887888c52228457
     return {
         "file_path": arquivo_selecionado,
         "trigger_dag_id":"PROSPEC_UPDATER",
