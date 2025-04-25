@@ -199,9 +199,97 @@ with DAG(
         get_pty=True,
     )
 
+# Definindo a DAG para '2.0-PROSPEC_ATUALIZAÇOÊS'
+
+# Função que executa o script com parâmetros dinâmicos
+def run_python_update_with_dynamic_params(**kwargs):
+    # Recuperando todos os parâmetros passados para a DAG
+    print(kwargs.get('params'))
+    params = kwargs.get('params', {})
+    print(params)
+    # Iniciando a construção do comando para o script
+    command = " . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script/mainRodadaAutoProspec.py prevs PREVS_PLUVIA_RAIZEN rvs 1 mapas ONS_Pluvia"
+    
+    # Adicionando parâmetros ao comando dinamicamente, se existirem
+    for key, value in params.items():
+        if value is not None:  # Verifica se o valor não é None
+            # Adiciona o parâmetro e o valor ao comando
+            command += f" {key} '{value}'"
+    print(command)
+    kwargs['ti'].xcom_push(key='command', value=command)
+
+# Definindo a DAG para '1.0-ENVIAR-EMAIL-ESTUDOS' (adicionada)
+with DAG(
+    default_args=default_args,
+    dag_id='2.0-PROSPEC_ATUALIZACAO', 
+    start_date=datetime(2025, 1, 23), 
+    schedule_interval=None, 
+    catchup=False,
+) as dag:
+    run_script_task = PythonOperator(
+        task_id='run_update_with_dynamic_params',
+        python_callable=run_python_update_with_dynamic_params,
+
+    )
+    run_prospec_on_host = SSHOperator(
+        trigger_rule="none_failed_min_one_success",
+        task_id='run',
+        ssh_conn_id='ssh_master',  
+        command="{{ ti.xcom_pull(task_ids='run_update_with_dynamic_params', key='command')}}",
+        conn_timeout=36000,
+        cmd_timeout=28800,
+        execution_timeout=timedelta(hours=20),
+        get_pty=True,
+    )
+
+    run_script_task >> run_prospec_on_host
+
+# Definindo a DAG para '2.1-PROSPEC_NAO-CONSISTIDO'
+
+# Função que executa o script com parâmetros dinâmicos
+def run_python_with_dynamic_params(**kwargs):
+    # Recuperando todos os parâmetros passados para a DAG
+    print(kwargs.get('params'))
+    params = kwargs.get('params', {})
+    print(params)
+    # Iniciando a construção do comando para o script
+    command = " . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script/mainRodadaAutoProspec.py prevs PREVS_NAO_CONSISTIDO rvs 1"
+    
+    # Adicionando parâmetros ao comando dinamicamente, se existirem
+    for key, value in params.items():
+        if value is not None:  # Verifica se o valor não é None
+            # Adiciona o parâmetro e o valor ao comando
+            command += f" {key} '{value}'"
+    print(command)
+    kwargs['ti'].xcom_push(key='command', value=command)
+
+with DAG(
+    default_args=default_args,
+    dag_id='2.1-PROSPEC_NAO_CONSISTIDO', 
+    start_date=datetime(2025, 1, 23), 
+    schedule_interval=None, 
+    catchup=False,
+) as dag:
+    run_script_task = PythonOperator(
+        task_id='run_update_dynamic_params',
+        python_callable=run_python_with_dynamic_params,
+
+    )
+    run_prospec_on_host = SSHOperator(
+        trigger_rule="none_failed_min_one_success",
+        task_id='run',
+        ssh_conn_id='ssh_master',  
+        command="{{ ti.xcom_pull(task_ids='run_update_dynamic_params', key='command')}}",
+        conn_timeout=36000,
+        cmd_timeout=28800,
+        execution_timeout=timedelta(hours=20),
+        get_pty=True,
+    )
+
+    run_script_task >> run_prospec_on_host 
+
 
 # Definindo a DAG para 1.8-PROSPEC_GRUPOS-ONS
-
 # Função que verifica o estado da DAG
 def check_dag_state(dag_id='1.8-PROSPEC_GRUPOS-ONS'):
     # Carrega a DAG e verifica se está pausada
