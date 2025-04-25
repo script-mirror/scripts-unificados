@@ -920,10 +920,42 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
         
 def relatorio_limites_intercambio(dadosProduto):
     
+<<<<<<< HEAD
     filename = get_filename(dadosProduto)
     logger.info(filename)
+=======
+    arquivo_zip = get_filename(dadosProduto)
+    
+    path_arquivo = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(arquivo_zip)[:-4])
+    os.makedirs(path_arquivo, exist_ok=True)
+    
+    with zipfile.ZipFile(arquivo_zip, 'r') as zip_ref:
+        zip_content_names = zip_ref.namelist()
+        
+        zip_ref.extract(zip_content_names[0], path_arquivo)
+        
+        arquivo_zip_interno = os.path.join(path_arquivo, zip_content_names[0])
+        with zipfile.ZipFile(arquivo_zip_interno, 'r') as zip_ref2:
+            
+            zip_ref2.extractall(path_arquivo)
+            
+            arquivos_pdf = glob.glob(os.path.join(path_arquivo, "**", "*.pdf"), recursive=True)
+            
+            arquivo_selecionado = None
+            for arquivo in arquivos_pdf:
+                nome_arquivo = os.path.basename(arquivo)
+                if nome_arquivo.startswith("RT-ONS DPL") and "_Limites PMO_" in nome_arquivo:
+                    arquivo_selecionado = arquivo
+                    logger.info(f"Arquivo no formato correto encontrado: {nome_arquivo}")
+                    break
+            
+            if arquivo_selecionado is None:
+                logger.error("Nenhum arquivo no formato correto encontrado.")
+                return
+            
+>>>>>>> 5dd3b23c69be4a68567a10043887888c52228457
     return {
-        "file_path": filename,
+        "file_path": arquivo_selecionado,
         "trigger_dag_id":"PROSPEC_UPDATER",
         "task_to_execute": "revisao_restricao"
     }
@@ -970,19 +1002,18 @@ def notas_tecnicas_medio_prazo(dadosProduto):
 if __name__ == '__main__':
     
     dadosProduto = {
-        "dataProduto":"05/2025",
-        "enviar":True,
-        "filename":"Notas Técnicas - Medio Prazo.zip",
-        "macroProcesso":"Programação da Operação",
-        "nome":"Notas Técnicas - Medio Prazo",
-        "periodicidade":"2025-05-01T03:00:00.000Z",
-        "periodicidadeFinal":"2025-06-01T02:59:59.000Z",
-        "processo":"Médio Prazo",
-        "s3Key":"webhooks/Notas Técnicas - Medio Prazo/6807b454b2f11f6ae1b8f193_Notas Técnicas - Medio Prazo.zip",
-        "url":"https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODgvMjItMDQtMjAyNV8xMjIwMDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiTm90YXMgVMOpY25pY2FzIC0gTWVkaW8gUHJhem8iLCJJc0ZpbGUiOiJGYWxzZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NDU0MjIwMjAsIm5iZiI6MTc0NTMzNTM4MH0.FH6mbJP84k92TUUu5AEiAWdZ0vep7LGULoaTB50GnP8",
-        "webhookId":"6807b454b2f11f6ae1b8f193"
-    }
-
-
-    notas_tecnicas_medio_prazo(dadosProduto)
+            "dataProduto": "05/2025",
+            "enviar": True,
+            "filename": "Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP.zip",
+            "macroProcesso": "Programação da Operação",
+            "nome": "Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP",
+            "periodicidade": "2025-05-01T03:00:00.000Z",
+            "periodicidadeFinal": "2025-06-01T02:59:59.000Z",
+            "processo": "Programação mensal da operação energética",
+            "s3Key": "webhooks/Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP/680a3f87b2f11f6ae1b8f2c1_Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP.zip",
+            "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi9Qcm9kdXRvcy8zMDIvMjQtMDQtMjAyNV8xMDM2MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiUmVsYXTDs3JpbyBNZW5zYWwgZGUgTGltaXRlcyBkZSBJbnRlcmPDom1iaW8gcGFyYSBvIE1vZGVsbyBERUNPTVAiLCJJc0ZpbGUiOiJGYWxzZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NDU1ODg3MjYsIm5iZiI6MTc0NTUwMjA4Nn0.-JkHNTvb26bumeH-aDQUSzK7A-mG2Z96IKDktIdmHB4",
+            "webhookId": "680a3f87b2f11f6ae1b8f2c1"
+        }
+    
+    relatorio_limites_intercambio(dadosProduto)
     
