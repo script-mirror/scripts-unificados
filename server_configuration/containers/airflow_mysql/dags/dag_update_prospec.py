@@ -3,6 +3,7 @@ import json
 import datetime
 from airflow.models.dag import DAG
 from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.providers.ssh.operators.ssh import SSHOperator
 
@@ -131,15 +132,19 @@ with DAG(
             },
     )
 
-    fim = DummyOperator(
-        task_id='fim',
+    trigger_dag_prospec = TriggerDagRunOperator(
+        task_id='trigger_dag_prospec_2.0',
+        trigger_dag_id='2.0-PROSPEC_ATUALIZACAO',
+        conf={'nome_estudo': "{{dag_run.conf.external_params.task_to_execute}}"},  
+        wait_for_completion=False,  
+        trigger_rule="                                                                                                                                         ",
+
     )
 
 
 # Definindo dependências com base na decisão
-inicio >> revisao_cvu >> cvu_dadger_decomp >> cvu_clast_newave >> fim
-inicio >> revisao_cvu >> cvu_dadger_decomp >> fim
-inicio >> revisao_carga_dc >> carga_dadger_decomp  >> fim
-inicio >> revisao_eolica >> eolica_dadger_decomp >> fim
-inicio >> revisao_carga_nw >> carga_c_adic_newave >> carga_sistema_newave >> fim
-inicio >> revisao_restricao >> restricao_dadger_decomp >> fim
+inicio >> revisao_cvu >> cvu_dadger_decomp >> cvu_clast_newave >> trigger_dag_prospec
+inicio >> revisao_cvu >> cvu_dadger_decomp >> trigger_dag_prospec
+inicio >> revisao_carga_dc >> carga_dadger_decomp  >> trigger_dag_prospec
+inicio >> revisao_carga_nw >> carga_c_adic_newave >> carga_sistema_newave >> trigger_dag_prospec
+inicio >> revisao_restricao >> restricao_dadger_decomp >> trigger_dag_prospec
