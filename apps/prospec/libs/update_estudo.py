@@ -205,7 +205,15 @@ def update_cvu_clast_nw_estudo(
 
         extracted_zip_estudo = utils.extract_file_estudo(
             path_to_modify,
-            ) 
+            )
+        pasta_nw = [
+        nome for nome in os.listdir(extracted_zip_estudo)
+        if os.path.isdir(os.path.join(extracted_zip_estudo, nome)) and nome.startswith("NW")
+        ]
+        if not pasta_nw:
+            logger.info(f"Estudo {id_estudo} nao possui NW")
+            continue
+
 
         clast_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*clast*"),recursive=True)
         arquivos_filtrados = [arquivo for arquivo in clast_to_modify if not re.search(r'\.0+$', arquivo)]
@@ -240,6 +248,14 @@ def update_carga_c_adic_nw_estudo(file_path:str,ids_to_modify:List[int]=None):
         extracted_zip_estudo = utils.extract_file_estudo(
             path_to_modify,
             ) 
+        pasta_nw = [
+        nome for nome in os.listdir(extracted_zip_estudo)
+        if os.path.isdir(os.path.join(extracted_zip_estudo, nome)) and nome.startswith("NW")
+        ]
+        if not pasta_nw:
+            logger.info(f"Estudo {id_estudo} nao possui NW")
+            continue
+
 
         c_adic_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*c_adic*"),recursive=True)
         if c_adic_to_modify == []:
@@ -284,6 +300,14 @@ def update_carga_sistema_nw_estudo(file_path:str,ids_to_modify:List[int]=None):
         extracted_zip_estudo = utils.extract_file_estudo(
             path_to_modify,
             ) 
+        pasta_nw = [
+        nome for nome in os.listdir(extracted_zip_estudo)
+        if os.path.isdir(os.path.join(extracted_zip_estudo, nome)) and nome.startswith("NW")
+        ]
+        if not pasta_nw:
+            logger.info(f"Estudo {id_estudo} nao possui NW")
+            continue
+
         paths_sistema_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*sistema*"),recursive=True)
         if paths_sistema_to_modify == []:
             raise Exception(f"Não foi encontrado nenhum arquivo sistema no estudo {id_estudo}")
@@ -326,6 +350,13 @@ def update_weol_sistema_nw_estudo(data_produto:datetime.date, ids_to_modify:List
         extracted_zip_estudo = utils.extract_file_estudo(
             path_estudo,
             )
+        pasta_nw = [
+        nome for nome in os.listdir(extracted_zip_estudo)
+        if os.path.isdir(os.path.join(extracted_zip_estudo, nome)) and nome.startswith("NW")
+        ]
+        if not pasta_nw:
+            logger.info(f"Estudo {id_estudo} nao possui NW")
+            continue
 
         paths_sistema_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*sistema*"),recursive=True)
         if paths_sistema_to_modify == []:
