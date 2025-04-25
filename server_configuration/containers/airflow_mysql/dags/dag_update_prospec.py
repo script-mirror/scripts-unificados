@@ -137,7 +137,7 @@ with DAG(
         trigger_dag_id='2.0-PROSPEC_ATUALIZACAO',
         conf={'nome_estudo': "{{dag_run.conf.external_params.task_to_execute}}"},  
         wait_for_completion=False,  
-        trigger_rule="                                                                                                                                         ",
+        trigger_rule="none_failed_min_one_success",
 
     )
 
