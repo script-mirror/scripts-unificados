@@ -222,6 +222,8 @@ def arquivo_acomph(dadosProduto):
             dadosProduto["dataProduto"], "%d/%m/%Y"
         )
     #gerar Produto
+    cmd = f"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/web_modelos/server/caches/env/bin/python rz_cache.py atualizar_cache_acomph data {dtRef.date}"
+    os.system(cmd)
     if dadosProduto.get('enviar', True) == True:
         GERAR_PRODUTO.enviar({
         "produto":"ACOMPH",
@@ -1000,18 +1002,18 @@ def notas_tecnicas_medio_prazo(dadosProduto):
 if __name__ == '__main__':
     
     dadosProduto = {
-            "dataProduto": "05/2025",
-            "enviar": True,
-            "filename": "Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP.zip",
-            "macroProcesso": "Programação da Operação",
-            "nome": "Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP",
-            "periodicidade": "2025-05-01T03:00:00.000Z",
-            "periodicidadeFinal": "2025-06-01T02:59:59.000Z",
-            "processo": "Programação mensal da operação energética",
-            "s3Key": "webhooks/Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP/680a3f87b2f11f6ae1b8f2c1_Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP.zip",
-            "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi9Qcm9kdXRvcy8zMDIvMjQtMDQtMjAyNV8xMDM2MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiUmVsYXTDs3JpbyBNZW5zYWwgZGUgTGltaXRlcyBkZSBJbnRlcmPDom1iaW8gcGFyYSBvIE1vZGVsbyBERUNPTVAiLCJJc0ZpbGUiOiJGYWxzZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NDU1ODg3MjYsIm5iZiI6MTc0NTUwMjA4Nn0.-JkHNTvb26bumeH-aDQUSzK7A-mG2Z96IKDktIdmHB4",
-            "webhookId": "680a3f87b2f11f6ae1b8f2c1"
-        }
+        "dataProduto": "26/04/2025 - 02/05/2025",
+        "enviar": False,
+        "filename": "RV0_PMO_Maio_2025_carga_semanal.zip",
+        "macroProcesso": "Programação da Operação",
+        "nome": "Carga por patamar - DECOMP",
+        "periodicidade": "2025-04-26T03:00:00.000Z",
+        "periodicidadeFinal": "2025-05-03T02:59:59.000Z",
+        "processo": "Previsão de Carga para o PMO",
+        "s3Key": "webhooks/Carga por patamar - DECOMP/68082f97b2f11f6ae1b8f1e4_RV0_PMO_Maio_2025_carga_semanal.zip",
+        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ny9Qcm9kdXRvcy8yMjgvUlYwX1BNT19NYWlvXzIwMjVfY2FyZ2Ffc2VtYW5hbC56aXAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiQ2FyZ2EgcG9yIHBhdGFtYXIgLSBERUNPTVAiLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc0NTQ1MzU3NSwibmJmIjoxNzQ1MzY2OTM1fQ.cch-88YEB3RFfb6b8MaPfnnIWQ9EAcCmp55Rm6IMGHA",
+        "webhookId": "68082f97b2f11f6ae1b8f1e4"
+    }
     
-    relatorio_limites_intercambio(dadosProduto)
+    carga_patamar(dadosProduto)
     
