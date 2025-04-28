@@ -100,9 +100,6 @@ def importAcomph(path):
     num_inseridos = dataBase.conn.execute(sql_insert).rowcount
     print(f"{num_inseridos} linhas inseridas.")
 
-    cmd = F"cd {PATH_CACHE};"
-    cmd += f"python rz_cache.py atualizar_cache_acomph data {DT_ACOMPH}"
-    os.system(cmd)
 
    
 def importRdh(path):
