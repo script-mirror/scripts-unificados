@@ -137,7 +137,25 @@ def update_eolica_DC(paths_to_modify:List[str], data_produto:datetime.date):
         except Exception as e:
             logger.error(f"Erro ao tentar sobrescrever bloco {path_dadger}: {str(e)}")
             continue    
-
+def update_carga_pq_dc(paths_to_modify:List[str], data_produto:datetime.date):
+    info_carga = info_external_files.organizar_info_dadger_carga_pq(
+        paths_to_modify,
+        data_produto
+        )
+    for path_dadger in info_carga:
+        bloco = info_carga[path_dadger].split('\n')
+        try:
+            dadger.sobrescreve_bloco(
+                path_to_modify=path_dadger,
+                mnemonico_bloco='PQ',
+                values=bloco,
+                skip_lines=len(bloco)
+            )
+            logger.info(f"Bloco {path_dadger} sobrescrito com sucesso")
+        except Exception as e:
+            logger.error(f"Erro ao tentar sobrescrever bloco {path_dadger}: {str(e)}")
+            continue    
+    
 def update_restricoes_eletricas_DC(info_restricoes:pd.DataFrame,paths_to_modify:List[str]):
 
     colunas_primeiro_mes = ['1º Mês Pesada','1º Mês Média','1º Mês Leve']

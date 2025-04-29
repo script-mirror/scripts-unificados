@@ -270,6 +270,18 @@ class DirTools():
                             extracted_files = extracted_files)
 
         return extracted_files
+    def extrair_zip_e_buscar_arquivo(self, zip_path:str, destino_extracao:str, padrao_arquivo:str="*.xlsx"):
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(destino_extracao)
+        
+        padrao_busca = os.path.join(destino_extracao, '**', padrao_arquivo)
+        
+        arquivos_encontrados = glob.glob(padrao_busca, recursive=True)
+        
+        if arquivos_encontrados:
+            return arquivos_encontrados
+        else:
+            return None
 
 if __name__ == '__main__':
     pass

@@ -361,6 +361,26 @@ def carga_patamar(dadosProduto):
     filename = get_filename(dadosProduto)
 
     logger.info(filename)
+    extracted_files = DIR_TOOLS.extrair_zip_e_buscar_arquivo(
+        filename,
+        f"{PATH_WEBHOOK_TMP}/{dadosProduto['nome']}",
+        "Semanal*.xlsx"
+    )
+    df = pd.read_excel(extracted_files[0])
+    df.drop(columns=['cod_ss', 'cod_pat'], inplace=True)
+    df.columns = [str.lower(x) for x in df.columns]
+    df['patamar'] = df['patamar'].str.replace('é', 'e').str.lower()
+    df.rename(columns={"so":"semana_operativa", "subsistema":"submercado"}, inplace=True)
+    df['data_produto'] = str(datetime.datetime.strptime(dadosProduto['dataProduto'][:10], "%d/%m/%Y").date())
+    df['semana_operativa'] = df['semana_operativa'].dt.strftime("%Y-%m-%d")
+    
+    df['submercado'] = df['submercado'].str.replace('/', '')
+    req.post(f"http://localhost:8000/api/v2/decks/carga-decomp",
+                               json=df.to_dict('records'),
+                               headers={
+                'Authorization': f'Bearer {get_access_token()}'
+        })
+    
     
     # gerar Produto
     if dadosProduto.get('enviar', True) == True:
@@ -1002,18 +1022,19 @@ def notas_tecnicas_medio_prazo(dadosProduto):
 if __name__ == '__main__':
     
     dadosProduto = {
-        "dataProduto": "26/04/2025 - 02/05/2025",
+        "dataProduto": "29/04/2025",
         "enviar": False,
-        "filename": "RV0_PMO_Maio_2025_carga_semanal.zip",
+        "filename": "ACOMPH_29.04.2025.xls",
         "macroProcesso": "Programação da Operação",
-        "nome": "Carga por patamar - DECOMP",
-        "periodicidade": "2025-04-26T03:00:00.000Z",
-        "periodicidadeFinal": "2025-05-03T02:59:59.000Z",
-        "processo": "Previsão de Carga para o PMO",
-        "s3Key": "webhooks/Carga por patamar - DECOMP/68082f97b2f11f6ae1b8f1e4_RV0_PMO_Maio_2025_carga_semanal.zip",
-        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ny9Qcm9kdXRvcy8yMjgvUlYwX1BNT19NYWlvXzIwMjVfY2FyZ2Ffc2VtYW5hbC56aXAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiQ2FyZ2EgcG9yIHBhdGFtYXIgLSBERUNPTVAiLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc0NTQ1MzU3NSwibmJmIjoxNzQ1MzY2OTM1fQ.cch-88YEB3RFfb6b8MaPfnnIWQ9EAcCmp55Rm6IMGHA",
-        "webhookId": "68082f97b2f11f6ae1b8f1e4"
+        "nome": "Acomph",
+        "periodicidade": "2025-04-29T03:00:00.000Z",
+        "periodicidadeFinal": "2025-04-30T02:59:59.000Z",
+        "processo": "Acompanhamento das Condições Hidroenergéticas",
+        "s3Key": "webhooks/Acomph/6810e07bb2f11f6ae1b8f616_ACOMPH_29.04.2025.xls",
+        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy81Ni9Qcm9kdXRvcy8yMzAvQUNPTVBIXzI5LjA0LjIwMjUueGxzIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IkFjb21waCIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzQ2MDIzMTQ3LCJuYmYiOjE3NDU5MzY1MDd9.ainJm-W_JGTHa9hwD3lJp7Pyu69wEzohfqCM8NFSZec",
+        "webhookId": "6810e07bb2f11f6ae1b8f616"
     }
+
     
-    carga_patamar(dadosProduto)
+    arquivo_acomph(dadosProduto)
     

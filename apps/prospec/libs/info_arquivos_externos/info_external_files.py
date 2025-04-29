@@ -181,6 +181,10 @@ def df_pq_to_dadger(df: pd.DataFrame) -> str:
         f"{row['mnemonico']:<4}{row['nome']:<11}{row['sub']:<1}{row['estagio']:>5}{row['gerac_p1']:>8}{row['gerac_p2']:>5}{row['gerac_p3']:>5}\n"
         for _, row in df.iterrows()
     )
+
+
+def df_pq_to_dadger_carga(df: pd.DataFrame) -> str:
+    result = ''.join(    f"{str(row['mnemonico'])[:4]:<4}{str(row['nome'])[:11]:<11}{str(row['sub'])[:1]:<1}{str(row['estagio'])[:5]:>5}{str(row['gerac_p1'])[:5]:>8}{str(row['gerac_p2'])[:5]:>5}{str(row['gerac_p3'])[:5]:>5}\n"    for _, row in df.iterrows())
     return result.rstrip("&\n").rstrip("\n")
 
 def get_weol(data_produto:datetime.date, data_inicio_semana:datetime.datetime) -> pd.DataFrame:
@@ -200,6 +204,24 @@ def get_weol(data_produto:datetime.date, data_inicio_semana:datetime.datetime) -
     df_estagio['estagio'] += 1
     df = df.merge(df_estagio, on='inicio_semana', how='inner')
     return df
+
+
+def get_carga_decomp(data_produto:datetime.date) -> pd.DataFrame:
+    res = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/carga-patamar",
+                        params={"dataProduto":str(data_produto)},
+                        headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            })
+    res.raise_for_status()
+    if res.json() == []:
+        logger.info("Nenhum dado encontrado")
+        return pd.DataFrame()
+        
+    df = pd.DataFrame(res.json())
+    
+    return df
+
+
 
 def get_df_dadger(path_dadger:str) -> pd.DataFrame:
     df = utils.trim_df(dadger.leituraArquivo(path_dadger)[0]['PQ'])
@@ -222,7 +244,7 @@ def organizar_info_eolica(paths_dadgers:List[str], data_produto:datetime.date):
         df_bloco_atual = df_bloco_atual[~df_bloco_atual['nome'].str.endswith('_EOL')]
         df_bloco_atual = pd.concat([df_bloco_atual, df_eol])
 
-        df_bloco_atual = df_bloco_atual.reset_index()[df_bloco_atual.columns].sort_values(['sub', 'nome', 'estagio'])
+        df_bloco_atual = df_bloco_atual[df_bloco_atual.columns].sort_values(['sub', 'nome', 'estagio']).reset_index(drop=True)
         estagio_mensal = max(df_bloco_atual[df_bloco_atual['nome'].str.endswith('_EOL')]['estagio'].tolist())
 
         for index, row in df_bloco_atual.iterrows():
@@ -247,6 +269,55 @@ def organizar_info_eolica(paths_dadgers:List[str], data_produto:datetime.date):
         novos_blocos[path_dadger] = df_pq_to_dadger(df_bloco_atual)
     return novos_blocos
 
+def organizar_info_dadger_carga_pq(paths_dadgers:List[str], data_produto:datetime.date):
+    novos_blocos = {}
+    for path_dadger in paths_dadgers:
+
+        df_carga = get_carga_decomp(data_produto)
+        fonte_map = {'PCHgd': 'Exp_CGH', 'PCTgd': 'Exp_UTE', 'EOLgd': 'Exp_EOL', 'UFVgd': 'Exp_UFV'}
+        colunas_alterar = [x.lower() for x in fonte_map.keys()]
+        # Completando estagios apenas para os blocos de EOL
+        df_bloco_atual = get_df_dadger(path_dadger)
+        
+        mask = df_bloco_atual['nome'].apply(lambda x: any(x.endswith(value) for value in fonte_map.keys()))
+        df_estagios_preenchidos = completar_estagios(df_bloco_atual[mask])
+
+        # Removendo os blocos de EOL do df original, e adicionando os completos
+        df_bloco_atual = df_bloco_atual[~mask]
+        df_bloco_atual = pd.concat([df_bloco_atual, df_estagios_preenchidos])
+
+        df_bloco_atual = df_bloco_atual[df_bloco_atual.columns].sort_values(['sub', 'nome', 'estagio']).reset_index(drop=True)
+        estagio_mensal = max(df_bloco_atual['estagio'].tolist())
+        for index, row in df_bloco_atual.iterrows():
+            submercado = row['nome'].split('_')[0]
+            coluna_alterar = row['nome'].split('_')[1]
+            if coluna_alterar in fonte_map.keys():
+                # apenas SUL precisa ser ajustado
+                if submercado == 'SUL':
+                    submercado = 'S'
+                if row['estagio'] == estagio_mensal:
+                    # print(f"{row} estagio mensal")
+                    continue
+                try:
+                    df_bloco_atual.at[index, 'gerac_p1'] = df_carga[
+                                                                    (df_carga['submercado'] == submercado) &
+                                                                    (df_carga['patamar'] == 'pesada') &
+                                                                    (df_carga['estagio'] == row['estagio'])][fonte_map[coluna_alterar].lower()].values[0]
+                    df_bloco_atual.at[index, 'gerac_p2'] = df_carga[
+                                                                    (df_carga['submercado'] == submercado) &
+                                                                    (df_carga['patamar'] == 'media') &
+                                                                    (df_carga['estagio'] == row['estagio'])][fonte_map[coluna_alterar].lower()].values[0]
+                    df_bloco_atual.at[index, 'gerac_p3'] = df_carga[
+                                                                    (df_carga['submercado'] == submercado) &
+                                                                    (df_carga['patamar'] == 'leve') &
+                                                                    (df_carga['estagio'] == row['estagio'])][fonte_map[coluna_alterar].lower()].values[0]
+                except:
+                    continue
+            # else:
+                # print(f"coluna nao altera{coluna_alterar}")
+        df_bloco_atual = df_bloco_atual.sort_values(['sub', 'nome', 'estagio'])
+        novos_blocos[path_dadger] = df_pq_to_dadger_carga(df_bloco_atual)
+    return novos_blocos
 
 def extract_carga_nw(path_carga,path_saida=PATH_DOWNLOAD_TMP):
         DIR_TOOLS = rz_dir_tools.DirTools()
@@ -459,7 +530,4 @@ if __name__ == "__main__":
 #         print(wx_opweek.ElecData(datetime.datetime.strptime(rv, "%Y-%m-%d")).atualRevisao)
     # teste = ler_csv_para_dicionario("/home/arthur-moraes/Downloads/Deck_PrevMes_20241128/Arquivos Saida/Previsoes Subsistemas Finais/Total/Prev_20241128_Semanas_20241130_20250103.csv")
 
-    info_cvu = organizar_info_cvu(
-        titles_fonte_to_search=['CCEE_conjuntural_revisado','CCEE_merchant'],
-        dt_atualizacao=datetime.date(2025,2,7)
-        )
+    organizar_info_dadger_carga_pq(['/home/arthur-moraes/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_25085/DC202505-sem2/dadger.rv1'], datetime.date(2025, 4, 26))
