@@ -148,6 +148,6 @@ with DAG(
 
 inicio >> revisao_cvu >> cvu_dadger_decomp >> cvu_clast_newave >> trigger_dag_prospec
 inicio >> revisao_cvu >> cvu_dadger_decomp >> trigger_dag_prospec
-inicio >> revisao_carga_dc >> carga_dadger_decomp >> carga_pq_gd >> trigger_dag_prospec
+inicio >> revisao_carga_dc >> carga_dadger_decomp >> carga_pq_dadger_dc >> trigger_dag_prospec
 inicio >> revisao_carga_nw >> carga_c_adic_newave >> carga_sistema_newave >> trigger_dag_prospec
 inicio >> revisao_restricao >> restricao_dadger_decomp >> trigger_dag_prospec
