@@ -23,6 +23,12 @@ def trigger_task_sequence(**kwargs):
     task_name = kwargs.get('dag_run').conf.get('external_params').get('task_to_execute')
     return [task_name]
 
+def update_carga_pq_dadger_dc(data_produto, ids_to_modify):
+    update_estudo.update_carga_pq_dadger_dc_estudo(
+        datetime.datetime.strptime(data_produto[:10], "%d/%m/%Y").date(),
+        ids_to_modify
+    )
+
 with DAG(
     dag_id='PROSPEC_UPDATER',
     tags=["PROSPEC"],
@@ -72,6 +78,16 @@ with DAG(
             },
         
     )
+    carga_pq_dadger_dc = PythonOperator(
+        task_id='carga_pq_dadger_dc',
+        python_callable=update_carga_pq_dadger_dc,
+        provide_context=True,
+        op_kwargs={
+            "data_produto": '{{ dag_run.conf.get("external_params").get("product_details").get("dataProduto")}}',
+            "ids_to_modify":'{{ dag_run.conf.get("ids_to_modify") }}'
+            },
+    )
+    
 
 
     cvu_clast_newave = PythonOperator(
@@ -129,8 +145,9 @@ with DAG(
 
 
 # Definindo dependências com base na decisão
+
 inicio >> revisao_cvu >> cvu_dadger_decomp >> cvu_clast_newave >> trigger_dag_prospec
 inicio >> revisao_cvu >> cvu_dadger_decomp >> trigger_dag_prospec
-inicio >> revisao_carga_dc >> carga_dadger_decomp  >> trigger_dag_prospec
+inicio >> revisao_carga_dc >> carga_dadger_decomp >> carga_pq_gd >> trigger_dag_prospec
 inicio >> revisao_carga_nw >> carga_c_adic_newave >> carga_sistema_newave >> trigger_dag_prospec
 inicio >> revisao_restricao >> restricao_dadger_decomp >> trigger_dag_prospec
