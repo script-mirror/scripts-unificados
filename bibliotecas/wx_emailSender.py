@@ -275,7 +275,7 @@ def api_html_to_image(html_str,path_save=f'output{datetime.datetime.now().strfti
             "type": "png",
             "quality": 100,
             "trim": True,
-            "deviceScaleFactor": 10,
+            "deviceScaleFactor": 1,
             "background": True
         }
     }
