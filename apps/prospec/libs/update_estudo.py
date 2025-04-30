@@ -201,7 +201,6 @@ def update_carga_pq_dadger_dc_estudo(data_produto:datetime.date, ids_to_modify:L
             arquivos_filtrados,
             data_produto
             )
-        pdb.set_trace()
         send_files_to_api(id_estudo, arquivos_filtrados, tag)
 
         logger.info(f"============================================")
@@ -456,5 +455,5 @@ if __name__ == "__main__":
     # update_cvu_estudo(ids_to_modify,ano_referencia_cvu,mes_referencia_cvu)
     # update_carga_estudo(ids_to_modify,file_path)
 
-    update_carga_pq_dadger_dc_estudo(datetime.date(2025, 4, 26))
+    update_carga_pq_dadger_dc_estudo(datetime.date(2025, 5, 3))
     
