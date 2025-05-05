@@ -222,7 +222,7 @@ def arquivo_acomph(dadosProduto):
             dadosProduto["dataProduto"], "%d/%m/%Y"
         )
     #gerar Produto
-    cmd = f"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/web_modelos/server/caches/env/bin/python rz_cache.py atualizar_cache_acomph data {dtRef.date}"
+    cmd = f"/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/web_modelos/server/caches/env/bin/python rz_cache.py atualizar_cache_acomph data {dtRef.date()}"
     os.system(cmd)
     if dadosProduto.get('enviar', True) == True:
         GERAR_PRODUTO.enviar({
