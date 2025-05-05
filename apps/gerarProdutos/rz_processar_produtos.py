@@ -162,19 +162,55 @@ def processar_produto_ACOMPH(parametros):
     return resultado
 
 
-def processar_produto_ACOMPH_tabelas_whatsapp(parametros):
+def split_html_table(html_content):
+    """Split HTML table content while preserving structure"""
+    # Create BeautifulSoup object to parse HTML
+    from bs4 import BeautifulSoup
     
+    soup = BeautifulSoup(html_content, 'html.parser')
+    tables = soup.find_all('table')
+    
+    html_chunks = []
+    for table in tables:
+        # Preserve the style
+        style = soup.find('style')
+        # Create new HTML document for each table
+        new_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+        {style if style else ''}
+        </head>
+        <body>
+        {str(table)}
+        </body>
+        </html>
+        """
+        html_chunks.append(new_html)
+    
+    return html_chunks
+
+
+# Modified version of your function
+def processar_produto_ACOMPH_tabelas_whatsapp(parametros):
     resultado = Resultado(parametros)
     
     dtReferente = parametros["data"]
-
     html_tabela_acomph = rz_aux_libs.gerarTabelasEmailAcomph(dtReferente)
-    path_fig = api_html_to_image(html_tabela_acomph,path_save=os.path.join(PATH_WEBHOOK_TMP,f'acomph_{datetime.date.today()}.png'))
     
-    resultado.fileWhats = path_fig
-    resultado.msgWhats = 'Acomph ({})'.format(dtReferente.strftime('%d/%m/%Y'))
-    resultado.flagWhats = True
-    resultado.destinatarioWhats = "Condicao Hidrica"
+    # Split the HTML content
+    html_chunks = split_html_table(html_tabela_acomph)
+    titles = ['Submercado', 'Bacias', 'Submercado - D-1', 'Bacias - D-1']
+    
+    # Process each chunk
+    for i, html_chunk in enumerate(html_chunks):
+        path_fig = api_html_to_image(
+            html_chunk,
+            path_save=os.path.join(PATH_WEBHOOK_TMP, f'acomph_{datetime.date.today()}_{i}.png')
+        )
+        
+        msg = f'Acomph ({dtReferente.strftime("%d/%m/%Y")}) - {titles[i]}'
+        send_whatsapp_message('Condicao Hidrica', msg, path_fig)
     
     return resultado
     
