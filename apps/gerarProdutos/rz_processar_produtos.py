@@ -203,10 +203,10 @@ def processar_produto_RELATORIO_BBCE(parametros):
     resultado.remetenteEmail = 'info_bbce@climenergy.com'
     resultado.flagEmail = True
     
-    res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros["data"]}&tipo_negociacao=Boleta Eletronica")
+    res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros['data']}&tipo_negociacao=Boleta Eletronica")
     send_whatsapp_message('bbce',f'{parametros["data"]}', api_html_to_image(res.json()['html']))
     
-    res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros["data"]}&tipo_negociacao=Mesa")
+    res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros['data']}&tipo_negociacao=Mesa")
     send_whatsapp_message('bbce',f'{parametros["data"]}', api_html_to_image(res.json()['html']))
     
     return resultado
