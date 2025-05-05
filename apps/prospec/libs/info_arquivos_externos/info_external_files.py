@@ -176,11 +176,13 @@ def completar_estagios(df):
     df_completo = df_completo.drop_duplicates(['nome', 'estagio'])
     return df_completo
 
+
 def df_pq_to_dadger(df: pd.DataFrame) -> str:
     result = ''.join(
         f"{row['mnemonico']:<4}{row['nome']:<11}{row['sub']:<1}{row['estagio']:>5}{row['gerac_p1']:>8}{row['gerac_p2']:>5}{row['gerac_p3']:>5}\n"
         for _, row in df.iterrows()
     )
+    return result.rstrip("&\n").rstrip("\n")
 
 
 def df_pq_to_dadger_carga(df: pd.DataFrame) -> str:
@@ -197,7 +199,7 @@ def get_weol(data_produto:datetime.date, data_inicio_semana:datetime.datetime) -
     if weol_decomp.json() == []:
         logger.info("Nenhum dado encontrado")
         return pd.DataFrame()
-        
+
     df = pd.DataFrame(weol_decomp.json())
     df['valor'] = df['valor'].astype(str).str[:5]
     df_estagio = pd.DataFrame({'inicio_semana': df['inicio_semana'].sort_values().unique()}).reset_index().rename(columns={'index': 'estagio'})
@@ -229,6 +231,7 @@ def get_df_dadger(path_dadger:str) -> pd.DataFrame:
     df['sub'] = df['sub'].astype(int)
     return df
 
+
 def organizar_info_eolica(paths_dadgers:List[str], data_produto:datetime.date):
     novos_blocos = {}
     for path_dadger in paths_dadgers:
@@ -244,7 +247,7 @@ def organizar_info_eolica(paths_dadgers:List[str], data_produto:datetime.date):
         df_bloco_atual = df_bloco_atual[~df_bloco_atual['nome'].str.endswith('_EOL')]
         df_bloco_atual = pd.concat([df_bloco_atual, df_eol])
 
-        df_bloco_atual = df_bloco_atual[df_bloco_atual.columns].sort_values(['sub', 'nome', 'estagio']).reset_index(drop=True)
+        df_bloco_atual = df_bloco_atual.reset_index()[df_bloco_atual.columns].sort_values(['sub', 'nome', 'estagio'])
         estagio_mensal = max(df_bloco_atual[df_bloco_atual['nome'].str.endswith('_EOL')]['estagio'].tolist())
 
         for index, row in df_bloco_atual.iterrows():
