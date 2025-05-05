@@ -119,7 +119,7 @@ def gerarTabela(body, header=[], widthColunas=[], nthColor=1):
     if header != []:
         html += '\t<tr style="height: 15pt;">\n'
         for i, cell in enumerate(header):
-            html += '\t\t<td style="width: {}pt; border: 1pt solid windowtext; background: rgb(120, 30, 119) none repeat scroll 0% 0%; padding: 0cm 3.5pt; height: 15pt;" width="{}" valign="bottom" nowrap="nowrap">\n'.format(widthColunas[i], int(widthColunas[i]*1.33))
+            html += '\t\t<td style="width: {}pt; border: 1pt solid windowtext; background: rgb(100,100,100) none repeat scroll 0% 0%; padding: 0cm 3.5pt; height: 15pt;" width="{}" valign="bottom" nowrap="nowrap">\n'.format(widthColunas[i], int(widthColunas[i]*1.33))
             html += '\t\t<p class="MsoNormal" style="margin: 0cm 0cm 0.0001pt; text-align: center; line-height: normal; font-size: 11pt; font-family: &quot;Calibri&quot;, sans-serif;" align="center"><span style="color: white;">{}<span></span></span></p>\n'.format(cell)
             html += '\t\t</td>\n'
         html += '\t\t</tr>\n'
@@ -141,7 +141,7 @@ def gerarTabela(body, header=[], widthColunas=[], nthColor=1):
                     html += '\t\t</td>\n'
 
                 else:
-                    html += '\t\t<td style="width:49pt;border-color:currentcolor windowtext windowtext;border-style:none solid solid;border-width:medium 1pt 1pt;background:rgb(218, 194, 218) none repeat scroll 0% 0%;padding:0cm 3.5pt;height:15pt" width="65" valign="bottom" nowrap="">\n'
+                    html += '\t\t<td style="width:49pt;border-color:currentcolor windowtext windowtext;border-style:none solid solid;border-width:medium 1pt 1pt;background:rgb(200,200,200) none repeat scroll 0% 0%;padding:0cm 3.5pt;height:15pt" width="65" valign="bottom" nowrap="">\n'
                     html += '\t\t<p class="MsoNormal" style="margin:0cm 0cm 0.0001pt;text-align:center;line-height:normal;font-size:11pt;font-family:&quot;Calibri&quot;,sans-serif" align="center"><span style="color:black"><span>&nbsp;</span>{}<span></span></span></p>\n'.format(cell)
                     html += '\t\t</td>\n'
 
