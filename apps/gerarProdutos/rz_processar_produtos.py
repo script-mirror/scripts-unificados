@@ -195,7 +195,15 @@ def processar_produto_RDH(parametros):
     resultado.flagEmail = True
     return resultado
 
-
+def remover_primeira_div(html_string):
+    inicio_div = html_string.find('<div>')
+    fim_div = html_string.find('</div>') + 6  # +6 para incluir o </div>
+    
+    if inicio_div != -1 and fim_div != -1:
+        return html_string[:inicio_div] + html_string[fim_div:], html_string[inicio_div:fim_div]
+    else:
+        return html_string, f"{datetime.datetime.now()}"
+    
 def processar_produto_RELATORIO_BBCE(parametros):
     resultado = Resultado(parametros)
     resultado.corpoEmail, resultado.file = rz_aux_libs.geraRelatorioBbce(parametros["data"])
@@ -204,10 +212,14 @@ def processar_produto_RELATORIO_BBCE(parametros):
     resultado.flagEmail = True
     
     res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros['data'].date()}&tipo_negociacao=Boleta Eletronica")
-    send_whatsapp_message('bbce',f'{parametros["data"].strftime("%d/%m/%Y")}', api_html_to_image(res.json()['html']))
+    html = remover_primeira_div(res.json()['html'])
+    msg = html[1].replace("  ", "").replace("<h3>", "").replace("</h3>", "").replace("<div>", "").replace("</div>", "")[1:][:-1]
+    send_whatsapp_message('bbce',msg, api_html_to_image(html))
     
     res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros['data'].date()}&tipo_negociacao=Mesa")
-    send_whatsapp_message('bbce',f'{parametros["data"].strftime("%d/%m/%Y")}', api_html_to_image(res.json()['html']))
+    html = remover_primeira_div(res.json()['html'])
+    msg = html[1].replace("  ", "").replace("<h3>", "").replace("</h3>", "").replace("<div>", "").replace("</div>", "")[1:][:-1]
+    send_whatsapp_message('bbce',msg, api_html_to_image(html))
     
     return resultado
 
@@ -723,4 +735,4 @@ if __name__ == '__main__':
         "destinatarioWhats": 'PMO',
     }
     
-    processar_produto_CMO_DC_PRELIMINAR(parametros)
+    processar_produto_RELATORIO_BBCE({'data':datetime.datetime.now()})
