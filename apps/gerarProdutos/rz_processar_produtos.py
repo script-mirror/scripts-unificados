@@ -20,7 +20,8 @@ from PMO.scripts_unificados.apps.rodadas import rz_rodadasModelos
 from PMO.scripts_unificados.apps.gerarProdutos.config import (
     __HOST_SERVIDOR,
     __USER_EMAIL_CV,
-    __PASSWORD_EMAIL_CV
+    __PASSWORD_EMAIL_CV,
+    WHATSAPP_API,
     )
 
 diretorioApp = os.path.dirname(os.path.abspath(__file__))
@@ -40,6 +41,28 @@ def get_access_token() -> str:
         headers={'Content-Type': 'application/x-www-form-urlencoded'}
     )
     return response.json()['access_token']
+
+def send_whatsapp_message(destinatario,msg,file=None):  
+    fields={
+        "destinatario": destinatario,
+        "mensagem": msg,
+    }
+    files={}
+    if file:
+        files={
+            "arquivo": (os.path.basename(file), open(file, "rb"))
+        }
+    response = req.post(
+        WHATSAPP_API,
+        data=fields,
+        files=files,
+        headers={
+            'Authorization': f'Bearer {get_access_token()}'
+            }
+        )
+
+    print("Status Code:", response.status_code)
+
 
 try:
     locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
@@ -179,6 +202,13 @@ def processar_produto_RELATORIO_BBCE(parametros):
     resultado.assuntoEmail = '[BBCE] Resumo das negociações do dia {}'.format(parametros["data"].strftime('%d/%m/%Y'))
     resultado.remetenteEmail = 'info_bbce@climenergy.com'
     resultado.flagEmail = True
+    
+    res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros["data"]}&tipo_negociacao=Boleta Eletronica")
+    send_whatsapp_message('bbce',f'{parametros["data"]}', api_html_to_image(res.json()['html']))
+    
+    res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros["data"]}&tipo_negociacao=Mesa")
+    send_whatsapp_message('bbce',f'{parametros["data"]}', api_html_to_image(res.json()['html']))
+    
     return resultado
 
 
@@ -653,7 +683,7 @@ def processar_produto_prev_ena_consistido(parametros):
 
     resultado.msgWhats = titulo
     resultado.flagWhats = True
-    resultado.destinatarioWhats = "Condicao Hidrica"
+    resultado.destinatarioWhats = "Premissas Preco"
 
     return resultado
 
@@ -663,10 +693,14 @@ def processar_produto_MAPA_PSAT(parametros):
 
     
     path_fig = f"/WX2TB/Documentos/dados/psat/zgifs/psat_{data.strftime('%Y%m%d')}12z_smap.png"
-    resultado.fileWhats = path_fig
-    resultado.msgWhats = f"PSAT ({data.strftime('%d/%m/%Y')})"
-    resultado.flagWhats = True
-    resultado.destinatarioWhats = "Condicao Hidrica"
+
+    # deixando de enviar produto do psat ja que o mesmo esta sendo enviado pelo JP
+
+    resultado.flagWhats = False
+    if resultado.flagWhats:
+        resultado.fileWhats = path_fig
+        resultado.msgWhats = f"PSAT ({data.strftime('%d/%m/%Y')})"
+        resultado.destinatarioWhats = "Condicao Hidrica"
 
     return resultado
 
