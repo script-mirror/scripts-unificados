@@ -29,7 +29,7 @@ def run_python_script_with_dynamic_params(**kwargs):
     print(command)
     kwargs['ti'].xcom_push(key='command', value=command)
 
-# Definindo a DAG para '1.0-ENVIAR-EMAIL-ESTUDOS' (adicionada)
+# Definindo a DAG para '1.00-ENVIAR-EMAIL-ESTUDOS' (adicionada)
 with DAG(
     default_args=default_args,
     dag_id='1.00-ENVIAR-EMAIL-ESTUDOS', 
@@ -60,7 +60,7 @@ with DAG(
     run_script_task >> run_prospec_on_host
 
 # python /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script/mainRodadaAutoProspec.py prevs PREVS_PLUVIA_2_RV rvs 2 preliminar 0 nome_estudo CVU-ATUALIZADO
-# Definindo a DAG para '1.1-PROSPEC_PCONJUNTO_DEFINITIVO'
+# Definindo a DAG para '1.01-PROSPEC_PCONJUNTO_DEFINITIVO'
 with DAG(
     default_args=default_args,
     dag_id='1.01-PROSPEC_PCONJUNTO_DEFINITIVO', 
@@ -80,7 +80,7 @@ with DAG(
     )
 
 
-# Definindo a DAG para '1.2-PROSPEC_PCONJUNTO_PREL'
+# Definindo a DAG para '1.02-PROSPEC_PCONJUNTO_PREL'
 with DAG(
     default_args=default_args,
     dag_id='1.02-PROSPEC_PCONJUNTO_PREL', 
@@ -100,7 +100,7 @@ with DAG(
     )
 
  # 
-# Definindo a DAG para '1.3-PROSPEC_1RV'
+# Definindo a DAG para '1.03-PROSPEC_1RV'
 with DAG(
     default_args=default_args,
     dag_id='1.03-PROSPEC_1RV', 
@@ -123,7 +123,7 @@ with DAG(
 # Definindo a DAG para '1.4-PROSPEC_EC_EXT'
 with DAG(
     default_args=default_args,
-    dag_id='1.04-PROSPEC_EC_EXT', 
+    dag_id='1.4-PROSPEC_EC_EXT', 
     start_date=datetime(2024, 4, 28), 
     schedule_interval="00 19 * * 1-4", 
     catchup=False,
@@ -140,7 +140,7 @@ with DAG(
     )
 
 
-# Definindo a DAG para '1.5-PROSPEC_CENARIO_10'
+# Definindo a DAG para '1.05-PROSPEC_CENARIO_10'
 with DAG(
     default_args=default_args,
     dag_id='1.05-PROSPEC_CENARIO_10', 
@@ -160,7 +160,7 @@ with DAG(
     )
 
 
-# Definindo a DAG para '1.6-PROSPEC_CENARIO_11'
+# Definindo a DAG para '1.06-PROSPEC_CENARIO_11'
 with DAG(
     default_args=default_args,
     dag_id='1.06-PROSPEC_CENARIO_11', 
@@ -220,7 +220,7 @@ def run_python_gfs(**kwargs):
     print(command)
     kwargs['ti'].xcom_push(key='command', value=command)
 
-# Definindo a DAG para '1.0-ENVIAR-EMAIL-ESTUDOS' (adicionada)
+# Definindo a DAG para '1.00-ENVIAR-EMAIL-ESTUDOS' (adicionada)
 with DAG(
     default_args=default_args,
     dag_id='1.10-PROSPEC_GFS', 
@@ -267,7 +267,7 @@ def run_python_update_with_dynamic_params(**kwargs):
     print(command)
     kwargs['ti'].xcom_push(key='command', value=command)
 
-# Definindo a DAG para '1.0-ENVIAR-EMAIL-ESTUDOS' (adicionada)
+# Definindo a DAG para '1.00-ENVIAR-EMAIL-ESTUDOS' (adicionada)
 with DAG(
     default_args=default_args,
     dag_id='1.11-PROSPEC_ATUALIZACAO', 
@@ -338,7 +338,7 @@ with DAG(
     run_script_task >> run_prospec_on_host 
 
 
-# Definindo a DAG para 1.8-PROSPEC_GRUPOS-ONS
+# Definindo a DAG para 1.08-PROSPEC_GRUPOS-ONS
 # Função que verifica o estado da DAG
 def check_dag_state(dag_id='1.008-PROSPEC_GRUPOS-ONS'):
     # Carrega a DAG e verifica se está pausada

@@ -23,7 +23,7 @@ with DAG(
 '''
 
 with DAG(
-    dag_id = '1.8-PROSPEC_GRUPOS-ONS', 
+    dag_id = '1.08-PROSPEC_GRUPOS-ONS', 
     start_date=datetime(2024, 4, 28), 
     schedule_interval=None, 
     catchup=False

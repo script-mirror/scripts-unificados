@@ -274,7 +274,7 @@ with DAG(
     
     trigger_dag_prospec = TriggerDagRunOperator(
         task_id='trigger_dag_prospec_2.0',
-        trigger_dag_id='2.0-PROSPEC_ATUALIZACAO',
+        trigger_dag_id='1.11-PROSPEC_ATUALIZACAO',
         conf={'nome_estudo': "revisao_weol"},  
         wait_for_completion=False,  
         trigger_rule="none_failed_min_one_success",

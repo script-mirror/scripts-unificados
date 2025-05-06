@@ -242,12 +242,12 @@ def arquivo_acomph(dadosProduto):
     })
     if dadosProduto.get('enviar', True) == True:
         airflow_tools.trigger_airflow_dag(
-            dag_id="1.8-PROSPEC_GRUPOS-ONS",
+            dag_id="1.08-PROSPEC_GRUPOS-ONS",
             json_produtos={}
             )
         
         airflow_tools.trigger_airflow_dag(
-            dag_id="1.1-PROSPEC_PCONJUNTO_DEFINITIVO",
+            dag_id="1.01-PROSPEC_PCONJUNTO_DEFINITIVO",
             json_produtos={
                 'dt_ref':dadosProduto['dataProduto']
                 })
