@@ -424,7 +424,7 @@ def deck_preliminar_decomp(dadosProduto):
     })
     if dadosProduto.get('enviar', True) == True:
         airflow_tools.trigger_airflow_dag(
-            dag_id="2.0-BACKTEST-DECOMP",
+            dag_id="1.14-BACKTEST-DECOMP",
             json_produtos={
                 'dt_ref':dadosProduto['dataProduto']
                 })

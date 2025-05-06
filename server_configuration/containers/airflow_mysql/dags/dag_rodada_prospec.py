@@ -340,7 +340,7 @@ with DAG(
 
 # Definindo a DAG para 1.08-PROSPEC_GRUPOS-ONS
 # Função que verifica o estado da DAG
-def check_dag_state(dag_id='1.008-PROSPEC_GRUPOS-ONS'):
+def check_dag_state(dag_id='1.08-PROSPEC_GRUPOS-ONS'):
     # Carrega a DAG e verifica se está pausada
     dagbag = DagBag()
     dag = dagbag.get_dag(dag_id)
@@ -394,4 +394,43 @@ with DAG(
 
     # Definindo a ordem das tarefas
     check_dag_state_task >> [run_decomp_ons_grupos, skip_task]
+
+
+with DAG(
+    dag_id = '1.14-BACKTEST-DECOMP', 
+    start_date=datetime(2024, 4, 28), 
+    schedule_interval=None, 
+    catchup=False
+    ) as dag:
+    
+    run_decomp_on_host = SSHOperator(
+        trigger_rule="none_failed_min_one_success",
+        task_id='run_decomp',
+        ssh_conn_id='ssh_master',  # Ensure this matches the connection ID set in the Airflow UI
+        command=" . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX/WX2TB/Documentos/fontes/PMO/backTest_DC/script/back_teste_decomp.py",
+        conn_timeout = None,
+        cmd_timeout = None,
+        get_pty=True,
+    )
+
+
+
+with DAG(
+    dag_id = '1.13-PROSPEC_PCONJUNTO_PREL_PRECIPITACAO', 
+    start_date=datetime(2024, 7, 30), 
+    schedule_interval='00 07 * * 1-5', 
+    catchup=False
+    ) as dag:
+    
+    run_pconjunto_prel_precipitacao = SSHOperator(
+        trigger_rule="none_failed_min_one_success",
+        task_id='run_pconjunto_prel_precipitacao',
+        ssh_conn_id='ssh_master',  # Ensure this matches the connection ID set in the Airflow UI
+        command=" . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script/mainRodadaAutoProspec.py prevs PREVS_PLUVIA_APR rvs 2 preliminar 0",
+        conn_timeout = None,
+        cmd_timeout = None,
+        get_pty=True,
+        execution_timeout=timedelta(hours=20),
+    )
+
 
