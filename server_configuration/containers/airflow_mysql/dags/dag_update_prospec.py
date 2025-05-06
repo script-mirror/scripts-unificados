@@ -76,7 +76,7 @@ def update_carga_pq_dadger_dc(data_produto, ids_to_modify):
 
 with DAG(
     dag_id='PROSPEC_UPDATER',
-    tags=["PROSPEC"],
+    tags=["Prospec"],
     start_date= datetime.datetime(2024, 4, 28),
     catchup=False,
     schedule=None,   
@@ -85,7 +85,6 @@ with DAG(
         'owner': 'airflow',
         'on_failure_callback': enviar_whatsapp_erro,
     },
-    tags=['Prospec'],
 ) as dag:
     
     inicio = BranchPythonOperator(
