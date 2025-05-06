@@ -85,6 +85,7 @@ with DAG(
         'owner': 'airflow',
         'on_failure_callback': enviar_whatsapp_erro,
     },
+    tags=['Prospec'],
 ) as dag:
     
     inicio = BranchPythonOperator(

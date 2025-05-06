@@ -36,6 +36,7 @@ with DAG(
     start_date=datetime(2025, 1, 23), 
     schedule_interval=None, 
     catchup=False,
+    tags=['Prospec'],
 ) as dag:
     run_script_task = PythonOperator(
         task_id='run_script_with_dynamic_params',
@@ -67,6 +68,7 @@ with DAG(
     start_date=datetime(2024, 4, 28), 
     schedule_interval=None, 
     catchup=False,
+    tags=['Prospec'],
 ) as dag:
     run_prospec_on_host = SSHOperator(
         trigger_rule="none_failed_min_one_success",
@@ -87,6 +89,7 @@ with DAG(
     start_date=datetime(2024, 4, 28), 
     schedule_interval='02 07 * * *', 
     catchup=False,
+    tags=['Prospec'],
 ) as dag:
     run_prospec_on_host = SSHOperator(
         trigger_rule="none_failed_min_one_success",
@@ -107,6 +110,7 @@ with DAG(
     start_date=datetime(2024, 4, 28), 
     schedule_interval="51 06 * * 1-4", 
     catchup=False,
+    tags=['Prospec'],
 ) as dag:
     run_prospec_on_host = SSHOperator(
         trigger_rule="none_failed_min_one_success",
@@ -127,6 +131,7 @@ with DAG(
     start_date=datetime(2024, 4, 28), 
     schedule_interval="00 19 * * 1-4", 
     catchup=False,
+    tags=['Prospec'],
 ) as dag:
     run_prospec_on_host = SSHOperator(
         trigger_rule="none_failed_min_one_success",
@@ -147,6 +152,7 @@ with DAG(
     start_date=datetime(2024, 4, 28), 
     schedule_interval='42 6 * * 1-5', 
     catchup=False,
+    tags=['Prospec'],
 ) as dag:
     run_prospec_on_host = SSHOperator(
         trigger_rule="none_failed_min_one_success",
@@ -167,6 +173,7 @@ with DAG(
     start_date=datetime(2024, 4, 28), 
     schedule_interval='33 7 * * 1-5', 
     catchup=False,
+    tags=['Prospec'],
 ) as dag:
     run_prospec_on_host = SSHOperator(
         trigger_rule="none_failed_min_one_success",
@@ -187,6 +194,7 @@ with DAG(
     start_date=datetime(2024, 4, 28), 
     schedule_interval='00 8 * * 1', 
     catchup=False,
+    tags=['Prospec'],
 ) as dag:
     run_prospec_on_host = SSHOperator(
         trigger_rule="none_failed_min_one_success",
@@ -227,6 +235,7 @@ with DAG(
     start_date=datetime(2025, 1, 23), 
     schedule_interval=None, 
     catchup=False,
+    tags=['Prospec'],
 ) as dag:
     run_script_task = PythonOperator(
         task_id='run_python_gfs',
@@ -274,6 +283,7 @@ with DAG(
     start_date=datetime(2025, 1, 23), 
     schedule_interval=None, 
     catchup=False,
+    tags=['Prospec'],
 ) as dag:
     run_script_task = PythonOperator(
         task_id='run_update_with_dynamic_params',
@@ -318,6 +328,7 @@ with DAG(
     start_date=datetime(2025, 1, 23), 
     schedule_interval=None, 
     catchup=False,
+    tags=['Prospec'],
 ) as dag:
     run_script_task = PythonOperator(
         task_id='run_update_dynamic_params',
@@ -363,7 +374,8 @@ with DAG(
     dag_id='1.08-PROSPEC_GRUPOS-ONS', 
     start_date=datetime(2024, 4, 28), 
     schedule_interval=None, 
-    catchup=False
+    catchup=False,
+    tags=['Prospec'],
 ) as dag:
 
     # Verifica o estado da DAG antes de executar qualquer tarefa
@@ -400,7 +412,8 @@ with DAG(
     dag_id = '1.14-BACKTEST-DECOMP', 
     start_date=datetime(2024, 4, 28), 
     schedule_interval=None, 
-    catchup=False
+    catchup=False,
+    tags=['Prospec'],
     ) as dag:
     
     run_decomp_on_host = SSHOperator(
@@ -419,7 +432,8 @@ with DAG(
     dag_id = '1.13-PROSPEC_PCONJUNTO_PREL_PRECIPITACAO', 
     start_date=datetime(2024, 7, 30), 
     schedule_interval='00 07 * * 1-5', 
-    catchup=False
+    catchup=False,
+    tags=['Prospec'],
     ) as dag:
     
     run_pconjunto_prel_precipitacao = SSHOperator(

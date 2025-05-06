@@ -164,7 +164,7 @@ with DAG(
     start_date=datetime.datetime(2024, 4, 28),
     catchup=False,
     schedule=None,
-    tags=['webhook'],
+    tags=['Webhook', 'Prospec'],
     default_args={
         'retries': 4,
         'retry_delay': datetime.timedelta(minutes=5),
@@ -241,7 +241,7 @@ with DAG(
         'retry_delay': datetime.timedelta(minutes=5),
         'on_failure_callback': enviar_whatsapp_erro_weol,
     },
-    tags=['Webhook', 'Decks', 'Decomp']
+    tags=['Webhook', 'Prospec']
     ) as dag:
     
     inicio = DummyOperator(
