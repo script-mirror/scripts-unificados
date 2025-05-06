@@ -1,17 +1,62 @@
+import os
 import sys
 import json
 import datetime
+from dotenv import load_dotenv
 from airflow.models.dag import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.providers.ssh.operators.ssh import SSHOperator
-
-
+import requests
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+WHATSAPP_API = os.getenv("WHATSAPP_API")
+URL_COGNITO = os.getenv("URL_COGNITO")
+CONFIG_COGNITO = os.getenv("CONFIG_COGNITO")
 sys.path.insert(1,"/WX2TB/Documentos/fontes")
+
 from PMO.scripts_unificados.apps.prospec.libs import update_estudo
 
-
+def get_access_token() -> str:
+    response = requests.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
+ 
+def enviar_whatsapp_erro(context):
+    task_instance = context['task_instance']
+    dag_id = context['dag'].dag_id
+    task_id = task_instance.task_id
+    
+    msg = f"❌ Erro em {dag_id} na task {task_id}"
+    fields = {
+        "destinatario": "Airflow",
+        "mensagem": msg
+    }
+    headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
+    response = requests.post(WHATSAPP_API, data=fields, headers=headers)
+    print("Status Code:", response.status_code)
+ 
+def enviar_whatsapp_sucesso(context):
+    task_instance = context['task_instance']
+    if task_instance.state == 'skipped':
+        return
+    
+    task_instance = context['task_instance']
+    dag_id = context['dag'].dag_id
+    task_id = task_instance.task_id
+    
+    msg = f"✅ Sucesso no Produto: *{context['params']['product_details']['nome']}*"
+    fields = {
+        "destinatario": "Airflow",
+        "mensagem": msg
+    }
+    headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
+    response = requests.post(WHATSAPP_API, data=fields, headers=headers)
+    print("Status Code:", response.status_code)
+    
 def trigger_task_sequence(**kwargs):
     kwargs.get('dag_run').conf['ids_to_modify'] = kwargs.get('dag_run').conf.get('external_params').get('ids_to_modify',[])
 
@@ -35,7 +80,11 @@ with DAG(
     start_date= datetime.datetime(2024, 4, 28),
     catchup=False,
     schedule=None,   
-    render_template_as_native_obj=True, 
+    render_template_as_native_obj=True,
+    default_args={
+        'owner': 'airflow',
+        'on_failure_callback': enviar_whatsapp_erro,
+    },
 ) as dag:
     
     inicio = BranchPythonOperator(

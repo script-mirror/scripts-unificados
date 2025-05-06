@@ -12,6 +12,7 @@ import traceback
 import os
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 WHATSAPP_API = os.getenv("WHATSAPP_API")
+EVENTS_API = os.getenv("URL_EVENTS_API")
 URL_COGNITO = os.getenv("URL_COGNITO")
 CONFIG_COGNITO = os.getenv("CONFIG_COGNITO")
 
@@ -94,6 +95,20 @@ def enviar_whatsapp_erro(context):
     headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
     response = requests.post(WHATSAPP_API, data=fields, headers=headers)
     print("Status Code:", response.status_code)
+    
+def enviar_whatsapp_erro_weol(context):
+    task_instance = context['task_instance']
+    dag_id = context['dag'].dag_id
+    task_id = task_instance.task_id
+    
+    msg = f"❌ Erro em {dag_id} na task {task_id}"
+    fields = {
+        "destinatario": "Airflow",
+        "mensagem": msg
+    }
+    headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
+    response = requests.post(WHATSAPP_API, data=fields, headers=headers)
+    print("Status Code:", response.status_code)
  
 def enviar_whatsapp_sucesso(context):
     task_instance = context['task_instance']
@@ -111,7 +126,38 @@ def enviar_whatsapp_sucesso(context):
     }
     headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
     response = requests.post(WHATSAPP_API, data=fields, headers=headers)
+    enviar_evento_event_tracker(context)
     print("Status Code:", response.status_code)
+
+def enviar_evento_event_tracker(context):
+    headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
+    # O formato do evento deve ser semelhante a este:{
+    #   "eventType": "string",
+    #   "systemOrigin": "string",
+    #   "payload": {},
+    #   "value": 0,
+    #   "userId": "string",
+    #   "sessionId": "string",
+    #   "correlationId": "string",
+    #   "metadata": {}
+    # }
+
+    print("product_details", context['params'])
+    fields = {
+        "eventType": "product_processed",
+        "systemOrigin": "airflow_"+context['params']['function_name'],
+        "sessionId": context['params']['product_details']['nome'],
+        # "value": 0
+    }
+    #debug events_api url
+    print("EVENTS_API:", EVENTS_API)
+    #debug fields
+    print("fields:", fields)
+    response = requests.post(EVENTS_API, data=fields, headers=headers)
+    print("text", response.text)
+    print("Status Code:", response.status_code)
+
+
     
 with DAG(
     dag_id='WEBHOOK',
@@ -192,7 +238,8 @@ with DAG(
     schedule=None,
     default_args={
         'retries': 4,
-        'retry_delay': datetime.timedelta(minutes=5) 
+        'retry_delay': datetime.timedelta(minutes=5),
+        'on_failure_callback': enviar_whatsapp_erro_weol,
     },
     tags=['Webhook', 'Decks', 'Decomp']
     ) as dag:
