@@ -93,12 +93,17 @@ def importAcomph(path):
         POSTOS += postos
 
     sql_delete = tb_acomph.delete().where(db.and_(tb_acomph.c.cd_posto.in_(POSTOS) ,tb_acomph.c.dt_acomph == DT_ACOMPH))
-    num_deletados = dataBase.conn.execute(sql_delete).rowcount
+    num_deletados = dataBase.db_execute(sql_delete).rowcount
     print(f"{num_deletados} linhas deletadas.") 
-
-    sql_insert = tb_acomph.insert().values(ACOMPH)
-    num_inseridos = dataBase.conn.execute(sql_insert).rowcount
+    
+    df = pd.DataFrame(ACOMPH, columns=["dt_ref","cd_posto","nivel_lido","nivel_conso","defluente_lido","defluente_conso","afluente_lido","afluente_conso","incremental_conso","natural_conso", "dt_acomph"])
+    df['afluente_lido'] = None
+        
+    sql_insert = tb_acomph.insert().values(df.values.tolist())
+    num_inseridos = dataBase.db_execute(sql_insert).rowcount
     print(f"{num_inseridos} linhas inseridas.")
+    
+        
 
 
    
