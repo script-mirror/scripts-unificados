@@ -368,13 +368,13 @@ def getFatorConversaoDb():
     db_ons = wx_dbClass.db_mysql_master("db_ons", connect=True)
     tb_produtibilidade = db_ons.db_schemas['tb_produtibilidade']
 
-    sql_select = db.select([
+    sql_select = db.select(
         tb_produtibilidade.c.cd_posto,
         tb_produtibilidade.c.vl_produtibilidade,
         tb_produtibilidade.c.str_submercado,
         tb_produtibilidade.c.str_bacia,
         tb_produtibilidade.c.str_sigla,
-        ])
+        )
     
     answer = db_ons.db_execute(sql_select).fetchall()
     db_ons.db_dispose()

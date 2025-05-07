@@ -113,7 +113,7 @@ def update_cvu_dadger_dc_estudo(
 
         logger.info(f"============================================")
 
-def update_carga_dadger_dc_estudo(file_path,ids_to_modify:List[int]=None):
+def update_carga_dadger_dc_estudo(file_path:str,ids_to_modify:List[int]=None):
 
     tag = [f'CARGA-DC {datetime.datetime.now().strftime("%d/%m %H:%M")}']
     if not ids_to_modify:
@@ -143,8 +143,8 @@ def update_carga_dadger_dc_estudo(file_path,ids_to_modify:List[int]=None):
             info_cargas,
             arquivos_filtrados
             )
-
-        send_files_to_api(id_estudo, paths_modified, tag)
+        print(f"nao enviando arquivos {paths_modified}")
+        # send_files_to_api(id_estudo, paths_modified, tag)
 
         logger.info(f"============================================")
         
@@ -176,6 +176,35 @@ def update_weol_dadger_dc_estudo(data_produto:datetime.date, ids_to_modify:List[
         send_files_to_api(id_estudo, arquivos_filtrados, tag)
 
         logger.info(f"============================================")
+        
+def update_carga_pq_dadger_dc_estudo(data_produto:datetime.date, ids_to_modify:List[int] = None):
+    logger.info(f"UPDATE DADGER DECOMP")
+    tag = [f'GD-DC {datetime.datetime.now().strftime("%d/%m %H:%M")}']
+    if not ids_to_modify:
+        ids_to_modify = get_ids_to_modify()
+
+    for id_estudo in ids_to_modify:
+        logger.info("\n\n")
+        logger.info(f"Modificando estudo {id_estudo}")
+
+        path_estudo = api.downloadEstudoPorId(id_estudo)
+
+        extracted_zip_estudo = utils.extract_file_estudo(
+            path_estudo,
+            )
+
+        dadgers_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
+        arquivos_filtrados = [arquivo for arquivo in dadgers_to_modify if not re.search(r'\.0+$', arquivo)]
+        if arquivos_filtrados == []:
+            raise Exception(f"Não foi encontrado nenhum arquivo dadger no estudo {id_estudo}")
+        dadger_updater.update_carga_pq_dc(
+            arquivos_filtrados,
+            data_produto
+            )
+        send_files_to_api(id_estudo, arquivos_filtrados, tag)
+
+        logger.info(f"============================================")
+
 #NEWAVE
 def update_cvu_clast_nw_estudo(
     fontes_to_search:List[str],
@@ -205,7 +234,15 @@ def update_cvu_clast_nw_estudo(
 
         extracted_zip_estudo = utils.extract_file_estudo(
             path_to_modify,
-            ) 
+            )
+        pasta_nw = [
+        nome for nome in os.listdir(extracted_zip_estudo)
+        if os.path.isdir(os.path.join(extracted_zip_estudo, nome)) and nome.startswith("NW")
+        ]
+        if not pasta_nw:
+            logger.info(f"Estudo {id_estudo} nao possui NW")
+            continue
+
 
         clast_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*clast*"),recursive=True)
         arquivos_filtrados = [arquivo for arquivo in clast_to_modify if not re.search(r'\.0+$', arquivo)]
@@ -240,6 +277,14 @@ def update_carga_c_adic_nw_estudo(file_path:str,ids_to_modify:List[int]=None):
         extracted_zip_estudo = utils.extract_file_estudo(
             path_to_modify,
             ) 
+        pasta_nw = [
+        nome for nome in os.listdir(extracted_zip_estudo)
+        if os.path.isdir(os.path.join(extracted_zip_estudo, nome)) and nome.startswith("NW")
+        ]
+        if not pasta_nw:
+            logger.info(f"Estudo {id_estudo} nao possui NW")
+            continue
+
 
         c_adic_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*c_adic*"),recursive=True)
         if c_adic_to_modify == []:
@@ -284,6 +329,14 @@ def update_carga_sistema_nw_estudo(file_path:str,ids_to_modify:List[int]=None):
         extracted_zip_estudo = utils.extract_file_estudo(
             path_to_modify,
             ) 
+        pasta_nw = [
+        nome for nome in os.listdir(extracted_zip_estudo)
+        if os.path.isdir(os.path.join(extracted_zip_estudo, nome)) and nome.startswith("NW")
+        ]
+        if not pasta_nw:
+            logger.info(f"Estudo {id_estudo} nao possui NW")
+            continue
+
         paths_sistema_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*sistema*"),recursive=True)
         if paths_sistema_to_modify == []:
             raise Exception(f"Não foi encontrado nenhum arquivo sistema no estudo {id_estudo}")
@@ -326,6 +379,13 @@ def update_weol_sistema_nw_estudo(data_produto:datetime.date, ids_to_modify:List
         extracted_zip_estudo = utils.extract_file_estudo(
             path_estudo,
             )
+        pasta_nw = [
+        nome for nome in os.listdir(extracted_zip_estudo)
+        if os.path.isdir(os.path.join(extracted_zip_estudo, nome)) and nome.startswith("NW")
+        ]
+        if not pasta_nw:
+            logger.info(f"Estudo {id_estudo} nao possui NW")
+            continue
 
         paths_sistema_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*sistema*"),recursive=True)
         if paths_sistema_to_modify == []:
@@ -395,7 +455,5 @@ if __name__ == "__main__":
     # update_cvu_estudo(ids_to_modify,ano_referencia_cvu,mes_referencia_cvu)
     # update_carga_estudo(ids_to_modify,file_path)
 
-    file_path = r"C:\Users\CS399274\Downloads\Preliminar - RT-ONS DPL 0075-2025_Limites PMO_Março-2025.pdf"
-    update_restricoes_dadger_dc_estudo(file_path, ids_to_modify=[23188])
-
+    update_carga_pq_dadger_dc_estudo(datetime.date(2025, 5, 3))
     

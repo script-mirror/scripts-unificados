@@ -20,7 +20,8 @@ from PMO.scripts_unificados.apps.rodadas import rz_rodadasModelos
 from PMO.scripts_unificados.apps.gerarProdutos.config import (
     __HOST_SERVIDOR,
     __USER_EMAIL_CV,
-    __PASSWORD_EMAIL_CV
+    __PASSWORD_EMAIL_CV,
+    WHATSAPP_API,
     )
 
 diretorioApp = os.path.dirname(os.path.abspath(__file__))
@@ -40,6 +41,28 @@ def get_access_token() -> str:
         headers={'Content-Type': 'application/x-www-form-urlencoded'}
     )
     return response.json()['access_token']
+
+def send_whatsapp_message(destinatario,msg,file=None):  
+    fields={
+        "destinatario": destinatario,
+        "mensagem": msg,
+    }
+    files={}
+    if file:
+        files={
+            "arquivo": (os.path.basename(file), open(file, "rb"))
+        }
+    response = req.post(
+        WHATSAPP_API,
+        data=fields,
+        files=files,
+        headers={
+            'Authorization': f'Bearer {get_access_token()}'
+            }
+        )
+
+    print("Status Code:", response.status_code)
+
 
 try:
     locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
@@ -139,19 +162,55 @@ def processar_produto_ACOMPH(parametros):
     return resultado
 
 
-def processar_produto_ACOMPH_tabelas_whatsapp(parametros):
+def split_html_table(html_content):
+    """Split HTML table content while preserving structure"""
+    # Create BeautifulSoup object to parse HTML
+    from bs4 import BeautifulSoup
     
+    soup = BeautifulSoup(html_content, 'html.parser')
+    tables = soup.find_all('table')
+    
+    html_chunks = []
+    for table in tables:
+        # Preserve the style
+        style = soup.find('style')
+        # Create new HTML document for each table
+        new_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+        {style if style else ''}
+        </head>
+        <body>
+        {str(table)}
+        </body>
+        </html>
+        """
+        html_chunks.append(new_html)
+    
+    return html_chunks
+
+
+# Modified version of your function
+def processar_produto_ACOMPH_tabelas_whatsapp(parametros):
     resultado = Resultado(parametros)
     
     dtReferente = parametros["data"]
-
     html_tabela_acomph = rz_aux_libs.gerarTabelasEmailAcomph(dtReferente)
-    path_fig = api_html_to_image(html_tabela_acomph,path_save=os.path.join(PATH_WEBHOOK_TMP,f'acomph_{datetime.date.today()}.png'))
     
-    resultado.fileWhats = path_fig
-    resultado.msgWhats = 'Acomph ({})'.format(dtReferente.strftime('%d/%m/%Y'))
-    resultado.flagWhats = True
-    resultado.destinatarioWhats = "Condicao Hidrica"
+    # Split the HTML content
+    html_chunks = split_html_table(html_tabela_acomph)
+    titles = ['Submercado', 'Bacias', 'Submercado - D-1', 'Bacias - D-1']
+    
+    # Process each chunk
+    for i, html_chunk in enumerate(html_chunks):
+        path_fig = api_html_to_image(
+            html_chunk,
+            path_save=os.path.join(PATH_WEBHOOK_TMP, f'acomph_{datetime.date.today()}_{i}.png')
+        )
+        
+        msg = f'Acomph ({dtReferente.strftime("%d/%m/%Y")}) - {titles[i]}'
+        send_whatsapp_message('Condicao Hidrica', msg, path_fig)
     
     return resultado
     
@@ -172,13 +231,32 @@ def processar_produto_RDH(parametros):
     resultado.flagEmail = True
     return resultado
 
-
+def remover_primeira_div(html_string):
+    inicio_div = html_string.find('<div>')
+    fim_div = html_string.find('</div>') + 6  # +6 para incluir o </div>
+    
+    if inicio_div != -1 and fim_div != -1:
+        return html_string[:inicio_div] + html_string[fim_div:], html_string[inicio_div:fim_div]
+    else:
+        return html_string, f"{datetime.datetime.now()}"
+    
 def processar_produto_RELATORIO_BBCE(parametros):
     resultado = Resultado(parametros)
     resultado.corpoEmail, resultado.file = rz_aux_libs.geraRelatorioBbce(parametros["data"])
     resultado.assuntoEmail = '[BBCE] Resumo das negociações do dia {}'.format(parametros["data"].strftime('%d/%m/%Y'))
     resultado.remetenteEmail = 'info_bbce@climenergy.com'
     resultado.flagEmail = True
+    
+    res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros['data'].date()}&tipo_negociacao=Boleta Eletronica")
+    html = remover_primeira_div(res.json()['html'])
+    msg = html[1].replace("  ", "").replace("<h3>", "").replace("</h3>", "").replace("<div>", "").replace("</div>", "")[1:][:-1]
+    send_whatsapp_message('bbce',msg, api_html_to_image(html[0]))
+    
+    res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros['data'].date()}&tipo_negociacao=Mesa")
+    html = remover_primeira_div(res.json()['html'])
+    msg = html[1].replace("  ", "").replace("<h3>", "").replace("</h3>", "").replace("<div>", "").replace("</div>", "")[1:][:-1]
+    send_whatsapp_message('bbce',msg, api_html_to_image(html[0]))
+    
     return resultado
 
 
@@ -653,7 +731,7 @@ def processar_produto_prev_ena_consistido(parametros):
 
     resultado.msgWhats = titulo
     resultado.flagWhats = True
-    resultado.destinatarioWhats = "Condicao Hidrica"
+    resultado.destinatarioWhats = "Premissas Preco"
 
     return resultado
 
@@ -663,10 +741,14 @@ def processar_produto_MAPA_PSAT(parametros):
 
     
     path_fig = f"/WX2TB/Documentos/dados/psat/zgifs/psat_{data.strftime('%Y%m%d')}12z_smap.png"
-    resultado.fileWhats = path_fig
-    resultado.msgWhats = f"PSAT ({data.strftime('%d/%m/%Y')})"
-    resultado.flagWhats = True
-    resultado.destinatarioWhats = "Condicao Hidrica"
+
+    # deixando de enviar produto do psat ja que o mesmo esta sendo enviado pelo JP
+
+    resultado.flagWhats = False
+    if resultado.flagWhats:
+        resultado.fileWhats = path_fig
+        resultado.msgWhats = f"PSAT ({data.strftime('%d/%m/%Y')})"
+        resultado.destinatarioWhats = "Condicao Hidrica"
 
     return resultado
 
@@ -689,4 +771,4 @@ if __name__ == '__main__':
         "destinatarioWhats": 'PMO',
     }
     
-    processar_produto_CMO_DC_PRELIMINAR(parametros)
+    processar_produto_RELATORIO_BBCE({'data':datetime.datetime.now()})

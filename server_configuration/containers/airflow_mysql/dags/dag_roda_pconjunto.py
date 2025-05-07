@@ -32,6 +32,8 @@ def run_pconjunto(**kwargs):
     forcar_rodar = params.get('forcar_rodar',False)
 
     if not dt_rodada: dt_rodada = datetime.datetime.now().replace(hour=0,minute=0,second=0)
+    if type(dt_rodada) == str:
+        dt_rodada = datetime.datetime.strptime(dt_rodada, '%Y-%m-%d')
     
     previsao_conjunto_ONS_shadow.previsao_conjunto_ONS(
         {

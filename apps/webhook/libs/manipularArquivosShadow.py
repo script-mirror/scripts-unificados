@@ -222,6 +222,8 @@ def arquivo_acomph(dadosProduto):
             dadosProduto["dataProduto"], "%d/%m/%Y"
         )
     #gerar Produto
+    cmd = f"cd /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/web_modelos/server/caches && /env/bin/python rz_cache.py atualizar_cache_acomph data {dtRef.date()}"
+    os.system(cmd)
     if dadosProduto.get('enviar', True) == True:
         GERAR_PRODUTO.enviar({
         "produto":"ACOMPH",
@@ -240,12 +242,12 @@ def arquivo_acomph(dadosProduto):
     })
     if dadosProduto.get('enviar', True) == True:
         airflow_tools.trigger_airflow_dag(
-            dag_id="1.8-PROSPEC_GRUPOS-ONS",
+            dag_id="1.08-PROSPEC_GRUPOS-ONS",
             json_produtos={}
             )
         
         airflow_tools.trigger_airflow_dag(
-            dag_id="1.1-PROSPEC_PCONJUNTO_DEFINITIVO",
+            dag_id="1.01-PROSPEC_PCONJUNTO_DEFINITIVO",
             json_produtos={
                 'dt_ref':dadosProduto['dataProduto']
                 })
@@ -359,6 +361,26 @@ def carga_patamar(dadosProduto):
     filename = get_filename(dadosProduto)
 
     logger.info(filename)
+    extracted_files = DIR_TOOLS.extrair_zip_e_buscar_arquivo(
+        filename,
+        f"{PATH_WEBHOOK_TMP}/{dadosProduto['nome']}",
+        "Semanal*.xlsx"
+    )
+    df = pd.read_excel(extracted_files[0])
+    df.drop(columns=['cod_ss', 'cod_pat'], inplace=True)
+    df.columns = [str.lower(x) for x in df.columns]
+    df['patamar'] = df['patamar'].str.replace('é', 'e').str.lower()
+    df.rename(columns={"so":"semana_operativa", "subsistema":"submercado"}, inplace=True)
+    df['data_produto'] = str(datetime.datetime.strptime(dadosProduto['dataProduto'][:10], "%d/%m/%Y").date())
+    df['semana_operativa'] = df['semana_operativa'].dt.strftime("%Y-%m-%d")
+    
+    df['submercado'] = df['submercado'].str.replace('/', '')
+    req.post(f"http://localhost:8000/api/v2/decks/carga-decomp",
+                               json=df.to_dict('records'),
+                               headers={
+                'Authorization': f'Bearer {get_access_token()}'
+        })
+    
     
     # gerar Produto
     if dadosProduto.get('enviar', True) == True:
@@ -402,7 +424,7 @@ def deck_preliminar_decomp(dadosProduto):
     })
     if dadosProduto.get('enviar', True) == True:
         airflow_tools.trigger_airflow_dag(
-            dag_id="2.0-BACKTEST-DECOMP",
+            dag_id="1.14-BACKTEST-DECOMP",
             json_produtos={
                 'dt_ref':dadosProduto['dataProduto']
                 })
@@ -1000,18 +1022,19 @@ def notas_tecnicas_medio_prazo(dadosProduto):
 if __name__ == '__main__':
     
     dadosProduto = {
-            "dataProduto": "05/2025",
-            "enviar": True,
-            "filename": "Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP.zip",
-            "macroProcesso": "Programação da Operação",
-            "nome": "Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP",
-            "periodicidade": "2025-05-01T03:00:00.000Z",
-            "periodicidadeFinal": "2025-06-01T02:59:59.000Z",
-            "processo": "Programação mensal da operação energética",
-            "s3Key": "webhooks/Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP/680a3f87b2f11f6ae1b8f2c1_Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP.zip",
-            "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi9Qcm9kdXRvcy8zMDIvMjQtMDQtMjAyNV8xMDM2MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiUmVsYXTDs3JpbyBNZW5zYWwgZGUgTGltaXRlcyBkZSBJbnRlcmPDom1iaW8gcGFyYSBvIE1vZGVsbyBERUNPTVAiLCJJc0ZpbGUiOiJGYWxzZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NDU1ODg3MjYsIm5iZiI6MTc0NTUwMjA4Nn0.-JkHNTvb26bumeH-aDQUSzK7A-mG2Z96IKDktIdmHB4",
-            "webhookId": "680a3f87b2f11f6ae1b8f2c1"
-        }
+        "dataProduto": "29/04/2025",
+        "enviar": False,
+        "filename": "ACOMPH_29.04.2025.xls",
+        "macroProcesso": "Programação da Operação",
+        "nome": "Acomph",
+        "periodicidade": "2025-04-29T03:00:00.000Z",
+        "periodicidadeFinal": "2025-04-30T02:59:59.000Z",
+        "processo": "Acompanhamento das Condições Hidroenergéticas",
+        "s3Key": "webhooks/Acomph/6810e07bb2f11f6ae1b8f616_ACOMPH_29.04.2025.xls",
+        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy81Ni9Qcm9kdXRvcy8yMzAvQUNPTVBIXzI5LjA0LjIwMjUueGxzIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IkFjb21waCIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzQ2MDIzMTQ3LCJuYmYiOjE3NDU5MzY1MDd9.ainJm-W_JGTHa9hwD3lJp7Pyu69wEzohfqCM8NFSZec",
+        "webhookId": "6810e07bb2f11f6ae1b8f616"
+    }
+
     
-    relatorio_limites_intercambio(dadosProduto)
+    arquivo_acomph(dadosProduto)
     

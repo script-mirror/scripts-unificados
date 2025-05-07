@@ -111,7 +111,9 @@ def importAcomph(path):
                 ACOMPH.append((dt_ref.strftime('%Y-%m-%d'), cd_posto, nivel_lido, nivel_conso, defluente_lido, defluente_conso, afluente_lido, afluente_conso, incremental_conso, natural_conso, DT_ACOMPH))
         # Append os postos da bacia ao array de todos os postos    
         POSTOS += postos
-        
+    df_acomph_insert = pd.DataFrame(ACOMPH, columns=["dt_ref","cd_posto","nivel_lido","nivel_conso","defluente_lido","defluente_conso","afluente_lido","afluente_conso","incremental_conso","natural_conso", "dt_acomph"])
+    df_acomph_insert['afluente_lido'] = None
+    
     df_acomph = pd.DataFrame(ACOMPH, columns=['DT_REFERENTE', 'CD_POSTO', 'VL_NIVEL_LIDO', 'VL_NIVEL_CONSO', 'VL_VAZ_DEFLUENTE_LIDO', 'VL_VAZ_DEFLUENTE_CONSO', 'VL_VAZ_AFLUENTE_LIDO', 'VL_VAZ_AFLUENTE_CONSO', 'VL_VAZ_INC_CONSO', 'VL_VAZ_NAT_CONSO', 'DT_ACOMPH'])
     df_acomph = df_acomph[['CD_POSTO', 'DT_REFERENTE', 'VL_VAZ_INC_CONSO', 'VL_VAZ_NAT_CONSO', 'DT_ACOMPH']]
     df_acomph = df_acomph.sort_values(by=['CD_POSTO', 'DT_REFERENTE', 'DT_ACOMPH'], ascending=[True, True, False])
@@ -130,7 +132,7 @@ def importAcomph(path):
         num_deletados = dataBase.conn.execute(sql_delete).rowcount
         print(f"{num_deletados} linhas deletadas.") 
         
-        sql_insert = tb_acomph.insert().values(ACOMPH)
+        sql_insert = tb_acomph.insert().values(df_acomph_insert.values.tolist())
         num_inseridos = dataBase.conn.execute(sql_insert).rowcount
         print(f"{num_inseridos} linhas inseridas.")
         
