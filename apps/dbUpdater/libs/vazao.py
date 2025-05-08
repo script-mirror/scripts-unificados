@@ -7,13 +7,33 @@ import datetime
 import numpy as np
 import pandas as pd
 import sqlalchemy as db
+import traceback
+import os
+import requests
 
 path_fontes = "/WX2TB/Documentos/fontes/"
+path_produtos = "/home/diogopolastrine/Documentos/produtos"
 sys.path.insert(1,path_fontes)
+sys.path.insert(2,path_produtos)
 from PMO.scripts_unificados.bibliotecas import wx_dbClass,rz_dir_tools
+from PMO.scripts_unificados.apps.web_modelos.server.libs import wx_calcEna 
+import os
 
 PATH_LISTA_VAZOES= "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/smap/arquivos/opera-smap/smap_novo/info_vazao_obs.json"
 PATH_CACHE = os.path.join(path_fontes,"PMO","scripts_unificados","apps","web_modelos","server","caches")
+
+
+
+URL_COGNITO = os.getenv('URL_COGNITO')
+CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
+def get_access_token() -> str:
+    response = requests.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
+ 
 
 
 def importAcomph(path):
@@ -38,7 +58,7 @@ def importAcomph(path):
 
     # Armazena as tuplas com as informações diarias de cada posto (30 dias x #postos = #linhas a serem inseridas no db) 
     ACOMPH = []
-
+    
     # Leitura de cada aba
     for bacia in BACIAS:
         df_bacia = df.parse(bacia, skiprows=[1,2,3], header=None)
@@ -86,20 +106,198 @@ def importAcomph(path):
                 afluente_conso = df_bacia[cd_posto].loc[dt_ref]['afluente']['conso']
                 incremental_conso = df_bacia[cd_posto].loc[dt_ref]['inc']['conso']
                 natural_conso = df_bacia[cd_posto].loc[dt_ref]['nat']['conso']
-                
+
                 # Append os dados lidos a variavel ACOMPH
                 ACOMPH.append((dt_ref.strftime('%Y-%m-%d'), cd_posto, nivel_lido, nivel_conso, defluente_lido, defluente_conso, afluente_lido, afluente_conso, incremental_conso, natural_conso, DT_ACOMPH))
         # Append os postos da bacia ao array de todos os postos    
         POSTOS += postos
+    df_acomph_insert = pd.DataFrame(ACOMPH, columns=["dt_ref","cd_posto","nivel_lido","nivel_conso","defluente_lido","defluente_conso","afluente_lido","afluente_conso","incremental_conso","natural_conso", "dt_acomph"])
+    df_acomph_insert['afluente_lido'] = None
 
     sql_delete = tb_acomph.delete().where(db.and_(tb_acomph.c.cd_posto.in_(POSTOS) ,tb_acomph.c.dt_acomph == DT_ACOMPH))
-    num_deletados = dataBase.conn.execute(sql_delete).rowcount
+
+    # trocar de False para True python 3.12+
+    num_deletados = dataBase.db_execute(sql_delete, False).rowcount
     print(f"{num_deletados} linhas deletadas.") 
 
-    sql_insert = tb_acomph.insert().values(ACOMPH)
-    num_inseridos = dataBase.conn.execute(sql_insert).rowcount
+    sql_insert = tb_acomph.insert().values(df_acomph_insert.values.tolist())
+    num_inseridos = dataBase.db_execute(sql_insert, False).rowcount
     print(f"{num_inseridos} linhas inseridas.")
+    print("ACOMPH processado com sucesso!")
 
+    try:
+        df_acomph = pd.DataFrame(ACOMPH, columns=['DT_REFERENTE', 'CD_POSTO', 'VL_NIVEL_LIDO', 'VL_NIVEL_CONSO', 'VL_VAZ_DEFLUENTE_LIDO', 'VL_VAZ_DEFLUENTE_CONSO', 'VL_VAZ_AFLUENTE_LIDO', 'VL_VAZ_AFLUENTE_CONSO', 'VL_VAZ_INC_CONSO', 'VL_VAZ_NAT_CONSO', 'DT_ACOMPH'])
+        df_acomph = df_acomph[['CD_POSTO', 'DT_REFERENTE', 'VL_VAZ_INC_CONSO', 'VL_VAZ_NAT_CONSO', 'DT_ACOMPH']]
+        df_acomph = df_acomph.sort_values(by=['CD_POSTO', 'DT_REFERENTE', 'DT_ACOMPH'], ascending=[True, True, False])
+        df_acomph['ROW'] = df_acomph.groupby(['CD_POSTO', 'DT_REFERENTE']).cumcount() + 1
+        df_acomph = df_acomph[df_acomph['ROW'] == 1]
+        df_acomph['CD_POSTO'] = pd.to_numeric(df_acomph['CD_POSTO'])
+        df_acomph['DT_REFERENTE'] = pd.to_datetime(df_acomph['DT_REFERENTE'])
+        df_vazNat = df_acomph.pivot(index='CD_POSTO', columns='DT_REFERENTE', values='VL_VAZ_NAT_CONSO')
+
+        acomph_nat = wx_calcEna.calcPostosArtificiais_df(df_vazNat, ignorar_erros=True)
+        exportAcomph_toDataviz(acomph_nat)
+
+        return True
+    except Exception as e:
+        print(f"Erro ao calcular postos artificiais ou exportar dados: {str(e)}")
+        traceback.print_exc()
+        return False
+
+def exportAcomph_toDataviz(
+    df_acomph: pd.DataFrame, 
+    ):
+    
+    dataRodada = df_acomph.columns.max().strftime('%Y-%m-%d')
+    
+    df_acomph = df_acomph.stack().reset_index()
+    df_acomph.columns = ['CD_POSTO', 'DT_REFERENTE', 'VL_VAZ_NAT_CONSO']
+    
+    valoresMapaPosto = get_valoresMapa(df_acomph, 'posto')
+    valoresMapaBacia = get_valoresMapa(df_acomph, 'bacia')
+    valoresMapaSubmercado = get_valoresMapa(df_acomph, 'submercado')
+    
+    mongo_template = {
+        "dataRodada": dataRodada,
+        "dataFinal": dataRodada,
+        "mapType": "vazao",
+        "idType": "",
+        "modelo": "ACOMPH",
+        "priority": None,
+        "grupo": "ONS",
+        "rodada": "0",
+        "viez": True,
+        "membro": "0",
+        "measuringUnit": "m³/s",
+        "propagationBase": "VNA",
+        "generationProcess": "SMAP",
+        "data": [
+            {
+                "valoresMapa": valoresMapaPosto,
+                "agrupamento": "posto"
+            },
+            {
+                "valoresMapa": valoresMapaBacia,
+                "agrupamento": "bacia"
+            },
+            {
+                "valoresMapa": valoresMapaSubmercado,
+                "agrupamento": "submercado"
+            },
+        ],
+        "relatedMaps": [],
+    }
+    
+    accessToken = get_access_token()
+    
+    res = requests.post(
+            'https://tradingenergiarz.com/backend/api/map',
+            json= mongo_template,
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {accessToken}'
+            }
+            )
+    if res.status_code == 200 or res.status_code == 201:
+        print("Exportado com sucesso para o Dataviz")
+        
+    else:
+        raise ValueError(f"Erro ao exportar previsao: {res.content}")
+    
+    
+
+def get_valoresMapa(df_acomph, agrupamento):
+    dbOns = wx_dbClass.db_mysql_master('db_ons')
+    dbOns.connect()
+    tb_postos_completo = dbOns.getSchema('tb_postos_completo')
+        
+    query = db.select(
+        tb_postos_completo.c.cd_posto, 
+        tb_postos_completo.c.str_posto, 
+        tb_postos_completo.c.cd_bacia, 
+        tb_postos_completo.c.cd_submercado
+    )
+        
+    record_postos = dbOns.conn.execute(query).fetchall()
+    
+    df_postos = pd.DataFrame(record_postos, columns=['CD_POSTO', 'STR_POSTO', 'CD_BACIA', 'CD_SUBMERCADO'])
+    
+    if agrupamento == 'posto':
+        
+        df_merged = pd.merge(df_acomph, df_postos, on='CD_POSTO', how='left')
+        df_merged = df_merged[['VL_VAZ_NAT_CONSO', 'DT_REFERENTE', 'STR_POSTO', 'CD_POSTO']]
+        
+        result = []
+        
+        for _, row in df_merged.iterrows():
+            result.append({
+                "valor": round(float(row['VL_VAZ_NAT_CONSO']), 2) if pd.notna(row['VL_VAZ_NAT_CONSO']) else None,
+                "dataReferente": row['DT_REFERENTE'].strftime('%Y-%m-%d'),
+                "valorAgrupamento": row['STR_POSTO'] if pd.notna(row['STR_POSTO']) else str(int(row['CD_POSTO'])),
+            })
+        return result
+    
+    elif agrupamento == 'bacia':
+        tb_bacias = dbOns.getSchema('tb_bacias')
+        
+        query = db.select(
+            tb_bacias.c.id_bacia,
+            tb_bacias.c.str_bacia
+        )
+        
+        record_bacias = dbOns.conn.execute(query).fetchall()
+        df_bacias = pd.DataFrame(record_bacias, columns=['ID_BACIA', 'STR_BACIA'])
+        
+        df_merged_posto = pd.merge(df_acomph, df_postos, on='CD_POSTO', how='left')
+        
+        df_merged = pd.merge(df_merged_posto, df_bacias, left_on='CD_BACIA', right_on='ID_BACIA', how='left')
+        
+        df_merged = df_merged[['VL_VAZ_NAT_CONSO', 'DT_REFERENTE', 'STR_BACIA', 'CD_BACIA']]
+        
+        df_merged = df_merged.groupby(['STR_BACIA', 'CD_BACIA', 'DT_REFERENTE']).sum(numeric_only=True).reset_index()
+        
+        result = []
+        
+        for _, row in df_merged.iterrows():
+            result.append({
+                "valor": round(float(row['VL_VAZ_NAT_CONSO']), 2) if pd.notna(row['VL_VAZ_NAT_CONSO']) else None,
+                "dataReferente": row['DT_REFERENTE'].strftime('%Y-%m-%d'),
+                "valorAgrupamento": row['STR_BACIA'] if pd.notna(row['STR_BACIA']) else str(int(row['CD_BACIA'])),
+            })
+        return result
+
+    elif agrupamento == 'submercado':
+        df_merged = pd.merge(df_acomph, df_postos, on='CD_POSTO', how='left')
+        
+        tb_submercado = dbOns.getSchema('tb_submercado')
+        
+        query = db.select(
+            tb_submercado.c.cd_submercado,
+            tb_submercado.c.str_submercado
+        )
+        
+        record_submercado = dbOns.conn.execute(query).fetchall()
+        df_submercado = pd.DataFrame(record_submercado, columns=['CD_SUBMERCADO', 'STR_SUBMERCADO'])
+        
+        df_merged = pd.merge(df_merged, df_submercado, on='CD_SUBMERCADO', how='left')
+        df_merged = df_merged[['VL_VAZ_NAT_CONSO', 'DT_REFERENTE', 'STR_SUBMERCADO', 'CD_SUBMERCADO']]
+        df_merged = df_merged.groupby(['STR_SUBMERCADO', 'CD_SUBMERCADO', 'DT_REFERENTE']).sum().reset_index()
+        
+        result = []
+        
+        for _, row in df_merged.iterrows():
+            result.append({
+                "valor": round(float(row['VL_VAZ_NAT_CONSO']), 2) if pd.notna(row['VL_VAZ_NAT_CONSO']) else None,
+                "dataReferente": row['DT_REFERENTE'].strftime('%Y-%m-%d'),
+                "valorAgrupamento": row['STR_SUBMERCADO'] if pd.notna(row['STR_SUBMERCADO']) else str(int(row['CD_SUBMERCADO'])),
+            })
+        return result
+    else:
+        print(f"Tipo de agregação não reconhecido: {agrupamento}")
+        return []
+    
+    
+        
 
    
 def importRdh(path):
@@ -504,5 +702,6 @@ def importNiveisDessem(path):
 
 
 if __name__ == '__main__':
-    path = r"C:\Users\cs399274\Downloads\Vazões Observadas - 19-03-2024 a 16-06-2024.xlsx"
-    process_planilha_vazoes_obs(path)
+    path = "/home/diogopolastrine/Documentos/produtos/ACOMPH/ACOMPH_06.05.2025.xls"
+    
+    importAcomph(path)
