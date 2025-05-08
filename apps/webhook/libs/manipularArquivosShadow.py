@@ -216,13 +216,13 @@ def arquivo_acomph(dadosProduto):
     logger.info(path_copia_tmp)
 
     
-    vazao.importAcomph(filename)
+    # vazao.importAcomph(filename)
 
     dtRef = datetime.datetime.strptime(
             dadosProduto["dataProduto"], "%d/%m/%Y"
         )
     #gerar Produto
-    cmd = f"cd /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/web_modelos/server/caches && /env/bin/python rz_cache.py atualizar_cache_acomph data {dtRef.date()}"
+    cmd = f"cd /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/web_modelos/server/caches && env/bin/python rz_cache.py atualizar_cache_acomph data {dtRef.date()}"
     os.system(cmd)
     if dadosProduto.get('enviar', True) == True:
         GERAR_PRODUTO.enviar({
@@ -375,7 +375,7 @@ def carga_patamar(dadosProduto):
     df['semana_operativa'] = df['semana_operativa'].dt.strftime("%Y-%m-%d")
     
     df['submercado'] = df['submercado'].str.replace('/', '')
-    req.post(f"http://localhost:8000/api/v2/decks/carga-decomp",
+    req.post(f"https://tradingenergiarz.com/api/v2/decks/carga-decomp",
                                json=df.to_dict('records'),
                                headers={
                 'Authorization': f'Bearer {get_access_token()}'
@@ -868,7 +868,7 @@ def deck_prev_eolica_semanal_patamares(dadosProduto):
         df_patamares = pd.read_csv(io.StringIO(content.decode("latin-1")), sep=";")
         df_patamares.columns = [x[0].lower() + x[1:] for x in df_patamares.columns]
     df_patamares.columns = ['inicio','patamar','cod_patamar','dia_semana','dia_tipico','tipo_dia','intervalo','dia','semana','mes']
-    post_patamates = req.post(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares", json=df_patamares.to_dict("records"),
+    post_patamates = req.post(f"https://tradingenergiarz.com/api/v2/decks/patamares", json=df_patamares.to_dict("records"),
         headers={
         'Authorization': f'Bearer {get_access_token()}'
     })
@@ -910,7 +910,7 @@ def deck_prev_eolica_semanal_previsao_final(dadosProduto):
                         "valor":info_weol[data][submercado][patamar],
                         "data_produto":str(datetime.datetime.strptime(dadosProduto['dataProduto'], "%d/%m/%Y").date())})
         
-    post_decks_weol = req.post(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol",
+    post_decks_weol = req.post(f"https://tradingenergiarz.com/api/v2/decks/weol",
                                json=body_weol,
                                headers={
                 'Authorization': f'Bearer {get_access_token()}'
