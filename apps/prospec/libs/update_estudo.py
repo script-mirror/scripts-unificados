@@ -210,9 +210,9 @@ def update_cvu_clast_nw_estudo(
     dt_atualizacao:datetime.datetime,
     ids_to_modify:List[int]=None
     ):
-    apenas_estrutural = False
-    if apenas_estrutural:
-        fontes_to_search = [x for x in fontes_to_search if "estrutural" in x.lower()]
+    tipos_cvu = ["conjuntural" if "conjuntural" in x else "estrutural" if "estrutural" in x else None for x in fontes_to_search]
+    
+    
     tag = [f'CVU {datetime.datetime.now().strftime("%d/%m %H:%M")}']
     if not ids_to_modify:
         ids_to_modify = get_ids_to_modify()
@@ -250,7 +250,7 @@ def update_cvu_clast_nw_estudo(
         paths_modified = clast_updater.atualizar_cvu_NW(
             info_cvu,
             clast_to_modify,
-            apenas_estrutural
+            tipos_cvu
             )
         send_files_to_api(id_estudo, paths_modified, tag)
 
@@ -454,5 +454,15 @@ if __name__ == "__main__":
     # update_cvu_estudo(ids_to_modify,ano_referencia_cvu,mes_referencia_cvu)
     # update_carga_estudo(ids_to_modify,file_path)
 
-    update_carga_pq_dadger_dc_estudo(datetime.date(2025, 5, 3))
+    update_cvu_clast_nw_estudo([
+            "CCEE_conjuntural_revisado",
+            "CCEE_merchant"],datetime.date(2025,5,7),[
+        "25413",
+        "25408",
+        "25411",
+        "25409",
+        "25414",
+        "25412",
+        "25410"
+    ])
     
