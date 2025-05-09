@@ -11,11 +11,12 @@ import zipfile
 import pandas as pd
 import requests as req
 import hashlib
+import subprocess
+
 
 from dotenv import load_dotenv
-from airflow.exceptions import AirflowSkipException
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     handlers=[
@@ -160,7 +161,7 @@ def _verify_file_is_new(filename: str, product_name: str) -> None:
     ).json()
 
     if not is_new:
-        raise AirflowSkipException("Produto ja inserido")
+        raise Exception("Produto ja inserido")
 
 def resultados_preliminares_consistidos(dadosProduto):
 
@@ -207,7 +208,7 @@ def arquivos_modelo_pdp(dadosProduto):
         "data":dtRef,
     })
 
-
+    
 def arquivo_acomph(dadosProduto):
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -216,14 +217,13 @@ def arquivo_acomph(dadosProduto):
     logger.info(path_copia_tmp)
 
     
-    # vazao.importAcomph(filename)
+    vazao.importAcomph(filename)
 
     dtRef = datetime.datetime.strptime(
             dadosProduto["dataProduto"], "%d/%m/%Y"
         )
     #gerar Produto
-    cmd = f"cd /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/web_modelos/server/caches && env/bin/python rz_cache.py atualizar_cache_acomph data {dtRef.date()}"
-    os.system(cmd)
+
     if dadosProduto.get('enviar', True) == True:
         GERAR_PRODUTO.enviar({
         "produto":"ACOMPH",
@@ -1021,20 +1021,22 @@ def notas_tecnicas_medio_prazo(dadosProduto):
 
 if __name__ == '__main__':
     
-    dadosProduto = {
-        "dataProduto": "29/04/2025",
-        "enviar": False,
-        "filename": "ACOMPH_29.04.2025.xls",
-        "macroProcesso": "Programação da Operação",
-        "nome": "Acomph",
-        "periodicidade": "2025-04-29T03:00:00.000Z",
-        "periodicidadeFinal": "2025-04-30T02:59:59.000Z",
-        "processo": "Acompanhamento das Condições Hidroenergéticas",
-        "s3Key": "webhooks/Acomph/6810e07bb2f11f6ae1b8f616_ACOMPH_29.04.2025.xls",
-        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy81Ni9Qcm9kdXRvcy8yMzAvQUNPTVBIXzI5LjA0LjIwMjUueGxzIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IkFjb21waCIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzQ2MDIzMTQ3LCJuYmYiOjE3NDU5MzY1MDd9.ainJm-W_JGTHa9hwD3lJp7Pyu69wEzohfqCM8NFSZec",
-        "webhookId": "6810e07bb2f11f6ae1b8f616"
-    }
+    # dadosProduto = {
+    #     "dataProduto": "09/05/2025",
+    #     "enviar": False,
+    #     "filename": "ACOMPH_09.05.2025.xls",
+    #     "macroProcesso": "Programação da Operação",
+    #     "nome": "Acomph",
+    #     "periodicidade": "2025-05-09T03:00:00.000Z",
+    #     "periodicidadeFinal": "2025-05-10T02:59:59.000Z",
+    #     "processo": "Acompanhamento das Condições Hidroenergéticas",
+    #     "s3Key": "webhooks/Acomph/681e0e40b2f11f6ae1b8feb2_ACOMPH_09.05.2025.xls",
+    #     "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy81Ni9Qcm9kdXRvcy8yMzAvQUNPTVBIXzA5LjA1LjIwMjUueGxzIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IkFjb21waCIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzQ2ODg2ODMyLCJuYmYiOjE3NDY4MDAxOTJ9.Wn2N3uCd-JZ5LGHDGc1t8MZ4VBvswcr0ZaWTPsivu5E",
+    #     "webhookId": "681e0e40b2f11f6ae1b8feb2"
+    # }
 
+
+    update_acomph_cache(datetime.datetime.now())
+    # arquivo_acomph(dadosProduto)
     
-    arquivo_acomph(dadosProduto)
     

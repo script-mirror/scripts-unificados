@@ -7,10 +7,18 @@ import datetime
 import numpy as np
 import pandas as pd
 import sqlalchemy as db
-import traceback
+import subprocess
 import os
 import requests
+import logging
+logging.basicConfig(level=logging.INFO,
+                    format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    handlers=[
+                        logging.StreamHandler()
+                    ])
 
+logger = logging.getLogger(__name__)
 path_fontes = "/WX2TB/Documentos/fontes/"
 path_produtos = "/home/diogopolastrine/Documentos/produtos"
 sys.path.insert(1,path_fontes)
@@ -33,7 +41,13 @@ def get_access_token() -> str:
         headers={'Content-Type': 'application/x-www-form-urlencoded'}
     )
     return response.json()['access_token']
- 
+
+def update_acomph_cache(dtRef):
+    cmd = F"cd {PATH_CACHE};"
+    cmd += f"python rz_cache.py atualizar_cache_acomph data {dtRef}"
+    result = os.popen(cmd)
+    print(result.read())    
+    
 
 
 def importAcomph(path):
@@ -124,6 +138,8 @@ def importAcomph(path):
     num_inseridos = dataBase.db_execute(sql_insert, False).rowcount
     print(f"{num_inseridos} linhas inseridas.")
     print("ACOMPH processado com sucesso!")
+    update_acomph_cache(DT_ACOMPH)
+    
 
     try:
         df_acomph = pd.DataFrame(ACOMPH, columns=['DT_REFERENTE', 'CD_POSTO', 'VL_NIVEL_LIDO', 'VL_NIVEL_CONSO', 'VL_VAZ_DEFLUENTE_LIDO', 'VL_VAZ_DEFLUENTE_CONSO', 'VL_VAZ_AFLUENTE_LIDO', 'VL_VAZ_AFLUENTE_CONSO', 'VL_VAZ_INC_CONSO', 'VL_VAZ_NAT_CONSO', 'DT_ACOMPH'])
@@ -141,7 +157,6 @@ def importAcomph(path):
         return True
     except Exception as e:
         print(f"Erro ao calcular postos artificiais ou exportar dados: {str(e)}")
-        traceback.print_exc()
         return False
 
 def exportAcomph_toDataviz(

@@ -143,8 +143,7 @@ def update_carga_dadger_dc_estudo(file_path:str,ids_to_modify:List[int]=None):
             info_cargas,
             arquivos_filtrados
             )
-        print(f"nao enviando arquivos {paths_modified}")
-        # send_files_to_api(id_estudo, paths_modified, tag)
+        send_files_to_api(id_estudo, paths_modified, tag)
 
         logger.info(f"============================================")
         
