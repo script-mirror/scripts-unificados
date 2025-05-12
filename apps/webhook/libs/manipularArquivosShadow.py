@@ -49,10 +49,8 @@ from PMO.scripts_unificados.apps.gerarProdutos import gerarProdutos2
 from PMO.scripts_unificados.bibliotecas import wx_opweek,rz_dir_tools
 from PMO.scripts_unificados.apps.dbUpdater.libs import carga_ons,chuva,deck_ds,deck_dc,deck_nw,geracao,revisao,temperatura,vazao
 from PMO.scripts_unificados.apps.prospec.libs import update_estudo
-    "produto":"PREV_ENA_CONSISTIDO",
-            "data":data_produto,
-            "titulo":titulo,
-            "html":html
+
+
 #constantes path
 PATH_CV = os.path.abspath("/WX2TB/Documentos/chuva-vazao")
 PATH_PCONJUNTO = os.path.join(path_fontes, "PMO", "scripts_unificados","apps","pconjunto") 
