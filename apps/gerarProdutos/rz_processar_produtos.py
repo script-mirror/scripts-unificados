@@ -200,7 +200,7 @@ def processar_produto_ACOMPH_tabelas_whatsapp(parametros):
     
     # Split the HTML content
     html_chunks = split_html_table(html_tabela_acomph)
-    titles = ['Submercado', 'Bacias', 'Submercado - D-1', 'Bacias - D-1']
+    titles = ['Submercado', 'Bacias', 'Submercado (D-1)', 'Bacias (D-1)']
     
     # Process each chunk
     for i, html_chunk in enumerate(html_chunks):
