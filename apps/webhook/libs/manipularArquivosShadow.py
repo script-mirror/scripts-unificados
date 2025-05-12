@@ -11,6 +11,10 @@ import zipfile
 import pandas as pd
 import requests as req
 import hashlib
+import re
+import shutil
+
+
 
 from dotenv import load_dotenv
 from airflow.exceptions import AirflowSkipException
@@ -46,7 +50,10 @@ from PMO.scripts_unificados.apps.gerarProdutos import gerarProdutos2
 from PMO.scripts_unificados.bibliotecas import wx_opweek,rz_dir_tools
 from PMO.scripts_unificados.apps.dbUpdater.libs import carga_ons,chuva,deck_ds,deck_dc,deck_nw,geracao,revisao,temperatura,vazao
 from PMO.scripts_unificados.apps.prospec.libs import update_estudo
-
+    "produto":"PREV_ENA_CONSISTIDO",
+            "data":data_produto,
+            "titulo":titulo,
+            "html":html
 #constantes path
 PATH_CV = os.path.abspath("/WX2TB/Documentos/chuva-vazao")
 PATH_PCONJUNTO = os.path.join(path_fontes, "PMO", "scripts_unificados","apps","pconjunto") 
@@ -715,21 +722,67 @@ def resultados_nao_consistidos_semanal(dadosProduto):
 
     titulo, html = wx_libs_preco.nao_consistido_rv(filename)
     
-    data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto')[:10], "%d/%m/%Y")
+    data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto'), "%d/%m/%Y")
     
     # manda arquivo .zip para maquina newave'
     cmd = f"cp {filename} /WX/SERVER_NW/WX4TB/Documentos/fontes/PMO/decomp/entradas/DC_preliminar/;"
     os.system(cmd)
     if dadosProduto.get('enviar', True) == True:
         GERAR_PRODUTO.enviar({
-    "produto":"PREV_ENA_CONSISTIDO",
-    "data":data_produto,
-    "titulo":titulo,
-    "html":html
-
-    })
-
-
+            "produto":"PREV_ENA_CONSISTIDO",
+            "data":data_produto,
+            "titulo":titulo,
+            "html":html
+        })
+    
+    temp_dir = os.path.join(PATH_WEBHOOK_TMP, 'temp_extract_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    DIR_TOOLS.extract(filename, temp_dir)
+    
+    zip_filename = os.path.basename(filename)
+    rev_match = re.search(r'REV(\d+)', zip_filename, re.IGNORECASE)
+    month_match = re.search(r'_(\d{6})_', zip_filename)
+    
+    if not rev_match:
+        rev_match = re.search(r'REV(\d+)', zip_filename, re.IGNORECASE)
+    
+    if not month_match:
+        month_match = re.search(r'(\d{6})', zip_filename)
+        
+    prevs_files = glob.glob(os.path.join(temp_dir, '**/Prevs_VE.prv'), recursive=True)
+    
+    prevs_file = prevs_files[0]
+    logger.info(f"Arquivo de previsão encontrado em: {prevs_file}")
+    
+    if rev_match and month_match:
+        revision = rev_match.group(1)   
+        yearmonth = month_match.group(1)  
+        month = int(yearmonth[-2:])
+        
+        new_filename = f'prevs.rev{revision}'
+        target_dir = f'/WX2TB/Documentos/fontes/PMO/API_Prospec/GerarDecks/PREVS/Pld1Click/ALL/{month}'
+        
+        if os.path.exists(target_dir):
+            logger.info(f"Removendo diretório existente: {target_dir}")
+            shutil.rmtree(target_dir)
+        
+        os.makedirs(target_dir, exist_ok=True)
+        
+        dest_file = os.path.join(target_dir, new_filename)
+        
+        shutil.copy2(prevs_file, dest_file)
+        logger.info(f"Arquivo copiado para: {dest_file}")
+        
+        params = dadosProduto.copy()
+        params["sensibilidade"] = "NÃO CONSISTIDO"
+        
+        airflow_tools.trigger_airflow_dag(
+            dag_id="1.12-PROSPEC_NAO_CONSISTIDO",
+            json_produtos=params
+        )
+    else:
+        logger.error(f"Não foi possível extrair revisão ou mês do nome do arquivo: {zip_filename}")
     
     
 
@@ -1022,19 +1075,20 @@ def notas_tecnicas_medio_prazo(dadosProduto):
 if __name__ == '__main__':
     
     dadosProduto = {
-        "dataProduto": "29/04/2025",
-        "enviar": False,
-        "filename": "ACOMPH_29.04.2025.xls",
+        "dataProduto": "03/05/2025 - 09/05/2025",
+        "enviar": True,
+        "filename": "Nao_Consistido_202505_REV1.zip",
         "macroProcesso": "Programação da Operação",
-        "nome": "Acomph",
-        "periodicidade": "2025-04-29T03:00:00.000Z",
-        "periodicidadeFinal": "2025-04-30T02:59:59.000Z",
-        "processo": "Acompanhamento das Condições Hidroenergéticas",
-        "s3Key": "webhooks/Acomph/6810e07bb2f11f6ae1b8f616_ACOMPH_29.04.2025.xls",
-        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy81Ni9Qcm9kdXRvcy8yMzAvQUNPTVBIXzI5LjA0LjIwMjUueGxzIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IkFjb21waCIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzQ2MDIzMTQ3LCJuYmYiOjE3NDU5MzY1MDd9.ainJm-W_JGTHa9hwD3lJp7Pyu69wEzohfqCM8NFSZec",
-        "webhookId": "6810e07bb2f11f6ae1b8f616"
+        "nome": "Resultados preliminares não consistidos  (vazões semanais - PMO)",
+        "periodicidade": "2025-05-03T03:00:00.000Z",
+        "periodicidadeFinal": "2025-05-10T02:59:59.000Z",
+        "processo": "Previsão de Vazões e Geração de Cenários - PMO",
+        "s3Key": "webhooks/Resultados preliminares não consistidos  (vazões semanais - PMO)/681156b7b2f11f6ae1b8f684_Nao_Consistido_202505_REV1.zip",
+        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy83OS9Qcm9kdXRvcy8yNDYvTmFvX0NvbnNpc3RpZG9fMjAyNTA1X1JFVjEuemlwIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IlJlc3VsdGFkb3MgcHJlbGltaW5hcmVzIG7Do28gY29uc2lzdGlkb3MgICh2YXrDtWVzIHNlbWFuYWlzIC0gUE1PKSIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzQ2MDUzNDE1LCJuYmYiOjE3NDU5NjY3NzV9.UmIwxm0Tg1HOnCqjekypzVVXLw40abhuxEXADZ_igas",
+        "webhookId": "681156b7b2f11f6ae1b8f684"
     }
 
+
     
-    arquivo_acomph(dadosProduto)
-    
+    resultados_nao_consistidos_semanal(dadosProduto)
+
