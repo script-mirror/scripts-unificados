@@ -125,20 +125,20 @@ def importAcomph(path):
                 ACOMPH.append((dt_ref.strftime('%Y-%m-%d'), cd_posto, nivel_lido, nivel_conso, defluente_lido, defluente_conso, afluente_lido, afluente_conso, incremental_conso, natural_conso, DT_ACOMPH))
         # Append os postos da bacia ao array de todos os postos    
         POSTOS += postos
-    df_acomph_insert = pd.DataFrame(ACOMPH, columns=["dt_ref","cd_posto","nivel_lido","nivel_conso","defluente_lido","defluente_conso","afluente_lido","afluente_conso","incremental_conso","natural_conso", "dt_acomph"])
-    df_acomph_insert['afluente_lido'] = None
+    # df_acomph_insert = pd.DataFrame(ACOMPH, columns=["dt_ref","cd_posto","nivel_lido","nivel_conso","defluente_lido","defluente_conso","afluente_lido","afluente_conso","incremental_conso","natural_conso", "dt_acomph"])
+    # df_acomph_insert['afluente_lido'] = None
 
-    sql_delete = tb_acomph.delete().where(db.and_(tb_acomph.c.cd_posto.in_(POSTOS) ,tb_acomph.c.dt_acomph == DT_ACOMPH))
+    # sql_delete = tb_acomph.delete().where(db.and_(tb_acomph.c.cd_posto.in_(POSTOS) ,tb_acomph.c.dt_acomph == DT_ACOMPH))
 
-    # trocar de False para True python 3.12+
-    num_deletados = dataBase.db_execute(sql_delete, False).rowcount
-    print(f"{num_deletados} linhas deletadas.") 
+    # # trocar de False para True python 3.12+
+    # num_deletados = dataBase.db_execute(sql_delete, False).rowcount
+    # print(f"{num_deletados} linhas deletadas.") 
 
-    sql_insert = tb_acomph.insert().values(df_acomph_insert.values.tolist())
-    num_inseridos = dataBase.db_execute(sql_insert, False).rowcount
-    print(f"{num_inseridos} linhas inseridas.")
-    print("ACOMPH processado com sucesso!")
-    update_acomph_cache(DT_ACOMPH)
+    # sql_insert = tb_acomph.insert().values(df_acomph_insert.values.tolist())
+    # num_inseridos = dataBase.db_execute(sql_insert, False).rowcount
+    # print(f"{num_inseridos} linhas inseridas.")
+    # print("ACOMPH processado com sucesso!")
+    # update_acomph_cache(DT_ACOMPH)
     
 
     try:
@@ -152,6 +152,7 @@ def importAcomph(path):
         df_vazNat = df_acomph.pivot(index='CD_POSTO', columns='DT_REFERENTE', values='VL_VAZ_NAT_CONSO')
 
         acomph_nat = wx_calcEna.calcPostosArtificiais_df(df_vazNat, ignorar_erros=True)
+        
         exportAcomph_toDataviz(acomph_nat)
 
         return True
@@ -162,6 +163,9 @@ def importAcomph(path):
 def exportAcomph_toDataviz(
     df_acomph: pd.DataFrame, 
     ):
+    
+    df_acomph = df_acomph.replace([np.inf, -np.inf], np.nan)  
+    df_acomph = df_acomph.where(pd.notna(df_acomph), None)
     
     dataRodada = df_acomph.columns.max().strftime('%Y-%m-%d')
     
@@ -198,22 +202,27 @@ def exportAcomph_toDataviz(
         "relatedMaps": [],
     }
     
+    
     accessToken = get_access_token()
     
-    res = requests.post(
-            # 'https://tradingenergiarz.com/backend/api/map',
-            'http://localhost:27017/backend/api/map',
-            json= mongo_template,
-            headers={
-                'Content-Type': 'application/json',
-                'Authorization': f'Bearer {accessToken}'
-            }
-            )
-    if res.status_code == 200 or res.status_code == 201:
-        print("Exportado com sucesso para o Dataviz")
+    try:
         
-    else:
-        raise ValueError(f"Erro ao exportar previsao: {res.content}")
+        res = requests.post(
+                'http://localhost:3000/api/map',
+                json=mongo_template,
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {accessToken}'
+                }
+                )
+        
+        if res.status_code == 200 or res.status_code == 201:
+            print("Exportado com sucesso para o Dataviz")
+        else:
+            raise ValueError(f"Erro ao exportar previsao: {res.content}")
+    except Exception as e:
+        print(f"Erro na serialização JSON: {str(e)}")
+        raise
     
     
 
@@ -225,18 +234,17 @@ def get_valoresMapa(df_acomph, agrupamento):
     query = db.select(
         tb_postos_completo.c.cd_posto, 
         tb_postos_completo.c.str_posto, 
-        tb_postos_completo.c.cd_bacia, 
-        tb_postos_completo.c.cd_submercado
     )
         
     record_postos = dbOns.conn.execute(query).fetchall()
     
-    df_postos = pd.DataFrame(record_postos, columns=['CD_POSTO', 'STR_POSTO', 'CD_BACIA', 'CD_SUBMERCADO'])
+    df_postos = pd.DataFrame(record_postos, columns=['CD_POSTO', 'STR_POSTO'])
     
     if agrupamento == 'posto':
         
         df_merged = pd.merge(df_acomph, df_postos, on='CD_POSTO', how='left')
-        df_merged = df_merged[['VL_VAZ_NAT_CONSO', 'DT_REFERENTE', 'STR_POSTO', 'CD_POSTO']]
+        df_merged = df_merged[['VL_VAZ_NAT_CONSO', 'DT_REFERENTE', 'STR_POSTO']]
+        df_merged = df_merged[pd.notna(df_merged['STR_POSTO'])]
         
         
         result = []
@@ -262,7 +270,8 @@ def get_valoresMapa(df_acomph, agrupamento):
         df_usinas = pd.DataFrame(record_usina, columns=['CD_POSTO', 'STR_USINA'])
         
         df_merged = pd.merge(df_acomph, df_usinas, on='CD_POSTO', how='left')
-        df_merged = df_merged[['VL_VAZ_NAT_CONSO', 'DT_REFERENTE', 'STR_USINA', 'CD_POSTO']]
+        df_merged = df_merged[['VL_VAZ_NAT_CONSO', 'DT_REFERENTE', 'STR_USINA']]
+        df_merged = df_merged[pd.notna(df_merged['STR_USINA'])]
         
         result = []
         
