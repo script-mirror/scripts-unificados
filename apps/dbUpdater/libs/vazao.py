@@ -169,8 +169,7 @@ def exportAcomph_toDataviz(
     df_acomph.columns = ['CD_POSTO', 'DT_REFERENTE', 'VL_VAZ_NAT_CONSO']
     
     valoresMapaPosto = get_valoresMapa(df_acomph, 'posto')
-    valoresMapaBacia = get_valoresMapa(df_acomph, 'bacia')
-    valoresMapaSubmercado = get_valoresMapa(df_acomph, 'submercado')
+    valoresMapaUsina = get_valoresMapa(df_acomph, 'usina')
     
     mongo_template = {
         "dataRodada": dataRodada,
@@ -192,12 +191,8 @@ def exportAcomph_toDataviz(
                 "agrupamento": "posto"
             },
             {
-                "valoresMapa": valoresMapaBacia,
-                "agrupamento": "bacia"
-            },
-            {
-                "valoresMapa": valoresMapaSubmercado,
-                "agrupamento": "submercado"
+                "valoresMapa": valoresMapaUsina,
+                "agrupamento": "usina"
             },
         ],
         "relatedMaps": [],
@@ -206,7 +201,8 @@ def exportAcomph_toDataviz(
     accessToken = get_access_token()
     
     res = requests.post(
-            'https://tradingenergiarz.com/backend/api/map',
+            # 'https://tradingenergiarz.com/backend/api/map',
+            'http://localhost:27017/backend/api/map',
             json= mongo_template,
             headers={
                 'Content-Type': 'application/json',
@@ -242,34 +238,31 @@ def get_valoresMapa(df_acomph, agrupamento):
         df_merged = pd.merge(df_acomph, df_postos, on='CD_POSTO', how='left')
         df_merged = df_merged[['VL_VAZ_NAT_CONSO', 'DT_REFERENTE', 'STR_POSTO', 'CD_POSTO']]
         
+        
         result = []
         
         for _, row in df_merged.iterrows():
             result.append({
                 "valor": round(float(row['VL_VAZ_NAT_CONSO']), 2) if pd.notna(row['VL_VAZ_NAT_CONSO']) else None,
                 "dataReferente": row['DT_REFERENTE'].strftime('%Y-%m-%d'),
-                "valorAgrupamento": row['STR_POSTO'] if pd.notna(row['STR_POSTO']) else str(int(row['CD_POSTO'])),
+                "valorAgrupamento": row['STR_POSTO'],
             })
         return result
-    
-    elif agrupamento == 'bacia':
-        tb_bacias = dbOns.getSchema('tb_bacias')
+    elif agrupamento == 'usina':
+        
+        tb_posto_uhe = dbOns.getSchema('tb_posto_uhe')
         
         query = db.select(
-            tb_bacias.c.id_bacia,
-            tb_bacias.c.str_bacia
+            tb_posto_uhe.c.cd_posto,
+            tb_posto_uhe.c.str_usina
         )
         
-        record_bacias = dbOns.conn.execute(query).fetchall()
-        df_bacias = pd.DataFrame(record_bacias, columns=['ID_BACIA', 'STR_BACIA'])
+        record_usina = dbOns.conn.execute(query).fetchall()
         
-        df_merged_posto = pd.merge(df_acomph, df_postos, on='CD_POSTO', how='left')
+        df_usinas = pd.DataFrame(record_usina, columns=['CD_POSTO', 'STR_USINA'])
         
-        df_merged = pd.merge(df_merged_posto, df_bacias, left_on='CD_BACIA', right_on='ID_BACIA', how='left')
-        
-        df_merged = df_merged[['VL_VAZ_NAT_CONSO', 'DT_REFERENTE', 'STR_BACIA', 'CD_BACIA']]
-        
-        df_merged = df_merged.groupby(['STR_BACIA', 'CD_BACIA', 'DT_REFERENTE']).sum(numeric_only=True).reset_index()
+        df_merged = pd.merge(df_acomph, df_usinas, on='CD_POSTO', how='left')
+        df_merged = df_merged[['VL_VAZ_NAT_CONSO', 'DT_REFERENTE', 'STR_USINA', 'CD_POSTO']]
         
         result = []
         
@@ -277,36 +270,11 @@ def get_valoresMapa(df_acomph, agrupamento):
             result.append({
                 "valor": round(float(row['VL_VAZ_NAT_CONSO']), 2) if pd.notna(row['VL_VAZ_NAT_CONSO']) else None,
                 "dataReferente": row['DT_REFERENTE'].strftime('%Y-%m-%d'),
-                "valorAgrupamento": row['STR_BACIA'] if pd.notna(row['STR_BACIA']) else str(int(row['CD_BACIA'])),
+                "valorAgrupamento": row['STR_USINA']
             })
+            
         return result
-
-    elif agrupamento == 'submercado':
-        df_merged = pd.merge(df_acomph, df_postos, on='CD_POSTO', how='left')
         
-        tb_submercado = dbOns.getSchema('tb_submercado')
-        
-        query = db.select(
-            tb_submercado.c.cd_submercado,
-            tb_submercado.c.str_submercado
-        )
-        
-        record_submercado = dbOns.conn.execute(query).fetchall()
-        df_submercado = pd.DataFrame(record_submercado, columns=['CD_SUBMERCADO', 'STR_SUBMERCADO'])
-        
-        df_merged = pd.merge(df_merged, df_submercado, on='CD_SUBMERCADO', how='left')
-        df_merged = df_merged[['VL_VAZ_NAT_CONSO', 'DT_REFERENTE', 'STR_SUBMERCADO', 'CD_SUBMERCADO']]
-        df_merged = df_merged.groupby(['STR_SUBMERCADO', 'CD_SUBMERCADO', 'DT_REFERENTE']).sum().reset_index()
-        
-        result = []
-        
-        for _, row in df_merged.iterrows():
-            result.append({
-                "valor": round(float(row['VL_VAZ_NAT_CONSO']), 2) if pd.notna(row['VL_VAZ_NAT_CONSO']) else None,
-                "dataReferente": row['DT_REFERENTE'].strftime('%Y-%m-%d'),
-                "valorAgrupamento": row['STR_SUBMERCADO'] if pd.notna(row['STR_SUBMERCADO']) else str(int(row['CD_SUBMERCADO'])),
-            })
-        return result
     else:
         print(f"Tipo de agregação não reconhecido: {agrupamento}")
         return []
