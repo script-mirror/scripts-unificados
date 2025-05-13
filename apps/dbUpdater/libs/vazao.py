@@ -167,7 +167,7 @@ def exportAcomph_toDataviz(
     df_acomph = df_acomph.replace([np.inf, -np.inf], np.nan)  
     df_acomph = df_acomph.where(pd.notna(df_acomph), None)
     
-    dataRodada = df_acomph.columns.max().strftime('%Y-%m-%d')
+    dataRodada = (df_acomph.columns.max() + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
     
     df_acomph = df_acomph.stack().reset_index()
     df_acomph.columns = ['CD_POSTO', 'DT_REFERENTE', 'VL_VAZ_NAT_CONSO']
@@ -208,7 +208,7 @@ def exportAcomph_toDataviz(
     try:
         
         res = requests.post(
-                'https://tradingenergiarz/backend/api/map',
+                'https://tradingenergiarz.com/backend/api/map',
                 json=mongo_template,
                 headers={
                     'Content-Type': 'application/json',
@@ -694,6 +694,6 @@ def importNiveisDessem(path):
 
 
 if __name__ == '__main__':
-    path = "/home/diogopolastrine/Documentos/produtos/ACOMPH/ACOMPH_06.05.2025.xls"
+    path = "/home/diogopolastrine/Documentos/produtos/ACOMPH/ACOMPH_13.05.2025.xls"
     
     importAcomph(path)
