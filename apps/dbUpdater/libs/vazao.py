@@ -125,20 +125,20 @@ def importAcomph(path):
                 ACOMPH.append((dt_ref.strftime('%Y-%m-%d'), cd_posto, nivel_lido, nivel_conso, defluente_lido, defluente_conso, afluente_lido, afluente_conso, incremental_conso, natural_conso, DT_ACOMPH))
         # Append os postos da bacia ao array de todos os postos    
         POSTOS += postos
-    # df_acomph_insert = pd.DataFrame(ACOMPH, columns=["dt_ref","cd_posto","nivel_lido","nivel_conso","defluente_lido","defluente_conso","afluente_lido","afluente_conso","incremental_conso","natural_conso", "dt_acomph"])
-    # df_acomph_insert['afluente_lido'] = None
+    df_acomph_insert = pd.DataFrame(ACOMPH, columns=["dt_ref","cd_posto","nivel_lido","nivel_conso","defluente_lido","defluente_conso","afluente_lido","afluente_conso","incremental_conso","natural_conso", "dt_acomph"])
+    df_acomph_insert['afluente_lido'] = None
 
-    # sql_delete = tb_acomph.delete().where(db.and_(tb_acomph.c.cd_posto.in_(POSTOS) ,tb_acomph.c.dt_acomph == DT_ACOMPH))
+    sql_delete = tb_acomph.delete().where(db.and_(tb_acomph.c.cd_posto.in_(POSTOS) ,tb_acomph.c.dt_acomph == DT_ACOMPH))
 
-    # # trocar de False para True python 3.12+
-    # num_deletados = dataBase.db_execute(sql_delete, False).rowcount
-    # print(f"{num_deletados} linhas deletadas.") 
+    # trocar de False para True python 3.12+
+    num_deletados = dataBase.db_execute(sql_delete, False).rowcount
+    print(f"{num_deletados} linhas deletadas.") 
 
-    # sql_insert = tb_acomph.insert().values(df_acomph_insert.values.tolist())
-    # num_inseridos = dataBase.db_execute(sql_insert, False).rowcount
-    # print(f"{num_inseridos} linhas inseridas.")
-    # print("ACOMPH processado com sucesso!")
-    # update_acomph_cache(DT_ACOMPH)
+    sql_insert = tb_acomph.insert().values(df_acomph_insert.values.tolist())
+    num_inseridos = dataBase.db_execute(sql_insert, False).rowcount
+    print(f"{num_inseridos} linhas inseridas.")
+    print("ACOMPH processado com sucesso!")
+    update_acomph_cache(DT_ACOMPH)
     
 
     try:
@@ -208,7 +208,7 @@ def exportAcomph_toDataviz(
     try:
         
         res = requests.post(
-                'http://localhost:3000/api/map',
+                'https://tradingenergiarz/backend/api/map',
                 json=mongo_template,
                 headers={
                     'Content-Type': 'application/json',
