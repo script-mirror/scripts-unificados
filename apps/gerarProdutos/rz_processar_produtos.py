@@ -765,6 +765,24 @@ def processar_produto_NOTAS_TECNICAS(parametros):
     return resultado
 
 
+def processar_produto_FSARH(parametros):
+    resultado = Resultado(parametros)
+    data:datetime.date = parametros['data']
+    titulo = parametros['titulo']
+    html = parametros['html']
+    
+    path_fig = api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'prev_ena_consistido_{data}.png'))
+    
+    resultado.fileWhats = path_fig
+
+    resultado.msgWhats = titulo
+    resultado.flagWhats = True
+    resultado.destinatarioWhats = "FSARH"
+    
+    return resultado
+    
+
+
 if __name__ == '__main__':
     parametros = {
         "produto":"CMO_DC_PRELIMINAR",

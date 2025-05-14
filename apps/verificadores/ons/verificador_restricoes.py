@@ -17,6 +17,9 @@ sys.path.insert(1,"/WX2TB/Documentos/fontes")
 from PMO.scripts_unificados.bibliotecas import wx_dbClass,wx_emailSender,rz_dir_tools
 from PMO.scripts_unificados.apps.verificadores.ons import rz_ons
 from PMO.scripts_unificados.apps.verificadores import rz_selenium
+from PMO.scripts_unificados.apps.gerarProdutos import gerarProdutos2 
+
+GERAR_PRODUTO = gerarProdutos2.GerardorProdutos()
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 path_app = os.path.dirname(file_path)
@@ -192,6 +195,7 @@ def checkAtualizFSARH(selenium):
         if len(body)>0:
             html = '<h3>Mudanças FSARH {}  </h3><h4>Sistema de Gestão da Atualização de Restrições Hidráulicas </h4>'.format(hoje.strftime('%d/%m/%Y'))
             html += wx_emailSender.gerarTabela(body, header)
+            
     else:
         print('Não há atualizações FSARH!')
     return html
@@ -497,6 +501,16 @@ def main():
     rz_ons.login_ons(selenium_driver)
     try:
         table_fsarh = checkAtualizFSARH(selenium_driver)
+        
+        titulo = 'Teste - Atualizações FSARH'
+            
+        print('Enviando tabela no whatsapp...')
+        GERAR_PRODUTO.enviar({
+            "produto":"FSARH",
+            "data": hoje,
+            "titulo":titulo,
+            "html": table_fsarh
+        })
     except Exception as e:
         print(e)
 
@@ -535,7 +549,6 @@ def main():
         serv_email = wx_emailSender.WxEmail()
         serv_email.username = 'intervencoes@climenergy.com'
         serv_email.password = 'clime2sam'
-        # serv_email.send_to = ['joao.Filho4@raizen.com']
 
         # 10 tentativas de mandar email
         for i in range(10):
@@ -544,6 +557,9 @@ def main():
                 break
             except:
                 pass
+            
+        
+        
 
 if __name__ == '__main__':
 
