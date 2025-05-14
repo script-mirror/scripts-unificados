@@ -502,7 +502,7 @@ def main():
     try:
         table_fsarh = checkAtualizFSARH(selenium_driver)
         
-        titulo = 'Teste - Atualizações FSARH'
+        titulo = 'Atualizações FSARH'
             
         print('Enviando tabela no whatsapp...')
         GERAR_PRODUTO.enviar({
