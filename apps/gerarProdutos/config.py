@@ -13,7 +13,7 @@ WHATSAPP_API = os.getenv('WHATSAPP_API')
 
 NUM_GILSEU = os.getenv('NUM_GILSEU')
 
-PRODUTCS_MAPPING = {
+PRODUCTS_MAPPING = {
 
         'SST': "processar_produto_SST",
         'PRECIPTACAO_MODELO': "processar_produto_PRECIPTACAO_MODELO",

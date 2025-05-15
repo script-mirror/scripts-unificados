@@ -86,7 +86,7 @@ def download_deck_ds(**kwargs):
 
 def importar_deck_ds(**kwargs):
 
-    GERAR_PRODUTO = gerarProdutos2.GerardorProdutos()
+    GERAR_PRODUTO = gerarProdutos2.GeradorProdutos()
 
     try:
         ti = kwargs['ti']

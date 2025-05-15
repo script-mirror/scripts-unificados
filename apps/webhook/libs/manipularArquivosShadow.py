@@ -59,7 +59,7 @@ PATH_WEBHOOK_TMP = os.path.join(path_webhook, "arquivos","tmp")
 PATH_PLAN_ACOMPH_RDH = os.path.join(path_fontes,"PMO","monitora_ONS","plan_acomph_rdh")
 
 #constantes Classes
-GERAR_PRODUTO = gerarProdutos2.GerardorProdutos()
+GERAR_PRODUTO = gerarProdutos2.GeradorProdutos()
 DIR_TOOLS = rz_dir_tools.DirTools()
 
 

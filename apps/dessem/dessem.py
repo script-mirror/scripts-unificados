@@ -354,7 +354,7 @@ def importarResultados(pdocmoPath, dtRodada, dtReferente, fonte='wx', comentario
         # enviarPrevCargaWhats(dtReferente)
 
 def enviarResultadosEmail(dtReferente):
-    GERAR_PRODUTO = gerarProdutos2.GerardorProdutos()
+    GERAR_PRODUTO = gerarProdutos2.GeradorProdutos()
 
     GERAR_PRODUTO.enviar({
         "produto":"RESULTADO_DESSEM",

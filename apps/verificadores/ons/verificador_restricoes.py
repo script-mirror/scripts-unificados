@@ -19,7 +19,7 @@ from PMO.scripts_unificados.apps.verificadores.ons import rz_ons
 from PMO.scripts_unificados.apps.verificadores import rz_selenium
 from PMO.scripts_unificados.apps.gerarProdutos import gerarProdutos2 
 
-GERAR_PRODUTO = gerarProdutos2.GerardorProdutos()
+GERAR_PRODUTO = gerarProdutos2.GeradorProdutos()
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 path_app = os.path.dirname(file_path)

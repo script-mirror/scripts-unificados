@@ -24,13 +24,13 @@ from PMO.scripts_unificados.apps.gerarProdutos import rz_processar_produtos
 from PMO.scripts_unificados.bibliotecas import wx_emailSender,wx_opweek
 from PMO.scripts_unificados.apps.gerarProdutos.utils import get_access_token
 from PMO.scripts_unificados.apps.gerarProdutos.config import (
-    PRODUTCS_MAPPING,
+    PRODUCTS_MAPPING,
     WHATSAPP_API,
     NUM_GILSEU
     )
 
 
-class GerardorProdutos():
+class GeradorProdutos():
 
     def __init__(self) -> None:
         self.num_whatsapp = NUM_GILSEU
@@ -76,7 +76,7 @@ class GerardorProdutos():
         produto = produto.upper()
         data_str = data.strftime("%d/%m/%Y")
 
-        funcao_processamento = PRODUTCS_MAPPING.get(produto,None)
+        funcao_processamento = PRODUCTS_MAPPING.get(produto,None)
 
         if funcao_processamento:
             execute_function = getattr(rz_processar_produtos,funcao_processamento)
@@ -246,7 +246,7 @@ class GerardorProdutos():
 
 
 if __name__ == '__main__':
-    GerardorProdutos().runWithParams()
+    GeradorProdutos().runWithParams()
 
 
 

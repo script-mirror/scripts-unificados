@@ -24,7 +24,7 @@ def importar_operacoes():
 def gerar_produto():
     
     try:
-        GERAR_PRODUTO = gerarProdutos2.GerardorProdutos()
+        GERAR_PRODUTO = gerarProdutos2.GeradorProdutos()
         GERAR_PRODUTO.enviar({
             "produto":"RELATORIO_BBCE",
         })
