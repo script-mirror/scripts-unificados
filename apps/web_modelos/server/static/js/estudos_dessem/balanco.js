@@ -7,6 +7,7 @@ async function getDadosDessem(apiPath, dataInicial, dataFinal) {
     let local;
     local = apiPath == 'limites-intercambio' ? getRe() : getSubsistema();
     local = local.replace('/', 'BARRA')
+
     let url;
     if (dataInicial == undefined || dataFinal == undefined) {
         const datas = await getDatas()
@@ -17,8 +18,8 @@ async function getDadosDessem(apiPath, dataInicial, dataFinal) {
         dtInicial: dataInicial,
         dtFinal: dataFinal
     })
-    
-    if(local == 'todos' || apiPath != 'demanda-geracao-intercambio'){
+    console.log(apiPath)
+    if(local == 'todos'){
         url = `/middle/API/get/${apiPath}?${queryParams}`
     }else{
         url = `/middle/API/get/${apiPath}/${local}?${queryParams}`
