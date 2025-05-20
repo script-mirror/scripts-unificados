@@ -10,7 +10,6 @@ def getFromFile(path):
 	return file.readlines()
 
 def leituraArquivo(filePath):
-
 	arquivo = getFromFile(filePath)
 
 	dados = {}
@@ -18,8 +17,8 @@ def leituraArquivo(filePath):
 	while iLine != len(arquivo)-1:
 		line = arquivo[iLine]
 
-		if '-------;---------;-----;-------;-------;--------------;------;------;------;-------;-------;------------;------------;------------;----------------;----------------------------------------------------;-------------;'  in line:
-			iLine += 3
+		if 'trata' in line.lower():
+			iLine += 2
 			line = arquivo[iLine]
 			bloco = []
 			while iLine != len(arquivo)-1:
@@ -48,15 +47,17 @@ def getInfoBlocos():
 						'cod',
 						'num',
 						'fator',
+      					'aplic',
+      					'valor',
 						'linf',
-						'valor',
+						'valor_rest',
 						'lsup',
 						'multipl',
 						'obs',
 						'justificativa',
 				],
-				'regex':'(.{7});(.{9});(.{5});(.{7});(.{7});(.{14});(.{6});(.{6});(.{6});(.{7});(.{7});(.{12});(.{12});(.{12});(.{16});(.{52});(.{13});(.*)',
-				'formatacao':'{:>7};{:>9};{:>5};{:>7};{:>7};{:>14};{:>6};{:>6};{:>6};{:>7};{:>7};{:>12};{:>12};{:>12};{:>16};{:>52};{:>13};'}
+				'regex': '(.{7});(.{9});(.{5});(.{7});(.{7});(.{14});(.{6});(.{6});(.{6});(.{7});(.{9});(.{6});(.{14});(.{12});(.{12});(.{12});(.{16});(.{52});(.{13});(.*)',
+			    'formatacao': '{:>7};{:>9};{:>5};{:>7};{:>7};{:>14};{:>6};{:>6};{:>6};{:>7};{:>9};{:>6};{:>14};{:>12};{:>12};{:>12};{:>16};{:>52};{:>13};'}
 	return blocos
 
 
@@ -71,11 +72,9 @@ def extrairInfoBloco(listaLinhas, mnemonico, regex):
 	return blocos
 
 def leituraRestOper(pdoRestoperPath):
-
 	infoBlocos = getInfoBlocos()
 
 	pdoRestoper = leituraArquivo(pdoRestoperPath)
-
 	rest = extrairInfoBloco(pdoRestoper, 'RESTOPER', infoBlocos['restoper']['regex'])
 	df_rest = pd.DataFrame(rest, columns=infoBlocos['restoper']['campos'])
 

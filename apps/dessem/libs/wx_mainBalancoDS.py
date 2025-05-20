@@ -14,7 +14,7 @@ def main(pastaDeck=None):
 	#pastaDeck =  (datetime(2021,9,1) + timedelta(days = dia)).strftime("%Y%m%d")
 	
 	if pastaDeck is None:
-		pastaDeck =  (datetime.today() + timedelta(days = 1)).strftime("%Y%m%d")
+		pastaDeck =  (datetime.today()).strftime("%Y%m%d")
 		print ('\nLendo deck: ', pastaDeck)
 	else:
 		pastaDeck
@@ -29,11 +29,15 @@ def main(pastaDeck=None):
 		dataDeck = getDataDeck(pathEntrada)
 		try:
 			readIntercambios(pathEntrada, patSaida, pathConfigRE, dataDeck, pathOutInt)
+			print (f'Leitura INTERCAMBIOS do deck {pastaDeck} OK')
+   
 		except:
 			print ('Erro na leitura dos INTERCAMBIOS do deck: ', pastaDeck)
 
 		try:
 			readPdoSist(patSaida, dataDeck, pathOutPdo)
+			print (f'Leitura PDO SIST do deck {pastaDeck} OK')
+
 		except:
 			print ('Erro na leitura do PDO SIST do deck: ', pastaDeck)					
 		
@@ -45,4 +49,5 @@ if '__main__' == __name__:
 		pastaDeck = sys.argv[1]
 		main(pastaDeck)
 	else:
-		main()
+		for i in range(10):
+			main((date(2025, 5, 10) + timedelta(days=i)).strftime("%Y%m%d"))
