@@ -366,6 +366,60 @@ def get_valores_IPDO(dtref):
     ipdo_Verificado['ipdo_verificado'] = carga_ipdo_dataFormatada
     return ipdo_Verificado
 
+def get_previsao_dessem():
+    """
+    Função para obter os valores de previsão do IPDO a partir da carga Dessem,
+    agregados por dia e submercado (pela sigla).
+    """
+    # --- conexões e metadados ---
+    db_decks = wx_dbClass.db_mysql_master('db_decks')
+    db_decks.connect()
+    tb_ds_carga     = db_decks.getSchema('tb_ds_carga')
+    tb_submercado   = db_decks.getSchema('tb_submercado')
+    
+    # --- subquery para pegar o último deck ---
+    subquery_max_id = db.select(func.max(tb_ds_carga.c.id_deck)).scalar_subquery()
+    
+    # --- query com join para trazer a str_sigla ---
+    query = (
+        db.select(
+            tb_submercado.c.str_sigla.label('sigla'),
+            tb_ds_carga.c.dataHora,
+            tb_ds_carga.c.vl_carga
+        )
+        .select_from(
+            tb_ds_carga.join(
+                tb_submercado,
+                tb_ds_carga.c.cd_submercado == tb_submercado.c.cd_submercado
+            )
+        )
+        .where(tb_ds_carga.c.id_deck == subquery_max_id)
+    )
+    
+    # --- executa e carrega no DataFrame ---
+    rows = db_decks.conn.execute(query).all()
+    df = pd.DataFrame(rows, columns=['sigla','dataHora','vl_carga'])
+    
+    # --- prepara para agregar ---
+    df['day'] = df['dataHora'].dt.date.astype(str)
+    
+    # --- calcula média diária por sigla ---
+    daily_avg = (
+        df
+        .groupby(['sigla','day'], as_index=False)
+        .agg(avg_vl_carga=('vl_carga','mean'))
+    )
+    
+    # --- monta o JSON aninhado por sigla ---
+    nested = (
+        daily_avg
+        .groupby("sigla")
+        .apply(lambda grp: grp[['day','avg_vl_carga']].to_dict('records'))
+        .to_dict()
+    )
+    # json_str = json.dumps(nested, indent=2)
+    return nested
+
 def get_valores_IPDO_previsao(dtref):
     
     global dateFormat
