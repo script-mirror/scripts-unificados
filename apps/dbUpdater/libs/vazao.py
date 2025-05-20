@@ -125,35 +125,29 @@ def importAcomph(path):
                 ACOMPH.append((dt_ref.strftime('%Y-%m-%d'), cd_posto, nivel_lido, nivel_conso, defluente_lido, defluente_conso, afluente_lido, afluente_conso, incremental_conso, natural_conso, DT_ACOMPH))
         # Append os postos da bacia ao array de todos os postos    
         POSTOS += postos
-    df_acomph_insert = pd.DataFrame(ACOMPH, columns=["dt_ref","cd_posto","nivel_lido","nivel_conso","defluente_lido","defluente_conso","afluente_lido","afluente_conso","incremental_conso","natural_conso", "dt_acomph"])
-    df_acomph_insert['afluente_lido'] = None
+    df_acomph_post = pd.DataFrame(ACOMPH, columns=["dt_referente","cd_posto","nivel_lido","nivel_conso","defluente_lido","vl_vaz_def_conso","afluente_lido","afluente_conso","vl_vaz_inc_conso","vl_vaz_nat_conso", "dt_acomph"])
+    df_acomph_post = df_acomph_post[["dt_referente","cd_posto","vl_vaz_def_conso","vl_vaz_inc_conso","vl_vaz_nat_conso", "dt_acomph"]]
+    res = requests.post('https://tradingenergiarz.com/api/v2/ons/acomph', json=df_acomph_post.to_dict('records'))
+    print(res.status_code)
+    print(res.text)
+    # df_acomph_insert['afluente_lido'] = None
 
-    sql_delete = tb_acomph.delete().where(db.and_(tb_acomph.c.cd_posto.in_(POSTOS) ,tb_acomph.c.dt_acomph == DT_ACOMPH))
+    # sql_delete = tb_acomph.delete().where(db.and_(tb_acomph.c.cd_posto.in_(POSTOS) ,tb_acomph.c.dt_acomph == DT_ACOMPH))
 
-    # trocar de False para True python 3.12+
-    num_deletados = dataBase.db_execute(sql_delete, False).rowcount
-    print(f"{num_deletados} linhas deletadas.") 
+    # # trocar de False para True python 3.12+
+    # num_deletados = dataBase.db_execute(sql_delete, False).rowcount
+    # print(f"{num_deletados} linhas deletadas.") 
 
-    sql_insert = tb_acomph.insert().values(df_acomph_insert.values.tolist())
-    num_inseridos = dataBase.db_execute(sql_insert, False).rowcount
-    print(f"{num_inseridos} linhas inseridas.")
-    print("ACOMPH processado com sucesso!")
+    # sql_insert = tb_acomph.insert().values(df_acomph_insert.values.tolist())
+    # num_inseridos = dataBase.db_execute(sql_insert, False).rowcount
+    # print(f"{num_inseridos} linhas inseridas.")
+    # print("ACOMPH processado com sucesso!")
     update_acomph_cache(DT_ACOMPH)
     
 
     try:
         df_acomph = pd.DataFrame(ACOMPH, columns=['DT_REFERENTE', 'CD_POSTO', 'VL_NIVEL_LIDO', 'VL_NIVEL_CONSO', 'VL_VAZ_DEFLUENTE_LIDO', 'VL_VAZ_DEFLUENTE_CONSO', 'VL_VAZ_AFLUENTE_LIDO', 'VL_VAZ_AFLUENTE_CONSO', 'VL_VAZ_INC_CONSO', 'VL_VAZ_NAT_CONSO', 'DT_ACOMPH'])
-        df_acomph = df_acomph[['CD_POSTO', 'DT_REFERENTE', 'VL_VAZ_INC_CONSO', 'VL_VAZ_NAT_CONSO', 'DT_ACOMPH']]
-        df_acomph = df_acomph.sort_values(by=['CD_POSTO', 'DT_REFERENTE', 'DT_ACOMPH'], ascending=[True, True, False])
-        df_acomph['ROW'] = df_acomph.groupby(['CD_POSTO', 'DT_REFERENTE']).cumcount() + 1
-        df_acomph = df_acomph[df_acomph['ROW'] == 1]
-        df_acomph['CD_POSTO'] = pd.to_numeric(df_acomph['CD_POSTO'])
-        df_acomph['DT_REFERENTE'] = pd.to_datetime(df_acomph['DT_REFERENTE'])
-        df_vazNat = df_acomph.pivot(index='CD_POSTO', columns='DT_REFERENTE', values='VL_VAZ_NAT_CONSO')
-
-        acomph_nat = wx_calcEna.calcPostosArtificiais_df(df_vazNat, ignorar_erros=True)
-        
-        exportAcomph_toDataviz(acomph_nat)
+        exportAcomph_toDataviz(df_acomph)
 
         return True
     except Exception as e:
@@ -164,16 +158,26 @@ def exportAcomph_toDataviz(
     df_acomph: pd.DataFrame, 
     ):
     
-    df_acomph = df_acomph.replace([np.inf, -np.inf], np.nan)  
-    df_acomph = df_acomph.where(pd.notna(df_acomph), None)
+    df_acomph = df_acomph[['CD_POSTO', 'DT_REFERENTE', 'VL_VAZ_INC_CONSO', 'VL_VAZ_NAT_CONSO', 'DT_ACOMPH']]
+    df_acomph = df_acomph.sort_values(by=['CD_POSTO', 'DT_REFERENTE', 'DT_ACOMPH'], ascending=[True, True, False])
+    df_acomph['ROW'] = df_acomph.groupby(['CD_POSTO', 'DT_REFERENTE']).cumcount() + 1
+    df_acomph = df_acomph[df_acomph['ROW'] == 1]
+    df_acomph['CD_POSTO'] = pd.to_numeric(df_acomph['CD_POSTO'])
+    df_acomph['DT_REFERENTE'] = pd.to_datetime(df_acomph['DT_REFERENTE'])
+    df_vazNat = df_acomph.pivot(index='CD_POSTO', columns='DT_REFERENTE', values='VL_VAZ_NAT_CONSO')
+
+    acomph_nat = wx_calcEna.calcPostosArtificiais_df(df_vazNat, ignorar_erros=True)
     
-    dataRodada = (df_acomph.columns.max() + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+    acomph_nat = acomph_nat.replace([np.inf, -np.inf], np.nan)  
+    acomph_nat = acomph_nat.where(pd.notna(acomph_nat), None)
     
-    df_acomph = df_acomph.stack().reset_index()
-    df_acomph.columns = ['CD_POSTO', 'DT_REFERENTE', 'VL_VAZ_NAT_CONSO']
+    dataRodada = (acomph_nat.columns.max() + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
     
-    valoresMapaPosto = get_valoresMapa(df_acomph, 'posto')
-    valoresMapaUsina = get_valoresMapa(df_acomph, 'usina')
+    acomph_nat = acomph_nat.stack().reset_index()
+    acomph_nat.columns = ['CD_POSTO', 'DT_REFERENTE', 'VL_VAZ_NAT_CONSO']
+    
+    valoresMapaPosto = get_valoresMapa(acomph_nat, 'posto')
+    valoresMapaUsina = get_valoresMapa(acomph_nat, 'usina')
     
     mongo_template = {
         "dataRodada": dataRodada,
