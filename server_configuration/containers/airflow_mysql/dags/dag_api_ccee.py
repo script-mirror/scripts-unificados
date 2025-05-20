@@ -12,28 +12,32 @@ from src.constants import MAPPING
 
 
 default_args = {
-    'execution_timeout': timedelta(hours=8)
+    'execution_timeout': timedelta(hours=8),
+    'retries': 2,
+    'retry_delay': timedelta(minutes=1)
 }
 
 
 def check_atualizacao(**kwargs):
 
-    execution_date_param = kwargs.get('dag_run').conf.get('execution_date')
-    titles_to_search = kwargs.get('dag_run').conf.get('titles_ccee',[])
+    execution_date = kwargs.get('dag_run').conf.get('execution_date')
+    titles_to_search = kwargs.get('dag_run').conf.get('titles_to_search',[])
     ids_to_modify = kwargs.get('dag_run').conf.get('ids_to_modify',[])
 
     execution_date = (
         datetime.now() 
-        if not execution_date_param 
-        else datetime.strptime(execution_date_param,'%Y-%m-%d')
+        if not execution_date 
+        else datetime.strptime(execution_date,'%Y-%m-%d')
         )
-
+    ultima_data_atualizacao = datetime.datetime.min
     if not titles_to_search:
         
         for title_name in MAPPING.keys():
             dt_atualizacao = ApiCCEE(title_name).get_date_atualizacao(title_name)
 
             if dt_atualizacao:
+                if dt_atualizacao > ultima_data_atualizacao:
+                    ultima_data_atualizacao = dt_atualizacao
                 if dt_atualizacao.date() == execution_date.date():
                     titles_to_search.append(title_name)
     
@@ -43,7 +47,7 @@ def check_atualizacao(**kwargs):
         kwargs.get('dag_run').conf.update(
             {
                 'fontes_to_search': fontes_to_search,
-                "dt_atualizacao": dt_atualizacao.strftime('%Y-%m-%d'),
+                "dt_atualizacao": ultima_data_atualizacao.strftime('%Y-%m-%d'),
                 'task_to_execute': 'revisao_cvu',
                 'ids_to_modify': ids_to_modify
             })
