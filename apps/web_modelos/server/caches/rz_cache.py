@@ -449,7 +449,7 @@ def import_acomph_consolidado(data_rodada:datetime.date):
                 })
     df = pd.DataFrame(valores_mapa)
     df.sort_values(['data', 'granularidade', 'localizacao'])
-    res = req.post('http://0.0.0.0:8000/api/v2/ons/ena-acomph', json=df.to_dict('records'), headers={"Authorization":f"Bearer {get_access_token()}"})
+    res = req.post('https://tradingenergiarz.com/api/v2/ons/ena-acomph', json=df.to_dict('records'), headers={"Authorization":f"Bearer {get_access_token()}"})
     if res.status_code >= 200 and res.status_code < 300:
         logger.info(f"Modelo do ACOMPH da data {data_rodada} inserido na tabela ena_acomph")
     else:

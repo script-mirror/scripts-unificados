@@ -23,28 +23,17 @@ def getVazoesDat():
 def getAcomph(data_inicial, data_final=None):
 
     db_ons = wx_dbClass.db_mysql_master('db_ons',connect=True)
-    tb_acomph = db_ons.db_schemas['tb_acomph']
+    tb_acomph = db_ons.getSchema('acomph_consolidado')
 
-    cte = (
-    db.select(
+    query = db.select(
         tb_acomph.c.cd_posto,
         tb_acomph.c.dt_referente,
         tb_acomph.c.vl_vaz_inc_conso,
         tb_acomph.c.vl_vaz_nat_conso,
         tb_acomph.c.dt_acomph,
-        db.func.row_number().over(
-            partition_by=[tb_acomph.c.cd_posto, tb_acomph.c.dt_referente],
-            order_by=db.desc(tb_acomph.c.dt_acomph)
-        ).label('row_num')
-    )
-    .where(tb_acomph.c.dt_referente.between(data_inicial, data_final) if data_final != None else tb_acomph.c.dt_referente >= data_inicial)
-    .cte('cte_groups')
-    )
-    query = (
-        db.select(cte)
-        .where(cte.c.row_num == 1)
-        .order_by(cte.c.cd_posto, cte.c.dt_referente)
-    )
+        db.literal(1).label('row_num')
+    ).where(tb_acomph.c.dt_referente.between(data_inicial, data_final) if data_final != None else tb_acomph.c.dt_referente >= data_inicial)
+    
 
     answer = db_ons.db_execute(query).fetchall() 
     db_ons.db_dispose()

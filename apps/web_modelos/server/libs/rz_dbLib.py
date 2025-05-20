@@ -183,17 +183,17 @@ def getAllRvs():
     db_ons = wx_dbClass.db_mysql_master("db_ons", connect=True)
     tb_ve = db_ons.db_schemas['tb_ve']
 
-    subquery_max_ano = db.select([db.func.max(tb_ve.c.vl_ano)]).scalar_subquery()
+    subquery_max_ano = db.select(db.func.max(tb_ve.c.vl_ano)).scalar_subquery()
 
-    subquery_max_mes = db.select([db.func.max(tb_ve.c.vl_mes)]).where(tb_ve.c.vl_ano == subquery_max_ano).scalar_subquery()
+    subquery_max_mes = db.select(db.func.max(tb_ve.c.vl_mes)).where(tb_ve.c.vl_ano == subquery_max_ano).scalar_subquery()
 
     # Consulta principal
-    query = db.select([
+    query = db.select(
         tb_ve.c.dt_inicio_semana,
         tb_ve.c.vl_ena,
         tb_ve.c.cd_revisao,
         tb_ve.c.cd_submercado
-    ]).where(
+    ).where(
         db.and_(
             tb_ve.c.vl_ano == subquery_max_ano,
             tb_ve.c.vl_mes == subquery_max_mes

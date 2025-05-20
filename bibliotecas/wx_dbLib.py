@@ -271,7 +271,7 @@ def getAcomphEspecifico(dtAcomph):
 
     dataBase = wx_dbClass.db_mysql_master("db_ons")
     dataBase.connect()
-    tb_acomph = dataBase.getSchema("tb_acomph")
+    tb_acomph = dataBase.getSchema("acomph_historico")
     sql_select = tb_acomph.select().where(tb_acomph.c.dt_acomph == dtAcomph.strftime('%Y-%m-%d'))
     values_list = dataBase.conn.execute(sql_select).fetchall()
     return values_list
@@ -346,11 +346,11 @@ def getCargaHoraria(data):
     db_ons = wx_dbClass.db_mysql_master("db_ons", connect=True)
     tb_carga_horaria = db_ons.db_schemas['tb_carga_horaria']
     
-    sql_select = db.select([
+    sql_select = db.select(
         tb_carga_horaria.c.str_submercado,
         tb_carga_horaria.c.dt_referente,
         tb_carga_horaria.c.vl_carga,
-    ]).where(
+    ).where(
         tb_carga_horaria.c.dt_update == data.strftime(dateFormat)
     ).order_by(
         tb_carga_horaria.c.dt_referente
@@ -535,7 +535,7 @@ def get_gereracao_termica_min_semana(dt_prev):
                 ultimo_balanco_com_valor = balanco
             else:
                 balanco = ultimo_balanco_com_valor
-
+        pdb.set_trace()
         days_to_sum = dt_aux - balanco[0][0]
         df_balanco = pd.DataFrame(balanco, columns = ['dt_data_hora', 'str_subsistema', 'vl_cmo', 'vl_demanda','vl_geracao_renovaveis', 'vl_geracao_hidreletrica','vl_geracao_termica', 'vl_gtmin', 'vl_gtmax', 'vl_intercambio','vl_pld'])
         df_geracao_termica_min = df_balanco[df_balanco['dt_data_hora'] < dt_aux + datetime.timedelta(days=1) ][['dt_data_hora','str_subsistema','vl_gtmin']]
