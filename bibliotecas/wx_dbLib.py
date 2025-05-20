@@ -271,7 +271,7 @@ def getAcomphEspecifico(dtAcomph):
 
     dataBase = wx_dbClass.db_mysql_master("db_ons")
     dataBase.connect()
-    tb_acomph = dataBase.getSchema("acomph_historico")
+    tb_acomph = dataBase.getSchema("tb_acomph")
     sql_select = tb_acomph.select().where(tb_acomph.c.dt_acomph == dtAcomph.strftime('%Y-%m-%d'))
     values_list = dataBase.conn.execute(sql_select).fetchall()
     return values_list
