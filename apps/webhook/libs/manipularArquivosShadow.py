@@ -718,7 +718,7 @@ def resultados_nao_consistidos_semanal(dadosProduto):
 
     titulo, html = wx_libs_preco.nao_consistido_rv(filename)
     
-    data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto'), "%d/%m/%Y")
+    data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto')[:10], "%d/%m/%Y")
     
     # manda arquivo .zip para maquina newave'
     cmd = f"cp {filename} /WX/SERVER_NW/WX4TB/Documentos/fontes/PMO/decomp/entradas/DC_preliminar/;"
