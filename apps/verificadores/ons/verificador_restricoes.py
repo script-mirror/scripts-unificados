@@ -121,7 +121,7 @@ def checkAtualizFSARH(selenium):
     if len(df_fsarh)>0:
 
         ordem = ['TemporalidadeRestricao', 'Agente', 'Bacia', 'Rio', 'ReservatorioRelacionado', 'RestricoesMontante', 'RestricoesJusante']
-        ordem += ['CaracteristicaRestricao', 'ClasseRestricao', 'NovoValor', 'ValorVigente', 'Evento', 'DescricaoJustificativa', 'Status']
+        ordem += ['CaracteristicaRestricao', 'ClasseRestricao', 'NovoValor', 'ValorVigente', 'DescricaoJustificativa', 'Status']
         ordem += ['CaracteristicaRestricaoPontoControle', 'DataCalculadaInicio', 'DataCalculadaTermino']
 
         df_fsarh['NovoValor'] = df_fsarh['NovoValor'].apply(pd.to_numeric, errors='coerce')
@@ -156,7 +156,7 @@ def checkAtualizFSARH(selenium):
                     "id", "modified", "temporalidade_restricao", "agente", "bacia",
                     "rio", "reservatorio_relacionado", "restricoes_montante", "restricoes_jusante",
                     "caracteristica_restricao", "classe_restricao", "novo_valor", "valor_vigente",
-                    "evento", "justificativa", "status", "caracteristica_restricao_ponto_cont",
+                    "justificativa", "status", "caracteristica_restricao_ponto_cont",
                     "data_inic", "data_fim"
                 ]
                 )
@@ -169,7 +169,7 @@ def checkAtualizFSARH(selenium):
         # Formatacao e geracao da tabela 
         hoje = datetime.datetime.now()
         index = 0
-        header = ['ID', 'Data Modificação', 'Data Inicio', 'Data Final', 'Agente', 'Região Hidrográfica', 'Reservatório', 'Restrição', 'Valor', 'Evento', 'Atualização', 'Temporarialidade', 'Status']
+        header = ['ID', 'Data Modificação', 'Data Inicio', 'Data Final', 'Agente', 'Região Hidrográfica', 'Reservatório', 'Restrição', 'Valor', 'Atualização', 'Temporarialidade', 'Status']
         body = []
         for i,row in df_fsarh.iterrows():
             row = row.replace({np.nan: ''})
@@ -185,7 +185,6 @@ def checkAtualizFSARH(selenium):
                 cells.append(str(round(float(row['NovoValor']),1)).replace('.',','))
             except:
                 cells.append(row['NovoValor'])
-            cells.append(row['Evento'])
             cells.append(updates[index][2])
             cells.append(row['TemporalidadeRestricao'])
             cells.append(row['Status'])
@@ -195,7 +194,7 @@ def checkAtualizFSARH(selenium):
         if len(body)>0:
             html = '<h3>Mudanças FSARH {}  </h3><h4>Sistema de Gestão da Atualização de Restrições Hidráulicas </h4>'.format(hoje.strftime('%d/%m/%Y'))
             html += wx_emailSender.gerarTabela(body, header)
-            
+        
     else:
         print('Não há atualizações FSARH!')
     return html

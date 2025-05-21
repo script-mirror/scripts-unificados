@@ -159,7 +159,7 @@ class GeradorProdutos():
             print(
                 '''
                 \nProduto não cadastrado!
-                Cadastre o produto para que  
+                Cadastre o produto para que ele execute a sua lógica de específica.
                 ''')
 
     def printHelper(self):
