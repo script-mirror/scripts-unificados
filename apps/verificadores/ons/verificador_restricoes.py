@@ -185,7 +185,7 @@ def checkAtualizFSARH(selenium):
                 cells.append(str(round(float(row['NovoValor']),1)).replace('.',','))
             except:
                 cells.append(row['NovoValor'])
-            cells.append(updates[index][2])
+            cells.append(', '.join([item.split('-')[0].strip() for item in updates[index][2].split(',')]))
             cells.append(row['TemporalidadeRestricao'])
             cells.append(row['Status'])
             body.append(cells)
