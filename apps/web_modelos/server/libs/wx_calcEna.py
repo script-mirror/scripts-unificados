@@ -1,3 +1,4 @@
+import pdb
 import sys
 import datetime
 import pandas as pd
@@ -27,7 +28,7 @@ def propagarPostos(vazao, acomph, postosDesejados):
             # exception no caso do acomph do dia atual nao tiver saido, ele ira repetir o do dia anterior
             except:
                 vaz2 = acomphCombinadoSmap.loc[posto, dia-datetime.timedelta(days=2+tv_dia)]
-            vazoesPropagadas.loc[posto, dia] = (((24*(1+tv_dia))-tv_horas)*float(vaz1) + (tv_horas-24*tv_dia)*float(vaz2))/24
+            vazoesPropagadas.loc[posto, dia] = (((24*(1+tv_dia))-tv_horas)*vaz1 + (tv_horas-24*tv_dia)*vaz2)/24
 
     return vazoesPropagadas
 
@@ -399,7 +400,7 @@ def gera_ena_df(vazao, divisao='submercado'):
 
     for posto in vazao.index:
         if posto in postosRelato:
-            ena.loc[posto] = vazao.loc[posto].astype(float) * df_produtibilidade.loc[posto]['VL_PRODUTIBILIDADE']
+            ena.loc[posto] = vazao.loc[posto] * df_produtibilidade.loc[posto]['VL_PRODUTIBILIDADE']
 
 
     if divisao == 'posto':
