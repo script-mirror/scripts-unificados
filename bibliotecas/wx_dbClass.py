@@ -1138,13 +1138,13 @@ class db_mysql_master():
                 db.Column('id', db.Integer, primary_key=True, autoincrement=True),
                 db.Column('dt_referente', db.Date, nullable=True),
                 db.Column('cd_posto', db.SmallInteger, nullable=True),
-                db.Column('vl_vaz_def_conso', db.Float(12,6), nullable=True),
-                db.Column('vl_vaz_inc_conso', db.Float(12,6), nullable=True),
-                db.Column('vl_vaz_nat_conso', db.Float(12,6), nullable=True),
+                db.Column('vl_vaz_def_conso', db.Float, nullable=True),
+                db.Column('vl_vaz_inc_conso', db.Float, nullable=True),
+                db.Column('vl_vaz_nat_conso', db.Float, nullable=True),
                 db.Column('dt_acomph', db.Date, nullable=True),
                 extend_existing=True
             )
-            
+
         return table_schema
 
     def get_db_schemas(self, tables=[]):
