@@ -346,11 +346,11 @@ def getCargaHoraria(data):
     db_ons = wx_dbClass.db_mysql_master("db_ons", connect=True)
     tb_carga_horaria = db_ons.db_schemas['tb_carga_horaria']
     
-    sql_select = db.select(
+    sql_select = db.select([
         tb_carga_horaria.c.str_submercado,
         tb_carga_horaria.c.dt_referente,
         tb_carga_horaria.c.vl_carga,
-    ).where(
+    ]).where(
         tb_carga_horaria.c.dt_update == data.strftime(dateFormat)
     ).order_by(
         tb_carga_horaria.c.dt_referente
@@ -535,7 +535,7 @@ def get_gereracao_termica_min_semana(dt_prev):
                 ultimo_balanco_com_valor = balanco
             else:
                 balanco = ultimo_balanco_com_valor
-        pdb.set_trace()
+
         days_to_sum = dt_aux - balanco[0][0]
         df_balanco = pd.DataFrame(balanco, columns = ['dt_data_hora', 'str_subsistema', 'vl_cmo', 'vl_demanda','vl_geracao_renovaveis', 'vl_geracao_hidreletrica','vl_geracao_termica', 'vl_gtmin', 'vl_gtmax', 'vl_intercambio','vl_pld'])
         df_geracao_termica_min = df_balanco[df_balanco['dt_data_hora'] < dt_aux + datetime.timedelta(days=1) ][['dt_data_hora','str_subsistema','vl_gtmin']]
@@ -924,5 +924,4 @@ if __name__ == '__main__':
     ('Hannah', 'Mountain 21')
     ]
     # datab.executemany(sql, val)
-
 

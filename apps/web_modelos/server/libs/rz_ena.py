@@ -220,17 +220,28 @@ def get_ena_modelos_smap(ids_to_search,dt_rodada, granularidade, dias: int = 7):
 def getAcomph(data_inicial, data_final=None):
 
     db_ons = wx_dbClass.db_mysql_master('db_ons',connect=True)
-    tb_acomph = db_ons.getSchema('acomph_consolidado')
+    tb_acomph = db_ons.db_schemas['tb_acomph']
 
-    query = db.select(
+    cte = (
+    db.select(
         tb_acomph.c.cd_posto,
         tb_acomph.c.dt_referente,
         tb_acomph.c.vl_vaz_inc_conso,
         tb_acomph.c.vl_vaz_nat_conso,
         tb_acomph.c.dt_acomph,
-        db.literal(1).label('row_num')
-    ).where(tb_acomph.c.dt_referente.between(data_inicial, data_final) if data_final != None else tb_acomph.c.dt_referente >= data_inicial)
-    
+        func.row_number().over(
+            partition_by=[tb_acomph.c.cd_posto, tb_acomph.c.dt_referente],
+            order_by=db.desc(tb_acomph.c.dt_acomph)
+        ).label('row_num')
+    )
+    .where(tb_acomph.c.dt_referente.between(data_inicial, data_final) if data_final != None else tb_acomph.c.dt_referente >= data_inicial)
+    .cte('cte_groups')
+    )
+    query = (
+        db.select(cte)
+        .where(cte.c.row_num == 1)
+        .order_by(cte.c.cd_posto, cte.c.dt_referente)
+    )
 
     answer = db_ons.db_execute(query).fetchall() 
     db_ons.db_dispose()
@@ -242,7 +253,6 @@ def get_ena_acomph(data_inicial,granularidade,data_final=None):
     acomph = getAcomph(data_inicial,data_final)
     df_acomph = pd.DataFrame(acomph, columns=['CD_POSTO', 'DT_REFERENTE', 'VL_VAZ_INC_CONSO', 'VL_VAZ_NAT_CONSO', 'DT_ACOMPH','ROW'])
     df_vazNat = df_acomph.pivot(index='CD_POSTO', columns='DT_REFERENTE', values='VL_VAZ_NAT_CONSO')
-
     acomph_nat = wx_calcEna.calcPostosArtificiais_df(df_vazNat, ignorar_erros=True)
 
     if granularidade == 'bacia':
@@ -328,7 +338,15 @@ def calc_previsao_smap(df_modelos:pd.DataFrame,granularidade:str='submercado'):
 
 if __name__ == '__main__':
     import pdb
-    res = getAcomph(datetime.date(2025,5,8))
+    # modelos_list=[]
+    # for dt_rodada in dts_rodada_list:
+    #     rodadas = SmapTools.convert_modelos_to_json(dt_rodada = datetime.datetime.strptime(dt_rodada,'%Y-%m-%d'))
+    #     modelos_list += [(modelo, hr, datetime.datetime.strptime(dt, '%d/%m/%Y')) for modelo,hr,dt in rodadas['modelos']] 
+
+    modelos_list=[('PCONJUNTO', 0, '2024-09-04'),('PCONJUNTO', 0, '2024-09-03')]
+    # teste = get_previsao_ena_smap(modelos_list)
+    TB_SMAP = tb_smap()
+    df_modelos = TB_SMAP.get_rodadas_do_dia('2024-09-03',column_data='id_smap')
     pdb.set_trace()
 
 

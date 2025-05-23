@@ -183,17 +183,17 @@ def getAllRvs():
     db_ons = wx_dbClass.db_mysql_master("db_ons", connect=True)
     tb_ve = db_ons.db_schemas['tb_ve']
 
-    subquery_max_ano = db.select(db.func.max(tb_ve.c.vl_ano)).scalar_subquery()
+    subquery_max_ano = db.select([db.func.max(tb_ve.c.vl_ano)]).scalar_subquery()
 
-    subquery_max_mes = db.select(db.func.max(tb_ve.c.vl_mes)).where(tb_ve.c.vl_ano == subquery_max_ano).scalar_subquery()
+    subquery_max_mes = db.select([db.func.max(tb_ve.c.vl_mes)]).where(tb_ve.c.vl_ano == subquery_max_ano).scalar_subquery()
 
     # Consulta principal
-    query = db.select(
+    query = db.select([
         tb_ve.c.dt_inicio_semana,
         tb_ve.c.vl_ena,
         tb_ve.c.cd_revisao,
         tb_ve.c.cd_submercado
-    ).where(
+    ]).where(
         db.and_(
             tb_ve.c.vl_ano == subquery_max_ano,
             tb_ve.c.vl_mes == subquery_max_mes
@@ -376,10 +376,10 @@ def get_previsao_dessem():
     db_decks.connect()
     tb_ds_carga     = db_decks.getSchema('tb_ds_carga')
     tb_submercado   = db_decks.getSchema('tb_submercado')
-    
+
     # --- subquery para pegar o último deck ---
     subquery_max_id = db.select(func.max(tb_ds_carga.c.id_deck)).scalar_subquery()
-    
+
     # --- query com join para trazer a str_sigla ---
     query = (
         db.select(
@@ -395,21 +395,21 @@ def get_previsao_dessem():
         )
         .where(tb_ds_carga.c.id_deck == subquery_max_id)
     )
-    
+
     # --- executa e carrega no DataFrame ---
     rows = db_decks.conn.execute(query).all()
     df = pd.DataFrame(rows, columns=['sigla','dataHora','vl_carga'])
-    
+
     # --- prepara para agregar ---
     df['day'] = df['dataHora'].dt.date.astype(str)
-    
+
     # --- calcula média diária por sigla ---
     daily_avg = (
         df
         .groupby(['sigla','day'], as_index=False)
         .agg(avg_vl_carga=('vl_carga','mean'))
     )
-    
+
     # --- monta o JSON aninhado por sigla ---
     nested = (
         daily_avg
@@ -419,6 +419,7 @@ def get_previsao_dessem():
     )
     # json_str = json.dumps(nested, indent=2)
     return nested
+
 
 def get_valores_IPDO_previsao(dtref):
     
