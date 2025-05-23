@@ -1,4 +1,3 @@
-import pdb
 import sys
 import datetime
 import pandas as pd
@@ -28,6 +27,7 @@ def propagarPostos(vazao, acomph, postosDesejados):
             # exception no caso do acomph do dia atual nao tiver saido, ele ira repetir o do dia anterior
             except:
                 vaz2 = acomphCombinadoSmap.loc[posto, dia-datetime.timedelta(days=2+tv_dia)]
+
             vazoesPropagadas.loc[posto, dia] = (((24*(1+tv_dia))-tv_horas)*vaz1 + (tv_horas-24*tv_dia)*vaz2)/24
 
     return vazoesPropagadas
@@ -92,7 +92,7 @@ def propagarCalcularNaturais(data, vazao,df_acomph = None ,dias=7):
 
 def calcPostosArtificiais_df(vazao, ignorar_erros=False):
     ordemCalculoPostos = [2, 104, 109, 301, 119, 116, 160, 171, 175, 176, 203, 230, 244, 252, 320, 37, 38, 39, 40, 42, 43, 44, 45, 46, 66, 75, 298, 317, 315, 316, 304, 127, 126, 131, 132, 292, 299, 302, 303, 306, 318, 227, 228, 81, 183]
-    vazao.columns = pd.to_datetime(vazao.columns)
+
     idxJan = vazao.columns.strftime('%m') == '01'
     idxfev = vazao.columns.strftime('%m') == '02'
     idxMar = vazao.columns.strftime('%m') == '03'
@@ -400,7 +400,7 @@ def gera_ena_df(vazao, divisao='submercado'):
 
     for posto in vazao.index:
         if posto in postosRelato:
-            ena.loc[posto] = vazao.loc[posto] * df_produtibilidade.loc[posto]['VL_PRODUTIBILIDADE']
+            ena.loc[posto] = vazao.loc[posto]*df_produtibilidade.loc[posto]['VL_PRODUTIBILIDADE']
 
 
     if divisao == 'posto':
@@ -429,4 +429,3 @@ def gera_ena_df(vazao, divisao='submercado'):
             postosPorSubmercado = df_produtibilidade[df_produtibilidade['STR_SIGLA']==sub].index
             enaSub.loc[sub] = ena[ena.index.isin(postosPorSubmercado)].sum()
         return enaSub
-
