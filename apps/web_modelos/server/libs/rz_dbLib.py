@@ -183,17 +183,17 @@ def getAllRvs():
     db_ons = wx_dbClass.db_mysql_master("db_ons", connect=True)
     tb_ve = db_ons.db_schemas['tb_ve']
 
-    subquery_max_ano = db.select([db.func.max(tb_ve.c.vl_ano)]).scalar_subquery()
+    subquery_max_ano = db.select(db.func.max(tb_ve.c.vl_ano)).scalar_subquery()
 
-    subquery_max_mes = db.select([db.func.max(tb_ve.c.vl_mes)]).where(tb_ve.c.vl_ano == subquery_max_ano).scalar_subquery()
+    subquery_max_mes = db.select(db.func.max(tb_ve.c.vl_mes)).where(tb_ve.c.vl_ano == subquery_max_ano).scalar_subquery()
 
     # Consulta principal
-    query = db.select([
+    query = db.select(
         tb_ve.c.dt_inicio_semana,
         tb_ve.c.vl_ena,
         tb_ve.c.cd_revisao,
         tb_ve.c.cd_submercado
-    ]).where(
+    ).where(
         db.and_(
             tb_ve.c.vl_ano == subquery_max_ano,
             tb_ve.c.vl_mes == subquery_max_mes
@@ -368,58 +368,83 @@ def get_valores_IPDO(dtref):
 
 def get_previsao_dessem():
     """
-    Função para obter os valores de previsão do IPDO a partir da carga Dessem,
-    agregados por dia e submercado (pela sigla).
+    Pega previsão IPDO:
+    - deck mais recente completo
+    - se faltarem registros de hoje, busca somente hoje no deck anterior
+    Agrega por dia e sigla, e retorna dict aninhado.
     """
-    # --- conexões e metadados ---
+    # --- setup DB ---
     db_decks = wx_dbClass.db_mysql_master('db_decks')
     db_decks.connect()
-    tb_ds_carga     = db_decks.getSchema('tb_ds_carga')
-    tb_submercado   = db_decks.getSchema('tb_submercado')
+    tb_ds_carga   = db_decks.getSchema('tb_ds_carga')
+    tb_submercado = db_decks.getSchema('tb_submercado')
 
-    # --- subquery para pegar o último deck ---
-    subquery_max_id = db.select(func.max(tb_ds_carga.c.id_deck)).scalar_subquery()
+    hoje = datetime.date.today()
 
-    # --- query com join para trazer a str_sigla ---
-    query = (
-        db.select(
-            tb_submercado.c.str_sigla.label('sigla'),
-            tb_ds_carga.c.dataHora,
-            tb_ds_carga.c.vl_carga
-        )
-        .select_from(
-            tb_ds_carga.join(
-                tb_submercado,
-                tb_ds_carga.c.cd_submercado == tb_submercado.c.cd_submercado
-            )
-        )
-        .where(tb_ds_carga.c.id_deck == subquery_max_id)
+    # 1) deck mais recente
+    max_deck_id = db.select(func.max(tb_ds_carga.c.id_deck)).scalar_subquery()
+
+    # 2) deck anterior ao mais recente
+    prev_deck_id = (
+        db.select(func.max(tb_ds_carga.c.id_deck))
+          .where(tb_ds_carga.c.id_deck < max_deck_id)
+          .scalar_subquery()
     )
 
-    # --- executa e carrega no DataFrame ---
-    rows = db_decks.conn.execute(query).all()
-    df = pd.DataFrame(rows, columns=['sigla','dataHora','vl_carga'])
+    # helper para montar query base
+    def make_query(deck_id_subq, only_today=False):
+        q = (
+            db.select(
+                tb_submercado.c.str_sigla.label('sigla'),
+                tb_ds_carga.c.dataHora,
+                tb_ds_carga.c.vl_carga
+            )
+            .select_from(
+                tb_ds_carga.join(
+                    tb_submercado,
+                    tb_ds_carga.c.cd_submercado == tb_submercado.c.cd_submercado
+                )
+            )
+            .where(tb_ds_carga.c.id_deck == deck_id_subq)
+        )
+        if only_today:
+            # filtra somente registros de hoje
+            q = q.where(func.date(tb_ds_carga.c.dataHora) == hoje)
+        return q
 
-    # --- prepara para agregar ---
-    df['day'] = df['dataHora'].dt.date.astype(str)
+    # 3) busca todos os dados do deck mais recente
+    rows_max   = db_decks.conn.execute(make_query(max_deck_id)).all()
+    df_max     = pd.DataFrame(rows_max, columns=['sigla','dataHora','vl_carga'])
+    df_max['day'] = df_max['dataHora'].dt.date.astype(str)
 
-    # --- calcula média diária por sigla ---
+    # 4) checa se há registros para hoje no deck mais recente
+    existe_hoje = (df_max['day'] == str(hoje)).any()
+
+    # 5) se não existir, busca só hoje no deck anterior e anexa
+    if not existe_hoje:
+        rows_prev = db_decks.conn.execute(make_query(prev_deck_id, only_today=True)).all()
+        df_prev   = pd.DataFrame(rows_prev, columns=['sigla','dataHora','vl_carga'])
+        if not df_prev.empty:
+            df_prev['day'] = df_prev['dataHora'].dt.date.astype(str)
+            # concatena mantendo ambos
+            df_max = pd.concat([df_max, df_prev], ignore_index=True)
+
+    # 6) agrupa e calcula média diária por sigla
     daily_avg = (
-        df
+        df_max
         .groupby(['sigla','day'], as_index=False)
         .agg(avg_vl_carga=('vl_carga','mean'))
     )
 
-    # --- monta o JSON aninhado por sigla ---
+    # 7) monta dict aninhado por sigla
     nested = (
         daily_avg
         .groupby("sigla")
         .apply(lambda grp: grp[['day','avg_vl_carga']].to_dict('records'))
         .to_dict()
     )
-    # json_str = json.dumps(nested, indent=2)
-    return nested
 
+    return nested
 
 def get_valores_IPDO_previsao(dtref):
     
@@ -2122,5 +2147,6 @@ def get_anos_disponiveis_rdh():
 
 if __name__ == '__main__':
     # print(get_postos_rdh())
-    getRevBacias(datetime.datetime.now())
+    # getRevBacias(datetime.datetime.now())
+    print(get_previsao_dessem())
     pass
