@@ -501,7 +501,7 @@ def main():
     try:
         table_fsarh = checkAtualizFSARH(selenium_driver)
         
-        titulo = 'Atualizações FSARH'
+        titulo = 'Atualizações FSARH - {}'.format(hoje.strftime('%d/%m/%Y'))
             
         print('Enviando tabela no whatsapp...')
         GERAR_PRODUTO.enviar({
