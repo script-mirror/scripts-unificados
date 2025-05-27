@@ -10,6 +10,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
 
 from service_deck_preliminar_decomp import DeckPreliminarDecompService
+from ....utils.whatsapp_message import WhatsappMessageSender  # type: ignore
 # # Importando o service layer
 
 
@@ -23,7 +24,7 @@ with DAG(
     default_args={
         'retries': 3,
         'retry_delay': datetime.timedelta(minutes=2),
-        'on_failure_callback': DeckPreliminarDecompService.enviar_whatsapp_erro,
+        'on_failure_callback': WhatsappMessageSender.enviar_whatsapp_erro,
     },
     description='DAG simplificada para processamento do Deck Preliminar Decomp'
 ) as dag:
@@ -67,7 +68,7 @@ with DAG(
     # 6. Finalizar
     finalizar = DummyOperator(
         task_id='finalizar', 
-        on_success_callback=DeckPreliminarDecompService.enviar_whatsapp_sucesso,
+        on_success_callback=WhatsappMessageSender.enviar_whatsapp_sucesso,
     )
 
     # Fluxo linear atualizado com nova task para envio de dados à API
