@@ -206,7 +206,9 @@ class DeckPreliminarDecompService:
             
             # Extrai informações do nome do arquivo
             filename = os.path.basename(carga_file_path)
-            match = re.search(r'Carga_PMO_(\w+)(\d+)(?:\(Rev\s*(\d+)\))?', filename)
+            match = re.search(r'Carga_PMO_(\D+)(\d+)(?:\(Rev\s*(\d+)\))?', filename)
+            if not match:
+                raise ValueError(f"Formato de nome de arquivo inválido: {filename}. Esperado: Carga_PMO_Mes##(Rev #).xlsx")
             
             mes = match.group(1) if match else None
             ano = match.group(2) if match else None
@@ -218,32 +220,46 @@ class DeckPreliminarDecompService:
                 'Maio': 5, 'Junho': 6, 'Julho': 7, 'Agosto': 8,
                 'Setembro': 9, 'Outubro': 10, 'Novembro': 11, 'Dezembro': 12
             }
-            mes_numero = mapeamento_mes.get(mes, 5)  # Padrão é 5 (maio) se o mês não for encontrado
-            
-            print("ALFACEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEeee")
+            if mes not in mapeamento_mes:
+                raise ValueError("Mês inválido") 
+            mes_numero = mapeamento_mes.get(mes)
+
             # Seleciona as primeiras linhas para extrair a data de início (linha do cabeçalho)
             cabecalho = df.iloc[0:10].reset_index(drop=True)
             print(f"Cabecalho do arquivo de carga:\n{cabecalho.to_string(index=False)}")
             
-            # Extrai a data de início da primeira semana
-            data_inicio = None
-            for idx, row in cabecalho.iterrows():
-                # Procura na linha 2 (índice 2) que contém as datas das semanas
-                if idx == 2:  # A terceira linha contém as datas
-                    # Extrai a data da primeira semana (coluna "Unnamed: 7")
-                    if 'Unnamed: 7' in row and not pd.isna(row['Unnamed: 7']):
-                        data_str = str(row['Unnamed: 7'])
-                        # Formato esperado: "26/04 a 02/05"
-                        match_data = re.search(r'(\d{2})/(\d{2})', data_str)
-                        if match_data:
-                            dia = match_data.group(1)
-                            mes_data = match_data.group(2)
-                            # Formata como YYYYMMDD
-                            data_inicio = f"2025{mes_data}{dia}"
-                            print(f"Data de início extraída: {data_inicio}")
-                            break
+            # Extrai as datas de início de todas as semanas
+            datas_semanas = {}  # Mapeamento coluna -> data de início
+            colunas_semanas = {
+                1: 'Unnamed: 7',  # 1ª Semana
+                2: 'Unnamed: 8',  # 2ª Semana
+                3: 'Unnamed: 9',  # 3ª Semana
+                4: 'Unnamed: 10', # 4ª Semana
+                5: 'Unnamed: 11', # 5ª Semana
+                6: 'Unnamed: 12'  # 6ª Semana
+            }
             
-            # Se não conseguiu extrair a data, lança uma exceção
+            for idx, row in cabecalho.iterrows():
+                # Procura na linha 10 (índice 9) que contém as datas das semanas
+                if idx == 9:  # A linha que contém as datas
+                    for num_semana, coluna in colunas_semanas.items():
+                        if coluna in row and not pd.isna(row[coluna]):
+                            data_str = str(row[coluna])
+                            # Formato esperado: "26/04 a 02/05"
+                            match_data = re.search(r'(\d{2})/(\d{2})', data_str)
+                            if match_data:
+                                dia = match_data.group(1)
+                                mes_data = match_data.group(2)
+                                # Formata como YYYYMMDD
+                                data_inicio_semana = f"20{ano}{mes_data}{dia}"
+                                datas_semanas[coluna] = data_inicio_semana
+                                print(f"Data da {num_semana}ª semana (coluna {coluna}): {data_inicio_semana}")
+                    break
+            
+            # Define data_inicio como a data da primeira semana para compatibilidade
+            data_inicio = datas_semanas.get('Unnamed: 7')
+            
+            # Se não conseguiu extrair pelo menos a primeira data, lança uma exceção
             if not data_inicio:
                 raise ValueError("Não foi possível extrair a data de início do arquivo de carga. Formato de dados inválido ou inesperado.")
             
@@ -298,26 +314,18 @@ class DeckPreliminarDecompService:
                 
                 # Adicionar registros para cada semana (de 1 a 6)
                 # Mapeamento das colunas para cada semana
-                colunas_semanas = {
-                    1: 'Unnamed: 7',  # 1ª Semana
-                    2: 'Unnamed: 8',  # 2ª Semana
-                    3: 'Unnamed: 9',  # 3ª Semana
-                    4: 'Unnamed: 10', # 4ª Semana
-                    5: 'Unnamed: 11', # 5ª Semana
-                    6: 'Unnamed: 12'  # 6ª Semana
-                }
-                
-                # Adicionar um registro para cada semana
                 for num_semana, coluna in colunas_semanas.items():
                     if coluna in row and not pd.isna(row[coluna]):
                         carga_semana = round(float(row[coluna]), 2)
+                        # Usa a data específica da semana em vez de data_inicio genérica
+                        data_semana = datas_semanas.get(coluna, data_inicio)  # Fallback para data_inicio se não encontrar
                         resultado_final.append({
                             'carga': carga_semana,
                             'mes': mes_numero,  # Usando o número do mês em vez da abreviação
                             'revisao': revisao,
                             'subsistema': subsistema_codigo,
                             'semana': int(num_semana),  # Garantindo que o número da semana seja inteiro
-                            'dt_inicio': data_inicio,
+                            'dt_inicio': data_semana,  # Usa a data específica da semana
                             'tipo': 'semanal'
                         })
             
@@ -361,6 +369,51 @@ class DeckPreliminarDecompService:
                 'error': error_msg,
                 'nome_arquivo': os.path.basename(carga_file_path) if carga_file_path else None
             }
+
+    @staticmethod
+    def enviar_whatsapp_sucesso(context):
+        """Envia mensagem de sucesso via WhatsApp"""
+        try:
+            repository = SharedRepository()
+            message = "✅ Deck Preliminar Decomp processado com sucesso!"
+            
+            repository.send_whatsapp_message(message)
+            print("Mensagem de sucesso enviada via WhatsApp")
+            
+        except Exception as e:
+            print(f"Erro ao enviar WhatsApp de sucesso: {str(e)}")
+
+    @staticmethod
+    def enviar_whatsapp_erro(context):
+        """Envia mensagem de erro via WhatsApp"""
+        try:
+            repository = SharedRepository()
+            # Obter detalhes do erro do context se disponível
+            error_details = context.get('exception', 'Erro não especificado')
+            message = f"❌ Erro no processamento do Deck Preliminar Decomp: {error_details}"
+            
+            repository.send_whatsapp_message(message)
+            print("Mensagem de erro enviada via WhatsApp")
+            
+        except Exception as e:
+            print(f"Erro ao enviar WhatsApp de erro: {str(e)}")
+    
+    def enviar_notificacao_evento(self, event_type: str, status: str, details: Dict[str, Any] = None):
+        """Envia notificação de evento para API de eventos"""
+        try:
+            event_data = {
+                'event_type': event_type,
+                'status': status,
+                'timestamp': datetime.now().isoformat(),
+                'service': 'deck_preliminar_decomp',
+                'details': details or {}
+            }
+            
+            self.repository.send_event_notification(event_data)
+            print(f"Evento {event_type} enviado com status {status}")
+            
+        except Exception as e:
+            print(f"Erro ao enviar notificação de evento: {str(e)}")
 
     @staticmethod
     def enviar_dados_para_api(**kwargs):
