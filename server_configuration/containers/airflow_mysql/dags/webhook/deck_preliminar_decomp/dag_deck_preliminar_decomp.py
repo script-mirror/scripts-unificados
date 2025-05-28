@@ -5,18 +5,18 @@ from airflow.models.dag import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python import PythonOperator
 
-# Adicionando o path do diretório atual para importar o service
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
-
 from service_deck_preliminar_decomp import DeckPreliminarDecompService
-from ....utils.whatsapp_message import WhatsappMessageSender  # type: ignore
-# # Importando o service layer
+
+utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'utils')
+sys.path.insert(0, utils_path)
+from utils.whatsapp_message import WhatsappMessageSender
 
 
 # Definição da DAG simplificada
 with DAG(
-    dag_id='deck_preliminar_decomp',
+    dag_id='DECK_PRELIMINAR_DECOMP',
     start_date=datetime.datetime(2024, 4, 28),
     catchup=False,
     schedule=None,

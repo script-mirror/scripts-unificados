@@ -170,7 +170,7 @@ class CargaPMOValidator(BaseValidator):
         return data_list
 
 
-class DeckPreliminarValidator:
+class DeckPreliminarDecompValidator:
     """Validador principal para dados do Deck Preliminar Decomp"""
     
     def __init__(self):

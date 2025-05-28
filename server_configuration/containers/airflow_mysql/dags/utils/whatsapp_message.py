@@ -1,8 +1,11 @@
 from datetime import datetime
 from typing import List, Dict, Any
+import os
+import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))) #NEVER REMOVE THIS LINE
-from ....utils.webhook_libs.repository_webhook import SharedRepository # type: ignore # Importando o repositório compartilhado
+utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'utils')
+sys.path.insert(0, utils_path)
+from utils.repository_webhook import SharedRepository
 
 class WhatsappMessageSender:
     def __init__(self, webhook_url):

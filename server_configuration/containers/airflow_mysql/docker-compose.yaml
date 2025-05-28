@@ -17,6 +17,7 @@ x-airflow-common: &airflow-common
     NEW_RELIC_INSERT_KEY: '7fbf1e391a7b4ca633fb6d9d176b810dFFFFNRAL'
     AIRFLOW__CORE__LOGGING_LEVEL: INFO
   volumes:
+    - ${AIRFLOW_PROJ_DIR:-.}/utils:/opt/airflow/dags/utils
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
