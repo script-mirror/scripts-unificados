@@ -28,7 +28,7 @@ RUN apt-get update && \
 ENV TZ=America/Sao_Paulo
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && dpkg-reconfigure -f noninteractive tzdata
 
-    
+
 # Set locale environment variables
 ENV LANG pt_BR.UTF-8
 ENV LANGUAGE pt_BR:pt

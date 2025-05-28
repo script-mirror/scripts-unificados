@@ -17,7 +17,7 @@ URL_COGNITO = os.getenv("URL_COGNITO")
 CONFIG_COGNITO = os.getenv("CONFIG_COGNITO")
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.webhook.my_run import PRODUCT_MAPPING, PRODUCT_MAPPING2
+from PMO.scripts_unificados.apps.webhook.my_run import PRODUCT_MAPPING
 from PMO.scripts_unificados.apps.webhook.libs import manipularArquivosShadow #comentario
 from PMO.scripts_unificados.apps.prospec.libs.update_estudo import update_weol_dadger_dc_estudo, update_weol_sistema_nw_estudo
 
@@ -50,28 +50,39 @@ def trigger_function(**kwargs):
     product_details = params.get('product_details')
     product_name = product_details.get('nome')
 
-    function_name = params.get('function_name')
+    product = PRODUCT_MAPPING.get(product_name)
+    if product.get("funcao") != None:
+        try:
+            func = getattr(manipularArquivosShadow, product.get("funcao"), None)
+            aditional_params = func(product_details)
+            if aditional_params != None:
+                kwargs.get('dag_run').conf.update(aditional_params)	
+                return['trigger_external_dag']
 
-    if not function_name or function_name == "WEBHOOK":
-        function_name = PRODUCT_MAPPING.get(product_name)
-        if function_name == None:
-            raise AirflowFailException("Produto nao mapeado")
-    try:
+        except AirflowSkipException:
+            raise AirflowSkipException("Produto ja inserido")
+        except Exception as e:
+            error_message = f"Erro ao chamar a função {product.get('funcao')}.\nDetalhes do erro:\n{str(e)}\n\n\n{traceback.format_exc()}"
+            print(error_message)
+            raise AirflowException(error_message)
+        if product.get("id_dag") != None:
+            return [remover_acentos_e_caracteres_especiais(product_name) + "_dag"]
+        return ['fim']
+    else:
+        raise AirflowException(f"FUNCAO do produto: {product_name} não encontrado no mapeamento.")
+        
+def trigger_external_dag(**kwargs):
+    params = kwargs.get('dag_run').conf
+    product_details = params.get('product_details')
+    product_name = product_details.get('nome')
 
-        func = getattr(manipularArquivosShadow, function_name, None)
-        aditional_params = func(product_details)
-        if aditional_params != None:
-            kwargs.get('dag_run').conf.update(aditional_params)	
-            return['trigger_external_dag']
-
-    except AirflowSkipException:
-        raise AirflowSkipException("Produto ja inserido")
-    except Exception as e:
-        error_message = f"Erro ao chamar a função {function_name}.\nDetalhes do erro:\n{str(e)}\n\n\n{traceback.format_exc()}"
-        print(error_message)
-        raise AirflowException(error_message)
-
-    return ['fim']
+    product = PRODUCT_MAPPING.get(product_name)
+    
+    if product.get("dag_id") != None:
+        return product.get("dag_id")
+    else:
+        raise AirflowException(f"DAG do produto: {product_name} não encontrado no mapeamento.")
+    
     
 def get_access_token() -> str:
     response = requests.post(
@@ -166,8 +177,8 @@ with DAG(
     schedule=None,
     tags=['Webhook', 'Prospec'],
     default_args={
-        'retries': 4,
-        'retry_delay': datetime.timedelta(minutes=5),
+        'retries': 2,
+        'retry_delay': datetime.timedelta(minutes=1),
         
     },
     render_template_as_native_obj=True
@@ -195,20 +206,37 @@ with DAG(
         trigger_rule="dummy",
     )
 
-    for webhookProdut in PRODUCT_MAPPING.keys():
+    for webhookProduct in PRODUCT_MAPPING:
 
-        produtoEscolhido = BranchPythonOperator(
-            task_id=remover_acentos_e_caracteres_especiais(webhookProdut),
-            trigger_rule="none_failed_min_one_success",
-            python_callable = trigger_function,
-            provide_context=True,
-            on_failure_callback=enviar_whatsapp_erro,
-            on_success_callback=enviar_whatsapp_sucesso
-        )
+        if PRODUCT_MAPPING[webhookProduct]["funcao"]:
+            produtoEscolhido = BranchPythonOperator(
+                task_id=remover_acentos_e_caracteres_especiais(
+                    # pegando key do produto
+                    webhookProduct
+                ),
+                trigger_rule="none_failed_min_one_success",
+                python_callable = trigger_function,
+                provide_context=True,
+                on_failure_callback=enviar_whatsapp_erro,
+                on_success_callback=enviar_whatsapp_sucesso
+            )
+        if PRODUCT_MAPPING[webhookProduct]["id_dag"]:
+            produtoEscolhidoDag = TriggerDagRunOperator(
+                task_id=f"{remover_acentos_e_caracteres_especiais(webhookProduct)}_dag",
+                conf="{{dag_run.conf}}",  
+                trigger_rule="none_failed_min_one_success",
+                trigger_dag_id = PRODUCT_MAPPING[webhookProduct]["id_dag"],
+            )
+        if PRODUCT_MAPPING[webhookProduct]["id_dag"]:
 
-        inicio >> produtoEscolhido
-        produtoEscolhido >> trigger_updater_estudo >> fim
-        produtoEscolhido >> fim
+            inicio >> produtoEscolhido
+            produtoEscolhido >> trigger_updater_estudo >> fim
+            produtoEscolhido >> produtoEscolhidoDag >> fim
+            produtoEscolhido >> fim
+        else:
+            inicio >> produtoEscolhido
+            produtoEscolhido >> trigger_updater_estudo >> fim
+            produtoEscolhido >> fim
 
 
 #=================================================================================================

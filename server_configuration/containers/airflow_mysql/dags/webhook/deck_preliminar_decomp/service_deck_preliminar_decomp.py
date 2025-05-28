@@ -5,9 +5,12 @@ import pandas as pd  # Adicionando pandas para processamento de Excel
 from datetime import datetime
 from typing import Dict, Any, Optional, List, Tuple
 
+utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'utils')
+sys.path.insert(0, utils_path)
+from utils.repository_webhook import SharedRepository
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))) #NEVER REMOVE THIS LINE
-from validator_deck_preliminar_decomp import DeckPreliminarValidator, ValidationError, CargaPMOValidator # type: ignore
-from ....utils.repository_webhook import SharedRepository # type: ignore
+from validator_deck_preliminar_decomp import DeckPreliminarDecompValidator, ValidationError, CargaPMOValidator # type: ignore
 
 
 class DeckPreliminarDecompService:
@@ -18,12 +21,12 @@ class DeckPreliminarDecompService:
     
     def __init__(self):
         self.repository = SharedRepository()
-        self.validator = DeckPreliminarValidator()
+        self.validator = DeckPreliminarDecompValidator()
 
     @staticmethod
     def validar_dados_entrada(**kwargs):
         """Valida os dados de entrada usando o validador"""
-        validator = DeckPreliminarValidator()
+        validator = DeckPreliminarDecompValidator()
         params = kwargs.get('params', {})
         return validator.validate(params)
 

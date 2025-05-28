@@ -56,71 +56,41 @@ class User(db.Model):
 
 # Mapeamento entre nomes de produtos e funções correspondentes
 PRODUCT_MAPPING = {
-    "Relatório de Acompanhamento Hidrológico": "vazoes_observadas",
-    "Precipitação por Satélite.": "psat_file",
-    "Modelo GEFS": "modelo_gefs",
-    "Resultados preliminares não consistidos  (vazões semanais - PMO)": "resultados_nao_consistidos_semanal",
-    "Relatório dos resultados finais consistidos da previsão diária (PDP)": "relatorio_resutados_finais_consistidos",
-    "Níveis de Partida para o DESSEM": "niveis_partida_dessem",
-    "DADVAZ – Arquivo de Previsão de Vazões Diárias (PDP)": "dadvaz_vaz_prev",
-    "Deck e Resultados DECOMP - Valor Esperado": "deck_resultados_decomp",
-    "Resultados finais consistidos (vazões diárias - PDP)": "resultados_finais_consistidos",
-    "Resultados preliminares consistidos (vazões semanais - PMO)": "resultados_preliminares_consistidos",
-    "Arquivos dos modelos de previsão de vazões semanais - PMO": "entrada_saida_previvaz",
-    "Arquivos dos modelos de previsão de vazões diárias - PDP": "arquivos_modelo_pdp",
-    "Acomph": "arquivo_acomph",
-    "RDH": "arquivo_rdh",
-    "Histórico de Precipitação por Satélite": "historico_preciptacao",
-    "Modelo ETA": "modelo_eta",
-    "Carga por patamar - DECOMP": "carga_patamar",
-    "Deck Preliminar DECOMP - Valor Esperado": "deck_preliminar_decomp",
-    "Decks de entrada e saída - Modelo DESSEM": "deck_entrada_saida_dessem",
-    "Arquivos de Previsão de Carga para o DESSEM": "previsao_carga_dessem",
-    "Decks de entrada do PrevCargaDESSEM": "prevCarga_dessem",
-    "Previsões de carga mensal e por patamar - NEWAVE": "carga_patamar_nw",
-    "IPDO (Informativo Preliminar Diário da Operação)": "carga_IPDO",
-    "Modelo ECMWF": "modelo_ECMWF",
-    "Dados utilizados na previsão de geração eólica": "dados_geracaoEolica",
-    "Arquivos de Previsão de Carga para o DESSEM - PrevCargaDESSEM": "prevCarga_dessem_saida",
-    'Deck NEWAVE Preliminar':"carga_newave_preliminar",
-    "DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM":"deck_prev_eolica_semanal_weol",
-    "Preliminar - Relatório Mensal de Limites de Intercâmbio":"relatorio_limites_intercambio",
-    "Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP":"relatorio_limites_intercambio",
-    "Notas Técnicas - Medio Prazo":"notas_tecnicas_medio_prazo",
+    
+    "Relatório de Acompanhamento Hidrológico": {"funcao": "vazoes_observadas", "id_dag": None},
+    "Precipitação por Satélite.": {"funcao": "psat_file", "id_dag": None},
+    "Modelo GEFS": {"funcao": "modelo_gefs", "id_dag": None},
+    "Resultados preliminares não consistidos  (vazões semanais - PMO)": {"funcao": "resultados_nao_consistidos_semanal", "id_dag": None},
+    "Relatório dos resultados finais consistidos da previsão diária (PDP)": {"funcao": "relatorio_resutados_finais_consistidos", "id_dag": None},
+    "Níveis de Partida para o DESSEM": {"funcao": "niveis_partida_dessem", "id_dag": None},
+    "DADVAZ – Arquivo de Previsão de Vazões Diárias (PDP)": {"funcao": "dadvaz_vaz_prev", "id_dag": None},
+    "Deck e Resultados DECOMP - Valor Esperado": {"funcao": "deck_resultados_decomp", "id_dag": None},
+    "Resultados finais consistidos (vazões diárias - PDP)": {"funcao": "resultados_finais_consistidos", "id_dag": None},
+    "Resultados preliminares consistidos (vazões semanais - PMO)": {"funcao": "resultados_preliminares_consistidos", "id_dag": None},
+    "Arquivos dos modelos de previsão de vazões semanais - PMO": {"funcao": "entrada_saida_previvaz", "id_dag": None},
+    "Arquivos dos modelos de previsão de vazões diárias - PDP": {"funcao": "arquivos_modelo_pdp", "id_dag": None},
+    "Acomph": {"funcao": "arquivo_acomph", "id_dag": None},
+    "RDH": {"funcao": "arquivo_rdh", "id_dag": None},
+    "Histórico de Precipitação por Satélite": {"funcao": "historico_preciptacao", "id_dag": None},
+    "Modelo ETA": {"funcao": "modelo_eta", "id_dag": None},
+    "Carga por patamar - DECOMP": {"funcao": "carga_patamar", "id_dag": "deck_preliminar_decomp"},
+    "Deck Preliminar DECOMP - Valor Esperado": {"funcao": "deck_preliminar_decomp", "id_dag": None},
+    "Decks de entrada e saída - Modelo DESSEM": {"funcao": "deck_entrada_saida_dessem", "id_dag": None},
+    "Arquivos de Previsão de Carga para o DESSEM": {"funcao": "previsao_carga_dessem", "id_dag": None},
+    "Decks de entrada do PrevCargaDESSEM": {"funcao": "prevCarga_dessem", "id_dag": None},
+    "Previsões de carga mensal e por patamar - NEWAVE": {"funcao": "carga_patamar_nw", "id_dag": None},
+    "IPDO (Informativo Preliminar Diário da Operação)": {"funcao": "carga_IPDO", "id_dag": None},
+    "Modelo ECMWF": {"funcao": "modelo_ECMWF", "id_dag": None},
+    "Dados utilizados na previsão de geração eólica": {"funcao": "dados_geracaoEolica", "id_dag": None},
+    "Arquivos de Previsão de Carga para o DESSEM - PrevCargaDESSEM": {"funcao": "prevCarga_dessem_saida", "id_dag": None},
+    'Deck NEWAVE Preliminar': {"funcao": "carga_newave_preliminar", "id_dag": None},
+    "DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM": {"funcao": "deck_prev_eolica_semanal_weol", "id_dag": None},
+    "Preliminar - Relatório Mensal de Limites de Intercâmbio": {"funcao": "relatorio_limites_intercambio", "id_dag": None},
+    "Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP": {"funcao": "relatorio_limites_intercambio", "id_dag": None},
+    "Notas Técnicas - Medio Prazo": {"funcao": "notas_tecnicas_medio_prazo", "id_dag": None},
 }
 
-PRODUCT_MAPPING2 = {
-    "Relatorio_de_Acompanhamento_Hidrologico":"vazoes_observadas",
-    "Precipitacao_por_Satelite":"psat_file",
-    "Modelo_GEFS":"modelo_gefs",
-    "Resultados_preliminares_nao_consistidos_vazoes_semanais_PMO":"resultados_nao_consistidos_semanal",
-    "Relatorio_dos_resultados_finais_consistidos_da_previsao_diaria_PDP":"relatorio_resutados_finais_consistidos",
-    "Niveis_de_Partida_para_o_DESSEM":"niveis_partida_dessem",
-    "DADVAZ_Arquivo_de_Previsao_de_Vazoes_Diarias_PDP":"dadvaz_vaz_prev",
-    "Deck_e_Resultados_DECOMP_Valor_Esperado":"deck_resultados_decomp",
-    "Resultados_finais_consistidos_vazoes_diarias_PDP":"resultados_finais_consistidos",
-    "Resultados_preliminares_consistidos_vazoes_semanais_PMO":"resultados_preliminares_consistidos",
-    "Arquivos_dos_modelos_de_previsao_de_vazoes_semanais_PMO":"entrada_saida_previvaz",
-    "Arquivos_dos_modelos_de_previsao_de_vazoes_diarias_PDP":"arquivos_modelo_pdp",
-    "Acomph":"arquivo_acomph",
-    "RDH":"arquivo_rdh",
-    "Historico_de_Precipitacao_por_Satelite":"historico_preciptacao",
-    "Modelo_ETA":"modelo_eta",
-    "Carga_por_patamar_DECOMP":"carga_patamar",
-    "Deck_Preliminar_DECOMP_Valor_Esperado":"deck_preliminar_decomp",
-    "Decks_de_entrada_e_saida_Modelo_DESSEM":"deck_entrada_saida_dessem",
-    "Arquivos_de_Previsao_de_Carga_para_o_DESSEM":"previsao_carga_dessem",
-    "Decks_de_entrada_do_PrevCargaDESSEM":"prevCarga_dessem",
-    "Previsoes_de_carga_mensal_e_por_patamar_NEWAVE":"carga_patamar_nw",
-    "IPDO_Informativo_Preliminar_Diario_da_Operacao":"carga_IPDO",
-    "Modelo_ECMWF":"modelo_ECMWF",
-    "Dados_utilizados_na_previsao_de_geracao_eolica":"dados_geracaoEolica",
-    "Arquivos_de_Previsao_de_Carga_para_o_DESSEM_PrevCargaDESSEM":"prevCarga_dessem_saida",
-    "Deck_NEWAVE_Preliminar":"carga_newave_preliminar",
-    "DECKS_DA_PREVISAO_DE_GERACAO_EOLICA_SEMANAL_WEOLSM":"deck_prev_eolica_semanal_weol",
-    "Preliminar_Relatorio_Mensal_de_Limites_de_Intercambio":"relatorio_limites_intercambio",
-    "Relatorio_Mensal_de_Limites_de_Intercambio_para_o_Modelo_DECOMP":"relatorio_limites_intercambio",
-}
+
 
 
 # Rota para registro de usuário
@@ -180,15 +150,16 @@ def webhook():
 
         data['enviar'] = True
         produto = data["nome"]
-        product_function = PRODUCT_MAPPING.get(produto,None)
+        product_function = PRODUCT_MAPPING.get(produto, None)
 
         # Verifica se o nome do produto está no mapeamento e inicia a DAG correspondente se estiver
         if produto in PRODUCT_MAPPING:
             
             dag_id = 'WEBHOOK'
-            json_produtos = { "product_details": data,"function_name": product_function}
+            function_name = product_function["funcao"] if product_function else None
+            json_produtos = {"product_details": data, "function_name": function_name}
 
-            response = airflow_tools.trigger_airflow_dag(dag_id=dag_id,json_produtos =json_produtos )
+            response = airflow_tools.trigger_airflow_dag(dag_id=dag_id, json_produtos=json_produtos)
 
             if response.status_code == 200:
                 print(f"DAG {dag_id} iniciada com sucesso para o produto: {produto}")
