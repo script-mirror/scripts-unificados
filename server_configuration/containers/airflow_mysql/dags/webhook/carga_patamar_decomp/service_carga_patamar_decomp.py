@@ -304,8 +304,8 @@ class CargaPatamarDecompService:
                 if not subsistema_codigo:
                     continue
                 
-                periodicidade_inicial = product_details.get('periodicidade_inicial')
-                periodicidade_final = product_details.get('periodicidade_final')
+                periodicidade_inicial = product_details.get('periodicidade')
+                periodicidade_final = product_details.get('periodicidadeFinal')
                 # Adicionar registro mensal (mantendo duas casas decimais)
                 carga_mensal = round(float(row['Unnamed: 6']), 2)
                 resultado_final.append({
