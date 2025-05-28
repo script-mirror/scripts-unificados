@@ -191,11 +191,7 @@ class CargaPatamarDecompValidator:
         """Valida os parâmetros principais"""
         if not params:
             raise ValidationError("Parâmetros não encontrados")
-        
-        # Valida function_name
-        function_name = params.get('function_name', '')
-        self.function_name_validator.validate(function_name)
-        
+
         # Valida product_details
         product_details = params.get('product_details')
         if not product_details:
