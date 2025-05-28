@@ -169,7 +169,8 @@ class CargaPatamarDecompService:
             carga_data = {}
             if carga_file and os.path.exists(carga_file):
                 # Processa o arquivo de carga
-                carga_data = CargaPatamarDecompService.processar_arquivo_carga(carga_file)
+                product_details = kwargs.get('params', {}).get('product_details', {})
+                carga_data = CargaPatamarDecompService.processar_arquivo_carga(carga_file, product_details)
                 print(f"Dados extraídos do arquivo de carga: {carga_data}")
             else:
                 print("Arquivo de carga não encontrado entre os arquivos extraídos")
@@ -191,7 +192,7 @@ class CargaPatamarDecompService:
             }
 
     @staticmethod
-    def processar_arquivo_carga(carga_file_path: str) -> Dict[str, Any]:
+    def processar_arquivo_carga(carga_file_path: str, product_details) -> Dict[str, Any]:
         """
         Processa o arquivo de carga Excel extraindo os dados relevantes
         
@@ -303,6 +304,8 @@ class CargaPatamarDecompService:
                 if not subsistema_codigo:
                     continue
                 
+                periodicidade_inicial = product_details.get('periodicidade_inicial')
+                periodicidade_final = product_details.get('periodicidade_final')
                 # Adicionar registro mensal (mantendo duas casas decimais)
                 carga_mensal = round(float(row['Unnamed: 6']), 2)
                 resultado_final.append({
@@ -312,7 +315,9 @@ class CargaPatamarDecompService:
                     'subsistema': subsistema_codigo,
                     'semana': None,
                     'dt_inicio': data_inicio,
-                    'tipo': 'mensal'
+                    'tipo': 'mensal',
+                    'periodicidade_inicial': periodicidade_inicial,
+                    'periodicidade_final': periodicidade_final
                 })
                 
                 # Adicionar registros para cada semana (de 1 a 6)
