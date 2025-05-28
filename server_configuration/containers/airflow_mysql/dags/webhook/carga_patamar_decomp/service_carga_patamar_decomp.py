@@ -334,7 +334,9 @@ class CargaPatamarDecompService:
                             'subsistema': subsistema_codigo,
                             'semana': int(num_semana),  # Garantindo que o número da semana seja inteiro
                             'dt_inicio': data_semana,  # Usa a data específica da semana
-                            'tipo': 'semanal'
+                            'tipo': 'semanal',
+                            'periodicidade_inicial': periodicidade_inicial,
+                            'periodicidade_final': periodicidade_final
                         })
             
             # Converter para DataFrame para facilitar a manipulação
