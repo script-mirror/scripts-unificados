@@ -54,6 +54,7 @@ class DateFormatValidator(BaseValidator):
         if not isinstance(date_str, str):
             raise ValidationError(f"Data deve ser string, recebido: {type(date_str)}")
         try:
+            date_str = date_str.split('T')[0]  # Remove time part if present
             return datetime.strptime(date_str, "%Y-%m-%d")
         except ValueError:
             raise ValidationError(f"Formato de data inválido: {date_str}")
