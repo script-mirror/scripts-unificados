@@ -164,7 +164,7 @@ with DAG(
     start_date=datetime.datetime(2024, 4, 28),
     catchup=False,
     schedule=None,
-    tags=['Webhook', 'Prospec'],
+    tags=['WEBHOOK'],
     default_args={
         'retries': 4,
         'retry_delay': datetime.timedelta(minutes=5),
