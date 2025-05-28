@@ -170,7 +170,7 @@ class CargaPMOValidator(BaseValidator):
         return data_list
 
 
-class DeckPreliminarDecompValidator:
+class CargaPatamarDecompValidator:
     """Validador principal para dados do Deck Preliminar Decomp"""
     
     def __init__(self):
@@ -178,7 +178,6 @@ class DeckPreliminarDecompValidator:
         self.url_validator = UrlValidator()
         self.filename_validator = FilenameValidator(['.zip'])
         self.product_name_validator = ProductNameValidator('Carga por patamar - DECOMP')
-        self.function_name_validator = FunctionNameValidator('deck_preliminar_decomp')
         self.date_format_validator = DateFormatValidator()
         self.date_range_validator = DateRangeValidator()
         self.boolean_validator = BooleanValidator()

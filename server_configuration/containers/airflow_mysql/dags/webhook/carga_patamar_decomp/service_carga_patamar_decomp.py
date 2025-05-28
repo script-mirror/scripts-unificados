@@ -10,10 +10,10 @@ sys.path.insert(0, utils_path)
 from utils.repository_webhook import SharedRepository
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))) #NEVER REMOVE THIS LINE
-from validator_deck_preliminar_decomp import DeckPreliminarDecompValidator, ValidationError, CargaPMOValidator # type: ignore
+from server_configuration.containers.airflow_mysql.dags.webhook.carga_patamar_decomp.validator_carga_patamar_decomp import CargaPatamarDecompValidator, ValidationError, CargaPMOValidator # type: ignore
 
 
-class DeckPreliminarDecompService:
+class CargaPatamarDecompService:
     """
     Service layer para processamento do Deck Preliminar Decomp
     Contém toda a lógica de negócio separada da DAG
@@ -21,12 +21,12 @@ class DeckPreliminarDecompService:
     
     def __init__(self):
         self.repository = SharedRepository()
-        self.validator = DeckPreliminarDecompValidator()
+        self.validator = CargaPatamarDecompValidator()
 
     @staticmethod
     def validar_dados_entrada(**kwargs):
         """Valida os dados de entrada usando o validador"""
-        validator = DeckPreliminarDecompValidator()
+        validator = CargaPatamarDecompValidator()
         params = kwargs.get('params', {})
         return validator.validate(params)
 
@@ -169,7 +169,7 @@ class DeckPreliminarDecompService:
             carga_data = {}
             if carga_file and os.path.exists(carga_file):
                 # Processa o arquivo de carga
-                carga_data = DeckPreliminarDecompService.processar_arquivo_carga(carga_file)
+                carga_data = CargaPatamarDecompService.processar_arquivo_carga(carga_file)
                 print(f"Dados extraídos do arquivo de carga: {carga_data}")
             else:
                 print("Arquivo de carga não encontrado entre os arquivos extraídos")

@@ -7,7 +7,7 @@ from airflow.operators.python import PythonOperator
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
-from service_deck_preliminar_decomp import DeckPreliminarDecompService
+from server_configuration.containers.airflow_mysql.dags.webhook.carga_patamar_decomp.service_carga_patamar_decomp import CargaPatamarDecompService
 
 utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'utils')
 sys.path.insert(0, utils_path)
@@ -16,37 +16,37 @@ from utils.whatsapp_message import WhatsappMessageSender
 
 # Definição da DAG simplificada
 with DAG(
-    dag_id='DECK_PRELIMINAR_DECOMP',
+    dag_id='CARGA_PATAMAR_DECOMP',
     start_date=datetime.datetime(2024, 4, 28),
     catchup=False,
     schedule=None,
-    tags=['Deck Preliminar', 'DECOMP', 'WEBHOOK'],
+    tags=['Carga Patamar', 'DECOMP', 'WEBHOOK'],
     default_args={
         'retries': 3,
         'retry_delay': datetime.timedelta(minutes=2),
         'on_failure_callback': WhatsappMessageSender.enviar_whatsapp_erro,
     },
-    description='DAG simplificada para processamento do Deck Preliminar Decomp'
+    description='DAG simplificada para processamento do Deck Patamar Decomp'
 ) as dag:
 
     # 1. Validar dados de entrada
     validar_dados = PythonOperator(
         task_id='validar_dados_entrada',
-        python_callable=DeckPreliminarDecompService.validar_dados_entrada,
+        python_callable=CargaPatamarDecompService.validar_dados_entrada,
         provide_context=True,
     )
 
     # 2. baixar arquivos
     download_arquivos = PythonOperator(
         task_id='download_arquivos',
-        python_callable=DeckPreliminarDecompService.download_arquivos,
+        python_callable=CargaPatamarDecompService.download_arquivos,
         provide_context=True,
     )
 
     # 3. Extrair arquivos 
     extrair_arquivos = PythonOperator(
         task_id='extrair_arquivos',
-        python_callable=DeckPreliminarDecompService.extrair_arquivos,
+        python_callable=CargaPatamarDecompService.extrair_arquivos,
         provide_context=True,
     )
 
@@ -54,14 +54,14 @@ with DAG(
     # 4. Processar arquivos
     processar_arquivos = PythonOperator(
         task_id='processar_arquivos',
-        python_callable=DeckPreliminarDecompService.processar_deck_preliminar_decomp,
+        python_callable=CargaPatamarDecompService.processar_deck_preliminar_decomp,
         provide_context=True
     )
     
     # 5. Enviar dados para API
     enviar_para_api = PythonOperator(
         task_id='enviar_dados_para_api',
-        python_callable=DeckPreliminarDecompService.enviar_dados_para_api,
+        python_callable=CargaPatamarDecompService.enviar_dados_para_api,
         provide_context=True
     )
 
