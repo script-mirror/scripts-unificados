@@ -10,12 +10,12 @@ sys.path.insert(0, utils_path)
 from utils.repository_webhook import SharedRepository
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))) #NEVER REMOVE THIS LINE
-from server_configuration.containers.airflow_mysql.dags.webhook.carga_patamar_decomp.validator_carga_patamar_decomp import CargaPatamarDecompValidator, ValidationError, CargaPMOValidator # type: ignore
+from validator_carga_patamar_decomp import CargaPatamarDecompValidator, ValidationError, CargaPMOValidator # type: ignore
 
 
 class CargaPatamarDecompService:
     """
-    Service layer para processamento do Deck Preliminar Decomp
+    Service layer para processamento do Carga Patamar Decomp
     Contém toda a lógica de negócio separada da DAG
     """
     
@@ -46,7 +46,7 @@ class CargaPatamarDecompService:
                 raise ValueError("webhookId e filename são obrigatórios")
             
             # Define caminho de download
-            download_path = "/tmp/deck_preliminar_decomp"
+            download_path = "/tmp/carga_patamar_decomp"
             
             # Faz download do arquivo via repository
             file_path = repository.download_webhook_file(
@@ -135,8 +135,8 @@ class CargaPatamarDecompService:
             }
 
     @staticmethod
-    def processar_deck_preliminar_decomp(**kwargs):
-        """Processa o deck preliminar decomp usando dados via XCom"""
+    def processar_carga_patamar_decomp(**kwargs):
+        """Processa o carga patamar decomp usando dados via XCom"""
         try:
             # Busca dados da task anterior via XCom
             task_instance = kwargs['task_instance']
@@ -155,8 +155,8 @@ class CargaPatamarDecompService:
             print(f"Processando arquivos extraídos: {extracted_files}")
             print(f"Diretório de extração: {extract_path}")
             
-            # Processa o Deck Preliminar Decomp
-            print("Processando Deck Preliminar Decomp...")
+            # Processa o Carga Patamar Decomp
+            print("Processando Carga Patamar Decomp...")
             
             # Busca o arquivo de carga que começa com "Carga" e termina com "xlsx"
             carga_file = None
@@ -179,7 +179,7 @@ class CargaPatamarDecompService:
                 'processed_files': extracted_files or [file_path] if file_path else [],
                 'extract_path': extract_path,
                 'carga_data': carga_data,
-                'message': 'Deck Preliminar Decomp processado com sucesso'
+                'message': 'Carga Patamar Decomp processada com sucesso'
             }
             
         except Exception as e:
@@ -378,7 +378,7 @@ class CargaPatamarDecompService:
         """Envia mensagem de sucesso via WhatsApp"""
         try:
             repository = SharedRepository()
-            message = "✅ Deck Preliminar Decomp processado com sucesso!"
+            message = "✅ Carga Patamar Decomp processado com sucesso!"
             
             repository.send_whatsapp_message(message)
             print("Mensagem de sucesso enviada via WhatsApp")
@@ -393,7 +393,7 @@ class CargaPatamarDecompService:
             repository = SharedRepository()
             # Obter detalhes do erro do context se disponível
             error_details = context.get('exception', 'Erro não especificado')
-            message = f"❌ Erro no processamento do Deck Preliminar Decomp: {error_details}"
+            message = f"❌ Erro no processamento do Carga Patamar Decomp: {error_details}"
             
             repository.send_whatsapp_message(message)
             print("Mensagem de erro enviada via WhatsApp")
@@ -408,7 +408,7 @@ class CargaPatamarDecompService:
                 'event_type': event_type,
                 'status': status,
                 'timestamp': datetime.now().isoformat(),
-                'service': 'deck_preliminar_decomp',
+                'service': 'carga_patamar_decomp',
                 'details': details or {}
             }
             
@@ -505,7 +505,7 @@ class CargaPatamarDecompService:
             # Prepara dados para evento de notificação no formato correto
             evento = {
                 'eventType': 'product_processed',  # Campo obrigatório
-                'systemOrigin': 'airflow_deck_preliminar_decomp',  # Campo obrigatório
+                'systemOrigin': 'airflow_carga_patamar_decomp',  # Campo obrigatório
                 'sessionId': 'RDPMO - Revisao Semanal PMO',  # Campo obrigatório
                 'payload': {  # Todos os dados específicos devem ir dentro de payload
                     'tipo': 'envio_carga_pmo',
@@ -554,7 +554,7 @@ class CargaPatamarDecompService:
                 repository = SharedRepository()
                 repository.send_event_notification({
                     'eventType': 'carga_pmo_erro',  # Campo obrigatório
-                    'systemOrigin': 'deck_preliminar_decomp',  # Campo obrigatório
+                    'systemOrigin': 'airflow_carga_patamar_decomp',  # Campo obrigatório
                     'payload': {  # Todos os dados específicos devem ir dentro de payload
                         'tipo': 'envio_carga_pmo',
                         'status': 'erro',

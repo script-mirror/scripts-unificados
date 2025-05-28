@@ -7,7 +7,7 @@ from airflow.operators.python import PythonOperator
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
-from server_configuration.containers.airflow_mysql.dags.webhook.carga_patamar_decomp.service_carga_patamar_decomp import CargaPatamarDecompService
+from service_carga_patamar_decomp import CargaPatamarDecompService
 
 utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'utils')
 sys.path.insert(0, utils_path)
@@ -54,7 +54,7 @@ with DAG(
     # 4. Processar arquivos
     processar_arquivos = PythonOperator(
         task_id='processar_arquivos',
-        python_callable=CargaPatamarDecompService.processar_deck_preliminar_decomp,
+        python_callable=CargaPatamarDecompService.processar_carga_patamar_decomp,
         provide_context=True
     )
     
