@@ -73,7 +73,7 @@ PRODUCT_MAPPING = {
     "RDH": {"funcao": "arquivo_rdh", "id_dag": None},
     "Histórico de Precipitação por Satélite": {"funcao": "historico_preciptacao", "id_dag": None},
     "Modelo ETA": {"funcao": "modelo_eta", "id_dag": None},
-    "Carga por patamar - DECOMP": {"funcao": "carga_patamar", "id_dag": "carga_patamar_decomp"},
+    "Carga por patamar - DECOMP": {"funcao": "carga_patamar", "id_dag": "CARGA_PATAMAR_DECOMP"},
     "Deck Preliminar DECOMP - Valor Esperado": {"funcao": "deck_preliminar_decomp", "id_dag": None},
     "Decks de entrada e saída - Modelo DESSEM": {"funcao": "deck_entrada_saida_dessem", "id_dag": None},
     "Arquivos de Previsão de Carga para o DESSEM": {"funcao": "previsao_carga_dessem", "id_dag": None},
