@@ -446,7 +446,7 @@ def organizar_info_restricoes_eletricas_dc(pdf_path, table_name="Tabela 4-1: Res
         logger.info(f"Nome do arquivo PDF {pdf_path} não corresponde ao padrão esperado.")
         return {}
         
-    primeiro_mes = pd.to_datetime(match.group(1),format="%B-%Y") 
+    primeiro_mes = pd.to_datetime(match.group(1).split("_")[0],format="%B-%Y") 
     segundo_mes = primeiro_mes + pd.DateOffset(months=1) 
  
     table_page = find_table_page(pdf_path, table_name)
