@@ -84,8 +84,8 @@ def get_auth():
 
 def get_access_token() -> str:
     response = req.post(
-        __URL_COGNITO,
-        data=__CONFIG_COGNITO,
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
         headers={'Content-Type': 'application/x-www-form-urlencoded'}
     )
     return response.json()['access_token']
