@@ -993,7 +993,7 @@ def relatorio_limites_intercambio(dadosProduto):
     
     filename = get_filename(dadosProduto)
     logger.info(filename)
-    
+    PREFIXO_PADRAO = "RT-ONS DPL"
     arquivo_zip = get_filename(dadosProduto)
     
     path_arquivo = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(arquivo_zip)[:-4])
@@ -1001,28 +1001,31 @@ def relatorio_limites_intercambio(dadosProduto):
     
     with zipfile.ZipFile(arquivo_zip, 'r') as zip_ref:
         zip_content_names = zip_ref.namelist()
-        
         zip_ref.extract(zip_content_names[0], path_arquivo)
         
-        arquivo_zip_interno = os.path.join(path_arquivo, zip_content_names[0])
-        with zipfile.ZipFile(arquivo_zip_interno, 'r') as zip_ref2:
+    arquivo_interno = os.path.join(path_arquivo, zip_content_names[0])
+    if PREFIXO_PADRAO in arquivo_interno and arquivo_interno.endswith('.pdf'):
+        arquivo_selecionado = arquivo_interno
+    elif arquivo_interno.endswith('.zip'):
+        with zipfile.ZipFile(arquivo_interno, 'r') as zip_ref:
             
-            zip_ref2.extractall(path_arquivo)
+            zip_ref.extractall(path_arquivo)
             
             arquivos_pdf = glob.glob(os.path.join(path_arquivo, "**", "*.pdf"), recursive=True)
             
             arquivo_selecionado = None
             for arquivo in arquivos_pdf:
                 nome_arquivo = os.path.basename(arquivo)
-                if nome_arquivo.startswith("RT-ONS DPL") and "_Limites PMO_" in nome_arquivo:
+                if PREFIXO_PADRAO in nome_arquivo:
                     arquivo_selecionado = arquivo
                     logger.info(f"Arquivo no formato correto encontrado: {nome_arquivo}")
                     break
             
             if arquivo_selecionado is None:
-                logger.error("Nenhum arquivo no formato correto encontrado.")
+                raise Exception("Nenhum arquivo no formato correto encontrado.")
                 return
-            
+    else:
+        raise Exception("O arquivo interno não é um PDF ou ZIP válido, ou o cenario não foi mapeado")
     return {
         "file_path": arquivo_selecionado,
         "trigger_dag_id":"PROSPEC_UPDATER",
