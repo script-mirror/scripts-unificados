@@ -282,9 +282,9 @@ class CargaPatamarDecompService:
             
             # Mapeamento dos subsistemas conforme a tabela desejada
             mapeamento_subsistemas = {
-                'Subsistema Nordeste': 'NO',
+                'Subsistema Nordeste': 'NE',
                 'Subsistema Norte': 'N',
-                'Subsistema Sudeste/C.Oeste': 'SCO',
+                'Subsistema Sudeste/C.Oeste': 'SE',
                 'Subsistema Sul': 'S',
                 'Sistema Interligado Nacional': 'SIN',
                 'Sistema Norte/Nordeste': 'NNO',
