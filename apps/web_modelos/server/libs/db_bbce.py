@@ -196,10 +196,10 @@ class tb_negociacoes_resumo:
     
     df['change_percent'] = ((df['close'] / df['preco_fechamento_anterior']) * 100) - 100
     df['change_value'] = df['close'] - df['preco_fechamento_anterior']
-    # df = df.fillna('-')
     
     df = df.sort_values("ordem")
-    df = df.replace({np.nan: None})
+    df = df.fillna('-')
+    # df = df.replace({np.nan: None})
     df = df.round(2)
     
     return df.to_dict('records')
