@@ -197,6 +197,7 @@ class db_mysql_master():
                 db.Column('id_produto', db.Integer), 
                 db.Column('str_produto', db.String(50)),
                 db.Column('dt_cria', db.DATETIME),
+                extend_existing=True
             )
 
         elif table_name.lower() == 'tb_negociacoes':

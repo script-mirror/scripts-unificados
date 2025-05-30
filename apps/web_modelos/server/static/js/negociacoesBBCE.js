@@ -25,7 +25,7 @@ $(document).ready(function () {
   // adicionando de forma automatica todos os produtos existente no banco de dados no menu dropdown
   $.ajax({
     method: "GET",
-    url: "/api/v2/bbce/produtos-interesse",
+    url: "/middle/API/get/produtos-bbce",
     data: {},
   }).done(function (objeto) {
     const dropdownMenu = $("#dynamicDropdown");

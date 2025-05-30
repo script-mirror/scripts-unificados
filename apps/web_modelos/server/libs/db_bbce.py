@@ -2,6 +2,7 @@ import sys
 import pdb
 import sqlalchemy as db
 import pandas as pd
+import numpy as np
 import locale 
 import datetime
 
@@ -13,13 +14,19 @@ from PMO.scripts_unificados.apps.web_modelos.server.libs import db_config
 
 class tb_negociacoes:
   @staticmethod
-  def get_datahora_ultima_negociacao():
+  def get_datahora_ultima_negociacao(categoria_negociacao:str="Mesa"):
     __DB_BBCE = db_mysql_master('bbce')
     negociacoes = __DB_BBCE.getSchema('tb_negociacoes')
+    tb_categoria_negociacao = __DB_BBCE.getSchema('tb_categoria_negociacao')
     query = db.select(
       db.func.max(
         negociacoes.c['dt_criacao']
       )
+    )
+    query = query.join(
+        tb_categoria_negociacao, tb_categoria_negociacao.c["id"] == negociacoes.c["id_categoria_negociacao"]
+    ).where(
+        tb_categoria_negociacao.c["nome"] == categoria_negociacao
     )
     result = __DB_BBCE.db_execute(query).fetchall()
     df = pd.DataFrame(result, columns=['ultimo_update'])
@@ -97,9 +104,11 @@ class tb_negociacoes_resumo:
   def get_negociacoes_fechamento_interesse_por_data(data:datetime):
     __DB_BBCE = db_mysql_master('bbce')
     negociacoes_resumo = __DB_BBCE.getSchema('tb_negociacoes_resumo')
+    categoria_negociacao = __DB_BBCE.getSchema('tb_categoria_negociacao')
+    
     produtos = __DB_BBCE.getSchema('tb_produtos')
-    df_produtos_interesse = pd.DataFrame(db_config.tb_produtos_bbce.get_produtos_interesse())
-    df_produtos_interesse = df_produtos_interesse.rename(columns={'palavra':'produto'})
+    df_produtos_interesse = pd.DataFrame(ProdutoInteresse.get_all())
+    df_produtos_interesse = df_produtos_interesse.rename(columns={'str_produto':'produto'})
         
     cte = (
     db.select(
@@ -113,15 +122,16 @@ class tb_negociacoes_resumo:
         ).label('row_num')
     ).join(
         produtos, produtos.c['id_produto'] == negociacoes_resumo.c['id_produto']
-        )
-   .where(db.and_(
+        ).join(
+            categoria_negociacao, categoria_negociacao.c["id"] == negociacoes_resumo.c["id_categoria_negociacao"]
+            ).where(db.and_(
+        categoria_negociacao.c["nome"] == "Mesa",
         negociacoes_resumo.c['data'] <= data,
         produtos.c['str_produto'].in_(df_produtos_interesse['produto'].tolist())
-        ))
-    .cte('cte_groups')
+        )).cte('cte_groups')
     )
     query = (
-        db.select([cte])
+        db.select(cte)
         .where(cte.c['row_num'] == 1)
         .order_by(cte.c['id_produto'])
     )
@@ -140,12 +150,14 @@ class tb_negociacoes_resumo:
     return df.to_dict('records')
 
   @staticmethod
-  def get_negociacoes_interesse_por_data(data:datetime.datetime):
+  def get_negociacoes_interesse_por_data(data:datetime.datetime, categoria_negociacao:str="Mesa"):
     __DB_BBCE = db_mysql_master('bbce')
     negociacoes_resumo = __DB_BBCE.getSchema('tb_negociacoes_resumo')
     produtos = __DB_BBCE.getSchema('tb_produtos')
-    df_produtos_interesse = pd.DataFrame(db_config.tb_produtos_bbce.get_produtos_interesse())
-    df_produtos_interesse = df_produtos_interesse.rename(columns={'palavra':'produto'})
+    tb_categoria_negociacao = __DB_BBCE.getSchema('tb_categoria_negociacao')
+    
+    df_produtos_interesse = pd.DataFrame(ProdutoInteresse.get_all())
+    df_produtos_interesse = df_produtos_interesse.rename(columns={'str_produto':'produto'})
     query = db.select(
       produtos.c['str_produto'],
       negociacoes_resumo.c['data'],
@@ -157,13 +169,16 @@ class tb_negociacoes_resumo:
       negociacoes_resumo.c['preco_medio'],
       negociacoes_resumo.c['total_negociacoes'],
       negociacoes_resumo.c['hora_fechamento'],
-    ).join(
-        produtos, produtos.c['id_produto'] == negociacoes_resumo.c['id_produto']
-        ).where(db.and_(
-        negociacoes_resumo.c['data'] == data,
-        produtos.c['str_produto'].in_(df_produtos_interesse['produto'].tolist())
-        ))
-    
+    )
+    query = query.join(
+              produtos, produtos.c['id_produto'] == negociacoes_resumo.c['id_produto']
+            ).join(
+              tb_categoria_negociacao, tb_categoria_negociacao.c["id"] == negociacoes_resumo.c["id_categoria_negociacao"]
+            ).where(db.and_(
+                negociacoes_resumo.c['data'] == data,
+                produtos.c['str_produto'].in_(df_produtos_interesse['produto'].tolist()),
+                tb_categoria_negociacao.c["nome"] == categoria_negociacao
+            ))
     result = __DB_BBCE.db_execute(query).all()
     df = pd.DataFrame(result, columns=['produto', 'date', 'open', 'high', 'low', 'close', 'volume', 'preco_medio', 'total', 'hora_fechamento'])
     df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
@@ -181,15 +196,32 @@ class tb_negociacoes_resumo:
     
     df['change_percent'] = ((df['close'] / df['preco_fechamento_anterior']) * 100) - 100
     df['change_value'] = df['close'] - df['preco_fechamento_anterior']
+    # df = df.fillna('-')
     
-    df = df.fillna('-')
-    
+    df = df.sort_values("ordem")
+    df = df.replace({np.nan: None})
     df = df.round(2)
     
     return df.to_dict('records')
   
 
-    
+class ProdutoInteresse:
+    __DB_BBCE = db_mysql_master('bbce')
+    tb:db.Table = __DB_BBCE.getSchema('tb_produtos_interesse')
+    @staticmethod
+    def get_all():
+        produtos = ProdutoInteresse.__DB_BBCE.getSchema('tb_produtos')
+      
+        select = db.select(
+            ProdutoInteresse.tb.c['id_produto'],
+            ProdutoInteresse.tb.c['ordem'],
+            produtos.c['str_produto']
+        ).join(
+            produtos, produtos.c['id_produto'] == ProdutoInteresse.tb.c['id_produto']
+        )
+        result = ProdutoInteresse.__DB_BBCE.db_execute(select).fetchall()
+        df = pd.DataFrame(result, columns=["id", "ordem", "str_produto"])
+        return df.to_dict("records")
 class tb_produtos:
   __DB_BBCE = db_mysql_master('bbce')
   produtos = __DB_BBCE.getSchema('tb_produtos')

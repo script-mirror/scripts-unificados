@@ -1,7 +1,7 @@
 function fetchApi(url, params){
     params = new URLSearchParams(params)
     return $.ajax({
-        url: `/api/v2/${url}?${params}`,
+        url: `/middle/API/get/${url}?${params}`,
         type: 'GET',
         dataType: 'json',
         success: function (data) {
