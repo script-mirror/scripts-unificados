@@ -247,12 +247,18 @@ def processar_produto_RELATORIO_BBCE(parametros):
     resultado.remetenteEmail = 'info_bbce@climenergy.com'
     resultado.flagEmail = True
     
-    res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros['data'].date()}&tipo_negociacao=Boleta Eletronica")
+    res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros['data'].date()}&tipo_negociacao=Boleta Eletronica",
+                  headers={
+            'Authorization': f'Bearer {get_access_token()}'
+            })
     html = remover_primeira_div(res.json()['html'])
     msg = html[1].replace("  ", "").replace("<h3>", "").replace("</h3>", "").replace("<div>", "").replace("</div>", "")[1:][:-1]
     send_whatsapp_message('bbce',msg, api_html_to_image(html[0]))
     
-    res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros['data'].date()}&tipo_negociacao=Mesa")
+    res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros['data'].date()}&tipo_negociacao=Mesa",
+                  headers={
+            'Authorization': f'Bearer {get_access_token()}'
+            })
     html = remover_primeira_div(res.json()['html'])
     msg = html[1].replace("  ", "").replace("<h3>", "").replace("</h3>", "").replace("<div>", "").replace("</div>", "")[1:][:-1]
     send_whatsapp_message('bbce',msg, api_html_to_image(html[0]))
