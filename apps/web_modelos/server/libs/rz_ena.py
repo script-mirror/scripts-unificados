@@ -229,7 +229,7 @@ def get_ena_modelos_smap(ids_to_search,dt_rodada, granularidade, dias: int = 7):
 def getAcomph(data_inicial, data_final=None):
 
     db_ons = wx_dbClass.db_mysql_master('db_ons',connect=True)
-    tb_acomph = db_ons.getSchema('tb_acomph')
+    tb_acomph = db_ons.getSchema('acomph_consolidado')
 
     cte = (
     db.select(
