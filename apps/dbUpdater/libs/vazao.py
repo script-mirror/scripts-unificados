@@ -52,9 +52,6 @@ def update_acomph_cache(dtRef):
 
 def importAcomph(path):
 
-    dataBase = wx_dbClass.db_mysql_master('db_ons')
-    dataBase.connect()
-    tb_acomph = dataBase.getSchema("tb_acomph")
     
     """ Importa o Acomph disponibilizado para o banco de dados
     :param path: caminho da planilha do acomph

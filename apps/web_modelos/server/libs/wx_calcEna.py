@@ -2,11 +2,16 @@ import sys
 import datetime
 import pandas as pd
 import sqlalchemy as db
+import pdb
 
+import os
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
+PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
+sys.path.insert(1,f"{PATH_PROJETO}/scripts_unificados")
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.bibliotecas import wx_dbClass
-from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_ena
+from bibliotecas import wx_dbClass
+from apps.web_modelos.server.libs import rz_ena
 
 def propagarPostos(vazao, acomph, postosDesejados):
     tempo_viagem = {18:18, 33:30, 99:46, 241:28, 261:28, 34:5, 243:7, 245:48, 154:32, 246:56}
@@ -90,8 +95,11 @@ def propagarCalcularNaturais(data, vazao,df_acomph = None ,dias=7):
 
     return vazao
 
-def calcPostosArtificiais_df(vazao, ignorar_erros=False):
-    ordemCalculoPostos = [2, 104, 109, 301, 119, 116, 160, 171, 175, 176, 203, 230, 244, 252, 320, 37, 38, 39, 40, 42, 43, 44, 45, 46, 66, 75, 298, 317, 315, 316, 304, 127, 126, 131, 132, 292, 299, 302, 303, 306, 318, 227, 228, 81, 183]
+def calcPostosArtificiais_df(
+    vazao:pd.DataFrame,
+    ignorar_erros=False
+) -> pd.DataFrame:
+    ordemCalculoPostos = [226, 118, 109, 119, 104, 116, 160, 171, 175, 176, 203, 230, 244, 252, 320, 37, 38, 39, 40, 42, 43, 44, 45, 46, 66, 75, 298, 317, 315, 316, 304, 127, 126, 131, 132, 292, 299, 302, 303, 306, 318, 227, 228, 81, 183]
 
     idxJan = vazao.columns.strftime('%m') == '01'
     idxfev = vazao.columns.strftime('%m') == '02'
@@ -109,20 +117,22 @@ def calcPostosArtificiais_df(vazao, ignorar_erros=False):
     for posto in ordemCalculoPostos:
         if posto not in vazao.index:
             try:
-                if posto == 2:
-                    vazao.loc[2] = vazao.loc[1]
-
-                elif posto == 104:
+                if posto == 104:
                     vazao.loc[104] = vazao.loc[117] + vazao.loc[118]
-
+                elif posto == 226:
+                    vazao.loc[226] = 0
+                    
                 elif posto == 109:
                     vazao.loc[109] = vazao.loc[118]
 
-                elif posto == 301:
-                    vazao.loc[301] = vazao.loc[118]
+                elif posto == 118:
+                    vazao.loc[118] = vazao.loc[119] * 0.8103 + 0.185
 
                 elif posto == 116:
-                    vazao.loc[116] = vazao.loc[119] - vazao.loc[301]
+                    vazao.loc[116] = vazao.loc[119] - vazao.loc[118]
+                    
+                elif posto == 318:
+                    vazao.loc[318] = vazao.loc[116] + vazao.loc[117] + vazao.loc[118] + 0.1 * (vazao.loc[161] - vazao.loc[117] - vazao.loc[118])
 
                 elif posto == 160:
                     vazao.loc[160] = 10
@@ -146,34 +156,34 @@ def calcPostosArtificiais_df(vazao, ignorar_erros=False):
                     vazao.loc[320] = vazao.loc[119]
 
                 elif posto == 37:
-                    vazao.loc[37] = vazao.loc[237]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[301])-vazao.loc[117]-vazao.loc[301]
+                    vazao.loc[37] = vazao.loc[237]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[118])-vazao.loc[117]-vazao.loc[118]
 
                 elif posto == 38:
-                    vazao.loc[38] = vazao.loc[238]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[301])-vazao.loc[117]-vazao.loc[301]
+                    vazao.loc[38] = vazao.loc[238]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[118])-vazao.loc[117]-vazao.loc[118]
 
                 elif posto == 39:
-                    vazao.loc[39] = vazao.loc[239]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[301])-vazao.loc[117]-vazao.loc[301]
+                    vazao.loc[39] = vazao.loc[239]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[118])-vazao.loc[117]-vazao.loc[118]
 
                 elif posto == 40:
-                    vazao.loc[40] = vazao.loc[240]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[301])-vazao.loc[117]-vazao.loc[301]
+                    vazao.loc[40] = vazao.loc[240]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[118])-vazao.loc[117]-vazao.loc[118]
 
                 elif posto == 42:
-                    vazao.loc[42] = vazao.loc[242]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[301])-vazao.loc[117]-vazao.loc[301]
+                    vazao.loc[42] = vazao.loc[242]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[118])-vazao.loc[117]-vazao.loc[118]
 
                 elif posto == 43:
-                    vazao.loc[43] = vazao.loc[243]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[301])-vazao.loc[117]-vazao.loc[301]
+                    vazao.loc[43] = vazao.loc[243]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[118])-vazao.loc[117]-vazao.loc[118]
 
                 elif posto == 44:
-                    vazao.loc[44] = vazao.loc[244]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[301])-vazao.loc[117]-vazao.loc[301]
+                    vazao.loc[44] = vazao.loc[244]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[118])-vazao.loc[117]-vazao.loc[118]
 
                 elif posto == 45:
-                    vazao.loc[45] = vazao.loc[245]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[301])-vazao.loc[117]-vazao.loc[301]
+                    vazao.loc[45] = vazao.loc[245]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[118])-vazao.loc[117]-vazao.loc[118]
 
                 elif posto == 46:
-                    vazao.loc[46] = vazao.loc[246]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[301])-vazao.loc[117]-vazao.loc[301]
+                    vazao.loc[46] = vazao.loc[246]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[118])-vazao.loc[117]-vazao.loc[118]
 
                 elif posto == 66:
-                    vazao.loc[66] = vazao.loc[266]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[301])-vazao.loc[117]-vazao.loc[301]
+                    vazao.loc[66] = vazao.loc[266]-0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[118])-vazao.loc[117]-vazao.loc[118]
 
                 elif posto == 75:
                     vazao.loc[75] = vazao.loc[76] + pd.DataFrame({'vaz': vazao.loc[73]-10, 'limiar':173.5}).min(axis=1)
@@ -212,9 +222,6 @@ def calcPostosArtificiais_df(vazao, ignorar_erros=False):
                 elif posto == 306:
                     vazao.loc[306] = vazao.loc[303] + vazao.loc[131]
 
-                elif posto == 318:
-                    vazao.loc[318] = vazao.loc[116]+0.1*(vazao.loc[161]-vazao.loc[117]-vazao.loc[301])+vazao.loc[117]+vazao.loc[301]
-
                 elif posto == 298:
                     idx1 = vazao.loc[125] <= 190
                     vazao.loc[posto, idx1] = vazao.loc[125, idx1]*(119/190)
@@ -232,7 +239,8 @@ def calcPostosArtificiais_df(vazao, ignorar_erros=False):
 
 
                 elif posto == 119:
-                    postoBase = 301
+                    
+                    postoBase = 118
                     vazao.loc[posto, idxJan] = vazao.loc[postoBase, idxJan]*1.217 + 0.608
                     vazao.loc[posto, idxfev] = vazao.loc[postoBase, idxfev]*1.232 + 0.123
                     vazao.loc[posto, idxMar] = vazao.loc[postoBase, idxMar]*1.311 - 2.359
@@ -355,11 +363,12 @@ def calcPostosArtificiais_df(vazao, ignorar_erros=False):
                     vazao.loc[posto, idxDez] = vazao.loc[postoBase, idxDez]*1.517
 
 
-            except:
+            except Exception as e:
+                print("Erro ao calcular ENA para o posto artificial {0}".format(posto))
                 if ignorar_erros:
+                    print(f"IGNORANDO ERROS\n{e}")
                     pass
                 else:
-                    print("Erro ao calcular ENA para o posto artelificial {0}".format(posto))
                     quit()
     return vazao
 

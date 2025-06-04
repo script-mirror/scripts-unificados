@@ -220,7 +220,7 @@ def getRevBacias(dataInicial):
         order_by=[tb_ve_bacias.c.vl_ano.desc(), tb_ve_bacias.c.vl_mes.desc(), tb_ve_bacias.c.cd_revisao.desc(), tb_ve_bacias.c.dt_inicio_semana.desc()]
     ).label('row_number')
 
-    groups_subquery = db.select([
+    groups_subquery = db.select(
         tb_ve_bacias.c.vl_ano,
         tb_ve_bacias.c.vl_mes,
         tb_ve_bacias.c.cd_revisao,
@@ -229,11 +229,11 @@ def getRevBacias(dataInicial):
         tb_ve_bacias.c.cd_bacia,
         tb_ve_bacias.c.vl_perc_mlt,
         row_number_column
-    ]).where(
+    ).where(
         tb_ve_bacias.c.dt_inicio_semana >= dataInicial.strftime(dateFormat)
     ).subquery('groups')
 
-    query = db.select([
+    query = db.select(
         groups_subquery.c.vl_ano,
         groups_subquery.c.vl_mes,
         groups_subquery.c.cd_revisao,
@@ -241,7 +241,7 @@ def getRevBacias(dataInicial):
         groups_subquery.c.vl_ena,
         tb_bacias_segmentadas.c.str_bacia,
         groups_subquery.c.vl_perc_mlt
-    ]).join(
+    ).join(
         tb_bacias_segmentadas,
         groups_subquery.c.cd_bacia == tb_bacias_segmentadas.c.cd_bacia
     ).where(
