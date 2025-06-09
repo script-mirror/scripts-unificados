@@ -1,22 +1,11 @@
-
-
 var botoes
 
 let btnGerarPrevs = document.getElementById("btnGerarPrevs");
 let anoDesejadoInput = document.getElementById("inputAnoDesejado");
 
 $(window).on('load', function(){
-    createSelect()
-    createBtnAno()
     $('[data-toggle="tooltip"]').tooltip()
-    botoes = document.querySelectorAll('.btn-anos');
-    botoes.forEach(b => {
-      if (anos.includes(b.textContent)) {
-          b.classList.remove('btn-light')
-          b.classList.add('btn-success');
-          anos_aux.push(b.textContent)
-      }
-  });  
+    // Remove createSelect() and createBtnAno() calls
 })
 
 
@@ -27,8 +16,13 @@ anoDesejadoInput.addEventListener("change", function(){
   if (isNumeric(anoDesejadoValue) && anoDesejadoValue >= 1930 && anoDesejadoValue <= 2100) {
     $("#btnGerarPrevs").prop("disabled", false);
     document.getElementById("btnGerarPrevs").addEventListener("click", fazerRequisicoesEmSerie);
+    // Create select and buttons based on user input
+    createSelect(parseInt(anoDesejadoValue));
+    createBtnAno(parseInt(anoDesejadoValue));
   } else {
     $("#btnGerarPrevs").prop("disabled", true);
+    // Clear select and buttons if invalid input
+    clearYearElements();
   }
 });
 
@@ -56,7 +50,7 @@ btnAnosList.addEventListener("click", function () {
   anos = []
   anos_aux = []
   var dt_inicial = btnAnosList.value
-  var dt_final = parseInt(moment().format("YYYY"))
+  var dt_final = parseInt(anoDesejadoInput.value) - 1; // Use user input instead of current year
   var dt_aux = dt_inicial
   while(dt_aux<=dt_final){
     anos.push(dt_aux)
@@ -65,6 +59,7 @@ btnAnosList.addEventListener("click", function () {
   }
 
   removeAllSuccess()
+  botoes = document.querySelectorAll('.btn-anos'); // Update botoes reference
   botoes.forEach(b => {
       if (anos.includes(b.textContent)) {
           b.classList.remove('btn-light')
@@ -77,35 +72,35 @@ btnAnosList.addEventListener("click", function () {
 
 const btnListDiv = document.getElementById("btnListAnos")
 var selectYear = document.getElementById('Anos')
-function createSelect(){
+function createSelect(anoDesejado){
+  // Clear existing options
+  selectYear.innerHTML = '';
+  
   dt_inicial = 2014
-  dt_final = parseInt(moment().format("YYYY"))
-  var dt_aux = dt_final - 1
+  dt_final = anoDesejado - 1; // Use user input year
+  var dt_aux = dt_final
   var div_aux = document.createElement("div");
   
   while(dt_aux >= dt_inicial){
-
     let option = document.createElement('option');
     option.value = dt_aux
     option.textContent = dt_aux;
     selectYear.appendChild(option);
-    div_aux.appendChild(selectYear)
     dt_aux = dt_aux-1
   }
-
-  btnListDiv.appendChild(div_aux)
 }
-
 
 var btnDiv = document.getElementById("btnAnos")
 
-function createBtnAno(){
+function createBtnAno(anoDesejado){
+  // Clear existing buttons
+  btnDiv.innerHTML = '';
+  
   dt_inicial = 2014
-  dt_final = parseInt(moment().format("YYYY"))
+  dt_final = anoDesejado - 1; // Use user input year
 
-  var dt_aux = dt_final - 1
+  var dt_aux = dt_final
   while(dt_aux >= dt_inicial){
-
     var btn_aux = document.createElement("button");
     btn_aux.type = 'button';
     btn_aux.classList.add('btn', 'btn-light', 'btn-anos','mb-1','ml-1');
@@ -113,6 +108,17 @@ function createBtnAno(){
     btnDiv.appendChild(btn_aux)
     dt_aux = dt_aux-1
   }
+  
+  // Update botoes reference after creating new buttons
+  botoes = document.querySelectorAll('.btn-anos');
+}
+
+// Add function to clear year elements
+function clearYearElements() {
+  document.getElementById('Anos').innerHTML = '';
+  document.getElementById('btnAnos').innerHTML = '';
+  anos = [];
+  anos_aux = [];
 }
 
 var anos=[]
@@ -137,7 +143,8 @@ btnDiv.addEventListener('click', (event) => {
 
 
 function removeAllSuccess(){
-
+// Update botoes reference before using
+botoes = document.querySelectorAll('.btn-anos');
 // Adiciona um ouvinte de evento de clique para cada botão
 botoes.forEach(b => b.classList.remove('btn-success'));
 botoes.forEach(b => b.classList.add('btn-light'));
