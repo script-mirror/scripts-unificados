@@ -2,6 +2,7 @@ var botoes
 
 let btnGerarPrevs = document.getElementById("btnGerarPrevs");
 let anoDesejadoInput = document.getElementById("inputAnoDesejado");
+let anoBaseInput = document.getElementById("inputAnoBase");
 
 $(window).on('load', function(){
     $('[data-toggle="tooltip"]').tooltip()
@@ -23,6 +24,15 @@ anoDesejadoInput.addEventListener("change", function(){
     $("#btnGerarPrevs").prop("disabled", true);
     // Clear select and buttons if invalid input
     clearYearElements();
+  }
+});
+
+// Add event listener for base year input
+anoBaseInput.addEventListener("change", function(){
+  var anoDesejadoValue = anoDesejadoInput.value;
+  if (isNumeric(anoDesejadoValue) && anoDesejadoValue >= 1930 && anoDesejadoValue <= 2100) {
+    createSelect(parseInt(anoDesejadoValue));
+    createBtnAno(parseInt(anoDesejadoValue));
   }
 });
 
@@ -76,10 +86,10 @@ function createSelect(anoDesejado){
   // Clear existing options
   selectYear.innerHTML = '';
   
-  dt_inicial = 2014
+  var anoBaseValue = anoBaseInput.value;
+  dt_inicial = (isNumeric(anoBaseValue) && anoBaseValue >= 1930) ? parseInt(anoBaseValue) : 2014;
   dt_final = anoDesejado - 1; // Use user input year
   var dt_aux = dt_final
-  var div_aux = document.createElement("div");
   
   while(dt_aux >= dt_inicial){
     let option = document.createElement('option');
@@ -96,8 +106,9 @@ function createBtnAno(anoDesejado){
   // Clear existing buttons
   btnDiv.innerHTML = '';
   
-  dt_inicial = 2014
-  dt_final = anoDesejado - 1; // Use user input year
+  var anoBaseValue = anoBaseInput.value;
+  dt_inicial = (isNumeric(anoBaseValue) && anoBaseValue >= 1930) ? parseInt(anoBaseValue) : 2014;
+  dt_final = anoDesejado; // Use user input year
 
   var dt_aux = dt_final
   while(dt_aux >= dt_inicial){
