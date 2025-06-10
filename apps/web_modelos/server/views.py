@@ -16,20 +16,18 @@ from flask_login import login_user, login_required, logout_user, current_user
 import datetime
 import requests
 from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
-PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
-sys.path.insert(1,f"{PATH_PROJETO}/scripts_unificados")
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+sys.path.insert(1,"/WX2TB/Documentos/fontes")
+from PMO.scripts_unificados.bibliotecas import wx_dbClass,wx_opweek,wx_dbLib
+from PMO.scripts_unificados.apps.previvaz.libs import wx_geradorPrevs
+from PMO.scripts_unificados.apps.web_modelos.server import utils ,pymssqlLib 
+from PMO.scripts_unificados.apps.web_modelos.server.models import RegistrationForm, LoginForm, User
+from PMO.scripts_unificados.apps.web_modelos.server.server import app, db, bp,cache
+from PMO.scripts_unificados.apps.web_modelos.server.caches import rz_cache
+from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_dbLib,rz_temperatura,rz_ena,rz_chuva,db_decks,db_meteorologia
 
-from bibliotecas import wx_dbClass,wx_opweek,wx_dbLib
-from apps.previvaz.libs import wx_geradorPrevs
-from apps.web_modelos.server import utils ,pymssqlLib 
-from apps.web_modelos.server.models import RegistrationForm, LoginForm, User
-from apps.web_modelos.server.server import app, db, bp,cache
-from apps.web_modelos.server.caches import rz_cache
-from apps.web_modelos.server.libs import rz_dbLib,rz_temperatura,rz_ena,rz_chuva,db_decks,db_meteorologia
-
-from apps.web_modelos.server.controller.ons_dados_abertos_controller import *
-from apps.web_modelos.server.controller.bbce_controller import *
+from PMO.scripts_unificados.apps.web_modelos.server.controller.ons_dados_abertos_controller import *
+from PMO.scripts_unificados.apps.web_modelos.server.controller.bbce_controller import *
 
 import urllib.parse
 import json
@@ -2476,7 +2474,7 @@ def API_get_ena_modelos():
 @bp.route('API/get/previsao/modelos-disponiveis', methods=['GET'])
 @login_required
 def API_get_modelos_disponiveis():
-    from apps.smap.libs.Rodadas import tb_smap
+    from PMO.scripts_unificados.apps.smap.libs.Rodadas import tb_smap
     dt_rodada = request.args.get('dt_rodada')
     TB_SMAP = tb_smap()
     df_modelos = TB_SMAP.get_rodadas_do_dia(dt_rodada)
