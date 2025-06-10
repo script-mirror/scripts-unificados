@@ -16,20 +16,25 @@ from flask_login import login_user, login_required, logout_user
 import datetime
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.bibliotecas import wx_dbClass,wx_opweek,wx_dbLib
-from PMO.scripts_unificados.apps.previvaz.libs import wx_geradorPrevs
-from PMO.scripts_unificados.apps.web_modelos.server import utils ,pymssqlLib 
-from PMO.scripts_unificados.apps.web_modelos.server.models import RegistrationForm, LoginForm, User
-from PMO.scripts_unificados.apps.web_modelos.server.server import app, db, bp,cache
-from PMO.scripts_unificados.apps.web_modelos.server.caches import rz_cache
-from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_dbLib,rz_temperatura,rz_ena,rz_chuva,db_decks,db_meteorologia
 
-from PMO.scripts_unificados.apps.web_modelos.server.controller.ons_dados_abertos_controller import *
-from PMO.scripts_unificados.apps.web_modelos.server.controller.bbce_controller import *
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
+PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
+sys.path.insert(1,f"{PATH_PROJETO}/scripts_unificados")
+
+from bibliotecas import wx_dbClass,wx_opweek,wx_dbLib
+from apps.previvaz.libs import wx_geradorPrevs
+from apps.web_modelos.server import utils ,pymssqlLib 
+from apps.web_modelos.server.models import RegistrationForm, LoginForm, User
+from apps.web_modelos.server.server import app, db, bp,cache
+from apps.web_modelos.server.caches import rz_cache
+from apps.web_modelos.server.libs import rz_dbLib,rz_temperatura,rz_ena,rz_chuva,db_decks,db_meteorologia
+
+from apps.web_modelos.server.controller.ons_dados_abertos_controller import *
+from apps.web_modelos.server.controller.bbce_controller import *
 
 
-pathBancoProspec = os.path.abspath('/WX2TB/Documentos/fontes/PMO/scripts_unificados/arquivos/db_rodadas_prospec.db')
+pathBancoProspec = os.path.abspath(f'{PATH_PROJETO}/scripts_unificados/arquivos/db_rodadas_prospec.db')
 
 
 @app.before_request

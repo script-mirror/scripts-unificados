@@ -38,8 +38,13 @@ cache.init_app(app)
 bp = Blueprint('middle_app', __name__,
                         template_folder='templates')
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.web_modelos.server.views import *
+import os
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
+PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
+sys.path.insert(1,f"{PATH_PROJETO}/scripts_unificados")
+
+from apps.web_modelos.server.views import *
 
 
 if __name__ == '__main__':
