@@ -12,11 +12,9 @@ from flask import send_file
 
 from flask import render_template, request, redirect, url_for, jsonify,send_file
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, login_required, logout_user
+from flask_login import login_user, login_required, logout_user, current_user
 import datetime
-
-
-
+import requests
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
 PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
@@ -33,15 +31,65 @@ from apps.web_modelos.server.libs import rz_dbLib,rz_temperatura,rz_ena,rz_chuva
 from apps.web_modelos.server.controller.ons_dados_abertos_controller import *
 from apps.web_modelos.server.controller.bbce_controller import *
 
+import urllib.parse
+import json
 
-pathBancoProspec = os.path.abspath(f'{PATH_PROJETO}/scripts_unificados/arquivos/db_rodadas_prospec.db')
+pathBancoProspec = os.path.abspath('/WX2TB/Documentos/fontes/PMO/scripts_unificados/arquivos/db_rodadas_prospec.db')
 
+URL_COGNITO = os.getenv('URL_COGNITO')
+CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
+URL_HTML_TO_IMAGE = os.getenv('URL_HTML_TO_IMAGE')
+
+def get_access_token() -> str:
+    response = requests.post(
+        URL_COGNITO,
+        data=CONFIG_COGNITO,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    return response.json()['access_token']
+  
+def post_event_trackin(path, query_string):
+  if "static" in path:
+    return None
+  user_id = f"{current_user.username}|{current_user.email}" if current_user.is_authenticated else None
+  res = requests.post(
+    "https://tradingenergiarz.com/backend/api/events",
+    json={
+      "eventType": "http request",
+      "systemOrigin": "/middle",
+      "payload": {"path":path, "query":urllib.parse.unquote(query_string)},
+      "value": 0,
+      "userId": user_id
+    },
+        headers={
+            "Authorization": f"Bearer {get_access_token()}"
+        }
+  )
+  return res
+def send_message(mensagem):
+    dest:str="Debug"
+    fields = {
+        "destinatario": dest,
+        "mensagem": mensagem
+    }
+
+    res = requests.post(
+        "https://tradingenergiarz.com/bot-whatsapp/whatsapp-message",
+        data=fields,
+        files=None,
+        headers={
+            "Authorization": f"Bearer {get_access_token()}"
+        }
+    )
+    print(f"Whatsapp status code: {res.status_code}")
 
 @app.before_request
 def add_prefix():
     path = request.path
     query_string = request.query_string.decode()
-    
+    res = post_event_trackin(path, query_string)
+    # if res:
+    #   send_message(f"{res.status_code}\n{res.text}")
     if not path.startswith('/middle') and not path.startswith('/static'):
         new_path = '/middle' + path
         if query_string:
@@ -69,7 +117,7 @@ def login():
 
 @bp.route('/signup', methods=['GET', 'POST'])
 def signup():
-  return '<p>Pagina desabilitada, falar com o thiago@wxe.com.br</p>'
+  return '<p>Pagina desabilitada, falar com o rodrigo.tenorio@raizen.com ou arthur.moraes2@raizen.com</p>'
   form = RegistrationForm()
   if form.validate_on_submit():
     hashed_password = generate_password_hash(form.password.data, method='pbkdf2:sha256')
@@ -1412,7 +1460,7 @@ def get_dados_rodadas_ena():
 
     no_cache= request.args.get('flagNoCache')
   
-    if no_cache:
+    if True:
       ena = rz_ena.get_ena_modelos_smap(modelos_list,dt_rodada, granularidade)
     else:
       prefixo = "PREVISAO_ENA"
@@ -1482,6 +1530,12 @@ def get_cargas_ipdo_previsao():
   dtref = (datetime.datetime.now())
   ipdo_dict_previsao = rz_dbLib.get_valores_IPDO_previsao(dtref)
   return jsonify(ipdo_dict_previsao)
+
+@bp.route("/API/get/previsao_dessem",methods=['GET'])
+@login_required
+def get_previsao_dessem():
+  previsao = rz_dbLib.get_previsao_dessem()
+  return jsonify(previsao)
 
 @bp.route("/API/get/acompanhamento_ipdo_verificado_e_previsao",methods=['GET'])
 @login_required
@@ -2315,10 +2369,8 @@ def API_get_limites_intercambio_por_nome_re_data_entre(nome_re:str):
   dt_final = request.args.get('dtFinal', type=utils.formatar_data)
   diferenca =  dt_final.date() - dt_inicial.date()
   no_cache = request.args.get('no_cache')
-  if no_cache:
-    limites_intercambio = db_decks.tb_intercambio_dessem.limites_intercambio_por_nome_re_data_entre(nome_re, dt_inicial, dt_final)
-  else:
-    limites_intercambio = rz_cache.get_cached(db_decks.tb_intercambio_dessem.limites_intercambio_por_nome_re_data_entre, nome_re, dt_inicial, dt_final)  
+  limites_intercambio = {}
+  limites_intercambio = db_decks.tb_intercambio_dessem.limites_intercambio_por_nome_re_data_entre(nome_re, dt_inicial, dt_final)
   if not limites_intercambio:
     return {}, 204
   return limites_intercambio, 200
@@ -2424,7 +2476,7 @@ def API_get_ena_modelos():
 @bp.route('API/get/previsao/modelos-disponiveis', methods=['GET'])
 @login_required
 def API_get_modelos_disponiveis():
-    from PMO.scripts_unificados.apps.smap.libs.Rodadas import tb_smap
+    from apps.smap.libs.Rodadas import tb_smap
     dt_rodada = request.args.get('dt_rodada')
     TB_SMAP = tb_smap()
     df_modelos = TB_SMAP.get_rodadas_do_dia(dt_rodada)
