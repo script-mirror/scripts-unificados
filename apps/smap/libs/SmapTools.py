@@ -74,7 +74,10 @@ def process_vazao_obs_pdp(path_src:str):
     for subbacia in df_lista_vazoes.keys():
         if subbacia == 'GOV. JAYME CANET':
             subbacia = 'MAUA'
-        file_subbacia = glob.glob(os.path.join(path_src,'**',f'{subbacia}.txt'),recursive=True)[0]
+        try:
+            file_subbacia = glob.glob(os.path.join(path_src,'**',f'{subbacia}.txt'),recursive=True)[0]
+        except:
+            print(f"WARNING    -    Arquivo não encontrado: {subbacia}.txt")
         print(file_subbacia)
         df_subbacia = pd.read_csv(file_subbacia,sep='|',header=None)
         df_subbacia['subbacia'] = subbacia
