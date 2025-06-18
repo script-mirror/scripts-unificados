@@ -17,8 +17,11 @@ default_args = {
 
 
 def update_conf(**kwargs):
-    cenario = kwargs['ti'].xcom_pull(task_ids='run_smap')
-    kwargs.get('dag_run').conf['cenario'] = json.loads(cenario)
+    cenario_output = kwargs['ti'].xcom_pull(task_ids='run_smap')
+    lines = cenario_output.strip().split('\n')
+    last_line = lines[-1].strip()
+    cenario = json.loads(last_line)
+    kwargs.get('dag_run').conf['cenario'] = cenario
 
 
 with DAG(
