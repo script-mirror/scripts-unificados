@@ -2,7 +2,7 @@ import json
 import datetime
 from airflow import DAG
 from airflow.providers.ssh.operators.ssh import SSHOperator
-from airflow.providers.bash import BashOperator
+from airflow.operators.bash import BashOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
