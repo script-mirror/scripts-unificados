@@ -998,43 +998,46 @@ def relatorio_limites_intercambio(dadosProduto):
     filename = get_filename(dadosProduto)
     logger.info(filename)
     PREFIXO_PADRAO = "RT-ONS DPL"
-    arquivo_zip = get_filename(dadosProduto)
-    
-    path_arquivo = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(arquivo_zip)[:-4])
-    os.makedirs(path_arquivo, exist_ok=True)
-    
-    with zipfile.ZipFile(arquivo_zip, 'r') as zip_ref:
-        zip_content_names = zip_ref.namelist()
-        zip_ref.extract(zip_content_names[0], path_arquivo)
-        
-    arquivo_interno = os.path.join(path_arquivo, zip_content_names[0])
-    if PREFIXO_PADRAO in arquivo_interno and arquivo_interno.endswith('.pdf'):
-        arquivo_selecionado = arquivo_interno
-    elif arquivo_interno.endswith('.zip'):
-        with zipfile.ZipFile(arquivo_interno, 'r') as zip_ref:
-            
-            zip_ref.extractall(path_arquivo)
-            
-            arquivos_pdf = glob.glob(os.path.join(path_arquivo, "**", "*.pdf"), recursive=True)
-            
-            arquivo_selecionado = None
-            for arquivo in arquivos_pdf:
-                nome_arquivo = os.path.basename(arquivo)
-                if PREFIXO_PADRAO in nome_arquivo:
-                    arquivo_selecionado = arquivo
-                    logger.info(f"Arquivo no formato correto encontrado: {nome_arquivo}")
-                    break
-            
-            if arquivo_selecionado is None:
-                raise Exception("Nenhum arquivo no formato correto encontrado.")
-                return
+    arquivo = get_filename(dadosProduto)
+    if '.pdf' in arquivo:
+        arquivo_selecionado = arquivo
     else:
-        raise Exception("O arquivo interno não é um PDF ou ZIP válido, ou o cenario não foi mapeado")
+        path_arquivo = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(arquivo)[:-4])
+        os.makedirs(path_arquivo, exist_ok=True)
+        
+        with zipfile.ZipFile(arquivo, 'r') as zip_ref:
+            zip_content_names = zip_ref.namelist()
+            zip_ref.extract(zip_content_names[0], path_arquivo)
+            
+        arquivo_interno = os.path.join(path_arquivo, zip_content_names[0])
+        if PREFIXO_PADRAO in arquivo_interno and arquivo_interno.endswith('.pdf'):
+            arquivo_selecionado = arquivo_interno
+        elif arquivo_interno.endswith('.zip'):
+            with zipfile.ZipFile(arquivo_interno, 'r') as zip_ref:
+                
+                zip_ref.extractall(path_arquivo)
+                
+                arquivos_pdf = glob.glob(os.path.join(path_arquivo, "**", "*.pdf"), recursive=True)
+                
+                arquivo_selecionado = None
+                for arquivo in arquivos_pdf:
+                    nome_arquivo = os.path.basename(arquivo)
+                    if PREFIXO_PADRAO in nome_arquivo:
+                        arquivo_selecionado = arquivo
+                        logger.info(f"Arquivo no formato correto encontrado: {nome_arquivo}")
+                        break
+                
+                if arquivo_selecionado is None:
+                    raise Exception("Nenhum arquivo no formato correto encontrado.")
+                    return
+        else:
+            raise Exception("O arquivo interno não é um PDF ou ZIP válido, ou o cenario não foi mapeado")
     return {
         "file_path": arquivo_selecionado,
         "trigger_dag_id":"PROSPEC_UPDATER",
         "task_to_execute": "revisao_restricao"
     }
+
 
 def notas_tecnicas_medio_prazo(dadosProduto):
     
@@ -1078,20 +1081,25 @@ def notas_tecnicas_medio_prazo(dadosProduto):
 if __name__ == '__main__':
     
     dadosProduto = {
-        "dataProduto": "03/05/2025 - 09/05/2025",
-        "enviar": True,
-        "filename": "Nao_Consistido_202505_REV1.zip",
+    "function_name": "WEBHOOK",
+    "product_details": {
+        "dataProduto": "13/06/2025",
+        "enviar": "true",
+        "filename": "Blocos_2025-06-14.zip",
         "macroProcesso": "Programação da Operação",
-        "nome": "Resultados preliminares não consistidos  (vazões semanais - PMO)",
-        "periodicidade": "2025-05-03T03:00:00.000Z",
-        "periodicidadeFinal": "2025-05-10T02:59:59.000Z",
-        "processo": "Previsão de Vazões e Geração de Cenários - PMO",
-        "s3Key": "webhooks/Resultados preliminares não consistidos  (vazões semanais - PMO)/681156b7b2f11f6ae1b8f684_Nao_Consistido_202505_REV1.zip",
-        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy83OS9Qcm9kdXRvcy8yNDYvTmFvX0NvbnNpc3RpZG9fMjAyNTA1X1JFVjEuemlwIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IlJlc3VsdGFkb3MgcHJlbGltaW5hcmVzIG7Do28gY29uc2lzdGlkb3MgICh2YXrDtWVzIHNlbWFuYWlzIC0gUE1PKSIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzQ2MDUzNDE1LCJuYmYiOjE3NDU5NjY3NzV9.UmIwxm0Tg1HOnCqjekypzVVXLw40abhuxEXADZ_igas",
-        "webhookId": "681156b7b2f11f6ae1b8f684"
+        "nome": "Arquivos de Previsão de Carga para o DESSEM",
+        "periodicidade": "2025-06-13T03:00:00.000Z",
+        "periodicidadeFinal": "2025-06-14T02:59:59.000Z",
+        "processo": "Previsão de carga para o DESSEM",
+        "s3Key": "webhooks/Arquivos de Previsão de Carga para o DESSEM/684c4549b1c148748afd0db6_Blocos_2025-06-14.zip",
+        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ni9Qcm9kdXRvcy8yNzUvQmxvY29zXzIwMjUtMDYtMTQuemlwIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IkFycXVpdm9zIGRlIFByZXZpc8OjbyBkZSBDYXJnYSBwYXJhIG8gREVTU0VNIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NDk5MTU1NzcsIm5iZiI6MTc0OTgyODkzN30.cRBQhCsssujc_JcD3b_Ng5QWDTJ_GkI8znjnHEFwcCg",
+        "webhookId": "684c4549b1c148748afd0db6"
     }
+}
+    dadosProduto = dadosProduto["product_details"]
+    dadosProduto["enviar"] = True
 
 
     
-    resultados_nao_consistidos_semanal(dadosProduto)
+    previsao_carga_dessem(dadosProduto)
 
