@@ -32,12 +32,16 @@ with DAG(
     catchup=False
 ) as dag:
 
-    t_run_smap = BashOperator(
+    t_run_smap = SSHOperator(
         task_id='run_smap',
-        bash_command='cd /WX2TB/Documentos/fontes/PMO/'
-                     'raizen-power-trading-smap &&  env/bin/python '
-                     ' main.py {{ dag_run.conf.get("id_chuva") }}',
+        ssh_conn_id='ssh_master',
+        command='cd /WX2TB/Documentos/fontes/PMO/'
+                'raizen-power-trading-smap && env/bin/python '
+                'main.py {{ dag_run.conf.get("id_chuva") }}',
         do_xcom_push=True,
+        conn_timeout=None,
+        cmd_timeout=None,
+        get_pty=True,
     )
 
     t_update_conf = PythonOperator(
