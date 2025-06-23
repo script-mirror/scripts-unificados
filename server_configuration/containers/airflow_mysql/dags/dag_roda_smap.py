@@ -84,4 +84,4 @@ with DAG(
         trigger_rule="all_success",
     )
 
-    t_run_smap >> atualizar_cache >> t_run_previvaz
+    t_run_smap >> t_update_conf >> atualizar_cache >> t_run_previvaz
