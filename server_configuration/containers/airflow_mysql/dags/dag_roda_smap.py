@@ -25,6 +25,7 @@ def update_conf(**kwargs):
     print(last_line)
     cenario = json.loads(last_line)
     kwargs.get('dag_run').conf['cenario'] = cenario
+    return cenario
 
 
 with DAG(
@@ -48,11 +49,14 @@ with DAG(
         conn_timeout=None,
         cmd_timeout=None,
         get_pty=True,
+        trigger_rule="all_success",
     )
 
     t_update_conf = PythonOperator(
         task_id='update_conf',
-        python_callable=update_conf
+        python_callable=update_conf,
+        do_xcom_push=True,
+        trigger_rule="all_success",
     )
 
     t_run_previvaz = TriggerDagRunOperator(
@@ -60,7 +64,7 @@ with DAG(
         trigger_dag_id='PREV_PREVIVAZ',
         conf={'cenario': "{{ dag_run.conf.get('cenario')}}"},
         wait_for_completion=False,  
-        trigger_rule="none_failed_min_one_success",
+        trigger_rule="all_success",
 
     )
 
@@ -77,7 +81,7 @@ with DAG(
         conn_timeout=None,
         cmd_timeout=None,
         get_pty=True,
-        trigger_rule="all_done",
+        trigger_rule="all_success",
     )
 
     t_run_smap >> atualizar_cache >> t_run_previvaz
