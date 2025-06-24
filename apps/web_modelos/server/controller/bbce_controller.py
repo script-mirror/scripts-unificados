@@ -20,7 +20,7 @@ from PMO.scripts_unificados.apps.web_modelos.server.caches import rz_cache
 @login_required
 def get_produtos_bbce():
 
-    database = wx_dbClass.db_mysql_master('db_config')
+    database = wx_dbClass.db_mysql_master('bbce')
     database.connect()
     tb_produtos_interesse = database.getSchema('tb_produtos_interesse')
     tb_produtos = database.getSchema('tb_produtos')
@@ -35,7 +35,6 @@ def get_produtos_bbce():
     result = database.db_execute(select).fetchall()
     df = pd.DataFrame(result, columns=["id", "ordem", "str_produto"])
     return df.to_dict("records")
-
 @bp.route('/API/set/produtos-bbce',methods=['POST'])
 @login_required
 def set_produtos_bbce():

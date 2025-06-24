@@ -17,3 +17,7 @@ docker-compose -f /home/admin/jose/app/docker-compose.yaml up -d
 
 echo "Iniciando container API v2..."
 docker-compose -f /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/api_v2/docker-compose.yaml up -d
+
+echo "iniciar mongodb"
+docker-compose -f /WX2TB/Documentos/fontes/PMO/scripts_unificados/server_configuration/containers/mongodb/docker-compose.yml up -d
+

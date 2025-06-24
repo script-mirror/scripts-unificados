@@ -47,7 +47,6 @@ def enviar_whatsapp_sucesso(context):
     task_instance = context['task_instance']
     dag_id = context['dag'].dag_id
     task_id = task_instance.task_id
-    
     msg = f"✅ Sucesso no Produto: *{context['params']['product_details']['nome']}*"
     fields = {
         "destinatario": "Airflow",
@@ -76,7 +75,6 @@ def update_carga_pq_dadger_dc(data_produto, ids_to_modify):
 
 with DAG(
     dag_id='PROSPEC_UPDATER',
-    tags=["Prospec"],
     start_date= datetime.datetime(2024, 4, 28),
     catchup=False,
     schedule=None,   
@@ -85,6 +83,7 @@ with DAG(
         'owner': 'airflow',
         'on_failure_callback': enviar_whatsapp_erro,
     },
+    tags=["Prospec"],
 ) as dag:
     
     inicio = BranchPythonOperator(

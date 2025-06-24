@@ -4,6 +4,9 @@ from airflow import DAG
 from airflow.providers.ssh.operators.ssh import SSHOperator
 from airflow.operators.python_operator import PythonOperator, BranchPythonOperator
 from airflow.models import DagBag
+from airflow.models import DagRun
+from airflow.exceptions import AirflowSkipException
+from airflow.utils.db import create_session
 import subprocess
 
 
@@ -11,6 +14,24 @@ default_args = {
     'execution_timeout': timedelta(hours=8)
 }
 
+# Função para verificar se a DAG está em execução
+def check_if_dag_is_running(**kwargs):
+    dag_id = kwargs['dag'].dag_id
+    # Obtém o execution_date da execução atual
+    execution_date = kwargs['execution_date']
+
+    # Cria uma sessão manualmente para consultar o banco de metadados
+    with create_session() as session:
+        # Consulta execuções ativas, excluindo a execução atual
+        active_runs = session.query(DagRun).filter(
+            DagRun.dag_id == dag_id,
+            DagRun.state == 'running',
+            DagRun.execution_date != execution_date  # Exclui a execução atual
+        ).all()
+
+        if active_runs:
+            raise AirflowSkipException(f"DAG {dag_id} já está em execução. Pulando execução {active_runs}.")
+        
 
 # Função que executa o script com parâmetros dinâmicos
 def run_python_script_with_dynamic_params(**kwargs):
@@ -29,6 +50,7 @@ def run_python_script_with_dynamic_params(**kwargs):
     print(command)
     kwargs['ti'].xcom_push(key='command', value=command)
 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '1.00-ENVIAR-EMAIL-ESTUDOS' (adicionada)
 with DAG(
     default_args=default_args,
@@ -60,28 +82,39 @@ with DAG(
 
     run_script_task >> run_prospec_on_host
 
-# python /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script/mainRodadaAutoProspec.py prevs PREVS_PLUVIA_2_RV rvs 2 preliminar 0 nome_estudo CVU-ATUALIZADO
+ # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------      
 # Definindo a DAG para '1.01-PROSPEC_PCONJUNTO_DEFINITIVO'
 with DAG(
+    dag_id='1.01-PROSPEC_PCONJUNTO_DEFINITIVO',
     default_args=default_args,
-    dag_id='1.01-PROSPEC_PCONJUNTO_DEFINITIVO', 
-    start_date=datetime(2024, 4, 28), 
-    schedule_interval=None, 
+    start_date=datetime(2024, 4, 28),
+    schedule_interval=None,
     catchup=False,
     tags=['Prospec'],
 ) as dag:
+    # Tarefa de verificação
+    check_running = PythonOperator(
+        task_id='check_if_dag_is_running',
+        python_callable=check_if_dag_is_running,
+        provide_context=True,
+    )
+
+    # Tarefa principal
     run_prospec_on_host = SSHOperator(
-        trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_on_host',
-        ssh_conn_id='ssh_master',  
+        ssh_conn_id='ssh_master',
         command="{{ 'cd /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script; ./rodaProspec2rvsDefinitivo.ksh' }}",
         conn_timeout=36000,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
         get_pty=True,
+        trigger_rule="none_failed_min_one_success",
     )
 
+    # Dependência: check_running deve rodar antes
+    check_running >> run_prospec_on_host
 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '1.02-PROSPEC_PCONJUNTO_PREL'
 with DAG(
     default_args=default_args,
@@ -102,7 +135,7 @@ with DAG(
         get_pty=True,
     )
 
- # 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '1.03-PROSPEC_1RV'
 with DAG(
     default_args=default_args,
@@ -123,11 +156,11 @@ with DAG(
         get_pty=True,
     )
 
-
-# Definindo a DAG para '1.4-PROSPEC_EC_EXT'
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Definindo a DAG para '1.04-PROSPEC_EC_EXT'
 with DAG(
     default_args=default_args,
-    dag_id='1.4-PROSPEC_EC_EXT', 
+    dag_id='1.04-PROSPEC_EC_EXT', 
     start_date=datetime(2024, 4, 28), 
     schedule_interval="00 19 * * 1-4", 
     catchup=False,
@@ -144,7 +177,7 @@ with DAG(
         get_pty=True,
     )
 
-
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '1.05-PROSPEC_CENARIO_10'
 with DAG(
     default_args=default_args,
@@ -165,7 +198,7 @@ with DAG(
         get_pty=True,
     )
 
-
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '1.06-PROSPEC_CENARIO_11'
 with DAG(
     default_args=default_args,
@@ -186,7 +219,7 @@ with DAG(
         get_pty=True,
     )
 
-
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '1.7-PROSPEC_CHUVA_0'
 with DAG(
     default_args=default_args,
@@ -208,7 +241,6 @@ with DAG(
     )
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 # Definindo a DAG para '1.10-PROSPEC_GFS'
 
 # Função que executa o script com parâmetros dinâmicos
@@ -256,10 +288,8 @@ with DAG(
     run_script_task >> run_prospec_on_host
 
 
-
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '2.0-PROSPEC_ATUALIZAÇOÊS'
-
-# Função que executa o script com parâmetros dinâmicos
 def run_python_update_with_dynamic_params(**kwargs):
     # Recuperando todos os parâmetros passados para a DAG
     print(kwargs.get('params'))
@@ -303,8 +333,8 @@ with DAG(
 
     run_script_task >> run_prospec_on_host
 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '2.1-PROSPEC_NAO-CONSISTIDO'
-
 # Função que executa o script com parâmetros dinâmicos
 def run_python_with_dynamic_params(**kwargs):
     # Recuperando todos os parâmetros passados para a DAG
@@ -348,7 +378,7 @@ with DAG(
 
     run_script_task >> run_prospec_on_host 
 
-
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para 1.08-PROSPEC_GRUPOS-ONS
 # Função que verifica o estado da DAG
 def check_dag_state(dag_id='1.08-PROSPEC_GRUPOS-ONS'):
@@ -375,6 +405,7 @@ with DAG(
     start_date=datetime(2024, 4, 28), 
     schedule_interval=None, 
     catchup=False,
+    max_active_runs=1,
     tags=['Prospec'],
 ) as dag:
 
@@ -407,7 +438,7 @@ with DAG(
     # Definindo a ordem das tarefas
     check_dag_state_task >> [run_decomp_ons_grupos, skip_task]
 
-
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 with DAG(
     dag_id = '1.14-BACKTEST-DECOMP', 
     start_date=datetime(2024, 4, 28), 
@@ -427,7 +458,7 @@ with DAG(
     )
 
 
-
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 with DAG(
     dag_id = '1.13-PROSPEC_PCONJUNTO_PREL_PRECIPITACAO', 
     start_date=datetime(2024, 7, 30), 
@@ -448,3 +479,48 @@ with DAG(
     )
 
 
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Definindo a DAG para '1.15-PROSPEC_RODAR_SENSIBILIDADE'
+# Função que executa o script com parâmetros dinâmicos
+def run_sensibilidades_params(**kwargs):
+    # Recuperando todos os parâmetros passados para a DAG
+    #print(f"{kwargs.get('params')}")
+    params = kwargs.get('params', {})
+    #print(params)
+    #params = f"{str(params)}"
+    #print("parametros recebidos: ", type(params))
+    
+    # Iniciando a construção do comando para o script
+    command = ". /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python  /WX2TB/Documentos/fontes/PMO/gera_sens_prospec/gerar_sens.py"
+    
+    command +=' "'  + str(params) + '"'
+    #command += f" str(kwargs.get('params'))'"
+    print(command)
+    kwargs['ti'].xcom_push(key='command', value=command)
+
+with DAG(
+    default_args=default_args,
+    dag_id='1.15-PROSPEC_RODAR_SENSIBILIDADE', 
+    start_date=datetime(2025, 1, 23), 
+    schedule_interval=None, 
+    catchup=False,
+    tags=['Prospec'],
+) as dag:
+    run_script_task = PythonOperator(
+        task_id='run_sensibilidades_params',
+        python_callable=run_sensibilidades_params,
+
+    )
+    run_prospec_on_host = SSHOperator(
+        trigger_rule="none_failed_min_one_success",
+        task_id='run',
+        ssh_conn_id='ssh_master',  
+        command="{{ ti.xcom_pull(task_ids='run_sensibilidades_params', key='command')}}",
+        conn_timeout=36000,
+        cmd_timeout=28800,
+        execution_timeout=timedelta(hours=20),
+        get_pty=True,
+    )
+
+    run_script_task >> run_prospec_on_host 

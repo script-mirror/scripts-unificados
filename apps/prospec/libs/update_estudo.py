@@ -398,7 +398,8 @@ def update_weol_sistema_nw_estudo(data_produto:datetime.date, ids_to_modify:List
         logger.info(f"============================================")
         
 def update_restricoes_dadger_dc_estudo(file_path:str, ids_to_modify:List[int] = None):
-    
+    logger.info(f"============================================")
+    logger.info(f"ARQUIVO UTILIZADO {file_path}")
     info_restricoes = info_external_files.organizar_info_restricoes_eletricas_dc(file_path)
     logger.info(f"UPDATE DADGER RESTRICOES (bloco LU)")
     tag = [f'RE {datetime.datetime.now().strftime("%d/%m %H:%M")}']
@@ -425,7 +426,7 @@ def update_restricoes_dadger_dc_estudo(file_path:str, ids_to_modify:List[int] = 
             info_restricoes,
             arquivos_filtrados
         )
-
+        logger.info(f"ENVIANDO AQREUIVO: {arquivos_filtrados}")
         send_files_to_api(id_estudo, arquivos_filtrados, tag)
 
         logger.info(f"============================================")
