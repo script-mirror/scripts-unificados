@@ -400,7 +400,7 @@ class DeckPreliminarNewaveService:
 
             print(f"Headers: {headers}")
 
-            api_url = os.getenv("URL_API_V2", "http://host.docker.internal:8000/api/v2")
+            api_url = os.getenv("URL_API_V2", "https://tradingenergiarz.com/api/v2")
 
             for record in nw_sist_records:
                 if isinstance(record.get('dt_deck'), date):
@@ -454,7 +454,7 @@ class DeckPreliminarNewaveService:
         try:
             product_datetime_str = kwargs.get('dag_run').conf.get('product_details').get('dataProduto')
 
-            api_url = os.getenv("URL_API_V2", "http://host.docker.internal:8000/api/v2")
+            api_url = os.getenv("URL_API_V2", "https://tradingenergiarz.com/api/v2")
             image_api_url = "https://tradingenergiarz.com/html-to-img"
             
             repository = SharedRepository()
