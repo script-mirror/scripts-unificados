@@ -586,34 +586,33 @@ class DeckPreliminarNewaveService:
             
             print(f"Preparando envio da imagem: {image_path}")
             
-            # Aqui você pode implementar o envio via WhatsApp usando suas bibliotecas
-            # Por exemplo, usando wx_emailSender ou outras bibliotecas disponíveis
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            sys.path.insert(0, project_root)
+            from utils.whatsapp_sender import WhatsAppSender
             
-            # Exemplo de estrutura para envio:
-            # from bibliotecas import wx_emailSender  # ou biblioteca do WhatsApp
-            # 
-            # # Para WhatsApp (implementar conforme sua biblioteca)
-            # whatsapp_sender = WhatsAppSender()
-            # whatsapp_sender.send_image(
-            #     group_id="seu_grupo_id",
-            #     image_path=image_path,
-            #     caption=f"Tabela de Diferença de Cargas - {product_datetime_str}"
-            # )
-            #
-            # # Para Email
-            # email_sender = wx_emailSender()
-            # email_sender.send_email_with_attachment(
-            #     to="destinatarios@email.com",
-            #     subject=f"Tabela de Diferença de Cargas - {product_datetime_str}",
-            #     body="Segue em anexo a tabela de diferença de cargas gerada.",
-            #     attachment_path=image_path
-            # )
+            whatsapp_sender = WhatsAppSender()
             
+            try:
+                success = whatsapp_sender.send_table_notification(
+                    table_type="Diferença de Cargas NEWAVE",
+                    product_datetime=product_datetime_str or "Data não informada",
+                    image_path=image_path
+                )
+                
+                if success:
+                    print(f"Tabela enviada com sucesso via WhatsApp para Debug")
+                else:
+                    print("Falha no envio via WhatsApp")
+                    
+            except Exception as whatsapp_error:
+                print(f"Erro no envio WhatsApp: {str(whatsapp_error)}")
+              
             xcom_data = {
                 'success': True,
-                'message': f'Imagem {image_filename} preparada para envio',
+                'message': f'Imagem {image_filename} enviada com sucesso',
                 'image_sent': True,
-                'product_datetime': product_datetime_str
+                'product_datetime': product_datetime_str,
+                'whatsapp_sent': success if 'success' in locals() else False
             }
             
             print(f"task(enviar_tabela_whatsapp_email) - Retornando dados para XCom: {xcom_data}")
