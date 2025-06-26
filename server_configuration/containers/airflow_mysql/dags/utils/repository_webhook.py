@@ -102,45 +102,6 @@ class SharedRepository:
         except Exception as e:
             raise Exception(f"Falha no download do arquivo {filename}: {str(e)}")
     
-    def send_whatsapp_message(self, message: str, phone_number: Optional[str] = None) -> bool:
-        """
-        Envia mensagem via WhatsApp API
-        
-        Args:
-            message: Mensagem a ser enviada
-            phone_number: Número de telefone (opcional)
-            
-        Returns:
-            True se mensagem foi enviada com sucesso
-            
-        Raises:
-            Exception: Se falhar no envio
-        """
-        try:
-            if not self.WHATSAPP_API:
-                raise Exception("WHATSAPP_API não configurada")
-            
-            payload = {
-                'message': message
-            }
-            
-            if phone_number:
-                payload['phone'] = phone_number
-            
-            response = req.post(
-                self.WHATSAPP_API,
-                json=payload,
-                headers={'Content-Type': 'application/json'}
-            )
-            
-            if response.status_code not in [200, 201]:
-                raise Exception(f"Erro ao enviar WhatsApp: {response.status_code} - {response.text}")
-            
-            return True
-            
-        except Exception as e:
-            raise Exception(f"Falha ao enviar mensagem WhatsApp: {str(e)}")
-    
     def send_event_notification(self, event_data: Dict[str, Any]) -> bool:
         """
         Envia notificação para API de eventos
