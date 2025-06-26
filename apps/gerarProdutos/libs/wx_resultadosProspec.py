@@ -12,11 +12,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-try:
-	locale.setlocale(locale.LC_ALL, 'pt_BR')
-except:
+# try:
+locale.setlocale(locale.LC_ALL, 'pt_BR.utf8')
+# except:
 	# locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil')
-	locale.setlocale(locale.LC_ALL, '')
+#	locale.setlocale(locale.LC_ALL, '')
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.bibliotecas import wx_opweek,wx_emailSender

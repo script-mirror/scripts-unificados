@@ -51,13 +51,14 @@ def trigger_function(**kwargs):
     product_name = product_details.get('nome')
 
     product = PRODUCT_MAPPING.get(product_name)
+    next_tasks = []
     if product.get("funcao") != None:
         try:
             func = getattr(manipularArquivosShadow, product.get("funcao"), None)
             aditional_params = func(product_details)
             if aditional_params != None:
                 kwargs.get('dag_run').conf.update(aditional_params)	
-                return['trigger_external_dag']
+                next_tasks.append('trigger_external_dag')
 
         except AirflowSkipException:
             raise AirflowSkipException("Produto ja inserido")
@@ -66,8 +67,8 @@ def trigger_function(**kwargs):
             print(error_message)
             raise AirflowException(error_message)
         if product.get("id_dag") != None:
-            return [remover_acentos_e_caracteres_especiais(product_name) + "_dag"]
-        return ['fim']
+            next_tasks.append(remover_acentos_e_caracteres_especiais(product_name) + "_dag")
+        return next_tasks
     else:
         raise AirflowException(f"FUNCAO do produto: {product_name} não encontrado no mapeamento.")
         

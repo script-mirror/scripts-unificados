@@ -6,32 +6,41 @@ import pandas as pd
 import sqlalchemy as db
 import concurrent.futures
 from sqlalchemy.sql.expression import func
+import os
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
+PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
+sys.path.insert(1,f"{PATH_PROJETO}/scripts_unificados")
+
+from bibliotecas import wx_dbClass
+from apps.web_modelos.server.libs import wx_calcEna 
+from apps.smap.libs import SmapTools 
+from apps.smap.libs.Rodadas import tb_smap
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.bibliotecas import wx_dbClass
-from PMO.scripts_unificados.apps.web_modelos.server.libs import wx_calcEna 
-
-
-
-def get_ena_smap(id,data,df_smap_result_aux,df_pluviaBaciasinteresse,granularidade, dias=7):
+def get_ena_smap(
+        id,
+        data:str,
+        df_smap_result_aux:pd.DataFrame,
+        df_pluviaBaciasinteresse:pd.DataFrame,
+        granularidade:str,
+        dias:int=7
+    ):
     data = datetime.datetime.strptime(data, '%Y-%m-%d')
-    primeiro_dia = df_smap_result_aux['dt_prevista'].min()
-    # pdb.set_trace()
-    df_pivot = df_smap_result_aux.pivot(index='dt_prevista', columns='cd_posto', values='vl_vazao_vna').T
-    # pdb.set_trace()
-    INCREMENTAL_ITAIPU = df_pivot.loc[266].copy()
-    vazao =wx_calcEna.propagarCalcularNaturais(data,df_pivot, dias=dias)
-    vazao.loc[118] = 0.185 + (vazao.loc[119]*0.8103)
+    # primeiro_dia = df_smap_result_aux['dt_prevista'].min()
+
+    vazao = df_smap_result_aux.pivot(index='cd_posto', columns='dt_prevista', values='vl_vazao_vna')
+
     vazao = wx_calcEna.calcPostosArtificiais_df(vazao, ignorar_erros=True)
+    # INCREMENTAL_ITAIPU = vazao.loc[66].copy()
     
-    vazao = vazao.drop([169, 176, 178, 172],errors='ignore')
+    # vazao = vazao.drop([169, 176, 178, 172],errors='ignore')
 
     df_ena = wx_calcEna.gera_ena_df(vazao,granularidade)
     df_ena = df_ena.T
 
     if granularidade == 'bacia':
-        df_ena['INCREMENTAL DE ITAIPU'] = INCREMENTAL_ITAIPU
+        # df_ena['INCREMENTAL DE ITAIPU'] = INCREMENTAL_ITAIPU
         df_pluviaBaciasinteresse = df_pluviaBaciasinteresse.pivot(index='DT_REFERENTE', columns='CD_BACIA', values='VL_ENA')
         df_pluviaBaciasinteresse = df_pluviaBaciasinteresse.rename(columns={21:'SÃO FRANCISCO (NE)'})
     
@@ -220,7 +229,7 @@ def get_ena_modelos_smap(ids_to_search,dt_rodada, granularidade, dias: int = 7):
 def getAcomph(data_inicial, data_final=None):
 
     db_ons = wx_dbClass.db_mysql_master('db_ons',connect=True)
-    tb_acomph = db_ons.db_schemas['tb_acomph']
+    tb_acomph = db_ons.getSchema('acomph_consolidado')
 
     cte = (
     db.select(
@@ -274,9 +283,6 @@ def get_ena_acomph(data_inicial,granularidade,data_final=None):
     return ena
 
 
-from PMO.scripts_unificados.apps.smap.libs import SmapTools 
-from PMO.scripts_unificados.apps.smap.libs.Rodadas import tb_smap
-
 
 
 def get_previsao_ena_smap(modelos_list:list,granularidade:str='submercado',priority:bool=False):
@@ -316,7 +322,7 @@ def calc_previsao_smap(df_modelos:pd.DataFrame,granularidade:str='submercado'):
         acomph[data] = getAcomph(data-datetime.timedelta(days=7)) if not acomph.get(data) else acomph[data]
 
         vazao =wx_calcEna.propagarCalcularNaturais(data,df_pivot,acomph[data],dias=7)
-        vazao.loc[118] = 0.185 + (vazao.loc[119]*0.8103)
+        # vazao.loc[118] = 0.185 + (vazao.loc[119]*0.8103)
         vazao = wx_calcEna.calcPostosArtificiais_df(vazao, ignorar_erros=True)
         df_ena = wx_calcEna.gera_ena_df(vazao,granularidade)
 

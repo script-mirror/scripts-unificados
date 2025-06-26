@@ -27,7 +27,6 @@ def resumoRestricoes(restricoes):
 
 	resumoRest = {}
 	for grupo, rests in restricoes_re.groupby(['iper', 'num']).__iter__():
-
 		per = grupo[0]
 		numRest = grupo[1]
 
@@ -110,10 +109,12 @@ def analisarIntercambios(pathArquivosSaidaDessem, pathArquivosEntradaDessem, dat
 	arquivosSaida = glob.glob(os.path.join(pathArquivosSaidaDessem, '*'))
 	pathRestOper = list(filter(lambda file: 'pdo_restoper.dat' in file.lower(), arquivosSaida))[0]
 	#print("\tLeitura do arquivo: {}".format(pathRestOper))
+
 	restOper = wx_pdoRestoper.leituraRestOper(pathRestOper)
 	resumoRest = resumoRestricoes(restOper)
 
 	pathOperLpp = list(filter(lambda file: 'pdo_oper_lpp.dat' in file.lower(), arquivosSaida))[0]
+	
 	operLpp = wx_pdoOperLpp.leituraOperLpp(pathOperLpp)
 	#print("\tLeitura do arquivo: {}".format(pathOperLpp))
 	resumoRest = atualizarLsupLpp(resumoRest, operLpp)
@@ -153,7 +154,7 @@ def analisarIntercambios(pathArquivosSaidaDessem, pathArquivosEntradaDessem, dat
 								 'lsup':str(int((int(resumoRest.loc[rest,iper]['lsup'])+int(resumoRest.loc[rest,iper+1]['lsup']))/2))} )
 				df_out = df_out.append(dict_aux,ignore_index=True)
 				iper = iper + 2
-		except:
+		except Exception:
 			pass
 			#print("Unexpected error:", sys.exc_info()[0])
 			#log.write('Restrição '+ str(rest) +' não esta na lista de REs do config' + '\n')
@@ -180,6 +181,7 @@ def readIntercambios(pathEntrada, patSaida, pathBase, dataDeck, pathOut):
 
 	nomeREs = pd.read_csv(pathBase + '/nomeREs.csv', header=0, sep=';')
 	df_out  = analisarIntercambios(patSaida, pathEntrada, dataDeck, nomeREs)
+	
 	balanco_intercambio_lista = df_out.values.tolist()
 	db_decks = wx_dbClass.db_mysql_master('db_decks')
 	db_decks.connect()

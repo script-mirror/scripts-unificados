@@ -73,7 +73,6 @@ def extrairInfoBloco(listaLinhas, mnemonico, regex):
 
 def leituraRestOper(pdoRestoperPath):
 	infoBlocos = getInfoBlocos()
-
 	pdoRestoper = leituraArquivo(pdoRestoperPath)
 	rest = extrairInfoBloco(pdoRestoper, 'RESTOPER', infoBlocos['restoper']['regex'])
 	df_rest = pd.DataFrame(rest, columns=infoBlocos['restoper']['campos'])

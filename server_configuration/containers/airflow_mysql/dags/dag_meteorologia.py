@@ -225,7 +225,7 @@ with DAG(
         task_id='run_forecast',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
-        command="{{ '/home/admin/raizen-power-trading-meteorologia/rotinas/forecast_to_dat.sh' }}",
+        command="{{ 'sudo /home/admin/raizen-power-trading-meteorologia/rotinas/forecast_to_dat.sh' }}",
         conn_timeout = TIME_OUT,
         cmd_timeout = TIME_OUT,
         execution_timeout = datetime.timedelta(hours=30),
@@ -241,7 +241,7 @@ with DAG(
         task_id='run_hindcast',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
-        command="{{ '/home/admin/raizen-power-trading-meteorologia/rotinas/hindcast_to_dat.sh' }}",
+        command="{{ 'sudo /home/admin/raizen-power-trading-meteorologia/rotinas/hindcast_to_dat.sh' }}",
         conn_timeout = TIME_OUT,
         cmd_timeout = TIME_OUT,
         execution_timeout = datetime.timedelta(hours=30),
@@ -322,7 +322,7 @@ with DAG(
     'PREV_CHUVA_DB_ECMWF',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='0 4,16 * * *',
+    schedule='0 4,17 * * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -766,6 +766,34 @@ with DAG(
 ##################################################################################################
 
 with DAG(
+    'Monitoramento_SST',
+    start_date= datetime.datetime(2024, 4, 28),
+    description='A simple SSH command execution example',
+    schedule = '0 12 * * 1',
+    catchup=False,
+    max_active_runs=1,
+    concurrency=1,
+    tags=['Metereologia', 'Mapas']
+
+
+) as dag:
+
+    run_shell_script = SSHOperator(
+        do_xcom_push=False,
+        task_id='roda_produtos_monitoramento_sst',
+        command="sudo /WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/python /WX2TB/Documentos/fontes/tempo/novos_produtos/ncep_sst_monitoramento/monit_sst.py",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        execution_timeout = datetime.timedelta(hours=30),
+        get_pty=True,
+    )
+
+##################################################################################################
+
+
+with DAG(
     'Mapas_GEFS',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
@@ -823,7 +851,7 @@ with DAG(
     'Mapas_ECMWF',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='0 4,16 * * *',
+    schedule='0 4,17 * * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -850,7 +878,7 @@ with DAG(
     'Mapas_ECMWF-NOVARES',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='0 8 * * *',
+    schedule='0 6 * * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -1714,7 +1742,7 @@ with DAG(
     'PREV_VENTO_GFS',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='0 2,8,14,20 * * *',
+    schedule='0 2 * * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -1741,7 +1769,7 @@ with DAG(
     'PREV_VENTO_GEFS_15D',
     start_date= datetime.datetime(2024, 4, 28),
     description='A simple SSH command execution example',
-    schedule='0 3,8,15,20 * * *',
+    schedule='0 3 * * *',
     catchup=False,
     max_active_runs=1,
     concurrency=1,
@@ -1813,7 +1841,7 @@ with DAG(
         task_id='task_teste',
         remote_host="{{ ti.xcom_pull(task_ids='start_ec2', key='public_ip') }}",
         ssh_conn_id='ssh_ecmwf',
-        command="/home/admin/enviMetereologia/bin/python /home/admin/raizen-power-trading-meteorologia/rotinas/gera_forecast_to_db_manual.py {{ dag_run.conf['modelo'] }} {{ dag_run.conf['data'] }} {{ dag_run.conf['hora'] }}",
+        command="sudo /home/admin/enviMetereologia/bin/python /home/admin/raizen-power-trading-meteorologia/rotinas/gera_forecast_to_db_manual.py {{ dag_run.conf['modelo'] }} {{ dag_run.conf['data'] }} {{ dag_run.conf['hora'] }}",
         conn_timeout = TIME_OUT,
         cmd_timeout = TIME_OUT,
         execution_timeout = datetime.timedelta(hours=30),

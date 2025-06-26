@@ -5,14 +5,17 @@ import datetime
 import pandas as pd
 import sqlalchemy as db
 import pdb
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
+PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
+sys.path.insert(1,f"{PATH_PROJETO}/scripts_unificados")
 
 path_libs = os.path.dirname(os.path.abspath(__file__))   # ou os.path.realpath(__file__)
 path_app = os.path.dirname(path_libs)
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.bibliotecas import wx_dbLib,wx_opweek, wx_dbClass
-from PMO.scripts_unificados.apps.previvaz.libs import wx_formatacao_prevs
+from bibliotecas import wx_dbLib,wx_opweek, wx_dbClass
+from apps.previvaz.libs import wx_formatacao_prevs
 
 
 
@@ -23,7 +26,7 @@ def getVazoesDat():
 def getAcomph(data_inicial, data_final=None):
 
     db_ons = wx_dbClass.db_mysql_master('db_ons',connect=True)
-    tb_acomph = db_ons.db_schemas['tb_acomph']
+    tb_acomph = db_ons.getSchema('acomph_consolidado')
 
     cte = (
     db.select(
@@ -52,9 +55,11 @@ def getAcomph(data_inicial, data_final=None):
 
 def gerarador_prevs(ano_desejado, ano_referencia):
     global path_libs
-
+    ultimo_mes = 12
+    if datetime.date(ano_referencia, 12, 1) > datetime.date.today():
+        ultimo_mes = datetime.date.today().month - 1
     primeiro_mes_prevs = datetime.datetime(ano_desejado, 1, 1,)
-    ultimo_mes_prevs = datetime.datetime(ano_desejado, 12, 1,)
+    ultimo_mes_prevs = datetime.datetime(ano_desejado, ultimo_mes, 1,)
 
     dt_inicio_prevs = wx_opweek.getLastSaturday(primeiro_mes_prevs)
     dt_fim_prevs = wx_opweek.getLastSaturday(ultimo_mes_prevs) + datetime.timedelta(days=7*6-1)
@@ -85,9 +90,10 @@ def gerarador_prevs(ano_desejado, ano_referencia):
         vazoes_ano_ref = df_vazoes.loc[posto,ano_referencia]
         vazoes_ano_ref.index = [f'{ano_desejado}{x:0>2}' for x in range(1,13)]
         dicionario_vazoes.update(vazoes_ano_ref.to_dict())
-        vazoes_ano_mais_um = df_vazoes.loc[posto,ano_referencia+1]
-        vazoes_ano_mais_um.index = [f'{ano_desejado+1}{x:0>2}' for x in range(1,13)]
-        dicionario_vazoes.update(vazoes_ano_mais_um.to_dict())
+        if ultimo_mes == 12:
+            vazoes_ano_mais_um = df_vazoes.loc[posto,ano_referencia+1]
+            vazoes_ano_mais_um.index = [f'{ano_desejado+1}{x:0>2}' for x in range(1,13)]
+            dicionario_vazoes.update(vazoes_ano_mais_um.to_dict())
 
         df[posto] = df[posto].replace(dicionario_vazoes)
 
@@ -113,14 +119,13 @@ def gerarador_prevs(ano_desejado, ano_referencia):
 
     # Tirando as vazoes com valores igual a 0
     df = df.replace({0:1})
-
     df = df.resample('7D').mean()
     df = df.T
 
     dt_ref = dt_inicio_prevs
 
-    while dt_ref < dt_fim_prevs:
-
+    data_aux = dt_fim_prevs - datetime.timedelta(days=7)
+    while dt_ref < data_aux:
         if wx_opweek.ElecData(dt_ref.date()).anoReferente != ano_desejado:
             dt_ref +=  datetime.timedelta(days=7)
             continue
@@ -150,9 +155,11 @@ def gerarador_prevs(ano_desejado, ano_referencia):
             semanas = []
             for num_semanas in range(6):
                 semanas.append(dt_ref+datetime.timedelta(days=7*num_semanas))
-                
+            # try:
             path_prevs_saida = os.path.join(path_saida_rv, nome_arquivo)    
             wx_formatacao_prevs.write_prevs(path_prevs_saida, df[semanas])
+            # except:
+                # pdb.set_trace()
         print(path_prevs_saida)
 
         dt_ref +=  datetime.timedelta(days=7)

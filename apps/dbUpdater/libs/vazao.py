@@ -52,9 +52,6 @@ def update_acomph_cache(dtRef):
 
 def importAcomph(path):
 
-    dataBase = wx_dbClass.db_mysql_master('db_ons')
-    dataBase.connect()
-    tb_acomph = dataBase.getSchema("tb_acomph")
     
     """ Importa o Acomph disponibilizado para o banco de dados
     :param path: caminho da planilha do acomph
@@ -127,7 +124,12 @@ def importAcomph(path):
         POSTOS += postos
     df_acomph_post = pd.DataFrame(ACOMPH, columns=["dt_referente","cd_posto","nivel_lido","nivel_conso","defluente_lido","vl_vaz_def_conso","afluente_lido","afluente_conso","vl_vaz_inc_conso","vl_vaz_nat_conso", "dt_acomph"])
     df_acomph_post = df_acomph_post[["dt_referente","cd_posto","vl_vaz_def_conso","vl_vaz_inc_conso","vl_vaz_nat_conso", "dt_acomph"]]
-    res = requests.post('https://tradingenergiarz.com/api/v2/ons/acomph', json=df_acomph_post.to_dict('records'))
+    res = requests.post('https://tradingenergiarz.com/api/v2/ons/acomph',
+                        json=df_acomph_post.to_dict('records'),
+                        headers={
+                            'Content-Type': 'application/json',
+                            'Authorization': f'Bearer {get_access_token()}'
+                        })
     print(res.status_code)
     print(res.text)
     # df_acomph_insert['afluente_lido'] = None

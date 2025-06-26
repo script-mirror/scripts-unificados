@@ -18,8 +18,8 @@ def leituraArquivo(filePath):
 	while iLine != len(arquivo)-1:
 		line = arquivo[iLine]
 
-		if '-----;-------;---------;------------;------------;--------;------------;------------;------------;------------;--------------------;'  in line:
-			iLine += 4
+		if 'IPER ;'  in line:
+			iLine += 3
 			line = arquivo[iLine]
 			bloco = []
 			while iLine != len(arquivo)-1:
@@ -38,6 +38,7 @@ def getInfoBlocos():
 
 	blocos['operlpp'] = {'campos':[
 						'iper',
+						'num_lpp',
 						'resp',
 						'numRe',
 						'vlrAtu',
@@ -45,12 +46,13 @@ def getInfoBlocos():
 						'indice',
 						'coeflin',
 						'nresparam',
+						'tipo_rest_var',
 						'vlrparam',
 						'coefang',
 						'multip',
 				],
-				'regex':'(.{5});(.{7});(.{9});(.{12});(.{12});(.{8});(.{12});(.{12});(.{12});(.{12});(.{20});(.*)',
-				'formatacao':'{:>5};{:>7};{:>9};{:>12};{:>12};{:>8};{:>12};{:>12};{:>12};{:>12};{:>20};'}
+				'regex':'(.{5});(.{8});(.{7});(.{9});(.{12});(.{12});(.{8});(.{12});(.{12});(.{12});(.{12});(.{12});(.{20});(.*)',
+				'formatacao':'{:>5};{:>8};{:>7};{:>9};{:>12};{:>12};{:>8};{:>12};{:>12};{:>12};{:>12};{:>12};{:>20};'}
 	return blocos
 
 
@@ -65,7 +67,6 @@ def extrairInfoBloco(listaLinhas, mnemonico, regex):
 	return blocos
 
 def leituraOperLpp(pdoOperLppPath):
-
 	infoBlocos = getInfoBlocos()
 
 	pdoOperLpp = leituraArquivo(pdoOperLppPath)

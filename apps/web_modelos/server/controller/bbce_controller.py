@@ -5,6 +5,8 @@ import pdb
 from flask import request, jsonify
 import datetime
 from flask_login import login_required
+import sqlalchemy as db
+import pandas as pd
 
 sys.path.insert(1,'/WX2TB/Documentos/fontes')
 from PMO.scripts_unificados.bibliotecas import wx_dbClass
@@ -18,18 +20,21 @@ from PMO.scripts_unificados.apps.web_modelos.server.caches import rz_cache
 @login_required
 def get_produtos_bbce():
 
-    database = wx_dbClass.db_mysql_master('db_config')
+    database = wx_dbClass.db_mysql_master('bbce')
     database.connect()
-    tb_produtos_bbce = database.getSchema('tb_produtos_bbce')
+    tb_produtos_interesse = database.getSchema('tb_produtos_interesse')
+    tb_produtos = database.getSchema('tb_produtos')
 
-    select = tb_produtos_bbce.select()
-    assuntos = database.conn.execute(select).fetchall()
-
-    palavras_ = []
-    for row in assuntos:
-        palavras_.append({'id':row[0],'palavra':row[1]})
-    return jsonify(palavras_)
-
+    select = db.select(
+        tb_produtos_interesse.c['id_produto'],
+        tb_produtos_interesse.c['ordem'],
+        tb_produtos.c['str_produto']
+    ).join(
+        tb_produtos, tb_produtos.c['id_produto'] == tb_produtos_interesse.c['id_produto']
+    )
+    result = database.db_execute(select).fetchall()
+    df = pd.DataFrame(result, columns=["id", "ordem", "str_produto"])
+    return df.to_dict("records")
 @bp.route('/API/set/produtos-bbce',methods=['POST'])
 @login_required
 def set_produtos_bbce():
@@ -68,9 +73,10 @@ def get_negociacoes_bbce():
 def get_negociacoes_interesse_bbce_por_data():
     no_cache = request.args.get('noCache', default=True)
     atualizar = request.args.get('atualizar', default=False)
+    categoria_negociacao = request.args.get('categoria_negociacao', default="Mesa")
     datas = request.args.get('datas', default=datetime.datetime.now(), type=utils.formatar_data)
     if no_cache:
-        return db_bbce.tb_negociacoes_resumo.get_negociacoes_interesse_por_data(datas)
+        return db_bbce.tb_negociacoes_resumo.get_negociacoes_interesse_por_data(datas, categoria_negociacao)
     return rz_cache.get_cached(db_bbce.tb_negociacoes_resumo.get_negociacoes_interesse_por_data, datas, atualizar=atualizar)
 
 
@@ -89,8 +95,9 @@ def get_negociacoes_fechamento_interesse_por_data():
 def get_datahora_ultima_negociacao():
     no_cache = request.args.get('noCache', default=True)
     atualizar = request.args.get('atualizar', default=False)
+    categoria_negociacao = request.args.get('categoria_negociacao', default="Mesa")
     if no_cache:
-        return db_bbce.tb_negociacoes.get_datahora_ultima_negociacao()
+        return db_bbce.tb_negociacoes.get_datahora_ultima_negociacao(categoria_negociacao)
     return rz_cache.get_cached(db_bbce.tb_negociacoes.get_datahora_ultima_negociacao, atualizar=atualizar)
 
 @bp.route('/API/get/bbce/resumos-negociacoes/spread/preco-medio', methods=['GET'])

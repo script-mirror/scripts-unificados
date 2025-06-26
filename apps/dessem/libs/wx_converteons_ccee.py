@@ -48,10 +48,13 @@ def converter_entdados(dt_referente):
     path_ultimo_deck_ons = os.path.join(path_decks_ons,f'ds_ons_{mes_ref_atual:0>2}{ano_ref_atual}_rv{rev_ref_atual}d{dt_referente.strftime("%d")}')
     path_penultimo_deck_ons = os.path.join(path_decks_ons,f'ds_ons_{mes_ref_anterior:0>2}{ano_ref_anterior}_rv{rev_ref_anterior}d{dt_referente_anterior.strftime("%d")}')
     path_ultimo_deck_ccee = os.path.join(path_decks_ccee,f'DS_CCEE_{mes_ref_anterior:0>2}{ano_ref_anterior}_SEMREDE_RV{rev_ref_anterior}D{dt_referente_anterior.strftime("%d")}')
-
     ultimo_entdados_ons = open(os.path.join(path_ultimo_deck_ons,'entdados.dat'), 'r', encoding="utf8").readlines()
     penultimo_entdados_ons = open(os.path.join(path_penultimo_deck_ons,'entdados.dat'), 'r', encoding="utf8").readlines()
-    penultimo_entdados_ccee = open(os.path.join(path_ultimo_deck_ccee,'entdados.dat'), 'r', encoding="utf8").readlines()
+    print(path_ultimo_deck_ccee)
+    try:
+        penultimo_entdados_ccee = open(os.path.join(path_ultimo_deck_ccee,'entdados.dat'), 'r', encoding="utf8").readlines()
+    except:
+        penultimo_entdados_ccee = open(os.path.join(path_ultimo_deck_ccee,'entdados.dat'), 'r', encoding="Windows-1252").readlines()
 
     mnemonicos_restricoes = ['RE','LU','FI','FH','FE','FT','FC','FR']
     mnemonicos_comentados = ['TM','DP','RD','CI','CE'] + mnemonicos_restricoes

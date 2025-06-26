@@ -386,7 +386,7 @@ def organizar_info_carga_nw(path_carga_zip):
 
 def organizar_info_eolica_nw(paths_sistema:List[str], data_produto:datetime.date):
     novos_blocos = {}
-    weol_decomp = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average", params={"dataProduto":str(data_produto)}, 
+    weol_decomp = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol/weighted-average", params={"dataProduto":str(data_produto)}, 
                         headers={
                 'Authorization': f'Bearer {get_access_token()}'
             })
@@ -446,7 +446,7 @@ def organizar_info_restricoes_eletricas_dc(pdf_path, table_name="Tabela 4-1: Res
         logger.info(f"Nome do arquivo PDF {pdf_path} não corresponde ao padrão esperado.")
         return {}
         
-    primeiro_mes = pd.to_datetime(match.group(1),format="%B-%Y") 
+    primeiro_mes = pd.to_datetime(match.group(1).split("_")[0],format="%B-%Y") 
     segundo_mes = primeiro_mes + pd.DateOffset(months=1) 
  
     table_page = find_table_page(pdf_path, table_name)

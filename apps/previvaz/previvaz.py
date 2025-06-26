@@ -13,20 +13,19 @@ diretorioApp = os.path.abspath('.')
 appsDir = os.path.dirname(diretorioApp)
 diretorioRaiz = os.path.dirname(appsDir)
 
-libLocal = os.path.join(diretorioApp,'libs')
-libUniversal = os.path.join(diretorioRaiz,'bibliotecas')
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
+PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
+sys.path.insert(1,f"{PATH_PROJETO}/scripts_unificados")
 
-sys.path.insert(1, libUniversal)
-import wx_dbLib
-import wx_opweek
-import wx_configs
-import wx_postosAux
-import wx_manipulaArqPrevivaz
-import wx_manipulaArqSmap
-import wx_manipulaArqCpins
-
-sys.path.insert(1, libLocal)
-import wx_manipulacaoDados
+from bibliotecas import wx_dbLib
+from bibliotecas import wx_opweek
+from bibliotecas import wx_configs
+from bibliotecas import wx_postosAux
+from bibliotecas import wx_manipulaArqPrevivaz
+from bibliotecas import wx_manipulaArqSmap
+from bibliotecas import wx_manipulaArqCpins
+from apps.previvaz.libs import wx_manipulacaoDados 
 
 def rodar_previvaz(data, modelo, fechamentos, ultima_rv_date, prox_rv_date):
 

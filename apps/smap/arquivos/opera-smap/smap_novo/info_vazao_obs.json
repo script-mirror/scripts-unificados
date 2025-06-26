@@ -1391,6 +1391,45 @@
                 "tipoVazao": "VMD"
             }
         }
+    },
+    
+    "JURUENA": {
+        "sheet": "Amazonas",
+        "iniciais": "VNA",
+        "codigoEstacao": "17091035",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "JURUENA": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    
+    "SAPIACAS": {
+        "sheet": "Amazonas",
+        "iniciais": "VNA",
+        "codigoEstacao": "17393500",
+        "bacia": "Norte",
+        "quantidadeDias": 95,
+        "composicao": {
+            "SALTO APIACÁS": {
+                "tipoVazao": "VNA"
+            }
+        }
+    },
+    
+    "SALTORS": {
+        "sheet": "Jacui",
+        "iniciais": "VNA",
+        "codigoEstacao": "87100000",
+        "bacia": "Sul",
+        "quantidadeDias": 45,
+        "composicao": {
+            "SALTO RS": {
+                "tipoVazao": "VNA"
+            }
+        }
     }
     
 }

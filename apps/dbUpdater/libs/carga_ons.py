@@ -8,9 +8,12 @@ import pdfplumber
 import pandas as pd
 import sqlalchemy as db
 
-path_fontes = "/WX2TB/Documentos/fontes/"
-sys.path.insert(1,path_fontes)
-from PMO.scripts_unificados.bibliotecas import wx_dbClass
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
+PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
+sys.path.insert(1,f"{PATH_PROJETO}/scripts_unificados")
+
+from bibliotecas import wx_dbClass
 
 def read_PrevCargaDessem_files_saida(path_zip:str):
     
