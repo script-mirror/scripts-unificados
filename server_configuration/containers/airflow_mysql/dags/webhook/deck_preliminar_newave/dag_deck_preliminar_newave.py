@@ -3,7 +3,7 @@ import sys
 import os
 from airflow.models.dag import DAG
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.operators.python import PythonOperator
+from airflow.operators.python import PythonOperator, BranchPythonOperator
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
@@ -27,6 +27,13 @@ with DAG(
     },
     description='DAG simplificada para processamento do Deck Preliminar Newave'
 ) as dag:
+
+    # Branch operator para decidir qual caminho seguir baseado na origem
+    branch_task = BranchPythonOperator(
+        task_id='branch_task',
+        python_callable=DeckPreliminarNewaveService.determinar_task_inicial,
+        provide_context=True,
+    )
 
     # 1. Validar dados de entrada
     validar_dados_entrada = PythonOperator(
@@ -90,4 +97,6 @@ with DAG(
         on_success_callback=WhatsappMessageSender.enviar_whatsapp_sucesso,
     )
 
-    validar_dados_entrada >> download_arquivos >> extrair_arquivos >> [processar_deck_nw_cadic, processar_deck_nw_sist] >> enviar_dados_para_api >> gerar_tabela_diferenca_cargas >> enviar_tabela_whatsapp_email >> finalizar 
+    branch_task >> [validar_dados_entrada, gerar_tabela_diferenca_cargas]
+    validar_dados_entrada >> download_arquivos >> extrair_arquivos >> [processar_deck_nw_cadic, processar_deck_nw_sist] >> enviar_dados_para_api >> gerar_tabela_diferenca_cargas >> enviar_tabela_whatsapp_email >> finalizar
+    gerar_tabela_diferenca_cargas >> enviar_tabela_whatsapp_email >> finalizar

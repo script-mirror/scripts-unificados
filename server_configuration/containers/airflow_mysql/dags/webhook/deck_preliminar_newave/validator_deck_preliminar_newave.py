@@ -162,7 +162,7 @@ class DeckPreliminarNewaveValidator:
             print(f"📝 Produto validado: {validated_data['nome']}")
             print(f"📅 Período: {validated_data['dataProduto']}")
             print(f"📁 Arquivo: {validated_data['filename']}")
-            print(f"🔗 URL: {validated_data['url'][:50]}...")
+            print(f"🔗 URL: {validated_data['url']}")
             
             return validated_data
             

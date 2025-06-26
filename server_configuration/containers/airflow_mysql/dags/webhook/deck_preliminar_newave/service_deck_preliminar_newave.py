@@ -16,7 +16,27 @@ class DeckPreliminarNewaveService:
         self.repository = SharedRepository()
         self.validator = DeckPreliminarNewaveValidator()
         
+    @staticmethod
+    def determinar_task_inicial(**kwargs):
+        """
+        Determina qual task deve ser executada baseada na origem da configuração.
+        Retorna 'validar_dados_entrada' se origem não existir ou for 'ons',
+        caso contrário retorna 'gerar_tabela_diferenca_cargas'.
+        """
+        dag_run = kwargs.get('dag_run')
+        if not dag_run or not hasattr(dag_run, 'conf') or not dag_run.conf:
+            print("Sem configuração DAG, executando fluxo completo")
+            return 'validar_dados_entrada'
         
+        origem = dag_run.conf.get('origem')
+        
+        if origem is None or origem == 'ons':
+            print(f"Origem: {origem}, executando fluxo completo")
+            return 'validar_dados_entrada'
+        else:
+            print(f"Origem: {origem}, executando apenas geração de tabela")
+            return 'gerar_tabela_diferenca_cargas'
+
     @staticmethod
     def validar_dados_entrada(**kwargs):
         validator = DeckPreliminarNewaveValidator()
@@ -432,14 +452,8 @@ class DeckPreliminarNewaveService:
         import pdb
         
         try:
-            task_instance = kwargs['task_instance']
-            api_result = task_instance.xcom_pull(task_ids='enviar_dados_para_api')
+            product_datetime_str = kwargs.get('dag_run').conf.get('product_details').get('dataProduto')
 
-            if not api_result or not api_result.get('success'):
-                raise Exception("Dados não importados no banco de dados. Não é possivel gerar a tabela de diferença")
-            
-            product_datetime_str = api_result.get('product_datetime')
-            
             api_url = os.getenv("URL_API_V2", "http://host.docker.internal:8000/api/v2")
             image_api_url = "https://tradingenergiarz.com/html-to-img"
             
@@ -539,8 +553,8 @@ class DeckPreliminarNewaveService:
             
             # Gerar nome do arquivo baseado na data do produto
             if product_datetime_str:
-                dt = datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
-                image_filename = f"tabela_diferenca_cargas_{dt.strftime('%Y%m%d')}.png"
+                # dt = datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
+                image_filename = f"tabela_diferenca_cargas_{product_datetime_str}.png"
             else:
                 image_filename = f"tabela_diferenca_cargas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
             
@@ -579,7 +593,7 @@ class DeckPreliminarNewaveService:
             
             image_path = tabela_result.get('image_path')
             image_filename = tabela_result.get('image_filename')
-            product_datetime_str = tabela_result.get('product_datetime')
+            product_datetime_str = kwargs.get('dag_run').conf.get('product_details').get('dataProduto')
             
             if not image_path or not os.path.exists(image_path):
                 raise Exception(f"Arquivo de imagem não encontrado: {image_path}")

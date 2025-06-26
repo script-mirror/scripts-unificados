@@ -155,13 +155,7 @@ class WhatsAppSender:
         Returns:
             True se enviado com sucesso
         """
-        timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-        
-        caption = f"""📊 {table_type}
-📅 Produto: {product_datetime}
-⏰ Gerado em: {timestamp}
-
-✅ Tabela processada com sucesso!"""
+        caption = f"""{table_type} ({product_datetime})"""
         
         return self.send_image(
             destinatario=destinatario,

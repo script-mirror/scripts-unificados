@@ -8,15 +8,16 @@ from airflow.models.dag import DAG
 from airflow.operators.dummy_operator import DummyOperator
 
 from airflow.operators.python import BranchPythonOperator, PythonOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.exceptions import AirflowException
 
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.dessem.libs import wx_mainBalancoDS
-from PMO.scripts_unificados.apps.dbUpdater.libs import deck_nw,deck_ds
-from PMO.scripts_unificados.apps.verificadores.ccee import rz_download_decks_ccee
-from PMO.scripts_unificados.apps.gerarProdutos import gerarProdutos2 
-from PMO.scripts_unificados.bibliotecas import wx_opweek, rz_dir_tools
+from apps.dessem.libs import wx_mainBalancoDS
+from apps.dbUpdater.libs import deck_nw,deck_ds
+from apps.verificadores.ccee import rz_download_decks_ccee
+from apps.gerarProdutos import gerarProdutos2 
+from bibliotecas import wx_opweek, rz_dir_tools
 
 
 
@@ -184,6 +185,20 @@ with DAG(
         python_callable=importar_deck_nw,
         
     )
+#     {
+#     'origem':'ccee',
+#     'product_details':{
+#     'dataProduto':'202501'
+#     }
+    
+# }
+    trigger_dag_diff_carga = TriggerDagRunOperator(
+        task_id="trigger_dag_diff_carga",
+        trigger_dag_id='DECK_PRELIMINAR_NEWAVE',
+        conf={'origem': "ccee", 'product_details': {'dataProduto': '{{dag_run.conf.dataProduto}}'}},  
+        wait_for_completion=False,  
+        trigger_rule="none_failed_min_one_success",
+    )
 
     fim = DummyOperator(
         task_id='fim',
@@ -192,4 +207,4 @@ with DAG(
 
     inicio >> downloadCCEE_ds >> dbUpdater_ds
     dbUpdater_ds >> fim
-    dbUpdater_ds >> downloadCCEE_nw >> dbUpdater_nw >> fim
+    dbUpdater_ds >> downloadCCEE_nw >> dbUpdater_nw >> trigger_dag_diff_carga >> fim
