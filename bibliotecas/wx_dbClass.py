@@ -1137,15 +1137,25 @@ class db_mysql_master():
         elif table_name.lower() == 'acomph_consolidado':
             table_schema = db.Table('acomph_consolidado', self.meta,
                 db.Column('id', db.Integer, primary_key=True, autoincrement=True),
-                db.Column('dt_referente', db.Date, nullable=True),
-                db.Column('cd_posto', db.SmallInteger, nullable=True),
-                db.Column('vl_vaz_def_conso', db.Float, nullable=True),
-                db.Column('vl_vaz_inc_conso', db.Float, nullable=True),
-                db.Column('vl_vaz_nat_conso', db.Float, nullable=True),
-                db.Column('dt_acomph', db.Date, nullable=True),
+                db.Column('dt_referente', db.DateTime),
+                db.Column('cd_posto', db.SmallInteger),
+                db.Column('vl_vaz_def_conso', db.Float),
+                db.Column('vl_vaz_inc_conso', db.Float),
+                db.Column('vl_vaz_nat_conso', db.Float),
+                db.Column('dt_acomph', db.DateTime),
                 extend_existing=True
             )
+            #     db.Column('dt_referente', db.DateTime),
+            #     db.Column('cd_posto', db.SmallInteger),
+            #     db.Column('vl_ear_lido', db.Float),
+            #     db.Column('vl_ear_conso', db.Float),
+            #     db.Column('vl_vaz_def_lido', db.Float),
+            #     db.Column('vl_vaz_def_conso', db.Float),
+            #     db.Column('vl_vaz_afl_lido', db.Float),
+            #     db.Column('vl_vaz_afl_conso', db.Float),
 
+            #     db.Column('dt_acomph', db.DateTime)
+            # )
         return table_schema
 
     def get_db_schemas(self, tables=[]):

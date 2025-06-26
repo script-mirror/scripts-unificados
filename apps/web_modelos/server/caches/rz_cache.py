@@ -127,7 +127,7 @@ def cache_acomph(prefixo,granularidade,dataInicial,dataFinal=None,flag_atualizar
   else:
     print("reset cache")
     df_ena_aux = pd.DataFrame()
-    ultima_data_cache = datetime.datetime.strptime("2025/01/01", "%Y/%m/%d")
+    ultima_data_cache = datetime.datetime.strptime("2013/01/01", "%Y/%m/%d")
 
   #se ja estiver atualizado retorna dados
   if ultima_data_cache == dt_ontem.strftime('%Y/%m/%d'):
