@@ -453,7 +453,8 @@ class DeckPreliminarNewaveService:
         
         try:
             product_datetime_str = kwargs.get('dag_run').conf.get('product_details').get('dataProduto')
-
+            if product_datetime_str:
+                product_datetime_str = product_datetime_str.replace('/', '')
             api_url = os.getenv("URL_API_V2", "https://tradingenergiarz.com/api/v2")
             image_api_url = "https://tradingenergiarz.com/html-to-img"
             
