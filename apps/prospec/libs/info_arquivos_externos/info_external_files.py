@@ -386,7 +386,7 @@ def organizar_info_carga_nw(path_carga_zip):
 
 def organizar_info_eolica_nw(paths_sistema:List[str], data_produto:datetime.date):
     novos_blocos = {}
-    weol_decomp = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average", params={"dataProduto":str(data_produto)}, 
+    weol_decomp = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol/weighted-average", params={"dataProduto":str(data_produto)}, 
                         headers={
                 'Authorization': f'Bearer {get_access_token()}'
             })

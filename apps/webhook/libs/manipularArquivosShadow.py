@@ -15,8 +15,8 @@ import re
 import shutil
 import subprocess
 
-
 from dotenv import load_dotenv
+
 
 logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
@@ -31,6 +31,7 @@ load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 HOST_SERVIDOR = os.getenv('HOST_SERVIDOR')
 URL_COGNITO = os.getenv('URL_COGNITO')
 CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
+PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
 
 path_libs = os.path.dirname(os.path.abspath(__file__))
 path_webhook = os.path.dirname(path_libs)
@@ -39,16 +40,17 @@ path_fontes = "/WX2TB/Documentos/fontes/"
 
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.airflow import airflow_tools
-from PMO.scripts_unificados.apps.webhook.libs import wx_libs_preco
-from PMO.scripts_unificados.apps.tempo.libs import plot
-from PMO.scripts_unificados.apps.smap.libs import SmapTools
-from PMO.scripts_unificados.apps.dessem import dessem
-from PMO.scripts_unificados.apps.pconjunto import wx_plota_pconjunto
-from PMO.scripts_unificados.apps.gerarProdutos import gerarProdutos2 
-from PMO.scripts_unificados.bibliotecas import wx_opweek,rz_dir_tools
-from PMO.scripts_unificados.apps.dbUpdater.libs import carga_ons,chuva,deck_ds,deck_dc,deck_nw,geracao,revisao,temperatura,vazao
-from PMO.scripts_unificados.apps.prospec.libs import update_estudo
+sys.path.insert(1, f"{PATH_PROJETO}/scripts_unificados")
+from apps.airflow import airflow_tools
+from apps.webhook.libs import wx_libs_preco
+from apps.tempo.libs import plot
+from apps.smap.libs import SmapTools
+from apps.dessem import dessem
+from apps.pconjunto import wx_plota_pconjunto
+from apps.gerarProdutos import gerarProdutos2
+from bibliotecas import wx_opweek,rz_dir_tools
+from apps.dbUpdater.libs import carga_ons,chuva,deck_ds,deck_dc,deck_nw,geracao,revisao,temperatura,vazao
+from apps.prospec.libs import update_estudo
 
 
 #constantes path
@@ -992,6 +994,12 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
         "produto":"TABELA_WEOL_SEMANAL",
         "data":data_produto.date(),
     })
+    if dadosProduto.get('enviar', True) == True:
+        GERAR_PRODUTO.enviar({
+        "produto":"TABELA_WEOL_DIFF",
+        "data":data_produto.date(),
+    })
+
         
 def relatorio_limites_intercambio(dadosProduto):
     
@@ -1083,23 +1091,58 @@ if __name__ == '__main__':
     dadosProduto = {
     "function_name": "WEBHOOK",
     "product_details": {
-        "dataProduto": "13/06/2025",
-        "enviar": "true",
-        "filename": "Blocos_2025-06-14.zip",
+        "dataProduto": "07/2025",
+        "enviar": 1,
+        "filename": "Deck NEWAVE Preliminar.zip",
         "macroProcesso": "Programação da Operação",
-        "nome": "Arquivos de Previsão de Carga para o DESSEM",
-        "periodicidade": "2025-06-13T03:00:00.000Z",
-        "periodicidadeFinal": "2025-06-14T02:59:59.000Z",
-        "processo": "Previsão de carga para o DESSEM",
-        "s3Key": "webhooks/Arquivos de Previsão de Carga para o DESSEM/684c4549b1c148748afd0db6_Blocos_2025-06-14.zip",
-        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ni9Qcm9kdXRvcy8yNzUvQmxvY29zXzIwMjUtMDYtMTQuemlwIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IkFycXVpdm9zIGRlIFByZXZpc8OjbyBkZSBDYXJnYSBwYXJhIG8gREVTU0VNIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NDk5MTU1NzcsIm5iZiI6MTc0OTgyODkzN30.cRBQhCsssujc_JcD3b_Ng5QWDTJ_GkI8znjnHEFwcCg",
-        "webhookId": "684c4549b1c148748afd0db6"
+        "nome": "Deck NEWAVE Preliminar",
+        "periodicidade": "2025-07-01T03:00:00.000Z",
+        "periodicidadeFinal": "2025-08-01T02:59:59.000Z",
+        "processo": "Médio Prazo",
+        "s3Key": "webhooks/Deck NEWAVE Preliminar/68596b2ab1c148748afd166c_Deck NEWAVE Preliminar.zip",
+        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjMtMDYtMjAyNV8xMTU0MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1MDc3NzI0MiwibmJmIjoxNzUwNjkwNjAyfQ.BMzBppjFOa47kjJHndtMoTDj00NZJWEJo1n1sQa1btM",
+        "webhookId": "68596b2ab1c148748afd166c"
     }
 }
     dadosProduto = dadosProduto["product_details"]
-    dadosProduto["enviar"] = True
-
-
+    carga_newave_preliminar(dadosProduto)
     
-    previsao_carga_dessem(dadosProduto)
+#     dadosProduto = {
+#     "function_name": "WEBHOOK",
+#     "product_details": {
+#         "dataProduto": "23/06/2025",
+#         "enviar": 0,
+#         "filename": "Eta40_precipitacao10d_20250623.zip",
+#         "macroProcesso": "Programação da Operação",
+#         "nome": "Modelo ETA",
+#         "periodicidade": "2025-06-23T03:00:00.000Z",
+#         "periodicidadeFinal": "2025-06-24T02:59:59.000Z",
+#         "processo": "Meteorologia e clima",
+#         "s3Key": "webhooks/Modelo ETA/6859284ab1c148748afd15dd_Eta40_precipitacao10d_20250623.zip",
+#         "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8zOC9Qcm9kdXRvcy81NDkvRXRhNDBfcHJlY2lwaXRhY2FvMTBkXzIwMjUwNjIzLnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJNb2RlbG8gRVRBIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTA3NjAxMjIsIm5iZiI6MTc1MDY3MzQ4Mn0.YscW7FP2ADuLS53tAxlG29mVjO_YoQWCxO76luEltWs",
+#         "webhookId": "6859284ab1c148748afd15dd"
+#     }
+# }
+#     dadosProduto = dadosProduto["product_details"]
+    
+#     modelo_eta(dadosProduto) 
+    
+#     dadosProduto = {
+#     "function_name": "WEBHOOK",
+#     "product_details": {
+#         "dataProduto": "23/06/2025",
+#         "enviar": 0,
+#         "filename": "GEFS50_precipitacao14d_20250623.zip",
+#         "macroProcesso": "Programação da Operação",
+#         "nome": "Modelo GEFS",
+#         "periodicidade": "2025-06-23T03:00:00.000Z",
+#         "periodicidadeFinal": "2025-06-24T02:59:59.000Z",
+#         "processo": "Meteorologia e clima",
+#         "s3Key": "webhooks/Modelo GEFS/68593650b1c148748afd15e4_GEFS50_precipitacao14d_20250623.zip",
+#         "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8zOC9Qcm9kdXRvcy81NTAvR0VGUzUwX3ByZWNpcGl0YWNhbzE0ZF8yMDI1MDYyMy56aXAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiTW9kZWxvIEdFRlMiLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1MDc2MzcxMSwibmJmIjoxNzUwNjc3MDcxfQ.NICaGwXdS0vbAn5llT-5IHXGdMU88gq9Ow1D0yb-eGM",
+#         "webhookId": "68593650b1c148748afd15e4"
+#     }
+# }
+#     dadosProduto = dadosProduto["product_details"]
+#     modelo_gefs(dadosProduto)
 

@@ -12,12 +12,15 @@ import requests as req
 from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.gerarProdutos.libs import wx_resultadosProspec ,wx_previsaoGeadaInmet ,rz_cargaPatamar ,rz_deck_dc_preliminar ,rz_aux_libs ,rz_produtos_chuva, html_to_image
-from PMO.scripts_unificados.apps.gerarProdutos.libs.html_to_image import api_html_to_image
-from PMO.scripts_unificados.bibliotecas import  wx_dbLib, wx_emailSender, wx_opweek
-from PMO.scripts_unificados.apps.rodadas import rz_rodadasModelos
-from PMO.scripts_unificados.apps.gerarProdutos.config import (
+
+sys.path.insert(1, f"{PATH_PROJETO}/scripts_unificados")
+from apps.gerarProdutos.libs import wx_resultadosProspec ,wx_previsaoGeadaInmet ,rz_cargaPatamar ,rz_deck_dc_preliminar ,rz_aux_libs ,rz_produtos_chuva, html_to_image
+from apps.gerarProdutos.libs.html_to_image import api_html_to_image
+from bibliotecas import  wx_dbLib, wx_emailSender, wx_opweek
+from apps.rodadas import rz_rodadasModelos
+from apps.gerarProdutos.config import (
     __HOST_SERVIDOR,
     __USER_EMAIL_CV,
     __PASSWORD_EMAIL_CV,
@@ -691,7 +694,7 @@ def processar_produto_TABELA_WEOL_MENSAL(parametros):
     resultado = Resultado(parametros)
     data:datetime.date = parametros['data']
     
-    res = req.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average/month/table",
+    res = req.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol/weighted-average/month/table",
                 params={"dataProduto":str(data), "quantidadeProdutos":15},
                 headers={
                 'Authorization': f'Bearer {get_access_token()}'
@@ -711,7 +714,7 @@ def processar_produto_TABELA_WEOL_SEMANAL(parametros):
     resultado = Resultado(parametros)
     data:datetime.date = parametros['data']
     
-    res = req.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/patamares/weighted-average/week/table",
+    res = req.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol/weighted-average/week/table",
                   params={"dataProduto":str(data), "quantidadeProdutos":15},
                   headers={
                 'Authorization': f'Bearer {get_access_token()}'
@@ -725,6 +728,27 @@ def processar_produto_TABELA_WEOL_SEMANAL(parametros):
     resultado.destinatarioWhats = "Premissas Preco"
 
     return resultado
+
+
+def processar_produto_TABELA_WEOL_DIFF(parametros):
+    resultado = Resultado(parametros)
+    data:datetime.date = parametros['data']
+    
+    res = req.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol/diff-table",
+                  params={"dataProduto":str(data)},
+                  headers={
+                'Authorization': f'Bearer {get_access_token()}'
+            })
+    html = res.json()["html"]
+    path_fig = api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'weol_diff_{data}.png'))
+
+    resultado.fileWhats = path_fig
+    resultado.msgWhats = f"WEOL (D-1) ({(data + datetime.timedelta(days=1)).strftime('%d/%m/%Y')})"
+    resultado.flagWhats = True
+    resultado.destinatarioWhats = "Premissas Preco"
+
+    return resultado
+
 
 def processar_produto_prev_ena_consistido(parametros):
     resultado = Resultado(parametros)
