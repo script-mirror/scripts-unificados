@@ -131,7 +131,11 @@ def importar_deck_nw(**kwargs):
         ti = kwargs['ti']
         path = ti.xcom_pull(task_ids='download_deck_nw', key='path')
 
-        deck_nw.importar_deck_values_nw(path)
+        data_produto = deck_nw.importar_deck_values_nw(path)
+        kwargs['dag_run'].conf.update(
+            {'origem': 'ccee',
+             'product_details': {'dataProduto': data_produto}}
+        )
         return ['fim']
     
     except Exception as e:

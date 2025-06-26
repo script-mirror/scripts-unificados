@@ -254,6 +254,7 @@ def importar_deck_values_nw(path_zip):
         sql_insert = table.insert().values(values.dropna(axis=0).values.tolist())
         n_values = db_decks.db_execute(sql_insert).rowcount
         print(f"{n_values} Linhas inseridas na {table_name}!")
+    return str_date
     
 
 def importar_carga_nw(pathZip, dataReferente, str_fonte, tx_comentario=""):
