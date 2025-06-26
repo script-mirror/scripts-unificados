@@ -4,7 +4,7 @@ import os
 from airflow.models.dag import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python import PythonOperator, BranchPythonOperator
-
+from airflow.utils.trigger_rule import TriggerRule
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
 from service_deck_preliminar_newave import DeckPreliminarNewaveService
@@ -82,6 +82,7 @@ with DAG(
         task_id='gerar_tabela_diferenca_cargas',
         python_callable=DeckPreliminarNewaveService.gerar_tabela_diferenca_cargas,
         provide_context=True,
+        trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS,
     )
     
     # 8. Enviar tabela para whatsapp e e-mail
@@ -89,12 +90,12 @@ with DAG(
         task_id='enviar_tabela_whatsapp_email',
         python_callable=DeckPreliminarNewaveService.enviar_tabela_whatsapp_email,
         provide_context=True,
+        trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS,
     )
     
     # 9. Finalizar
     finalizar = DummyOperator(
-        task_id='finalizar', 
-        on_success_callback=WhatsappMessageSender.enviar_whatsapp_sucesso,
+        task_id='finalizar'
     )
 
     branch_task >> [validar_dados_entrada, gerar_tabela_diferenca_cargas]
