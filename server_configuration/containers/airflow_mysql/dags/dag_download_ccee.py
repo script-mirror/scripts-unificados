@@ -10,9 +10,11 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.exceptions import AirflowException
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
 
-
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
+PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
+sys.path.insert(1,f"{PATH_PROJETO}/scripts_unificados")
 from apps.dessem.libs import wx_mainBalancoDS
 from apps.dbUpdater.libs import deck_nw,deck_ds
 from apps.verificadores.ccee import rz_download_decks_ccee
