@@ -69,15 +69,17 @@ def download_decks_acervo_ccee(pathArquivos, nome_deck_pesquisado, dtAtual=None,
     data = response.json()
  
     dataframe_produtos = pd.DataFrame(data['results'])
-
-    padrao_regex = r'Dessem - \d{2}/\d{4}'    
-    url = dataframe_produtos[dataframe_produtos['nomeComplementar'].str.contains(padrao_regex, regex=True)][['url']].values
     
+    padrao_regex = rf'{nome_deck_pesquisado} - \d{{2}}/\d{{4}}'
+    if nome_deck_pesquisado == 'Newave':
+        url = dataframe_produtos[dataframe_produtos['nomeDocumentoList']=='Deck de Preços - Newave'][['url']].values
+    else:
+        url = dataframe_produtos[dataframe_produtos['nomeComplementar'].str.contains(padrao_regex, regex=True)][['url']].values
+        
     url_string = url[0][0]
     nome_arquivo = url_string.strip().split('/')[-2]
- 
+
     return wx_download.downloadByRequest(url=url_string, pathSaida=pathArquivos, filename=nome_arquivo)
- 
  
 def enviar(parametros):
     """

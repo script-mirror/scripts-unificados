@@ -596,7 +596,9 @@ class db_mysql_master():
                     db.Column('vl_geracao_pct_mmgd', db.Float),
                     db.Column('vl_geracao_eol_mmgd', db.Float),
                     db.Column('vl_geracao_ufv_mmgd', db.Float),
+                    db.Column('fonte', db.String(45)),
                     db.Column('dt_deck', db.DateTime),
+                    
 
                 )
             
@@ -612,6 +614,7 @@ class db_mysql_master():
                     db.Column('vl_mmgd_ne', db.Float),
                     db.Column('vl_boa_vista', db.Float),
                     db.Column('vl_mmgd_n', db.Float),
+                    db.Column('fonte', db.String(45)),
                     db.Column('dt_deck', db.DateTime),
                 )
             

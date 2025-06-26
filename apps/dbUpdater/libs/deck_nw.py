@@ -218,13 +218,12 @@ def processar_c_adic_NW(dict_final):
 def importar_deck_values_nw(path_zip):
 
     # regex = "NW(\d{6})"
-    regex = "NEW_CCEE_(\d{6})"
     file_name = os.path.basename(path_zip)
-    match = re.search(regex, file_name)
-    str_date = match.group(1)
+    
+    str_date = file_name.replace('.zip', '').replace('NW', '')
     print(str_date)
     # date = datetime.datetime.strptime(str_date, "%Y%m")
-    date = datetime.datetime.strptime(str_date, "%m%Y")
+    date = datetime.datetime.strptime(str_date, "%Y%m")
     str_date_formated = date.strftime("%Y-%m-%d")
 
     dict_final = read_deck_nw_files(path_zip, files = ['SISTEMA.DAT','C_ADIC.DAT'])
@@ -233,10 +232,12 @@ def importar_deck_values_nw(path_zip):
     df_sist_intercambio_values = processar_sist_limites_intercambio_NW(dict_final)
     df_sist_values = processar_sist_energia_geracao_NW(dict_final)
     
+    df_cadic_values['fonte'] = 'ccee'
+    df_sist_values['fonte'] = 'ccee'
     table_values = [
-        ("tb_nw_cadic",df_cadic_values[['Ano','Mês','CONS.ITAIPU','ANDE','MMGD SE','MMGD S','MMGD NE','BOA VISTA','MMGD N']].copy()),
-        ("tb_nw_sist_intercambio",df_sist_intercambio_values[['Ano','Mês','sistema_src','sistema_dst','intercambio']].copy()),
-        ("tb_nw_sist_energia",df_sist_values[['cd_submercado','Ano','Mês','Energia Total','PCH','PCT','EOL','UFV','PCHMMGD','PCTMMGD','EOLMMGD','UFVMMGD']].copy())
+        ("tb_nw_cadic", df_cadic_values[['Ano','Mês','CONS.ITAIPU','ANDE','MMGD SE','MMGD S','MMGD NE','BOA VISTA','MMGD N', 'fonte']].copy()),
+        ("tb_nw_sist_intercambio", df_sist_intercambio_values[['Ano','Mês','sistema_src','sistema_dst','intercambio']].copy()),
+        ("tb_nw_sist_energia", df_sist_values[['cd_submercado','Ano','Mês','Energia Total','PCH','PCT','EOL','UFV','PCHMMGD','PCTMMGD','EOLMMGD','UFVMMGD', 'fonte']].copy())
         ]
     
     db_decks = wx_dbClass.db_mysql_master('db_decks')
@@ -246,13 +247,12 @@ def importar_deck_values_nw(path_zip):
 
         table = db_decks.getSchema(table_name)
         values.loc[:,'dt_deck'] = str_date_formated
-
         sql_delete = table.delete().where(table.c.dt_deck == str_date_formated)
-        n_values = db_decks.conn.execute(sql_delete).rowcount
+        n_values = db_decks.db_execute(sql_delete).rowcount
         print(f"{n_values} Linhas deletadas na {table_name}!")
 
         sql_insert = table.insert().values(values.dropna(axis=0).values.tolist())
-        n_values = db_decks.conn.execute(sql_insert).rowcount
+        n_values = db_decks.db_execute(sql_insert).rowcount
         print(f"{n_values} Linhas inseridas na {table_name}!")
     
 
@@ -364,5 +364,5 @@ if __name__ == '__main__':
     path = r"C:/Users/cs399274/Downloads/NW202404 (1).zip"
 
     # path  = "/WX2TB/Documentos/fontes/PMO/decks/ccee/nw/NW202404.zip"
-    teste = importar_deck_values_nw(path)
+    teste = importar_deck_values_nw('/WX2TB/Documentos/fontes/PMO/decks/ccee/nw/NW202506.zip')
 
