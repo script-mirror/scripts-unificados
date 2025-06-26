@@ -201,7 +201,7 @@ with DAG(
     trigger_dag_diff_carga = TriggerDagRunOperator(
         task_id="trigger_dag_diff_carga",
         trigger_dag_id='DECK_PRELIMINAR_NEWAVE',
-        conf={'origem': "ccee", 'product_details': {'dataProduto': '{{dag_run.conf.dataProduto}}'}},  
+        conf={'{{dag_run.conf}}'},  
         wait_for_completion=False,  
         trigger_rule="none_failed_min_one_success",
     )
