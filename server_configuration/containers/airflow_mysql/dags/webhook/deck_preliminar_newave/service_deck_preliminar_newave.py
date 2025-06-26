@@ -8,13 +8,13 @@ from datetime import datetime, date
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
 from utils.repository_webhook import SharedRepository
+from utils.html_builder import HtmlBuilder
 from validator_deck_preliminar_newave import DeckPreliminarNewaveValidator
 
 class DeckPreliminarNewaveService:
     def __init__(self):
         self.repository = SharedRepository()
         self.validator = DeckPreliminarNewaveValidator()
-        
         
         
     @staticmethod
@@ -34,21 +34,24 @@ class DeckPreliminarNewaveService:
             product_details = params.get('product_details', {})
             webhook_id = product_details.get('webhookId')
             filename = product_details.get('filename')
+            product_date = product_details.get('dataProduto')
             
-            if not webhook_id or not filename:
-                raise ValueError("webhookId e filename são obrigatórios")
+            if not webhook_id or not filename or not product_date:
+                raise ValueError("webhookId, filename e product_date são obrigatórios")
             
-            # Define caminho de download
+            if product_date:
+                from datetime import datetime
+                month, year = product_date.split('/')
+                product_datetime = datetime(int(year), int(month), 1, 0, 0, 0)
+            
             download_path = "/tmp/deck_preliminar_newave"
             
-            # Faz download do arquivo via repository
             file_path = repository.download_webhook_file(
                 webhook_id=webhook_id,
                 filename=filename,
                 download_path=download_path
             )
             
-            # Valida se arquivo foi baixado corretamente
             if not repository.validate_file_exists(file_path):
                 raise Exception(f"Arquivo {filename} não foi baixado corretamente")
             
@@ -57,6 +60,7 @@ class DeckPreliminarNewaveService:
             xcom_data = {
                 'file_path': file_path,
                 'success': True,
+                'product_datetime': product_datetime.strftime('%Y-%m-%d %H:%M:%S') if product_datetime else None,
                 'message': f'Arquivo {filename} baixado com sucesso'
             }
             
@@ -140,6 +144,7 @@ class DeckPreliminarNewaveService:
         try:
             task_instance = kwargs['task_instance']
             extract_result = task_instance.xcom_pull(task_ids='extrair_arquivos')
+            download_result = task_instance.xcom_pull(task_ids='download_arquivos')
             
             print(f"Dados de extração recebidos via XCom: {extract_result}")
             
@@ -193,8 +198,9 @@ class DeckPreliminarNewaveService:
                 aggfunc='first'  
             ).reset_index()
             
-            current_date = datetime.now()
-            dt_deck = datetime(current_date.year, current_date.month, 1, 0, 0, 0)
+            product_datetime_str = download_result.get('product_datetime') if download_result else None
+            dt_deck = datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
+                    
             nw_cadic_df['dt_deck'] = dt_deck
             nw_cadic_df['dt_deck'] = nw_cadic_df['dt_deck'].dt.strftime('%Y-%m-%d')  # Formata como string
             
@@ -207,6 +213,7 @@ class DeckPreliminarNewaveService:
                 'success': True,
                 'cadic_path': cadic_file,
                 'nw_cadic_records': nw_cadic_records,
+                'product_datetime': product_datetime_str,
                 'message': 'Arquivo C_ADIC.DAT processado com sucesso'
             }
             
@@ -224,6 +231,7 @@ class DeckPreliminarNewaveService:
         try:
             task_instance = kwargs['task_instance']
             extract_result = task_instance.xcom_pull(task_ids='extrair_arquivos')
+            download_result = task_instance.xcom_pull(task_ids='download_arquivos')
             
             print(f"Dados de extração recebidos via XCom: {extract_result}")
             
@@ -289,8 +297,9 @@ class DeckPreliminarNewaveService:
                 how='left'
             )
             
-            current_date = datetime.now()
-            dt_deck = datetime(current_date.year, current_date.month, 1, 0, 0, 0)  # Remova o .isoformat()
+            product_datetime_str = download_result.get('product_datetime') if download_result else None
+            dt_deck = datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
+                
             nw_sistema_df['dt_deck'] = dt_deck
             nw_sistema_df['dt_deck'] = nw_sistema_df['dt_deck'].dt.date 
             
@@ -331,7 +340,8 @@ class DeckPreliminarNewaveService:
                 'success': True,
                 'sistema_file': sistema_file,
                 'nw_sistema_records': nw_sistema_records,
-                'message': 'Arquivo SISTEMA.DAT processado com sucesso'
+                'product_datetime': product_datetime_str,
+                'message': 'Arquivo SISTEMA.DAT processado com sucesso',
             }
             
             print(f"task(processar_deck_nw_sist) - Retornando dados para XCom: {xcom_data}")
@@ -355,6 +365,7 @@ class DeckPreliminarNewaveService:
 
             nw_sist_records = nw_sist_result.get('nw_sistema_records', [])
             nw_cadic_records = nw_cadic_result.get('nw_cadic_records', [])
+            product_datetime_str = nw_sist_result.get('product_datetime') or nw_cadic_result.get('product_datetime')
 
             print(f"Preparando dados para envio à API: {len(nw_sist_records)} registros de SISTEMA e {len(nw_cadic_records)} registros CADIC")
 
@@ -404,7 +415,8 @@ class DeckPreliminarNewaveService:
 
             xcom_data = {
                 'success': True,
-                'message': 'Dados enviados para a API com sucesso'
+                'message': 'Dados enviados para a API com sucesso',
+                'product_datetime': product_datetime_str  # Repassa a data do produto para as próximas tasks
             }
 
             print(f"task(enviar_dados_para_api) - Retornando dados para XCom: {xcom_data}")
@@ -417,49 +429,137 @@ class DeckPreliminarNewaveService:
     
     @staticmethod
     def gerar_tabela_diferenca_cargas(**kwargs):
+        import pdb
+        
         try:
             task_instance = kwargs['task_instance']
-            data_confirmation = task_instance.xcom_pull(task_ids='enviar_dados_para_api', key='success')
-            
-            if not data_confirmation:
+            api_result = task_instance.xcom_pull(task_ids='enviar_dados_para_api')
+
+            if not api_result or not api_result.get('success'):
                 raise Exception("Dados não importados no banco de dados. Não é possivel gerar a tabela de diferença")
             
+            product_datetime_str = api_result.get('product_datetime')
+            
+            api_url = os.getenv("URL_API_V2", "http://host.docker.internal:8000/api/v2")
+            image_api_url = "https://tradingenergiarz.com/html-to-img"
+            
+            repository = SharedRepository()
+            html_builder = HtmlBuilder()
+
+            auth_headers = repository.get_auth_token()
+            headers = {
+                **auth_headers, 
+                'Content-Type': 'application/json',
+                'accept': 'application/json'
+            }
             
             
+            # Pegando valores do sistema de geração de usinas não simuladas (UNSI)
+            sistema_unsi_url = f"{api_url}/decks/newave/sistema/unsi"
+            sistema_unsi_response = requests.get(
+                sistema_unsi_url,
+                headers=headers
+            )
+            if sistema_unsi_response.status_code != 200:
+                raise Exception(f"Erro ao obter dados de geração UNSI: {sistema_unsi_response.text}")
             
-            # Necessário diferença entre os valores de unsi_deck_antigo e unsi_deck_novo
-            df_unsi_deck_antigo = None
-            df_unsi_deck_novo = None
-            
-        
-            # Somar os valores de mmgd_base e mmgd_expansao, antigo com antigo e novo com novo
-            # Necessário diferença entre os valores de df_mmgd_total_deck_antigo e df_mmgd_total_deck_novo
-            df_mmgd_base_deck_antigo = None
-            df_mmgd_expansao_deck_antigo = None
-            
-            df_mmgd_base_deck_novo = None
-            df_mmgd_expansao_deck_novo = None
-            
-            df_mmgd_total_deck_antigo = None
-            df_mmgd_total_deck_novo = None
+            sistema_unsi_values = sistema_unsi_response.json() 
             
             
-            # Necessário diferença entre os valores de df_carga_global_deck_antigo e df_carga_global_deck_novo
-            df_carga_global_deck_antigo = None
-            df_carga_global_deck_novo = None
+            # Pegando valores de MMGD Total 
+            sistema_mmgd_total_url = f"{api_url}/decks/newave/mmgd_total"
+            sistema_mmgd_total_response = requests.get(
+                sistema_mmgd_total_url,
+                headers=headers
+            )
+            if sistema_mmgd_total_response.status_code != 200:
+                raise Exception(f"Erro ao obter dados de MMGD Total: {sistema_mmgd_total_response.text}")
+            
+            sistema_mmgd_total_values = sistema_mmgd_total_response.json()
             
             
-            # Necessário diferença entre os valores de df_carga_liquida_deck_antigo e df_carga_liquida_deck_novo
-            df_carga_liquida_deck_antigo = None
-            df_carga_liquida_deck_novo = None
+            # Pegando valores de geração de Carga Global
+            carga_global_url = f"{api_url}/decks/newave/sistema/cargas/carga_global"
+            carga_global_response = requests.get(
+                carga_global_url,
+                headers=headers
+            )
+            if carga_global_response.status_code != 200:
+                raise Exception(f"Erro ao obter dados de geração de carga global: {carga_global_response.text}")
+            carga_global_values = carga_global_response.json()
             
             
+            # Pegando valores de geração de Carga Líquida
+            carga_liquida_url = f"{api_url}/decks/newave/sistema/cargas/carga_liquida"
+            carga_liquida_response = requests.get(
+                carga_liquida_url,
+                headers=headers
+            )
+            if carga_liquida_response.status_code != 200:
+                raise Exception(f"Erro ao obter dados de geração de carga liquida: {carga_liquida_response.text}")
+            carga_liquida_values = carga_liquida_response.json()
+            
+            
+            # Gerar o HTML usando o método gerar_html
+            html_tabela_diferenca = html_builder.gerar_html(
+                'diferenca_cargas', 
+                None, 
+                dados_unsi=sistema_unsi_values,
+                dados_mmgd_total=sistema_mmgd_total_values,
+                dados_carga_global=carga_global_values,
+                dados_carga_liquida=carga_liquida_values
+            )
+            
+            print(html_tabela_diferenca)
+            
+            api_html_payload = {
+                "html": html_tabela_diferenca,
+                "options": {
+                  "type": "png",
+                  "quality": 100,
+                  "trim": True,
+                  "deviceScaleFactor": 2
+                }
+            }
+            
+            html_api_endpoint = f"{image_api_url}/convert"
+            
+            request_html_api = requests.post(
+                html_api_endpoint,
+                headers=headers,
+                json=api_html_payload,  
+            )
+            
+            if request_html_api.status_code != 200:
+                raise Exception(f"Erro ao converter HTML em imagem: {request_html_api.text}")
+            
+            # Salvar a imagem retornada pela API
+            image_dir = "/tmp/deck_preliminar_newave/images"
+            os.makedirs(image_dir, exist_ok=True)
+            
+            # Gerar nome do arquivo baseado na data do produto
+            if product_datetime_str:
+                dt = datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
+                image_filename = f"tabela_diferenca_cargas_{dt.strftime('%Y%m%d')}.png"
+            else:
+                image_filename = f"tabela_diferenca_cargas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+            
+            image_path = os.path.join(image_dir, image_filename)
+            
+            with open(image_path, 'wb') as f:
+                f.write(request_html_api.content)
+            
+            print(f"Imagem salva em: {image_path}")
             
             xcom_data = {
                 'success': True,
-                'html_data': html,
+                'image_path': image_path,
+                'image_filename': image_filename,
                 'message': 'Tabela de diferença de carga gerada com sucesso',
+                'product_datetime': product_datetime_str  
             }
+            
+            print(f"task(gerar_tabela_diferenca_cargas) - Retornando dados para XCom: {xcom_data}")
             
             return xcom_data
         except Exception as e:
@@ -470,9 +570,56 @@ class DeckPreliminarNewaveService:
     @staticmethod
     def enviar_tabela_whatsapp_email(**kwargs):
         try:
+            task_instance = kwargs['task_instance']
+            tabela_result = task_instance.xcom_pull(task_ids='gerar_tabela_diferenca_cargas')
             params = kwargs.get('params', {})
             
-            return ''
+            if not tabela_result or not tabela_result.get('success'):
+                raise Exception("Tabela de diferença não foi gerada com sucesso")
+            
+            image_path = tabela_result.get('image_path')
+            image_filename = tabela_result.get('image_filename')
+            product_datetime_str = tabela_result.get('product_datetime')
+            
+            if not image_path or not os.path.exists(image_path):
+                raise Exception(f"Arquivo de imagem não encontrado: {image_path}")
+            
+            print(f"Preparando envio da imagem: {image_path}")
+            
+            # Aqui você pode implementar o envio via WhatsApp usando suas bibliotecas
+            # Por exemplo, usando wx_emailSender ou outras bibliotecas disponíveis
+            
+            # Exemplo de estrutura para envio:
+            # from bibliotecas import wx_emailSender  # ou biblioteca do WhatsApp
+            # 
+            # # Para WhatsApp (implementar conforme sua biblioteca)
+            # whatsapp_sender = WhatsAppSender()
+            # whatsapp_sender.send_image(
+            #     group_id="seu_grupo_id",
+            #     image_path=image_path,
+            #     caption=f"Tabela de Diferença de Cargas - {product_datetime_str}"
+            # )
+            #
+            # # Para Email
+            # email_sender = wx_emailSender()
+            # email_sender.send_email_with_attachment(
+            #     to="destinatarios@email.com",
+            #     subject=f"Tabela de Diferença de Cargas - {product_datetime_str}",
+            #     body="Segue em anexo a tabela de diferença de cargas gerada.",
+            #     attachment_path=image_path
+            # )
+            
+            xcom_data = {
+                'success': True,
+                'message': f'Imagem {image_filename} preparada para envio',
+                'image_sent': True,
+                'product_datetime': product_datetime_str
+            }
+            
+            print(f"task(enviar_tabela_whatsapp_email) - Retornando dados para XCom: {xcom_data}")
+            
+            return xcom_data
+            
         except Exception as e:
             error_msg = f"Erro ao enviar tabela por WhatsApp ou email: {str(e)}"
             print(error_msg)
@@ -481,33 +628,30 @@ class DeckPreliminarNewaveService:
 if __name__ == "__main__":
     service = DeckPreliminarNewaveService()
     class MockTaskInstance:
-        def xcom_pull(self, task_ids):
+        def xcom_pull(self, task_ids, key=None):
             return {
                 'success': True,
-                'original_file': '/tmp/deck_preliminar_newave/Deck NEWAVE Preliminar.zip',
-                'extract_path': '/tmp/deck_preliminar_newave',
-                'extracted_files': ['ADTERM.DAT', 'AGRINT.DAT', 'ARQUIVOS.DAT', 'BID.DAT', 'CASO.DAT', 'CDEFVAR.DAT', 'CLAST.DAT', 'CONFHD.DAT', 'CONFT.DAT', 'CURVA.DAT', 'CVAR.DAT', 'C_ADIC.DAT', 'DGER.DAT', 'DSVAGUA.DAT', 'ELNINO.DAT', 'ENSOAUX.DAT', 'EXPH.DAT', 'EXPT.DAT', 'FORMAT.TMP', 'GHMIN.DAT', 'GTMINPAT.DAT', 'HIDR.DAT', 'indices.csv', 'ITAIPU.DAT', 'LOSS.DAT', 'MANUTT.DAT', 'MENSAG.TMP', 'MODIF.DAT', 'NewaveMsgPortug.txt', 'PATAMAR.DAT', 'PENALID.DAT', 'polinjus.csv', 'POSTOS.DAT', 'RE.DAT', 'REE.DAT', 'restricao-eletrica.csv', 'selcor.dat', 'SHIST.DAT', 'SISTEMA.DAT', 'tecno.dat', 'TERM.DAT', 'VAZOES.DAT', 'VAZPAST.DAT', 'volref_saz.dat', 'volumes-referencia.csv', 'Leia-me.pdf'],
-                'message': 'Arquivos extraídos com sucesso de Deck NEWAVE Preliminar.zip'
+                'message': 'Dados enviados para a API com sucesso'
             }
     
     try:
         params = {
-                "function_name": "WEBHOOK",
-                "product_details": {
-                    "dataProduto": "06/2025",
-                    "enviar": True,
-                    "filename": "Deck NEWAVE Preliminar.zip",
-                    "macroProcesso": "Programação da Operação",
-                    "nome": "Deck NEWAVE Preliminar",
-                    "periodicidade": "2025-06-01T03:00:00.000Z",
-                    "periodicidadeFinal": "2025-07-01T02:59:59.000Z",
-                    "processo": "Médio Prazo",
-                    "s3Key": "webhooks/Deck NEWAVE Preliminar/68347a7abd270c7eb3fac7cb_Deck NEWAVE Preliminar.zip",
-                    "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjYtMDUtMjAyNV8xMTI2MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc0ODM1NjMyOSwibmJmIjoxNzQ4MjY5Njg5fQ.EWzTvWRcHywDyfTpVxGbRZ4phTok-Kw9uVypsPN5sXI",
-                    "webhookId": "68347a7abd270c7eb3fac7cb"
-                }
+            "function_name": "WEBHOOK",
+            "product_details": {
+                "dataProduto": "06/2025",
+                "enviar": True,
+                "filename": "Deck NEWAVE Preliminar.zip",
+                "macroProcesso": "Programação da Operação",
+                "nome": "Deck NEWAVE Preliminar",
+                "periodicidade": "2025-06-01T03:00:00.000Z",
+                "periodicidadeFinal": "2025-07-01T02:59:59.000Z",
+                "processo": "Médio Prazo",
+                "s3Key": "webhooks/Deck NEWAVE Preliminar/68347a7abd270c7eb3fac7cb_Deck NEWAVE Preliminar.zip",
+                "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjYtMDUtMjAyNV8xMTI2MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc0ODM1NjMyOSwibmJmIjoxNzQ4MjY5Njg5fQ.EWzTvWRcHywDyfTpVxGbRZ4phTok-Kw9uVypsPN5sXI",
+                "webhookId": "68347a7abd270c7eb3fac7cb"
             }
-        result = DeckPreliminarNewaveService.processar_deck_nw_sist(params=params, task_instance=MockTaskInstance())
+        }       
+        result = DeckPreliminarNewaveService.gerar_tabela_diferenca_cargas(params=params, task_instance=MockTaskInstance())
     except Exception as e:
         print(f"Erro ao extrair arquivos: {str(e)}")
 
