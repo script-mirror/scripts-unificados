@@ -146,7 +146,7 @@ class CargaPMOValidator(BaseValidator):
                     raise ValidationError(f"Campo 'tipo' deve ser 'mensal' ou 'semanal', recebido: {item.get('tipo')}")
                 
                 # Validar subsistema
-                valid_subsistemas = ['NO', 'N', 'SCO', 'S', 'SIN', 'NNO', 'SECOS']
+                valid_subsistemas = ['NE', 'N', 'SECO', 'S', 'SIN', 'NNO', 'SECOS']
                 if item.get('subsistema') not in valid_subsistemas:
                     raise ValidationError(f"Campo 'subsistema' inválido: {item.get('subsistema')}. Valores válidos: {valid_subsistemas}")
                 
