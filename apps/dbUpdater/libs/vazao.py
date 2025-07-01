@@ -149,7 +149,6 @@ def importAcomph(path):
 
     try:
         df_acomph = pd.DataFrame(ACOMPH, columns=['DT_REFERENTE', 'CD_POSTO', 'VL_NIVEL_LIDO', 'VL_NIVEL_CONSO', 'VL_VAZ_DEFLUENTE_LIDO', 'VL_VAZ_DEFLUENTE_CONSO', 'VL_VAZ_AFLUENTE_LIDO', 'VL_VAZ_AFLUENTE_CONSO', 'VL_VAZ_INC_CONSO', 'VL_VAZ_NAT_CONSO', 'DT_ACOMPH'])
-        exportAcomph_toDataviz(df_acomph)
 
         return True
     except Exception as e:
