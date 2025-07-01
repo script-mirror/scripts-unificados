@@ -71,30 +71,41 @@ class WxEmail:
             for i, anexo in enumerate(anexos):
                 logger.info("Anexo {}: {}".format(i, anexo))
 
-        msg = MIMEMultipart()
+        smtp = None
+        try:
+            msg = MIMEMultipart()
 
-        msg['From'] = '{} <{}>'.format(self.username.split('@')[0].upper(), self.username)
-        msg['To'] = ', '.join(send_to)
-        msg['Date'] = formatdate(localtime = True)
-        msg['Subject'] = assunto
-        msg.attach(MIMEText(texto.encode('utf-8'),'html',_charset='utf-8'))
+            msg['From'] = '{} <{}>'.format(self.username.split('@')[0].upper(), self.username)
+            msg['To'] = ', '.join(send_to)
+            msg['Date'] = formatdate(localtime = True)
+            msg['Subject'] = assunto
+            msg.attach(MIMEText(texto.encode('utf-8'),'html',_charset='utf-8'))
 
-        for anexo in anexos:
-            anexo = Path(anexo)
-            part = MIMEBase('application', "octet-stream")
-            part.set_payload(open(anexo, "rb").read())
-            encoders.encode_base64(part)
-            part.add_header('Content-Disposition', 'attachment', filename=anexo.name)
-            msg.attach(part)
+            for anexo in anexos:
+                anexo = Path(anexo)
+                part = MIMEBase('application', "octet-stream")
+                part.set_payload(open(anexo, "rb").read())
+                encoders.encode_base64(part)
+                part.add_header('Content-Disposition', 'attachment', filename=anexo.name)
+                msg.attach(part)
 
-        smtp = smtplib.SMTP(self.server, self.port)
-        if self.isTls:
-            smtp.starttls()
+            smtp = smtplib.SMTP(self.server, self.port)
+            if self.isTls:
+                smtp.starttls()
 
-        answer = smtp.login(self.username,self.password)
-        answer = smtp.sendmail(self.username, send_to, msg.as_string())
-        logger.info("Email enviado")
-        smtp.quit()
+            answer = smtp.login(self.username,self.password)
+            answer = smtp.sendmail(self.username, send_to, msg.as_string())
+            logger.info("Email enviado")
+            
+        except Exception as e:
+            print("\033[91mERRO ao enviar email: {}\033[0m".format(str(e)))
+            logger.error("Erro ao enviar email: {}".format(str(e)))
+        finally:
+            if smtp:
+                try:
+                    smtp.quit()
+                except:
+                    pass
 
 
 def gerarTabela(body, header=[], widthColunas=[], nthColor=1):
