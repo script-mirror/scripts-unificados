@@ -266,8 +266,6 @@ with DAG(
     catchup=False,
     schedule=None,
     default_args={
-        'retries': 4,
-        'retry_delay': datetime.timedelta(minutes=5),
         'on_failure_callback': enviar_whatsapp_erro_weol,
     },
     tags=['Webhook', 'Prospec']
@@ -282,12 +280,16 @@ with DAG(
         task_id='inserir_patamares_decomp',
         trigger_rule="none_failed_min_one_success",
         python_callable=deck_prev_eolica_semanal_patamares,
-        provide_context=True
+        provide_context=True,
+        retries=4,
+        retry_delay=datetime.timedelta(minutes=2),
     )
     
     previsao_final = PythonOperator(
         task_id='inserir_previsao_final_weol',
         python_callable=deck_prev_eolica_semanal_previsao_final,
+        retries=4,
+        retry_delay=datetime.timedelta(minutes=2),
         provide_context=True
     )
     atualizar_estudos = PythonOperator(
