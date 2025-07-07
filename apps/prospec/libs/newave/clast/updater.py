@@ -11,8 +11,7 @@ from PMO.scripts_unificados.apps.prospec.libs.newave.clast import clast
 
 
 
-def atualizar_cvu_NW(info_cvu,paths_to_modify, tipos_cvu):
-
+def atualizar_cvu_NW(info_cvu:pd.DataFrame, paths_to_modify: list[str], tipos_cvu):
     paths_modified = []
     for path_clast in paths_to_modify:
 
@@ -62,7 +61,8 @@ def atualizar_cvu_NW(info_cvu,paths_to_modify, tipos_cvu):
             cvu_map = info_cvu.set_index(['mes_referencia','tipo_cvu']).loc[(dt_referente,'conjuntural')].set_index("cd_usina")["vl_cvu"].round(2).to_dict()
             for col in ["CUSTO"]:
                 df_clast_conjuntural[col].update(df_clast_conjuntural["NUM"].map(cvu_map))
-
+        if 'merchant' in tipos_cvu:
+            df_clast_conjuntural = append_cvu_merchant(info_cvu, df_clast_conjuntural)
         clast.sobrescreve_clast_file(
             output_path = path_clast,
             df_estrutural = df_clast_estrutural.fillna(''),
@@ -71,6 +71,34 @@ def atualizar_cvu_NW(info_cvu,paths_to_modify, tipos_cvu):
         
         paths_modified.append(path_clast)
     return paths_modified
+
+
+def append_cvu_merchant(info_cvu: pd.DataFrame, df_clast_conjuntural: pd.DataFrame):
+    info_cvu['cd_usina'] = info_cvu['cd_usina'].astype(str)
+    info_cvu['data_inicio'] = pd.to_datetime(info_cvu['data_inicio'])
+    info_cvu['data_fim'] = pd.to_datetime(info_cvu['data_fim'])
+
+    info_cvu = info_cvu.merge(
+        df_clast_conjuntural[['NUM', 'Unnamed: 6']],
+        how='left',
+        left_on='cd_usina',
+        right_on='NUM'
+    )
+    info_cvu.drop_duplicates(subset=['cd_usina'], keep='last', inplace=True)
+
+    for _, row in info_cvu.iterrows():
+        new_row = {
+            'NUM': row['cd_usina'],
+            'CUSTO': row['vl_cvu'],
+            'Unnamed: 2': row['data_inicio'].month,
+            'Unnamed: 3': row['data_inicio'].year,
+            'Unnamed: 4': row['data_fim'].month,
+            'Unnamed: 5': row['data_fim'].year,
+            'Unnamed: 6': row['Unnamed: 6']
+        }
+        df_clast_conjuntural = pd.concat([df_clast_conjuntural, pd.DataFrame([new_row])], ignore_index=True)
+    return df_clast_conjuntural
+
 
 if __name__ == "__main__":
     from PMO.scripts_unificados.apps.prospec.libs import utils

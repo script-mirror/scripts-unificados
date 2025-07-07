@@ -9,12 +9,14 @@ import warnings
 import pandas as pd
 from typing import List
 
-warnings.simplefilter(action='ignore', category=FutureWarning)
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
+PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
+sys.path.insert(1,f"{PATH_PROJETO}/scripts_unificados")
 
-from PMO.scripts_unificados.apps.prospec.libs import utils
-from PMO.scripts_unificados.apps.prospec.libs.decomp.dadger import dadger
-from PMO.scripts_unificados.apps.prospec.libs.info_arquivos_externos import info_external_files
+from apps.prospec.libs import utils
+from apps.prospec.libs.decomp.dadger import dadger
+from apps.prospec.libs.info_arquivos_externos import info_external_files
 
 
 logging.basicConfig(level=logging.INFO,

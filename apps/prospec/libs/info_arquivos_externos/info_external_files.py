@@ -64,11 +64,14 @@ def organizar_info_cvu(fontes_to_search:List[str], dt_atualizacao:datetime.date)
         )
         answer = response.json()
         df_result = pd.DataFrame(answer)
-        
+
         df_result['dt_atualizacao'] = pd.to_datetime(df_result['dt_atualizacao']).dt.strftime('%Y-%m-%d')
         df_result[df_result['dt_atualizacao'] == pd.to_datetime(dt_atualizacao).strftime('%Y-%m-%d')]
 
         df_aux = pd.concat([df_aux,df_result]) if not df_aux.empty else df_result
+        
+    df_aux.dropna(subset=['vl_cvu'], inplace=True)
+    df_aux.drop_duplicates(['cd_usina'], keep='last', inplace=True)
     return df_aux
 
 
