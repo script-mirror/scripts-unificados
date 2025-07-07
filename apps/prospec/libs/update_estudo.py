@@ -71,8 +71,7 @@ def send_files_to_api(id_estudo: int, paths_modified: List[str], tag: str):
         id_deck = int(
             df_estudo['Id'][df_estudo['FileName'] == nome_estudo].values[0])
 
-        endpoint = f'/api/prospectiveStudies/{
-            id_estudo}/UploadFiles?deckId={id_deck}'
+        endpoint = f'/api/prospectiveStudies/{id_estudo}/UploadFiles?deckId={id_deck}'
         arquivo_enviado = api.sendFile(endpoint, path)
 
         if 'filesUploaded' in arquivo_enviado:
