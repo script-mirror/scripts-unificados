@@ -11,7 +11,7 @@ from PMO.scripts_unificados.apps.prospec.libs.newave.clast import clast
 
 
 
-def atualizar_cvu_NW(info_cvu:pd.DataFrame, paths_to_modify: list[str], tipos_cvu):
+def atualizar_cvu_NW(info_cvu:pd.DataFrame, paths_to_modify, tipos_cvu):
     paths_modified = []
     for path_clast in paths_to_modify:
 
