@@ -321,9 +321,9 @@ def organizar_info_dadger_carga_pq(paths_dadgers:List[str], data_produto:datetim
 
                     if not values_match:
                         df_bloco_atual.at[index, 'gerac_p1'] = dfcarga_p1
-                        print(f"\nUpdated {coluna_alterar} gerac_p1 from {current_value_p1} => {dfcarga_p1}")
+                        print(f"Updated {coluna_alterar} gerac_p1 from {current_value_p1} => {dfcarga_p1}")
                     else:
-                        print(f"\nNo change needed for {coluna_alterar} gerac_p1 (value unchanged: {current_value_p1})")
+                        print(f"No change needed for {coluna_alterar} gerac_p1 (value unchanged: {current_value_p1})")
                     
                     # Check for media patamar\\
                     dfcarga_p2 = df_carga[
@@ -341,9 +341,9 @@ def organizar_info_dadger_carga_pq(paths_dadgers:List[str], data_produto:datetim
 
                     if not values_match:
                         df_bloco_atual.at[index, 'gerac_p2'] = dfcarga_p2
-                        print(f"\nUpdated {coluna_alterar} gerac_p2 from {current_value_p2} to {dfcarga_p2}")
+                        print(f"Updated {coluna_alterar} gerac_p2 from {current_value_p2} to {dfcarga_p2}")
                     else:
-                        print(f"\nNo change needed for {coluna_alterar} gerac_p2 (value unchanged: {current_value_p2})")
+                        print(f"No change needed for {coluna_alterar} gerac_p2 (value unchanged: {current_value_p2})")
                     
                     # Check for leve patamar
                     dfcarga_p3 = df_carga[
@@ -361,9 +361,9 @@ def organizar_info_dadger_carga_pq(paths_dadgers:List[str], data_produto:datetim
 
                     if not values_match:
                         df_bloco_atual.at[index, 'gerac_p3'] = dfcarga_p3
-                        print(f"\nUpdated {coluna_alterar} gerac_p3 from {current_value_p3} to {dfcarga_p3}")
+                        print(f"Updated {coluna_alterar} gerac_p3 from {current_value_p3} to {dfcarga_p3}")
                     else:
-                        print(f"\nNo change needed for {coluna_alterar} gerac_p3 (value unchanged: {current_value_p3})")
+                        print(f"No change needed for {coluna_alterar} gerac_p3 (value unchanged: {current_value_p3})")
                         
                 except Exception as e:
                     print(f"Error updating {coluna_alterar} for estagio {row['estagio']}: {str(e)}")
