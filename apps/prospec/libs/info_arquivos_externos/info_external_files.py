@@ -305,22 +305,71 @@ def organizar_info_dadger_carga_pq(paths_dadgers:List[str], data_produto:datetim
                     # print(f"{row} estagio mensal")
                     continue
                 try:
-                    df_bloco_atual.at[index, 'gerac_p1'] = df_carga[
-                                                                    (df_carga['submercado'] == submercado) &
-                                                                    (df_carga['patamar'] == 'pesada') &
-                                                                    (df_carga['estagio'] == row['estagio'])][fonte_map[coluna_alterar].lower()].values[0]
-                    df_bloco_atual.at[index, 'gerac_p2'] = df_carga[
-                                                                    (df_carga['submercado'] == submercado) &
-                                                                    (df_carga['patamar'] == 'media') &
-                                                                    (df_carga['estagio'] == row['estagio'])][fonte_map[coluna_alterar].lower()].values[0]
-                    df_bloco_atual.at[index, 'gerac_p3'] = df_carga[
-                                                                    (df_carga['submercado'] == submercado) &
-                                                                    (df_carga['patamar'] == 'leve') &
-                                                                    (df_carga['estagio'] == row['estagio'])][fonte_map[coluna_alterar].lower()].values[0]
-                except:
+                    # Check for pesada patamar
+                    dfcarga_p1 = df_carga[
+                        (df_carga['submercado'] == submercado) &
+                        (df_carga['patamar'] == 'pesada') &
+                        (df_carga['estagio'] == row['estagio'])
+                    ][fonte_map[coluna_alterar].lower()].values[0]
+                    
+                    current_value_p1 = df_bloco_atual.at[index, 'gerac_p1']
+                    
+                    # Check if one value is contained in the other as strings
+                    current_str = str(current_value_p1)
+                    dfcarga_str = str(dfcarga_p1)
+                    values_match = current_str in dfcarga_str or dfcarga_str in current_str
+
+                    if not values_match:
+                        df_bloco_atual.at[index, 'gerac_p1'] = dfcarga_p1
+                        print(f"\nUpdated {coluna_alterar} gerac_p1 from {current_value_p1} => {dfcarga_p1}")
+                    else:
+                        print(f"\nNo change needed for {coluna_alterar} gerac_p1 (value unchanged: {current_value_p1})")
+                    
+                    # Check for media patamar\\
+                    dfcarga_p2 = df_carga[
+                        (df_carga['submercado'] == submercado) &
+                        (df_carga['patamar'] == 'media') &
+                        (df_carga['estagio'] == row['estagio'])
+                    ][fonte_map[coluna_alterar].lower()].values[0]
+                    
+                    current_value_p2 = df_bloco_atual.at[index, 'gerac_p2']
+                    
+                    # Check if one value is contained in the other as strings
+                    current_str = str(current_value_p2)
+                    dfcarga_str = str(dfcarga_p2)
+                    values_match = current_str in dfcarga_str or dfcarga_str in current_str
+
+                    if not values_match:
+                        df_bloco_atual.at[index, 'gerac_p2'] = dfcarga_p2
+                        print(f"\nUpdated {coluna_alterar} gerac_p2 from {current_value_p2} to {dfcarga_p2}")
+                    else:
+                        print(f"\nNo change needed for {coluna_alterar} gerac_p2 (value unchanged: {current_value_p2})")
+                    
+                    # Check for leve patamar
+                    dfcarga_p3 = df_carga[
+                        (df_carga['submercado'] == submercado) &
+                        (df_carga['patamar'] == 'leve') &
+                        (df_carga['estagio'] == row['estagio'])
+                    ][fonte_map[coluna_alterar].lower()].values[0]
+                    
+                    current_value_p3 = df_bloco_atual.at[index, 'gerac_p3']
+                    
+                    # Check if one value is contained in the other as strings
+                    current_str = str(current_value_p3)
+                    dfcarga_str = str(dfcarga_p3)
+                    values_match = current_str in dfcarga_str or dfcarga_str in current_str
+
+                    if not values_match:
+                        df_bloco_atual.at[index, 'gerac_p3'] = dfcarga_p3
+                        print(f"\nUpdated {coluna_alterar} gerac_p3 from {current_value_p3} to {dfcarga_p3}")
+                    else:
+                        print(f"\nNo change needed for {coluna_alterar} gerac_p3 (value unchanged: {current_value_p3})")
+                        
+                except Exception as e:
+                    print(f"Error updating {coluna_alterar} for estagio {row['estagio']}: {str(e)}")
                     continue
-            # else:
-                # print(f"coluna nao altera{coluna_alterar}")
+            else:
+                print(f"coluna nao alterada {coluna_alterar}")
         df_bloco_atual = df_bloco_atual.sort_values(['sub', 'nome', 'estagio'])
         novos_blocos[path_dadger] = df_pq_to_dadger_carga(df_bloco_atual)
     return novos_blocos
