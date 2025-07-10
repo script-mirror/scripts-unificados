@@ -612,7 +612,7 @@ class DeckPreliminarNewaveService:
                     table_type="Diferença de Cargas NEWAVE",
                     product_datetime=product_datetime_str or "Data não informada",
                     image_path=image_path,
-                    destinatario="PMO"
+                    destinatario="Premissas Preco"
                 )
                 
                 if success:
