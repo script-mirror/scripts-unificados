@@ -139,7 +139,7 @@ class HtmlBuilder:
                     
                     classe_css = "positive" if diferenca >= 0 else "negative"
                     
-                    html += f'<td class="{classe_css}">{diferenca:.2f}</td>'
+                    html += f'<td class="{classe_css}">{diferenca:.0f}</td>'
                 else:
                     html += "<td>-</td>"
             
@@ -258,7 +258,7 @@ class HtmlBuilder:
                     
                     classe_css = "positive" if diferenca >= 0 else "negative"
                     
-                    html += f'<td class="{classe_css}">{diferenca:.2f}</td>'
+                    html += f'<td class="{classe_css}">{diferenca:.0f}</td>'
                 else:
                     html += "<td>-</td>"
             
@@ -377,7 +377,7 @@ class HtmlBuilder:
                     
                     classe_css = "positive" if diferenca >= 0 else "negative"
                     
-                    html += f'<td class="{classe_css}">{diferenca:.2f}</td>'
+                    html += f'<td class="{classe_css}">{diferenca:.0f}</td>'
                 else:
                     html += "<td>-</td>"
             
@@ -496,7 +496,7 @@ class HtmlBuilder:
                     
                     classe_css = "positive" if diferenca >= 0 else "negative"
                     
-                    html += f'<td class="{classe_css}">{diferenca:.2f}</td>'
+                    html += f'<td class="{classe_css}">{diferenca:.0f}</td>'
                 else:
                     html += "<td>-</td>"
             
@@ -615,7 +615,7 @@ class HtmlBuilder:
                     
                     classe_css = "positive" if diferenca >= 0 else "negative"
                     
-                    html += f'<td class="{classe_css}">{diferenca:.2f}</td>'
+                    html += f'<td class="{classe_css}">{diferenca:.0f}</td>'
                 else:
                     html += "<td>-</td>"
             

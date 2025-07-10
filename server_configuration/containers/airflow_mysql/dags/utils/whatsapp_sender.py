@@ -180,10 +180,9 @@ class WhatsAppSender:
         timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
         
         message = f"""✅ {process_name}
-⏰ {timestamp}
-{details}
-
-Processamento concluído com sucesso!"""
+                    ⏰ {timestamp}
+                    {details}
+                    Processamento concluído com sucesso!"""
         
         return sender.send_message(destinatario, message)
     
@@ -204,11 +203,9 @@ Processamento concluído com sucesso!"""
         timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
         
         message = f"""❌ Erro em {process_name}
-⏰ {timestamp}
-
-Detalhes: {error_details}
-
-Verificar logs para mais informações."""
+        ⏰ {timestamp}
+        Detalhes: {error_details}
+        logs para mais informações."""
         
         return sender.send_message(destinatario, message)
 
