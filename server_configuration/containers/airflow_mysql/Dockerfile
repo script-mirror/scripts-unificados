@@ -49,7 +49,5 @@ RUN echo "Installing dependencies from requirements.txt..." && \
     pip install  -r /opt/airflow/requirements.txt && \
     echo "Dependency installation completed."
 
-RUN pip install --upgrade --no-binary shapely shapely
-RUN pip install Cartopy
 
 
