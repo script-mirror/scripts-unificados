@@ -366,12 +366,48 @@ def get_valores_IPDO(dtref):
     ipdo_Verificado['ipdo_verificado'] = carga_ipdo_dataFormatada
     return ipdo_Verificado
 
+def calculate_weighted_daily_mean(group):
+    """
+    Calculate weighted mean for a group of time series data based on actual time intervals.
+    Each record is weighted by the time period it represents (time until next record).
+    """
+    if len(group) <= 1:
+        return group['vl_carga'].iloc[0] if len(group) == 1 else 0
+    
+    # Sort by datetime to ensure correct order
+    group = group.sort_values('dataHora').copy()
+    
+    # Calculate time differences between consecutive records
+    # Shift time differences up so each record gets the time until the NEXT record
+    group['time_diff'] = group['dataHora'].shift(-1) - group['dataHora']
+    
+    # For the last record, calculate time until start of next day (00:00:00)
+    if len(group) > 0:
+        last_datetime = group['dataHora'].iloc[-1]
+        # Calculate time until next day at 00:00:00
+        next_day = last_datetime.normalize() + pd.Timedelta(days=1)
+        time_to_next_day = next_day - last_datetime
+        group.iloc[-1, group.columns.get_loc('time_diff')] = time_to_next_day
+    
+    # Convert time differences to hours (weights)
+    group['hours_weight'] = group['time_diff'].dt.total_seconds() / 3600
+    
+    # Handle edge case: if all time differences are NaN or 0
+    if group['hours_weight'].isna().all() or group['hours_weight'].sum() == 0:
+        return group['vl_carga'].mean()
+    
+    # Calculate weighted mean
+    weighted_sum = (group['vl_carga'] * group['hours_weight']).sum()
+    total_weight = group['hours_weight'].sum()
+    
+    return weighted_sum / total_weight
+
 def get_previsao_dessem():
     """
     Pega previsão IPDO:
     - deck mais recente completo
     - se faltarem registros de hoje, busca somente hoje no deck anterior
-    Agrega por dia e sigla, e retorna dict aninhado.
+    Agrega por dia e sigla usando média ponderada baseada nos intervalos de tempo.
     """
     # --- setup DB ---
     db_decks = wx_dbClass.db_mysql_master('db_decks')
@@ -429,11 +465,13 @@ def get_previsao_dessem():
             # concatena mantendo ambos
             df_max = pd.concat([df_max, df_prev], ignore_index=True)
 
-    # 6) agrupa e calcula média diária por sigla
+    # 6) agrupa e calcula média diária ponderada por sigla
     daily_avg = (
         df_max
-        .groupby(['sigla','day'], as_index=False)
-        .agg(avg_vl_carga=('vl_carga','mean'))
+        .groupby(['sigla', 'day'])
+        .apply(calculate_weighted_daily_mean)
+        .reset_index()
+        .rename(columns={0: 'avg_vl_carga'})
     )
 
     # 7) monta dict aninhado por sigla
@@ -887,7 +925,7 @@ def get_valores_Newave(dtref):
             data_referencia = row['dt_referente']
             valor_carga = row['vl_carga']
             if submercado not in dicionario_carga_Newave:
-                    dicionario_carga_Newave[submercado] = {}
+                    dicionario_carga_Newave[submercado] = {}  # Se não existir, crie um dicionário interno
             dicionario_carga_Newave[submercado][data_referencia] = valor_carga
             
     # Criando um dicionário vazio para armazenar chaves das datas formatadas e todos os valores.

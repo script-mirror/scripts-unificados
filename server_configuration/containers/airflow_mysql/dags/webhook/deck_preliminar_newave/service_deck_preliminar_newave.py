@@ -611,7 +611,8 @@ class DeckPreliminarNewaveService:
                 success = whatsapp_sender.send_table_notification(
                     table_type="Diferença de Cargas NEWAVE",
                     product_datetime=product_datetime_str or "Data não informada",
-                    image_path=image_path
+                    image_path=image_path,
+                    destinatario="Premissas Preco"
                 )
                 
                 if success:
