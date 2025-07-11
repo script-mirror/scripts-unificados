@@ -20,10 +20,10 @@ RUN apt-get update && \
     unixodbc-dev\
     poppler-data \
     locales locales-all\
-    poppler-utils &&\
+    poppler-utils \
+    git &&\
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
 # Set timezone
 ENV TZ=America/Sao_Paulo
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && dpkg-reconfigure -f noninteractive tzdata
