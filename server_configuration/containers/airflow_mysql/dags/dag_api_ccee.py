@@ -62,7 +62,7 @@ def get_cvu_data(tipo_cvu: str):
 
 
 def post_cvu(body: dict, tipo_cvu: str):
-    url = 'https://tradingenergiarz.com/api/v2/decks'
+    url = 'https://tradingenergiarz.com/api/v2/decks/cvu'
     if tipo_cvu == 'merchant':
         url = url + '/merchant'
     res = req.post(url,
