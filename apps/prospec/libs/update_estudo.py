@@ -107,6 +107,9 @@ def update_cvu_dadger_dc_estudo(
         extracted_zip_estudo = utils.extract_file_estudo(
             path_to_modify,
         )
+        if not os.path.exists(extracted_zip_estudo):
+            logger.info(f"erro ao fazer download de estudo com id {id_estudo}")
+            continue
 
         # ALTERAR CVU EM DECKS DC
         dadgers_to_modify = glob.glob(
@@ -149,6 +152,9 @@ def update_carga_dadger_dc_estudo(
         extracted_zip_estudo = utils.extract_file_estudo(
             path_to_modify,
         )
+        if not os.path.exists(extracted_zip_estudo):
+            logger.info(f"erro ao fazer download de estudo com id {id_estudo}")
+            continue
 
         info_cargas = info_external_files.organizar_info_carga(
             file_path,
@@ -195,6 +201,9 @@ def update_weol_dadger_dc_estudo(
         extracted_zip_estudo = utils.extract_file_estudo(
             path_estudo,
         )
+        if not os.path.exists(extracted_zip_estudo):
+            logger.info(f"erro ao fazer download de estudo com id {id_estudo}")
+            continue
         try:
             dadgers_to_modify = glob.glob(
                 os.path.join(
@@ -238,6 +247,9 @@ def update_carga_pq_dadger_dc_estudo(
         extracted_zip_estudo = utils.extract_file_estudo(
             path_estudo,
         )
+        if not os.path.exists(extracted_zip_estudo):
+            logger.info(f"erro ao fazer download de estudo com id {id_estudo}")
+            continue
 
         dadgers_to_modify = glob.glob(
             os.path.join(
@@ -289,6 +301,9 @@ def update_cvu_clast_nw_estudo(
         extracted_zip_estudo = utils.extract_file_estudo(
             path_to_modify,
         )
+        if not os.path.exists(extracted_zip_estudo):
+            logger.info(f"erro ao fazer download de estudo com id {id_estudo}")
+            continue
         pasta_nw = [
             nome for nome in os.listdir(extracted_zip_estudo) 
             if os.path.isdir(os.path.join(extracted_zip_estudo, nome)) 
@@ -350,6 +365,9 @@ def update_carga_c_adic_nw_estudo(
         extracted_zip_estudo = utils.extract_file_estudo(
             path_to_modify,
         )
+        if not os.path.exists(extracted_zip_estudo):
+            logger.info(f"erro ao fazer download de estudo com id {id_estudo}")
+            continue
         pasta_nw = [nome for nome in os.listdir(extracted_zip_estudo) if os.path.isdir(
             os.path.join(extracted_zip_estudo, nome)) and nome.startswith("NW")]
         if not pasta_nw:
@@ -411,6 +429,9 @@ def update_carga_sistema_nw_estudo(
         extracted_zip_estudo = utils.extract_file_estudo(
             path_to_modify,
         )
+        if not os.path.exists(extracted_zip_estudo):
+            logger.info(f"erro ao fazer download de estudo com id {id_estudo}")
+            continue
         pasta_nw = [nome for nome in os.listdir(extracted_zip_estudo) if os.path.isdir(
             os.path.join(extracted_zip_estudo, nome)) and nome.startswith("NW")]
         if not pasta_nw:
@@ -471,6 +492,9 @@ def update_weol_sistema_nw_estudo(
         extracted_zip_estudo = utils.extract_file_estudo(
             path_estudo,
         )
+        if not os.path.exists(extracted_zip_estudo):
+            logger.info(f"erro ao fazer download de estudo com id {id_estudo}")
+            continue
         try:
             pasta_nw = [nome for nome in os.listdir(extracted_zip_estudo) if os.path.isdir(
                 os.path.join(extracted_zip_estudo, nome)) and nome.startswith("NW")]
@@ -520,6 +544,9 @@ def update_restricoes_dadger_dc_estudo(
         extracted_zip_estudo = utils.extract_file_estudo(
             path_estudo,
         )
+        if not os.path.exists(extracted_zip_estudo):
+            logger.info(f"erro ao fazer download de estudo com id {id_estudo}")
+            continue
 
         dadgers_to_modify = glob.glob(
             os.path.join(
