@@ -128,7 +128,9 @@ def check_atualizacao(**kwargs):
                     if datetime.datetime.strptime(
                         dt_atualizacao, '%Y-%m-%dT%H:%M:%S'
                     ) > ultima_data_atualizacao:
-                        ultima_data_atualizacao = dt_atualizacao
+                        ultima_data_atualizacao = datetime.datetime.strptime(
+                            dt_atualizacao, '%Y-%m-%dT%H:%M:%S'
+                        )
         kwargs.get('dag_run').conf.update()
     
     if cvus_to_search:
