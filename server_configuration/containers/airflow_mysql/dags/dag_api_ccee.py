@@ -125,7 +125,9 @@ def check_atualizacao(**kwargs):
                 ids_cvu_nao_processados.append(check_cvu.get('id'))
                 if dt_atualizacao:
                     cvus_to_search.append(tipo_cvu)
-                    if dt_atualizacao > ultima_data_atualizacao:
+                    if datetime.datetime.strptime(
+                        dt_atualizacao, '%Y-%m-%dT%H:%M:%S'
+                    ) > ultima_data_atualizacao:
                         ultima_data_atualizacao = dt_atualizacao
         kwargs.get('dag_run').conf.update()
     
