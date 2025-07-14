@@ -471,8 +471,11 @@ def update_weol_sistema_nw_estudo(
         extracted_zip_estudo = utils.extract_file_estudo(
             path_estudo,
         )
-        pasta_nw = [nome for nome in os.listdir(extracted_zip_estudo) if os.path.isdir(
-            os.path.join(extracted_zip_estudo, nome)) and nome.startswith("NW")]
+        try:
+            pasta_nw = [nome for nome in os.listdir(extracted_zip_estudo) if os.path.isdir(
+                os.path.join(extracted_zip_estudo, nome)) and nome.startswith("NW")]
+        except Exception:
+            continue
         if not pasta_nw:
             logger.info(f"Estudo {id_estudo} nao possui NW")
             continue
