@@ -82,7 +82,7 @@ def check_cvu_status_processamento(tipo_cvu: str, data_atualizacao: str):
         headers=get_auth_header()
     )
     print(res.status_code, res.text)
-    print(data_atualizacao.strftime('%Y-%m-%dT%H:%M:%S'))
+    print(data_atualizacao)
     if res.status_code == 404:
         res = req.post("https://tradingenergiarz.com/api/v2/decks/check-cvu", json={
                 'tipo_cvu': tipo_cvu,
