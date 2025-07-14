@@ -195,13 +195,15 @@ def update_weol_dadger_dc_estudo(
         extracted_zip_estudo = utils.extract_file_estudo(
             path_estudo,
         )
-
-        dadgers_to_modify = glob.glob(
-            os.path.join(
-                extracted_zip_estudo,
-                "**",
-                "*dadger*"),
-            recursive=True)
+        try:
+            dadgers_to_modify = glob.glob(
+                os.path.join(
+                    extracted_zip_estudo,
+                    "**",
+                    "*dadger*"),
+                recursive=True)
+        except Exception:
+            continue
         arquivos_filtrados = [
             arquivo for arquivo in dadgers_to_modify if not re.search(
                 r'\.0+$', arquivo)]
