@@ -62,7 +62,7 @@ def atualizar_cvu_dadger_decomp(
         process_decomp(params, cvu_input)
         paths_modified.append(path_dadger)
         paths_modified.extend(
-            *glob.glob(os.path.join(
+            glob.glob(os.path.join(
                 os.path.dirname(path_dadger), "**", "*.log"
                 ), recursive=True)
         )
