@@ -336,11 +336,6 @@ def update_cvu_clast_nw_estudo(
         logger.info("============================================")
 
 
-def atualizar_clast_conjuntural(df_conjuntural, clast_to_modify):
-    return 1
-
-def atualizar_clast_estrutural(df_conjuntural, clast_to_modify):
-    return 1
 
 def update_carga_c_adic_nw_estudo(
         file_path: str,

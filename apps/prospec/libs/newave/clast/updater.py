@@ -3,18 +3,31 @@ import re
 import sys
 import pdb
 import pandas as pd
+import requests
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from middle.utils import get_auth_header
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.prospec.libs.newave.clast import clast
 
 
+def get_usinas():
+    res = requests.get(
+        'https://tradingenergiarz.com/api/v2/decks/cvu/usinas',
+        headers=get_auth_header()
+    )
+    if res.status_code != 200:
+        raise Exception(f"Erro ao obter usinas: {res.status_code} - {res.text}")
+    return pd.DataFrame(res.json())
 
 def atualizar_cvu_NW(info_cvu:pd.DataFrame, paths_to_modify, tipos_cvu):
     paths_modified = []
+    usinas = get_usinas()
+    info_cvu = info_cvu[info_cvu['cd_usina'].isin(usinas['cd_usina'])]
+    info_cvu['cd_usina'] = info_cvu['cd_usina'].astype(str)
     for path_clast in paths_to_modify:
-
+        
         #LEITURA DO DECK
         folder_name = os.path.basename(os.path.dirname(path_clast))
         padrao_folder = r"NW(\d{4})(\d{2})"
@@ -41,7 +54,6 @@ def atualizar_cvu_NW(info_cvu:pd.DataFrame, paths_to_modify, tipos_cvu):
         #COMPLETANDO BLOCO DE CLAST ESTRUTURAL
         df_clast_estrutural = df_clast_completo.iloc[:index_separacao_blocos].copy()
 
-        info_cvu['cd_usina'] = info_cvu['cd_usina'].astype(str)
 
         if "estrutural" in tipos_cvu:
         
@@ -56,7 +68,6 @@ def atualizar_cvu_NW(info_cvu:pd.DataFrame, paths_to_modify, tipos_cvu):
 
         #COMPLETANDO BLOCO DE CLAST CONJUNTURAL
         df_clast_conjuntural = pd.read_fwf(path_clast, skiprows = index_separacao_blocos + 2)
-        
         if "conjuntural" in tipos_cvu:
             cvu_map = info_cvu.set_index(['mes_referencia','tipo_cvu']).loc[(dt_referente,'conjuntural')].set_index("cd_usina")["vl_cvu"].round(2).to_dict()
             for col in ["CUSTO"]:
@@ -77,13 +88,7 @@ def append_cvu_merchant(info_cvu: pd.DataFrame, df_clast_conjuntural: pd.DataFra
     info_cvu['cd_usina'] = info_cvu['cd_usina'].astype(str)
     info_cvu['data_inicio'] = pd.to_datetime(info_cvu['data_inicio'])
     info_cvu['data_fim'] = pd.to_datetime(info_cvu['data_fim'])
-
-    info_cvu = info_cvu.merge(
-        df_clast_conjuntural[['NUM', 'Unnamed: 6']],
-        how='left',
-        left_on='cd_usina',
-        right_on='NUM'
-    )
+    info_cvu['Unnamed: 6'] = info_cvu['empreendimento'].str.upper()
     info_cvu.drop_duplicates(subset=['cd_usina'], keep='last', inplace=True)
 
     for _, row in info_cvu.iterrows():
