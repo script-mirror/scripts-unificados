@@ -8,6 +8,10 @@ import datetime
 import warnings
 import pandas as pd
 from typing import List
+from middle.decomp import (
+    cvu_input_generator, retrieve_dadger_metadata,
+    DecompParams, process_decomp
+)
 
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
@@ -28,43 +32,34 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger(__name__)
 
 
-def atualizar_cvu_DC(info_cvu,paths_to_modify):
-
-    paths_modified=[]
+def atualizar_cvu_dadger_decomp(
+    info_cvu,
+    paths_to_modify: List[str],
+    id_estudo: str
+):
+    paths_modified = []
     for path_dadger in paths_to_modify:
-
-        df_dadger, comentarios = dadger.leituraArquivo(path_dadger)
-
-        #LEITURA DO DECK 
-        folder_name = os.path.basename(os.path.dirname(path_dadger))
-        padrao_folder = r"DC(\d{4})(\d{2})-sem(\d{1})"
-
-        match = re.match(padrao_folder, folder_name)
-        if match:
-            ano = match.group(1)
-            mes = match.group(2)
-            semana = match.group(3)
-            dt_referente = f"{ano}{mes}"
-
-        else:
-            quit(f"Erro ao tentar extrair ano e mes do nome da pasta {folder_name}")
-
-        if dt_referente not in info_cvu['mes_referencia'].unique():
-           dt_referente = max(info_cvu['mes_referencia'])
-
-        logger.info(f"\n\n\nModificando arquivo {path_dadger}")
-
-
-        cvu_map = info_cvu.set_index(['mes_referencia','tipo_cvu']).loc[(dt_referente,'conjuntural')].set_index('cd_usina')['vl_cvu'].to_dict()
-
-        df_dadger['CT'] = utils.trim_df(df_dadger['CT'])
-        df_dadger['CT']['cod'] = df_dadger['CT']['cod'].str.strip().astype(int)
-
-        for col in ["cvu_p1", "cvu_p2", "cvu_pat3"]:
-            df_dadger['CT'][col].update(df_dadger['CT']["cod"].map(cvu_map))
         
-        dadger.escrever_dadger(df_dadger, comentarios, path_dadger)
+        params = DecompParams(
+            dadger_path=path_dadger,
+            output_path=os.path.dirname(path_dadger),
+            id_estudo=id_estudo,
+            case='sensibilidade-cvu',
+        )
+        
+        metadata = retrieve_dadger_metadata(**params.to_dict())
+        weeks = metadata['stages'][-1]
+        power_plants_ids = [int(x['id']) for x in metadata['power_plants']]
+        if type(info_cvu) is pd.DataFrame:
+            info_cvu = info_cvu[
+                info_cvu['cd_usina'].isin(power_plants_ids)
+            ].drop_duplicates(['cd_usina'], keep='last').to_dict('records')
 
+        cvu_input = cvu_input_generator(
+            info_cvu,
+            weeks
+        )
+        process_decomp(params, cvu_input)
         paths_modified.append(path_dadger)
 
     return paths_modified
@@ -259,7 +254,7 @@ if __name__ == "__main__":
     extracted_zip_estudo="C:/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/prospec/libs/info_arquivos_externos/tmp/Estudo_23188_Entrada"
     # #ALTERAR CVU EM DECKS DC
     paths_to_modify = glob.glob(os.path.join(extracted_zip_estudo,"**",f"*dadger*"),recursive=True)
-    atualizar_cvu_DC(
+    atualizar_cvu_dadger_decomp(
         info_cvu,
         paths_to_modify
         )

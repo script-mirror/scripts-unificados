@@ -39,7 +39,6 @@ api = RzProspec()
 
 
 def get_ids_to_modify():
-
     path = "/WX2TB/Documentos/fontes/PMO/API_Prospec/ConfigProspecAPI/ConfigRodadaDiaria.csv"
     with open(path, 'r') as file:
         csv_text = file.read()
@@ -91,7 +90,6 @@ def update_cvu_dadger_dc_estudo(
     if not ids_to_modify:
         ids_to_modify = get_ids_to_modify()
 
-    # ORGANIZA INFORMACOES DE CVU
     info_cvu = info_external_files.organizar_info_cvu(
         fontes_to_search=fontes_to_search,
         dt_atualizacao=dt_atualizacao
@@ -125,9 +123,10 @@ def update_cvu_dadger_dc_estudo(
             raise Exception(
                 "Não foi encontrado nenhum arquivo"
                 f" dadger no estudo {id_estudo}")
-        paths_modified = dadger_updater.atualizar_cvu_DC(
+        paths_modified = dadger_updater.atualizar_cvu_dadger_decomp(
             info_cvu,
-            arquivos_filtrados
+            arquivos_filtrados,
+            id_estudo
         )
 
         send_files_to_api(id_estudo, paths_modified, tag)
