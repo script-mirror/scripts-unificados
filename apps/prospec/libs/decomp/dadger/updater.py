@@ -44,7 +44,7 @@ def atualizar_cvu_dadger_decomp(
             dadger_path=path_dadger,
             output_path=os.path.dirname(path_dadger),
             id_estudo=id_estudo,
-            case='sensibilidade-cvu',
+            case='att-cvu',
         )
         
         metadata = retrieve_dadger_metadata(**params.to_dict())
