@@ -1,45 +1,44 @@
 import requests
 import os
 import sys
+import numpy as np
 import pandas as pd 
-from inewave.newave import Cadic, Sistema
+from inewave.newave import Patamar, Cadic, Sistema
 from datetime import datetime, date
 
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
 from utils.repository_webhook import SharedRepository
 from utils.html_builder import HtmlBuilder
-from validator_deck_preliminar_newave import DeckPreliminarNewaveValidator
+from validator_decks_newave import DecksNewaveValidator
 
-class DeckPreliminarNewaveService:
+class DecksNewaveService:
     def __init__(self):
         self.repository = SharedRepository()
-        self.validator = DeckPreliminarNewaveValidator()
-        
+        self.validator = DecksNewaveValidator()
+    
     @staticmethod
-    def determinar_task_inicial(**kwargs):
+    def determinar_versao_por_filename(filename):
         """
-        Determina qual task deve ser executada baseada na origem da configuração.
-        Retorna 'validar_dados_entrada' se origem não existir ou for 'ons',
-        caso contrário retorna 'gerar_tabela_diferenca_cargas'.
+        Determina a versão do deck baseada no nome do arquivo.
+        Retorna 'preliminar' para deck preliminar ou 'definitivo' para deck definitivo.
         """
-        dag_run = kwargs.get('dag_run')
-        if not dag_run or not hasattr(dag_run, 'conf') or not dag_run.conf:
-            print("Sem configuração DAG, executando fluxo completo")
-            return 'validar_dados_entrada'
+        if not filename:
+            return 'preliminar'  # Default para compatibilidade
         
-        origem = dag_run.conf.get('origem')
+        filename_upper = filename.upper()
         
-        if origem is None or origem == 'ons':
-            print(f"Origem: {origem}, executando fluxo completo")
-            return 'validar_dados_entrada'
+        if 'DEFINITIVO' in filename_upper:
+            return 'definitivo'
+        elif 'PRELIMINAR' in filename_upper:
+            return 'preliminar'
         else:
-            print(f"Origem: {origem}, executando apenas geração de tabela")
-            return 'gerar_tabela_diferenca_cargas'
+            # Se não encontrar nem preliminar nem definitivo, assume preliminar como padrão
+            return 'preliminar'
 
     @staticmethod
     def validar_dados_entrada(**kwargs):
-        validator = DeckPreliminarNewaveValidator()
+        validator = DecksNewaveValidator()
         params = kwargs.get('params', {})
         return validator.validate(params)
     
@@ -64,7 +63,7 @@ class DeckPreliminarNewaveService:
                 month, year = product_date.split('/')
                 product_datetime = datetime(int(year), int(month), 1, 0, 0, 0)
             
-            download_path = "/tmp/deck_preliminar_newave"
+            download_path = "/tmp/decks_newave"
             
             file_path = repository.download_webhook_file(
                 webhook_id=webhook_id,
@@ -141,7 +140,7 @@ class DeckPreliminarNewaveService:
                                 print(f"Arquivos extraídos do ZIP aninhado: {nested_extracted_files}")
                         except Exception as zip_error:
                             print(f"Erro ao extrair ZIP aninhado: {str(zip_error)}")
-            
+                            
             xcom_data = {
                     'success': True,
                     'original_file': file_path,
@@ -149,7 +148,7 @@ class DeckPreliminarNewaveService:
                     'extracted_files': nested_extracted_files,
                     'message': f'Arquivos extraídos com sucesso de {os.path.basename(file_path)}'
                 }
-        
+
             print(f"task(extrair_arquivos) - Retornando dados para XCom: {xcom_data}")
             
             return xcom_data
@@ -170,6 +169,14 @@ class DeckPreliminarNewaveService:
             
             if not extract_result or not extract_result.get('success'):
                 raise Exception(f"Falha na extração anterior: {extract_result.get('error', 'Erro desconhecido')}")
+            
+            # Obter informações do produto para determinar a versão
+            params = kwargs.get('params', {})
+            product_details = params.get('product_details', {})
+            filename = product_details.get('filename', '')
+            
+            # Determinar versão baseada no filename
+            versao = DecksNewaveService.determinar_versao_por_filename(filename)
             
             cadic_file = os.path.join(extract_result['extract_path'], 'C_ADIC.DAT')
             if not os.path.exists(cadic_file):
@@ -224,10 +231,11 @@ class DeckPreliminarNewaveService:
             nw_cadic_df['dt_deck'] = dt_deck
             nw_cadic_df['dt_deck'] = nw_cadic_df['dt_deck'].dt.strftime('%Y-%m-%d')  # Formata como string
             
-            nw_cadic_df['fonte'] = 'ONS'
-
+            nw_cadic_df['versao'] = versao
 
             nw_cadic_records = nw_cadic_df.to_dict('records')
+            
+            print(f"Processamento concluído:")
             
             xcom_data = {
                 'success': True,
@@ -258,6 +266,14 @@ class DeckPreliminarNewaveService:
             if not extract_result or not extract_result.get('success'):
                 raise Exception(f"Falha na extração anterior: {extract_result.get('error', 'Erro desconhecido')}")
             
+            # Obter informações do produto para determinar a versão
+            params = kwargs.get('params', {})
+            product_details = params.get('product_details', {})
+            filename = product_details.get('filename', '')
+            
+            # Determinar versão baseada no filename
+            versao = DecksNewaveService.determinar_versao_por_filename(filename)
+            
             sistema_file = os.path.join(extract_result['extract_path'], 'SISTEMA.DAT')
             
             sistema_object = Sistema.read(sistema_file)
@@ -266,7 +282,9 @@ class DeckPreliminarNewaveService:
             sistema_mercado_energia_df = sistema_object.mercado_energia.copy()   
             
             if sistema_mercado_energia_df is None:
-                print("Aviso: Não foram encontrados dados de sistema do mercado de energia no arquivo")
+                error_msg = "Dados de sistema do mercado de energia não encontrados no arquivo!"
+                print(error_msg)
+                raise Exception(error_msg)
             else:
                 print(f"Dados de sistema do mercado de energia encontrados: {sistema_mercado_energia_df} ")
                 print(f"Mercado de energia total carregado com sucesso. Total de registros: {len(sistema_mercado_energia_df)}")
@@ -333,7 +351,7 @@ class DeckPreliminarNewaveService:
                      (nw_sistema_df['vl_geracao_ufv_mmgd'].fillna(0) == 0))
             ]
             
-            nw_sistema_df['fonte'] = 'ONS'
+            nw_sistema_df['versao'] = versao
             
             ordem_colunas = [
                 'cd_submercado',
@@ -349,12 +367,14 @@ class DeckPreliminarNewaveService:
                 'vl_geracao_eol_mmgd',
                 'vl_geracao_ufv_mmgd',
                 'dt_deck',
-                'fonte'
+                'versao'
             ]
             
             nw_sistema_df = nw_sistema_df.reindex(columns=ordem_colunas)
             
             nw_sistema_records = nw_sistema_df.to_dict('records')
+            
+            print(f"Processamento concluído:")
             
             xcom_data = {
                 'success': True,
@@ -372,10 +392,305 @@ class DeckPreliminarNewaveService:
             error_msg = f"Erro ao processar deck NW SISTEMA: {str(e)}"
             print(error_msg)
             raise Exception(error_msg)
+        
+    @staticmethod
+    def processar_patamar_nw(**kwargs):
+        try:
+            task_instance = kwargs['task_instance']
+            extract_result = task_instance.xcom_pull(task_ids='extrair_arquivos')
+            download_result = task_instance.xcom_pull(task_ids='download_arquivos')
+
+            print(f"Dados de extração recebidos via XCom: {extract_result}")
+
+            if not extract_result or not extract_result.get('success'):
+                raise Exception(f"Falha na extração anterior: {extract_result.get('error', 'Erro desconhecido')}")
+            
+            # Obter informações do produto para determinar a versão
+            params = kwargs.get('params', {})
+            product_details = params.get('product_details', {})
+            filename = product_details.get('filename', '')
+            
+            # Determinar versão baseada no filename
+            versao = DecksNewaveService.determinar_versao_por_filename(filename)
+            
+            patamar_file = os.path.join(extract_result['extract_path'], 'PATAMAR.DAT')
+
+            # Corrigir a verificação de existência do arquivo
+            if not os.path.exists(patamar_file):
+                error_msg = f"Arquivo PATAMAR.DAT não encontrado em {extract_result['extract_path']}"
+                print(error_msg)
+                raise FileNotFoundError(error_msg)
+
+            print(f"Arquivo PATAMAR.DAT encontrado: {patamar_file}")
+            patamar_object = Patamar.read(patamar_file)
+
+            patamares = {
+                '1': 'Pesado',
+                '2': 'Medio',
+                '3': 'Leve'
+            }
+
+            indices_bloco = {
+                1: 'PCH',
+                2: 'PCT',
+                3: 'EOL',
+                4: 'UFV',
+                5: 'PCH_MMGD',
+                6: 'PCT_MMGD',
+                7: 'EOL_MMGD',
+                8: 'UFV_MMGD'
+            }
+
+            submercados = {
+                '1': 'SE',
+                '2': 'S',
+                '3': 'NE',
+                '4': 'N',
+                '11': 'FC'
+            }
+
+            # Verificar se os dados foram extraídos corretamente
+            carga_patamares_df = patamar_object.carga_patamares.copy() 
+
+            if carga_patamares_df is None or carga_patamares_df.empty:
+                error_msg = "Não foi possível extrair a carga dos patamares NEWAVE"
+                print(error_msg)
+                raise Exception(error_msg)
+
+            print(f"Total de registros de carga: {len(carga_patamares_df)}")
+
+            duracao_mensal_patamares_df = patamar_object.duracao_mensal_patamares.copy() 
+
+            if duracao_mensal_patamares_df is None or duracao_mensal_patamares_df.empty:
+                error_msg = "Não foi possível extrair a duração mensal dos patamares NEWAVE"
+                print(error_msg)
+                raise Exception(error_msg)
+
+            print(f"Total de registros de duração mensal: {len(duracao_mensal_patamares_df)}")
+
+            intercambio_patamares_df = patamar_object.intercambio_patamares.copy() 
+
+            if intercambio_patamares_df is None or intercambio_patamares_df.empty:
+                error_msg = "Não foi possível extrair os intercâmbios por patamares NEWAVE"
+                print(error_msg)
+                raise Exception(error_msg)
+
+            print(f"Total de registros de intercâmbios: {len(intercambio_patamares_df)}")
+
+            usinas_nao_simuladas_df = patamar_object.usinas_nao_simuladas.copy()
+
+            if usinas_nao_simuladas_df is None or usinas_nao_simuladas_df.empty:
+                error_msg = "Não foi possível extrair as usinas não simuladas do NEWAVE"
+                print(error_msg)
+                raise Exception(error_msg)
+
+            print(f"Total de registros de usinas não simuladas: {len(usinas_nao_simuladas_df)}")
+
+            # Processamento das tabelas
+            # 1. Processar carga_patamares_df
+            carga_df = carga_patamares_df.copy()
+            carga_df['patamar_nome'] = carga_df['patamar'].astype(str).map(patamares)
+            carga_df['submercado_nome'] = carga_df['codigo_submercado'].astype(str).map(submercados)
+            carga_df = carga_df.rename(columns={
+                'data': 'dt_referente',
+                'valor': 'pu_demanda_med',
+                'codigo_submercado': 'submercado'
+            })
+            carga_df = carga_df[['dt_referente', 'patamar', 'patamar_nome', 'submercado', 'submercado_nome', 'pu_demanda_med']]
+
+            # 2. Processar duracao_mensal_patamares_df
+            duracao_df = duracao_mensal_patamares_df.copy()
+            duracao_df['patamar_nome'] = duracao_df['patamar'].astype(str).map(patamares)
+            duracao_df = duracao_df.rename(columns={
+                'data': 'dt_referente',
+                'valor': 'duracao_mensal'
+            })
+            duracao_df = duracao_df[['dt_referente', 'patamar', 'patamar_nome', 'duracao_mensal']]
+
+            # 3. Processar intercambio_patamares_df
+            intercambio_df = intercambio_patamares_df.copy()
+            intercambio_df['patamar_nome'] = intercambio_df['patamar'].astype(str).map(patamares)
+            intercambio_df['submercado_de_nome'] = intercambio_df['submercado_de'].astype(str).map(submercados)
+            intercambio_df['submercado_para_nome'] = intercambio_df['submercado_para'].astype(str).map(submercados)
+            intercambio_df = intercambio_df.rename(columns={
+                'data': 'dt_referente',
+                'valor': 'pu_intercambio_med'
+            })
+            intercambio_df = intercambio_df[['dt_referente', 'patamar', 'patamar_nome', 'submercado_de', 'submercado_de_nome', 
+                                           'submercado_para', 'submercado_para_nome', 'pu_intercambio_med']]
+
+            # 4. Processar usinas_nao_simuladas_df
+            usinas_df = usinas_nao_simuladas_df.copy()
+            usinas_df['patamar_nome'] = usinas_df['patamar'].astype(str).map(patamares)
+            usinas_df['submercado_nome'] = usinas_df['codigo_submercado'].astype(str).map(submercados)
+            usinas_df['indice_bloco_nome'] = usinas_df['indice_bloco'].map(indices_bloco)
+            usinas_df = usinas_df.rename(columns={
+                'data': 'dt_referente',
+                'codigo_submercado': 'submercado',
+                'valor': 'pu_montante_med'
+            })
+            usinas_df = usinas_df[['dt_referente', 'patamar', 'patamar_nome', 'submercado', 'submercado_nome', 
+                                 'indice_bloco', 'indice_bloco_nome', 'pu_montante_med']]
+
+            product_datetime_str = download_result.get('product_datetime') if download_result else None
+            dt_deck = datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S') if product_datetime_str else datetime.now().replace(day=1)
+
+            # TABELA 1: Preparar DataFrame de carga com indice_bloco = 'CARGA'
+            carga_transformada_df = carga_df.copy()
+            carga_transformada_df['indice_bloco'] = 'CARGA'
+            carga_transformada_df['valor_pu'] = carga_transformada_df['pu_demanda_med']
+            carga_transformada_df = carga_transformada_df.drop(columns=['pu_demanda_med'])
+            
+            # Preparar DataFrame de usinas não simuladas
+            usinas_transformada_df = usinas_df.copy()
+            usinas_transformada_df['valor_pu'] = usinas_transformada_df['pu_montante_med']
+            usinas_transformada_df = usinas_transformada_df.drop(columns=['pu_montante_med'])
+            
+            # Concatenar os dois DataFrames
+            patamar_carga_usinas_df = pd.concat([carga_transformada_df, usinas_transformada_df], ignore_index=True)
+
+            # Adicionar duração mensal
+            patamar_carga_usinas_df = pd.merge(
+                patamar_carga_usinas_df,
+                duracao_df,
+                on=['dt_referente', 'patamar', 'patamar_nome'],
+                how='left'
+            )
+
+            # Adicionar dados complementares na tabela 1
+            patamar_carga_usinas_df['dt_deck'] = dt_deck.strftime('%Y-%m-%d')
+            patamar_carga_usinas_df['versao'] = versao
+
+            # Remover colunas numéricas originais e renomear as colunas de texto
+            patamar_carga_usinas_df = patamar_carga_usinas_df.drop(columns=['patamar', 'submercado'])
+            patamar_carga_usinas_df = patamar_carga_usinas_df.rename(columns={
+                'patamar_nome': 'patamar',
+                'submercado_nome': 'submercado'
+            })
+            
+            # Para a coluna indice_bloco, usar o valor de indice_bloco_nome quando disponível, senão manter o valor atual
+            patamar_carga_usinas_df['indice_bloco'] = patamar_carga_usinas_df.apply(
+                lambda row: row['indice_bloco_nome'] if pd.notna(row.get('indice_bloco_nome')) else row['indice_bloco'], axis=1
+            )
+            
+            # Remover a coluna indice_bloco_nome se existir
+            if 'indice_bloco_nome' in patamar_carga_usinas_df.columns:
+                patamar_carga_usinas_df = patamar_carga_usinas_df.drop(columns=['indice_bloco_nome'])
+
+            # Selecionar colunas finais da tabela 1
+            colunas_tabela1 = [
+                'dt_referente', 'patamar', 'submercado', 'valor_pu',
+                'duracao_mensal', 'indice_bloco', 'dt_deck', 'versao'
+            ]
+
+            patamar_carga_usinas_df['dt_referente'] = patamar_carga_usinas_df['dt_referente'].dt.strftime('%Y-%m-%d')
+            patamar_carga_usinas_df['dt_deck'] = patamar_carga_usinas_df['dt_deck'].astype(str)
+            patamar_carga_usinas_df = patamar_carga_usinas_df[colunas_tabela1]
+            
+            # TABELA 2: Intercâmbios por Patamares + Duração
+            patamar_intercambio_df = pd.merge(
+                intercambio_df,
+                duracao_df,
+                on=['dt_referente', 'patamar', 'patamar_nome'],
+                how='inner'
+            )
+
+            # Adicionar dados complementares na tabela 2
+            patamar_intercambio_df['dt_deck'] = dt_deck.strftime('%Y-%m-%d')
+            if patamar_intercambio_df['dt_deck'].dtype == 'object':
+                patamar_intercambio_df['dt_deck'] = patamar_intercambio_df['dt_deck'].astype(str)
+            patamar_intercambio_df['versao'] = versao
+
+            # Remover colunas numéricas originais e renomear as colunas de texto
+            patamar_intercambio_df = patamar_intercambio_df.drop(columns=['patamar', 'submercado_de', 'submercado_para'])
+            patamar_intercambio_df = patamar_intercambio_df.rename(columns={
+                'patamar_nome': 'patamar',
+                'submercado_de_nome': 'submercado_de',
+                'submercado_para_nome': 'submercado_para'
+            })
+
+            # Selecionar colunas finais da tabela 2
+            colunas_tabela2 = [
+                'dt_referente', 'patamar', 'submercado_de', 'submercado_para',
+                'pu_intercambio_med', 'duracao_mensal', 'dt_deck', 'versao'
+            ]
+
+            patamar_intercambio_df['dt_referente'] = patamar_intercambio_df['dt_referente'].dt.strftime('%Y-%m-%d')
+            patamar_intercambio_df['dt_deck'] = patamar_intercambio_df['dt_deck'].astype(str)
+            
+            patamar_intercambio_df['pu_intercambio_med'] = patamar_intercambio_df['pu_intercambio_med'].round(4)
+            
+            patamar_intercambio_df = patamar_intercambio_df[colunas_tabela2]
+            patamar_intercambio_df = patamar_intercambio_df.replace([np.inf, -np.inf], np.nan)
+            
+            patamar_carga_usinas_records = patamar_carga_usinas_df.to_dict('records')
+            patamar_intercambio_records = patamar_intercambio_df.to_dict('records')
+           
+            import pickle
+
+            temp_dir = "/tmp/deck_preliminar_newave/processed_data"
+            os.makedirs(temp_dir, exist_ok=True)
+
+            carga_usinas_file = os.path.join(temp_dir, "patamar_carga_usinas.pkl")
+            intercambio_file = os.path.join(temp_dir, "patamar_intercambio.pkl")
+
+            try:
+                with open(carga_usinas_file, 'wb') as f:
+                    pickle.dump(patamar_carga_usinas_records, f)
+                print(f"Arquivo {carga_usinas_file} salvo com sucesso")
+            except Exception as e:
+                print(f"Erro ao salvar arquivo carga_usinas: {str(e)}")
+                raise
+
+            try:
+                with open(intercambio_file, 'wb') as f:
+                    pickle.dump(patamar_intercambio_records, f)
+                print(f"Arquivo {intercambio_file} salvo com sucesso")
+            except Exception as e:
+                print(f"Erro ao salvar arquivo intercambio: {str(e)}")
+                raise
+
+            print(f"Dados salvos em arquivos temporários:")
+            print(f"- Carga e usinas: {carga_usinas_file} ({len(patamar_carga_usinas_records)} registros)")
+            print(f"- Intercâmbio: {intercambio_file} ({len(patamar_intercambio_records)} registros)")
+
+            # Retornar apenas metadados via XCom
+            xcom_data = {
+                'success': True,
+                'carga_usinas_file': carga_usinas_file,
+                'intercambio_file': intercambio_file,
+                'carga_usinas_count': len(patamar_carga_usinas_records),
+                'intercambio_count': len(patamar_intercambio_records),
+                'product_datetime': product_datetime_str,
+                'message': f'Arquivo PATAMAR.DAT processado com sucesso - 2 tabelas geradas ({len(patamar_carga_usinas_records)} + {len(patamar_intercambio_records)} registros)'
+            }
+
+            print(f"task(processar_patamar_nw) - Processamento concluído com sucesso")
+
+            return xcom_data
+    
+        except Exception as e:
+            error_msg = f"Erro ao processar deck NW PATAMAR: {str(e)}"
+            print(error_msg)
+            raise Exception(error_msg)
     
     @staticmethod
-    def enviar_dados_para_api(**kwargs):
+    def enviar_dados_sistema_cadic_para_api(**kwargs):
         try:
+            repository = SharedRepository()
+
+            auth_headers = repository.get_auth_token()
+            headers = {
+                **auth_headers, 
+                'Content-Type': 'application/json',
+                'accept': 'application/json'
+            }
+
+            print(f"Headers: {headers}")
+
+            api_url = os.getenv("DNS", "http://localhost:8000")
+            api_url += "/api/v2"
+            
             task_instance = kwargs['task_instance']
             nw_sist_result = task_instance.xcom_pull(task_ids='processar_deck_nw_sist')
             nw_cadic_result = task_instance.xcom_pull(task_ids='processar_deck_nw_cadic')
@@ -389,19 +704,6 @@ class DeckPreliminarNewaveService:
 
             print(f"Preparando dados para envio à API: {len(nw_sist_records)} registros de SISTEMA e {len(nw_cadic_records)} registros CADIC")
 
-            repository = SharedRepository()
-
-            auth_headers = repository.get_auth_token()
-            headers = {
-                **auth_headers, 
-                'Content-Type': 'application/json',
-                'accept': 'application/json'
-            }
-
-            print(f"Headers: {headers}")
-
-            api_url = os.getenv("URL_API_V2", "https://tradingenergiarz.com/api/v2")
-
             for record in nw_sist_records:
                 if isinstance(record.get('dt_deck'), date):
                     record['dt_deck'] = record['dt_deck'].isoformat()
@@ -413,29 +715,33 @@ class DeckPreliminarNewaveService:
             sistema_url = f"{api_url}/decks/newave/sistema"
             cadic_url = f"{api_url}/decks/newave/cadic"
 
-            print(f"Enviando dados para: {sistema_url}")
 
+            print(f"Enviando dados para: {sistema_url}")
+            
             request_sistema = requests.post(
                 sistema_url,
                 headers=headers,
                 json=nw_sist_records,  # Use json parameter to properly encode the data
             )
+            
+            if request_sistema.status_code != 200:
+                raise Exception(f"Erro ao enviar carga do SISTEMA para API: {request_sistema.text}")
+
+
+            print(f"Enviando dados para: {cadic_url}")
 
             request_cadic = requests.post(
                 cadic_url,
                 headers=headers,
                 json=nw_cadic_records,  # Use json parameter to properly encode the data
             )
-
-            if request_sistema.status_code != 200:
-                raise Exception(f"Erro ao enviar carga do SISTEMA para API: {request_sistema.text}")
-                
+            
             if request_cadic.status_code != 200:
                 raise Exception(f"Erro ao enviar carga do CADIC para API: {request_cadic.text}")
-
+            
             xcom_data = {
                 'success': True,
-                'message': 'Dados enviados para a API com sucesso',
+                'message': 'Dados do SISTEMA e CADIC enviados para a API com sucesso',
                 'product_datetime': product_datetime_str  # Repassa a data do produto para as próximas tasks
             }
 
@@ -448,13 +754,104 @@ class DeckPreliminarNewaveService:
             raise Exception(error_msg)
     
     @staticmethod
-    def gerar_tabela_diferenca_cargas(**kwargs):
-        import pdb
+    def enviar_dados_patamares_para_api(**kwargs):
+        try:
+            import pickle
+            
+            repository = SharedRepository()
+
+            auth_headers = repository.get_auth_token()
+            headers = {
+                **auth_headers, 
+                'Content-Type': 'application/json',
+                'accept': 'application/json'
+            }
+
+            print(f"Headers: {headers}")
+
+            api_url = os.getenv("DNS", "http://localhost:8000")
+            
+            api_url += "/api/v2"
+            
+            task_instance = kwargs['task_instance']
+            
+            patamar_nw_result = task_instance.xcom_pull(task_ids='processar_patamar_nw')
+            
+            carga_usinas_file = patamar_nw_result.get('carga_usinas_file')
+            intercambio_file = patamar_nw_result.get('intercambio_file')
         
+            if not carga_usinas_file or not intercambio_file:
+                raise Exception("Arquivos de dados temporários não encontrados")
+        
+            with open(carga_usinas_file, 'rb') as f:
+                patamar_carga_usinas_records = pickle.load(f)
+        
+            with open(intercambio_file, 'rb') as f:
+                patamar_intercambio_records = pickle.load(f)
+        
+            product_datetime_str = patamar_nw_result.get('product_datetime')
+            
+            print(f"Dados carregados dos arquivos temporários:")
+            print(f"- Carga e usinas: {len(patamar_carga_usinas_records)} registros")
+            print(f"- Intercâmbio: {len(patamar_intercambio_records)} registros")
+            
+            patamar_carga_usinas_url = f"{api_url}/decks/newave/patamar/carga_usinas"
+            patamar_intercambio_url = f"{api_url}/decks/newave/patamar/intercambio"
+            
+            
+            print(f"Enviando dados para: {patamar_carga_usinas_url}")
+            
+            request_patamar_carga_usinas = requests.post(
+                patamar_carga_usinas_url,
+                headers=headers,
+                json=patamar_carga_usinas_records,  
+            )
+            
+            if request_patamar_carga_usinas.status_code != 200:
+                raise Exception(f"Erro ao enviar patamar do newave de carga e usina para API: {request_patamar_carga_usinas.text}")
+            
+            
+            print(f"Enviando dados para: {patamar_intercambio_url}")
+            
+            request_patamar_intercambio = requests.post(
+                patamar_intercambio_url,
+                headers=headers,
+                json=patamar_intercambio_records,  
+            )
+            
+            if request_patamar_intercambio.status_code != 200:
+                raise Exception(f"Erro ao enviar patamar do newave de intercambio para API: {request_patamar_intercambio.text}")
+            
+            xcom_data = {
+                'success': True,
+                'message': 'Dados dos Patamares enviados para a API com sucesso',
+                'product_datetime': product_datetime_str  # Repassa a data do produto para as próximas tasks
+            }
+
+            print(f"task(enviar_dados_para_api) - Retornando dados para XCom: {xcom_data}")
+        
+            return xcom_data
+        
+        except Exception as e:
+            error_msg = f"Erro ao enviar dados dos Patamares para API: {str(e)}"
+            print(error_msg)
+            raise Exception(error_msg)
+            
+    @staticmethod
+    def gerar_tabela_diferenca_cargas(**kwargs):
         try:
             product_datetime_str = kwargs.get('dag_run').conf.get('product_details').get('dataProduto')
             if product_datetime_str:
                 product_datetime_str = product_datetime_str.replace('/', '')
+            
+            # Obter informações do produto para determinar o tipo de deck
+            product_details = kwargs.get('dag_run').conf.get('product_details', {})
+            filename = product_details.get('filename', '')
+            
+            # Determinar tipo de deck baseado no filename
+            tipo_deck = DecksNewaveService.determinar_versao_por_filename(filename)
+            tipo_deck_label = 'PRELIMINAR' if tipo_deck == 'preliminar' else 'DEFINITIVO'
+            
             api_url = os.getenv("URL_API_V2", "https://tradingenergiarz.com/api/v2")
             image_api_url = "https://tradingenergiarz.com/html-to-img"
             
@@ -552,12 +949,12 @@ class DeckPreliminarNewaveService:
             image_dir = "/tmp/deck_preliminar_newave/images"
             os.makedirs(image_dir, exist_ok=True)
             
-            # Gerar nome do arquivo baseado na data do produto
+            # Gerar nome do arquivo baseado na data do produto e tipo de deck
             if product_datetime_str:
                 # dt = datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
-                image_filename = f"tabela_diferenca_cargas_{product_datetime_str}.png"
+                image_filename = f"tabela_diferenca_cargas_{tipo_deck}_{product_datetime_str}.png"
             else:
-                image_filename = f"tabela_diferenca_cargas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+                image_filename = f"tabela_diferenca_cargas_{tipo_deck}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
             
             image_path = os.path.join(image_dir, image_filename)
             
@@ -592,9 +989,17 @@ class DeckPreliminarNewaveService:
             if not tabela_result or not tabela_result.get('success'):
                 raise Exception("Tabela de diferença não foi gerada com sucesso")
             
+            # Obter informações do produto para determinar o tipo de deck
+            product_details = kwargs.get('dag_run').conf.get('product_details', {})
+            filename = product_details.get('filename', '')
+            product_datetime_str = product_details.get('dataProduto')
+            
+            # Determinar tipo de deck baseado no filename
+            tipo_deck = DecksNewaveService.determinar_versao_por_filename(filename)
+            tipo_deck_label = 'PRELIMINAR' if tipo_deck == 'preliminar' else 'DEFINITIVO'
+            
             image_path = tabela_result.get('image_path')
             image_filename = tabela_result.get('image_filename')
-            product_datetime_str = kwargs.get('dag_run').conf.get('product_details').get('dataProduto')
             
             if not image_path or not os.path.exists(image_path):
                 raise Exception(f"Arquivo de imagem não encontrado: {image_path}")
@@ -609,10 +1014,10 @@ class DeckPreliminarNewaveService:
             
             try:
                 success = whatsapp_sender.send_table_notification(
-                    table_type="Diferença de Cargas NEWAVE",
+                    table_type=f"Diferença de Cargas NEWAVE {tipo_deck_label}",
                     product_datetime=product_datetime_str or "Data não informada",
                     image_path=image_path,
-                    destinatario="Premissas Preco"
+                    # destinatario="Premissas Preco"
                 )
                 
                 if success:
@@ -641,13 +1046,10 @@ class DeckPreliminarNewaveService:
             raise Exception(error_msg)
     
 if __name__ == "__main__":
-    service = DeckPreliminarNewaveService()
+    service = DecksNewaveService()
     class MockTaskInstance:
         def xcom_pull(self, task_ids, key=None):
-            return {
-                'success': True,
-                'message': 'Dados enviados para a API com sucesso'
-            }
+            return {'success': True, 'original_file': '/tmp/deck_preliminar_newave/Deck NEWAVE Preliminar.zip', 'extract_path': '/tmp/deck_preliminar_newave', 'extracted_files': ['ADTERM.DAT', 'AGRINT.DAT', 'ARQUIVOS.DAT', 'BID.DAT', 'CASO.DAT', 'CDEFVAR.DAT', 'CLAST.DAT', 'CONFHD.DAT', 'CONFT.DAT', 'CURVA.DAT', 'CVAR.DAT', 'C_ADIC.DAT', 'DGER.DAT', 'DSVAGUA.DAT', 'ELNINO.DAT', 'ENSOAUX.DAT', 'EXPH.DAT', 'EXPT.DAT', 'FORMAT.TMP', 'GHMIN.DAT', 'GTMINPAT.DAT', 'HIDR.DAT', 'indices.csv', 'ITAIPU.DAT', 'LOSS.DAT', 'MANUTT.DAT', 'MENSAG.TMP', 'MODIF.DAT', 'NewaveMsgPortug.txt', 'PATAMAR.DAT', 'PENALID.DAT', 'polinjus.csv', 'POSTOS.DAT', 'RE.DAT', 'REE.DAT', 'restricao-eletrica.csv', 'selcor.dat', 'SHIST.DAT', 'SISTEMA.DAT', 'tecno.dat', 'TERM.DAT', 'VAZOES.DAT', 'VAZPAST.DAT', 'volref_saz.dat', 'volumes-referencia.csv', 'Leia-me.pdf'], 'message': 'Arquivos extraídos com sucesso de Deck NEWAVE Preliminar.zip'}
     
     try:
         params = {
@@ -666,8 +1068,12 @@ if __name__ == "__main__":
                 "webhookId": "68347a7abd270c7eb3fac7cb"
             }
         }       
-        result = DeckPreliminarNewaveService.gerar_tabela_diferenca_cargas(params=params, task_instance=MockTaskInstance())
+        result = DecksNewaveService.processar_patamar_nw(
+            task_instance=MockTaskInstance(),
+            params=params
+        )
     except Exception as e:
-        print(f"Erro ao extrair arquivos: {str(e)}")
+        print(f"Erro ao debugar manualmente: {str(e)}")
+
 
 

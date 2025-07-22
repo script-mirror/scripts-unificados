@@ -57,8 +57,13 @@ class DateFormatValidator(BaseValidator):
             # First try to parse as ISO format with time
             if 'T' in date_str:
                 # Parse ISO format with time information
-                from dateutil import parser
-                return parser.parse(date_str)
+                try:
+                    from dateutil import parser
+                    return parser.parse(date_str)
+                except ImportError:
+                    # Fallback to manual parsing if dateutil not available
+                    date_part = date_str.split('T')[0]
+                    return datetime.strptime(date_part, "%Y-%m-%d")
             # Then try the simple YYYY-MM-DD format
             return datetime.strptime(date_str, "%Y-%m-%d")
         except Exception:
@@ -102,14 +107,14 @@ class RequiredFieldsValidator(BaseValidator):
             raise ValidationError(f"Campos obrigatórios ausentes: {', '.join(missing_fields)}")
         return data
 
-class DeckPreliminarNewaveValidator:
-    """Validador principal para dados do Deck Preliminar Decomp"""
+class DecksNewaveValidator:
+    """Validador principal para dados do Deck NEWAVE (Preliminar e Definitivo)"""
     
     def __init__(self):
         # Configuração dos validadores específicos
         self.url_validator = UrlValidator()
         self.filename_validator = FilenameValidator(['.zip'])
-        self.product_name_validator = ProductNameValidator('Deck NEWAVE Preliminar')
+        # Removido validador específico de nome do produto para aceitar ambos os tipos
         self.date_format_validator = DateFormatValidator()
         self.date_range_validator = DateRangeValidator()
         self.boolean_validator = BooleanValidator()
@@ -137,7 +142,11 @@ class DeckPreliminarNewaveValidator:
         self.required_fields_validator.validate(product_details)
         
         # Validações específicas
-        self.product_name_validator.validate(product_details['nome'])
+        # Validação do nome do produto - aceita tanto preliminar quanto definitivo
+        nome_produto = product_details['nome']
+        if not any(keyword in nome_produto.upper() for keyword in ['NEWAVE PRELIMINAR', 'NEWAVE DEFINITIVO']):
+            raise ValidationError(f"Nome de produto deve conter 'NEWAVE PRELIMINAR' ou 'NEWAVE DEFINITIVO': {nome_produto}")
+        
         self.url_validator.validate(product_details['url'])
         self.filename_validator.validate(product_details['filename'])
         self.boolean_validator.validate(product_details['enviar'])
