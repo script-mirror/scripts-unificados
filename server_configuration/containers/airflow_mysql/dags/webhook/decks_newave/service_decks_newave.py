@@ -114,40 +114,90 @@ class DecksNewaveService:
                 raise Exception(f"Arquivo não encontrado: {file_path}")
             
             extracted_files = []
-            nested_extracted_files = []
+            final_extracted_files = []
+            dat_files_found = []
             
             if file_path.endswith('.zip'):
                 import zipfile
                 
                 extract_path = os.path.dirname(file_path)
                 
+                # Extrair o ZIP principal primeiro
+                print(f"Extraindo ZIP principal: {file_path}")
                 with zipfile.ZipFile(file_path, 'r') as zip_ref:
                     zip_ref.extractall(extract_path)
                     extracted_files = zip_ref.namelist()
                 
-                print(f"Arquivos extraídos: {extracted_files}")
+                print(f"Arquivos extraídos do ZIP principal: {extracted_files}")
                 
-                for extracted_file in extracted_files:
-                    nested_zip_path = os.path.join(extract_path, extracted_file)
-                    
-                    if os.path.exists(nested_zip_path) and nested_zip_path.endswith('.zip'):
-                        print(f"Encontrado ZIP aninhado: {nested_zip_path}")
+                # Buscar por ZIPs aninhados e extrair todos de uma vez
+                print("Procurando por ZIPs aninhados...")
+                for root, dirs, files in os.walk(extract_path):
+                    for file in files:
+                        if file.endswith('.zip'):
+                            zip_path = os.path.join(root, file)
+                            try:
+                                if zipfile.is_zipfile(zip_path):
+                                    print(f"Extraindo ZIP aninhado: {file}")
+                                    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                                        zip_ref.extractall(extract_path)
+                                        nested_files = zip_ref.namelist()
+                                        print(f"Arquivos extraídos de {file}: {nested_files}")
+                                else:
+                                    print(f"Arquivo {file} não é um ZIP válido")
+                            except Exception as e:
+                                print(f"Erro ao extrair {file}: {str(e)}")
+                
+                # Agora buscar pelos arquivos .DAT uma única vez
+                print("Buscando arquivos .DAT...")
+                dat_files_found = []
+                all_files = []
+                
+                for root, dirs, files in os.walk(extract_path):
+                    for file in files:
+                        file_path_full = os.path.join(root, file)
+                        relative_path = os.path.relpath(file_path_full, extract_path)
+                        all_files.append(relative_path)
                         
-                        try:
-                            with zipfile.ZipFile(nested_zip_path, 'r') as nested_zip:
-                                nested_zip.extractall(extract_path)
-                                nested_extracted_files = nested_zip.namelist()
-                                print(f"Arquivos extraídos do ZIP aninhado: {nested_extracted_files}")
-                        except Exception as zip_error:
-                            print(f"Erro ao extrair ZIP aninhado: {str(zip_error)}")
+                        # Verificar se é um arquivo .DAT necessário
+                        if file.upper().endswith('.DAT'):
+                            dat_files_found.append(relative_path)
+                            print(f"Arquivo .DAT encontrado: {relative_path}")
+                
+                # Verificar se encontramos os arquivos .DAT necessários
+                required_dat_files = ['C_ADIC.DAT', 'SISTEMA.DAT', 'PATAMAR.DAT']
+                found_required_files = []
+                
+                for required_file in required_dat_files:
+                    for dat_file in dat_files_found:
+                        if os.path.basename(dat_file).upper() == required_file.upper():
+                            found_required_files.append(required_file)
+                            print(f"Arquivo necessário encontrado: {required_file} -> {dat_file}")
+                            break
+                
+                print(f"Arquivos .DAT necessários encontrados: {found_required_files}")
+                print(f"Total de arquivos .DAT encontrados: {len(dat_files_found)}")
+                print(f"Total de arquivos extraídos: {len(all_files)}")
+                
+                # Usar todos os arquivos extraídos
+                final_extracted_files = all_files
+                
+            else:
+                print(f"Arquivo não é ZIP: {file_path}")
+                final_extracted_files = []
+                dat_files_found = []
+                found_required_files = []
                             
             xcom_data = {
-                    'success': True,
-                    'original_file': file_path,
-                    'extract_path': extract_path,
-                    'extracted_files': nested_extracted_files,
-                    'message': f'Arquivos extraídos com sucesso de {os.path.basename(file_path)}'
-                }
+                'success': True,
+                'original_file': file_path,
+                'extract_path': extract_path,
+                'extracted_files': final_extracted_files,
+                'dat_files_found': dat_files_found,
+                'required_files_found': found_required_files,
+                'total_files': len(final_extracted_files),
+                'message': f'Arquivos extraídos com sucesso de {os.path.basename(file_path)}'
+            }
 
             print(f"task(extrair_arquivos) - Retornando dados para XCom: {xcom_data}")
             
@@ -850,9 +900,8 @@ class DecksNewaveService:
             
             # Determinar tipo de deck baseado no filename
             tipo_deck = DecksNewaveService.determinar_versao_por_filename(filename)
-            tipo_deck_label = 'PRELIMINAR' if tipo_deck == 'preliminar' else 'DEFINITIVO'
             
-            api_url = os.getenv("URL_API_V2", "https://tradingenergiarz.com/api/v2")
+            api_url = os.getenv("URL_API_V2", "http://localhost:8000/api/v2")
             image_api_url = "https://tradingenergiarz.com/html-to-img"
             
             repository = SharedRepository()
@@ -878,8 +927,20 @@ class DecksNewaveService:
             sistema_unsi_values = sistema_unsi_response.json() 
             
             
+            # Pegando valores de carga de ANDE
+            cadic_ande_url = f"{api_url}/decks/newave/cadic/ande"
+            cadic_ande_response = requests.get(
+                cadic_ande_url,
+                headers=headers
+            )
+            if cadic_ande_response.status_code != 200:
+                raise Exception(f"Erro ao obter dados de carga do ANDE: {cadic_ande_response.text}")
+            
+            cadic_ande_values = cadic_ande_response.json() 
+            
+            
             # Pegando valores de MMGD Total 
-            sistema_mmgd_total_url = f"{api_url}/decks/newave/mmgd_total"
+            sistema_mmgd_total_url = f"{api_url}/decks/newave/sistema/mmgd_total"
             sistema_mmgd_total_response = requests.get(
                 sistema_mmgd_total_url,
                 headers=headers
@@ -917,6 +978,7 @@ class DecksNewaveService:
                 'diferenca_cargas', 
                 None, 
                 dados_unsi=sistema_unsi_values,
+                dados_ande=cadic_ande_values,
                 dados_mmgd_total=sistema_mmgd_total_values,
                 dados_carga_global=carga_global_values,
                 dados_carga_liquida=carga_liquida_values

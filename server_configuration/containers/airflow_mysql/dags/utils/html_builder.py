@@ -8,6 +8,7 @@ class HtmlBuilder:
             'mmgd_total': self._gerar_tabela_mmgd_total,
             'cargaglobal': self._gerar_tabela_carga_global,
             'cargaliquida': self._gerar_tabela_carga_liquida,
+            'ande': self._gerar_tabela_ande,
             'diferenca_cargas': self._gerar_tabela_diferenca
         }
         
@@ -628,13 +629,144 @@ class HtmlBuilder:
         
         return html
     
-    def _gerar_tabela_diferenca(self, dados=None, dados_unsi=None, dados_mmgd_total=None, dados_carga_global=None, dados_carga_liquida=None):
+    def _gerar_tabela_ande(self, dados, **kwargs):
+        """
+        Gera tabela HTML para dados de carga do ANDE
+        
+        Args:
+            dados (dict): Dados contendo informações de decks antigo e novo
+            
+        Returns:
+            str: HTML da tabela de diferença de carga ANDE
+        """
+        if not dados or len(dados) < 2:
+            return "<p>Dados insuficientes para gerar a tabela de diferença de carga ANDE.</p>"
+        
+        # Ordenar os dados pelo dt_deck (mais antigo primeiro)
+        dados_ordenados = sorted(dados, key=lambda x: x['dt_deck'])
+        
+        # Extrair dados do deck antigo e novo
+        deck_antigo = dados_ordenados[0]
+        deck_novo = dados_ordenados[-1]
+        
+        # Verificar se os dados contêm a chave necessária
+        if not deck_antigo.get('data') or not deck_novo.get('data'):
+            return "<p>Estrutura de dados inválida para carga ANDE.</p>"
+        
+        # Verificar se pelo menos um item tem a chave vl_ande_total
+        sample_item_antigo = deck_antigo['data'][0] if deck_antigo['data'] else {}
+        sample_item_novo = deck_novo['data'][0] if deck_novo['data'] else {}
+        
+        if 'vl_ande_total' not in sample_item_antigo and 'vl_ande_total' not in sample_item_novo:
+            return "<p>Dados de carga ANDE não encontrados (campo 'vl_ande_total' ausente).</p>"
+        
+        # Converter os dados para um formato mais fácil de manipular
+        dados_antigo = {(item['vl_ano'], item['vl_mes']): item.get('vl_ande_total', 0) for item in deck_antigo['data']}
+        dados_novo = {(item['vl_ano'], item['vl_mes']): item.get('vl_ande_total', 0) for item in deck_novo['data']}
+        
+        # Encontrar todos os anos e meses únicos
+        anos = sorted(set([item['vl_ano'] for item in deck_antigo['data'] + deck_novo['data']]))
+        meses = list(range(1, 13))  # 1 a 12
+        
+        # Construir a tabela HTML
+        html = f"""
+        <style>
+            table.deck-diff {{
+                border-collapse: collapse;
+                width: 100%;
+                font-family: Arial, sans-serif;
+                font-size: 12px;
+            }}
+            
+            table.deck-diff th, table.deck-diff td {{
+                border: 1px solid #ddd;
+                padding: 6px;
+                text-align: center;
+            }}
+            
+            table.deck-diff th {{
+                background-color: #f2f2f2;
+                font-weight: bold;
+            }}
+            
+            table.deck-diff tr:nth-child(even) {{
+                background-color: #f9f9f9;
+            }}
+            
+            .positive {{
+                color: green;
+            }}
+            
+            .negative {{
+                color: red;
+            }}
+            
+            .caption {{
+                font-weight: bold;
+                margin-bottom: 8px;
+                font-size: 14px;
+            }}
+        </style>
+        
+        <table class="deck-diff">
+            <thead>
+                <tr>
+                    <th>Ano</th>
+                    <th>Jan</th>
+                    <th>Fev</th>
+                    <th>Mar</th>
+                    <th>Abr</th>
+                    <th>Mai</th>
+                    <th>Jun</th>
+                    <th>Jul</th>
+                    <th>Ago</th>
+                    <th>Set</th>
+                    <th>Out</th>
+                    <th>Nov</th>
+                    <th>Dez</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+        
+        # Preencher os dados na tabela
+        for ano in anos:
+            html += f"<tr><td>{ano}</td>"
+            
+            for mes in meses:
+                valor_antigo = dados_antigo.get((ano, mes), None)
+                valor_novo = dados_novo.get((ano, mes), None)
+                
+                if valor_antigo is not None and valor_novo is not None:
+                    # Regra: se o valor do deck novo for zero ou menor, a diferença também será zero
+                    if valor_novo <= 0:
+                        diferenca = 0
+                    else:
+                        diferenca = valor_novo - valor_antigo
+                    
+                    classe_css = "positive" if diferenca >= 0 else "negative"
+                    
+                    html += f'<td class="{classe_css}">{diferenca:.0f}</td>'
+                else:
+                    html += "<td>-</td>"
+            
+            html += "</tr>"
+        
+        html += """
+            </tbody>
+        </table>
+        """
+        
+        return html
+    
+    def _gerar_tabela_diferenca(self, dados=None, dados_unsi=None, dados_ande=None, dados_mmgd_total=None, dados_carga_global=None, dados_carga_liquida=None):
         """
         Gera um documento HTML completo contendo todas as tabelas de diferenças disponíveis
 
         Args:
             dados: Parâmetro ignorado (mantido por compatibilidade)
             dados_unsi (list): Dados para tabela de usinas não simuladas
+            dados_ande (list): Dados para tabela de carga ANDE
             dados_mmgd_total (list): Dados para tabela de MMGD Total (Base + Expansão)
             dados_carga_global (list): Dados para tabela de carga global
             dados_carga_liquida (list): Dados para tabela de carga líquida
@@ -645,6 +777,7 @@ class HtmlBuilder:
 
         # Gera as tabelas individuais
         html_tabela_diff_unsi = self._gerar_tabela_unsi(dados_unsi) if dados_unsi else "<p>Dados não disponíveis para usinas não simuladas.</p>"
+        html_tabela_diff_ande = self._gerar_tabela_ande(dados_ande) if dados_ande else "<p>Dados não disponíveis para carga ANDE.</p>"
         html_tabela_diff_mmgd_total = self._gerar_tabela_mmgd_total(dados_mmgd_total) if dados_mmgd_total else "<p>Dados não disponíveis para MMGD Total.</p>"
         html_tabela_diff_carga_global = self._gerar_tabela_carga_global(dados_carga_global) if dados_carga_global else "<p>Dados não disponíveis para carga global.</p>"
         html_tabela_diff_carga_liquida = self._gerar_tabela_carga_liquida(dados_carga_liquida) if dados_carga_liquida else "<p>Dados não disponíveis para carga líquida.</p>"
@@ -719,6 +852,11 @@ class HtmlBuilder:
                 <div class="table-section">
                     <h2>Usinas Não Simuladas (UNSI)</h2>
                     {html_tabela_diff_unsi}
+                </div>
+                
+                <div class="table-section">
+                    <h2>Carga ANDE</h2>
+                    {html_tabela_diff_ande}
                 </div>
 
                 <div class="table-section">
