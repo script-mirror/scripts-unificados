@@ -159,7 +159,7 @@ with DAG(
     
     # FLUXO 1: Sistema e Cadic (independente)
     extrair_arquivos >> [processar_deck_nw_cadic, processar_deck_nw_sist]
-    [processar_deck_nw_cadic, processar_deck_nw_sist] >> enviar_dados_sistema_cadic_para_api >> atualizar_sist_com_weol 
+    [processar_deck_nw_cadic, processar_deck_nw_sist] >> atualizar_sist_com_weol >> enviar_dados_sistema_cadic_para_api 
     enviar_dados_sistema_cadic_para_api >> gerar_tabela_diferenca_cargas >> enviar_tabela_whatsapp_email >> finalizar_sistema_cadic
     
     # FLUXO 2: Patamares (independente)
