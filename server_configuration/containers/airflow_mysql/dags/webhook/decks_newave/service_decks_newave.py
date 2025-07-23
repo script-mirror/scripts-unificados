@@ -535,8 +535,8 @@ class DecksNewaveService:
             
             xcom_data = {
                 'success': True,
-                'nw_sistema_records': nw_sist_records,
-                'message': 'Arquivo SISTEMA.DAT processado com sucesso',
+                'nw_sist_records': nw_sist_records,
+                'message': 'Arquivo SISTEMA.DAT atualizado pelo WEOL com sucesso',
             }
             
             return xcom_data
