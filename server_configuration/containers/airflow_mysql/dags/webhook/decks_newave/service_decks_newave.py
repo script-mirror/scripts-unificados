@@ -529,6 +529,18 @@ class DecksNewaveService:
 
             nw_sist_df = nw_sist_df.drop(columns=['vl_geracao_eol_weol'])
             
+            nw_sist_records = nw_sist_df.to_dict('records')
+            
+            print(f"Processamento concluído:")
+            
+            xcom_data = {
+                'success': True,
+                'nw_sistema_records': nw_sist_records,
+                'message': 'Arquivo SISTEMA.DAT processado com sucesso',
+            }
+            
+            return xcom_data
+            
         except Exception as e:
             error_msg = f"Erro ao atualizar os valores do sistema com o WEOL Semanal: {str(e)}"
             print(error_msg)
@@ -837,13 +849,13 @@ class DecksNewaveService:
             api_url += "/api/v2"
             
             task_instance = kwargs['task_instance']
-            nw_sist_result = task_instance.xcom_pull(task_ids='processar_deck_nw_sist')
+            nw_sist_result = task_instance.xcom_pull(task_ids='atualizar_sist_com_weol')
             nw_cadic_result = task_instance.xcom_pull(task_ids='processar_deck_nw_cadic')
 
             if not nw_sist_result or not nw_sist_result.get('success') or not nw_cadic_result or not nw_cadic_result.get('success'):
                 raise Exception("Dados necessários não encontrados ou inválidos nos XComs")
 
-            nw_sist_records = nw_sist_result.get('nw_sistema_records', [])
+            nw_sist_records = nw_sist_result.get('nw_sist_records', [])
             nw_cadic_records = nw_cadic_result.get('nw_cadic_records', [])
             product_datetime_str = nw_sist_result.get('product_datetime') or nw_cadic_result.get('product_datetime')
 
