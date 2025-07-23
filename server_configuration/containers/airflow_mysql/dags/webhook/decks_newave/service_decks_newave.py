@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import pandas as pd 
 from inewave.newave import Patamar, Cadic, Sistema
-from datetime import datetime, date
+import datetime
 
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
@@ -59,9 +59,8 @@ class DecksNewaveService:
                 raise ValueError("webhookId, filename e product_date são obrigatórios")
             
             if product_date:
-                from datetime import datetime
                 month, year = product_date.split('/')
-                product_datetime = datetime(int(year), int(month), 1, 0, 0, 0)
+                product_datetime = datetime.datetime(int(year), int(month), 1, 0, 0, 0)
             
             download_path = "/tmp/decks_newave"
             
@@ -276,7 +275,7 @@ class DecksNewaveService:
             ).reset_index()
             
             product_datetime_str = download_result.get('product_datetime') if download_result else None
-            dt_deck = datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
+            dt_deck = datetime.datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
                     
             nw_cadic_df['dt_deck'] = dt_deck
             nw_cadic_df['dt_deck'] = nw_cadic_df['dt_deck'].dt.strftime('%Y-%m-%d')  # Formata como string
@@ -386,7 +385,7 @@ class DecksNewaveService:
             )
             
             product_datetime_str = download_result.get('product_datetime') if download_result else None
-            dt_deck = datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
+            dt_deck = datetime.datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
                 
             nw_sistema_df['dt_deck'] = dt_deck
             nw_sistema_df['dt_deck'] = nw_sistema_df['dt_deck'].dt.date 
@@ -442,7 +441,103 @@ class DecksNewaveService:
             error_msg = f"Erro ao processar deck NW SISTEMA: {str(e)}"
             print(error_msg)
             raise Exception(error_msg)
+    
+    @staticmethod
+    def atualizar_sist_com_weol(**kwargs):
+        try:
+            repository = SharedRepository()
+
+            task_instance = kwargs['task_instance']
+            nw_sist_result  = task_instance.xcom_pull(task_ids='processar_deck_nw_sist')
+            nw_sist_records = nw_sist_result.get('nw_sistema_records', [])
+            
+            nw_sist_df = pd.DataFrame(nw_sist_records)
+            
+            auth_headers = repository.get_auth_token()
+            headers = {
+                **auth_headers, 
+                'Content-Type': 'application/json',
+                'accept': 'application/json'
+            }
+
+            print(f"Headers: {headers}")
+
+            api_url = os.getenv("DNS", "http://localhost:8000")
+            api_url += "/api/v2"
+            
+            
+            last_deck_date = requests.get(
+                f"{api_url}/decks/weol/last-deck-date",
+                headers=headers
+            )
+            
+       
+            
+            if last_deck_date.status_code != 200:
+                error_msg = f"Erro ao obter a última data do deck WEOL: {last_deck_date.text}"
+                print(error_msg)
+                raise Exception(error_msg)
+            
+            weol_decomp = requests.get(
+                f"{api_url}/decks/weol/weighted-average", 
+                params={"dataProduto": datetime.datetime.strptime(last_deck_date.json(), '%Y-%m-%d')}, 
+                headers= headers
+            )
+            
+            if weol_decomp.status_code != 200:
+                error_msg = f"Erro ao obter o WEOL decomp: {weol_decomp.text}"
+                print(error_msg)
+                raise Exception(error_msg)
+            
+            weol_decomp_df = pd.DataFrame(weol_decomp.json())
+            
+            weol_decomp_df['inicioSemana'] = pd.to_datetime(weol_decomp_df['inicioSemana'])
+            
+            weol_decomp_df['ano_mes'] = weol_decomp_df['inicioSemana'].dt.to_period('M')
+            
+            weol_mensal_por_submercado = weol_decomp_df.groupby(['submercado', 'ano_mes'])['mediaPonderada'].mean().reset_index()
+            
+            weol_mensal_por_submercado['vl_ano'] = weol_mensal_por_submercado['ano_mes'].dt.year
+            weol_mensal_por_submercado['vl_mes'] = weol_mensal_por_submercado['ano_mes'].dt.month
+            
+            weol_mensal_por_submercado = weol_mensal_por_submercado.drop(columns=['ano_mes'])
+            
+            weol_mensal_por_submercado['mediaPonderada'] = weol_mensal_por_submercado['mediaPonderada'].astype(int)
+
+            submercados = {
+                'SE': '1',
+                'S': '2',
+                'NE': '3',
+                'N': '4',
+            }
+            
+            weol_mensal_por_submercado['cd_submercado'] = weol_mensal_por_submercado['submercado'].map(submercados)
+            weol_mensal_por_submercado = weol_mensal_por_submercado.drop(columns=['submercado'])
+            weol_mensal_por_submercado = weol_mensal_por_submercado.rename(columns={'mediaPonderada': 'vl_geracao_eol'})
+            
+            weol_mensal_por_submercado['cd_submercado'] = weol_mensal_por_submercado['cd_submercado'].astype(int)
+            
+            # Fazer merge para atualizar os valores de vl_geracao_eol
+            nw_sist_df = nw_sist_df.merge(
+                weol_mensal_por_submercado[['cd_submercado', 'vl_ano', 'vl_mes', 'vl_geracao_eol']],
+                on=['cd_submercado', 'vl_ano', 'vl_mes'],
+                how='left',
+                suffixes=('', '_weol')
+            )
+
+            nw_sist_df['vl_geracao_eol'] = nw_sist_df['vl_geracao_eol_weol'].fillna(nw_sist_df['vl_geracao_eol'])
+
+            nw_sist_df = nw_sist_df.drop(columns=['vl_geracao_eol_weol'])
+            
+        except Exception as e:
+            error_msg = f"Erro ao atualizar os valores do sistema com o WEOL Semanal: {str(e)}"
+            print(error_msg)
+            raise Exception(error_msg)
         
+    @staticmethod
+    def atualizar_cadic_com_cargas(**kwargs):
+        return "Atualização do CADIC com cargas não implementada"
+            
     @staticmethod
     def processar_patamar_nw(**kwargs):
         try:
@@ -583,7 +678,7 @@ class DecksNewaveService:
                                  'indice_bloco', 'indice_bloco_nome', 'pu_montante_med']]
 
             product_datetime_str = download_result.get('product_datetime') if download_result else None
-            dt_deck = datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S') if product_datetime_str else datetime.now().replace(day=1)
+            dt_deck = datetime.datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S') if product_datetime_str else datetime.datetime.now().replace(day=1)
 
             # TABELA 1: Preparar DataFrame de carga com indice_bloco = 'CARGA'
             carga_transformada_df = carga_df.copy()
@@ -755,7 +850,7 @@ class DecksNewaveService:
             print(f"Preparando dados para envio à API: {len(nw_sist_records)} registros de SISTEMA e {len(nw_cadic_records)} registros CADIC")
 
             for record in nw_sist_records:
-                if isinstance(record.get('dt_deck'), date):
+                if isinstance(record.get('dt_deck'), datetime.date):
                     record['dt_deck'] = record['dt_deck'].isoformat()
 
             for record in nw_cadic_records:
@@ -1013,10 +1108,10 @@ class DecksNewaveService:
             
             # Gerar nome do arquivo baseado na data do produto e tipo de deck
             if product_datetime_str:
-                # dt = datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
+                # dt = datetime.datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
                 image_filename = f"tabela_diferenca_cargas_{tipo_deck}_{product_datetime_str}.png"
             else:
-                image_filename = f"tabela_diferenca_cargas_{tipo_deck}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+                image_filename = f"tabela_diferenca_cargas_{tipo_deck}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
             
             image_path = os.path.join(image_dir, image_filename)
             
@@ -1111,7 +1206,7 @@ if __name__ == "__main__":
     service = DecksNewaveService()
     class MockTaskInstance:
         def xcom_pull(self, task_ids, key=None):
-            return {'success': True, 'original_file': '/tmp/deck_preliminar_newave/Deck NEWAVE Preliminar.zip', 'extract_path': '/tmp/deck_preliminar_newave', 'extracted_files': ['ADTERM.DAT', 'AGRINT.DAT', 'ARQUIVOS.DAT', 'BID.DAT', 'CASO.DAT', 'CDEFVAR.DAT', 'CLAST.DAT', 'CONFHD.DAT', 'CONFT.DAT', 'CURVA.DAT', 'CVAR.DAT', 'C_ADIC.DAT', 'DGER.DAT', 'DSVAGUA.DAT', 'ELNINO.DAT', 'ENSOAUX.DAT', 'EXPH.DAT', 'EXPT.DAT', 'FORMAT.TMP', 'GHMIN.DAT', 'GTMINPAT.DAT', 'HIDR.DAT', 'indices.csv', 'ITAIPU.DAT', 'LOSS.DAT', 'MANUTT.DAT', 'MENSAG.TMP', 'MODIF.DAT', 'NewaveMsgPortug.txt', 'PATAMAR.DAT', 'PENALID.DAT', 'polinjus.csv', 'POSTOS.DAT', 'RE.DAT', 'REE.DAT', 'restricao-eletrica.csv', 'selcor.dat', 'SHIST.DAT', 'SISTEMA.DAT', 'tecno.dat', 'TERM.DAT', 'VAZOES.DAT', 'VAZPAST.DAT', 'volref_saz.dat', 'volumes-referencia.csv', 'Leia-me.pdf'], 'message': 'Arquivos extraídos com sucesso de Deck NEWAVE Preliminar.zip'}
+            return {''}
     
     try:
         params = {
@@ -1129,8 +1224,9 @@ if __name__ == "__main__":
                 "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjYtMDUtMjAyNV8xMTI2MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc0ODM1NjMyOSwibmJmIjoxNzQ4MjY5Njg5fQ.EWzTvWRcHywDyfTpVxGbRZ4phTok-Kw9uVypsPN5sXI",
                 "webhookId": "68347a7abd270c7eb3fac7cb"
             }
-        }       
-        result = DecksNewaveService.processar_patamar_nw(
+        }
+        
+        result = DecksNewaveService.atualizar_sist_com_weol(
             task_instance=MockTaskInstance(),
             params=params
         )

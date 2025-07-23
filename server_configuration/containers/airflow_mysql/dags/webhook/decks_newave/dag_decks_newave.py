@@ -72,7 +72,23 @@ with DAG(
         doc_md='Processa o arquivo SISTEMA.DAT do produto com a lib Inewave',
     )
     
-    # 6. Enviar os dados processados do SISTEMA e CADIC para a API Middle
+    # 6. Atualizar o SISTEMA com os dados do WEOL
+    atualizar_sist_com_weol = PythonOperator(
+        task_id='atualizar_sist_com_weol',
+        python_callable=DecksNewaveService.atualizar_sist_com_weol,
+        provide_context=True,
+        doc_md='Atualiza o SISTEMA com os dados do WEOL',
+    )
+    
+    # 7. Atualizar o CADIC com as cargas do SISTEMA
+    atualizar_cadic_com_cargas = PythonOperator(
+        task_id='atualizar_cadic_com_cargas',
+        python_callable=DecksNewaveService.atualizar_cadic_com_cargas,
+        provide_context=True,
+        doc_md='Atualiza o CADIC com as cargas do SISTEMA',
+    )
+    
+    # 8. Enviar os dados processados do SISTEMA e CADIC para a API Middle
     enviar_dados_sistema_cadic_para_api = PythonOperator(
         task_id='enviar_dados_sistema_cadic_para_api',
         python_callable=DecksNewaveService.enviar_dados_sistema_cadic_para_api,
@@ -81,7 +97,7 @@ with DAG(
         trigger_rule=TriggerRule.ALL_SUCCESS,  # Só executa se ambos processamentos foram bem-sucedidos
     )
     
-    # 7. Gerar tabela de diferença de cargas
+    # 9. Gerar tabela de diferença de cargas
     gerar_tabela_diferenca_cargas = PythonOperator(
         task_id='gerar_tabela_diferenca_cargas',
         python_callable=DecksNewaveService.gerar_tabela_diferenca_cargas,
@@ -89,7 +105,7 @@ with DAG(
         doc_md='Gera tabela de diferença de cargas entre os decks processados',
     )
     
-    # 8. Enviar tabela para whatsapp e e-mail
+    # 10. Enviar tabela para whatsapp e e-mail
     enviar_tabela_whatsapp_email = PythonOperator(
         task_id='enviar_tabela_whatsapp_email',
         python_callable=DecksNewaveService.enviar_tabela_whatsapp_email,
@@ -97,7 +113,7 @@ with DAG(
         doc_md='Envia a tabela de diferença de cargas via WhatsApp e e-mail',
     )
     
-    # 9. Finalizar o fluxo Sistema/Cadic
+    # 11. Finalizar o fluxo Sistema/Cadic
     finalizar_sistema_cadic = DummyOperator(
         task_id='finalizar_sistema_cadic',
         doc_md='Finaliza o processamento do fluxo Sistema/Cadic',
@@ -105,7 +121,7 @@ with DAG(
     
     # ====== FLUXO 2: PATAMARES (apenas envio para API) ======
     
-    # 10. Processar o arquivo PATAMAR.DAT do produto com a lib Inewave
+    # 12. Processar o arquivo PATAMAR.DAT do produto com a lib Inewave
     processar_patamar_nw = PythonOperator(
         task_id='processar_patamar_nw',
         python_callable=DecksNewaveService.processar_patamar_nw,
@@ -113,7 +129,7 @@ with DAG(
         doc_md='Processa o arquivo PATAMAR.DAT do produto com a lib Inewave',
     )
     
-    # 11. Enviar os dados dos Patamares para a API Middle
+    # 13. Enviar os dados dos Patamares para a API Middle
     enviar_dados_patamares_para_api = PythonOperator(
         task_id='enviar_dados_patamares_para_api',
         python_callable=DecksNewaveService.enviar_dados_patamares_para_api,
@@ -121,7 +137,7 @@ with DAG(
         doc_md='Envia os dados dos Patamares para a API Middle',
     )
     
-    # 12. Finalizar o fluxo Patamares
+    # 14. Finalizar o fluxo Patamares
     finalizar_patamares = DummyOperator(
         task_id='finalizar_patamares',
         doc_md='Finaliza o processamento do fluxo Patamares',
@@ -129,7 +145,7 @@ with DAG(
     
     # ====== FINALIZAÇÃO GERAL ======
     
-    # 13. Finalizar DAG (executa independentemente do sucesso/falha dos fluxos)
+    # 15. Finalizar DAG (executa independentemente do sucesso/falha dos fluxos)
     finalizar = DummyOperator(
         task_id='finalizar',
         doc_md='Finaliza o processamento do Deck Preliminar Newave',
@@ -143,7 +159,7 @@ with DAG(
     
     # FLUXO 1: Sistema e Cadic (independente)
     extrair_arquivos >> [processar_deck_nw_cadic, processar_deck_nw_sist]
-    [processar_deck_nw_cadic, processar_deck_nw_sist] >> enviar_dados_sistema_cadic_para_api
+    [processar_deck_nw_cadic, processar_deck_nw_sist] >> enviar_dados_sistema_cadic_para_api >> atualizar_sist_com_weol 
     enviar_dados_sistema_cadic_para_api >> gerar_tabela_diferenca_cargas >> enviar_tabela_whatsapp_email >> finalizar_sistema_cadic
     
     # FLUXO 2: Patamares (independente)
