@@ -1214,6 +1214,139 @@ class DecksNewaveService:
             print(error_msg)
             raise Exception(error_msg)
     
+    @staticmethod
+    def should_skip_weol_update(**kwargs):
+        """
+        Determina se deve pular a atualização com WEOL baseado na versão do produto.
+        Retorna True para pular (versão definitiva), False para executar (versão preliminar).
+        """
+        params = kwargs.get('params', {})
+        product_details = params.get('product_details', {})
+        filename = product_details.get('filename', '')
+        
+        versao = DecksNewaveService.determinar_versao_por_filename(filename)
+        
+        should_skip = versao == 'definitivo'
+        print(f"Verificando se deve pular atualização WEOL - Versão: {versao}, Pular: {should_skip}")
+        
+        return should_skip
+
+    @staticmethod
+    def should_skip_cargas_update(**kwargs):
+        """
+        Determina se deve pular a atualização de cargas baseado na versão do produto.
+        Retorna True para pular (versão definitiva), False para executar (versão preliminar).
+        """
+        params = kwargs.get('params', {})
+        product_details = params.get('product_details', {})
+        filename = product_details.get('filename', '')
+        
+        versao = DecksNewaveService.determinar_versao_por_filename(filename)
+        
+        should_skip = versao == 'definitivo'
+        print(f"Verificando se deve pular atualização de cargas - Versão: {versao}, Pular: {should_skip}")
+        
+        return should_skip
+
+    @staticmethod
+    def enviar_dados_sistema_cadic_para_api_conditional(**kwargs):
+        """
+        Método condicional que obtém dados do sistema de diferentes fontes dependendo da versão.
+        Para versão preliminar: obtém de 'atualizar_sist_com_weol'
+        Para versão definitiva: obtém de 'processar_deck_nw_sist'
+        """
+        try:
+            repository = SharedRepository()
+            
+            # Determinar versão do produto
+            params = kwargs.get('params', {})
+            product_details = params.get('product_details', {})
+            filename = product_details.get('filename', '')
+            versao = DecksNewaveService.determinar_versao_por_filename(filename)
+            
+            auth_headers = repository.get_auth_token()
+            headers = {
+                **auth_headers, 
+                'Content-Type': 'application/json',
+                'accept': 'application/json'
+            }
+
+            print(f"Headers: {headers}")
+
+            api_url = os.getenv("DNS", "http://localhost:8000")
+            api_url += "/api/v2"
+            
+            task_instance = kwargs['task_instance']
+            
+            # Obter dados do sistema baseado na versão
+            if versao == 'definitivo':
+                print("Versão definitiva detectada - obtendo dados diretamente do processamento do sistema")
+                nw_sist_result = task_instance.xcom_pull(task_ids='processar_deck_nw_sist')
+            else:
+                print("Versão preliminar detectada - obtendo dados do sistema atualizado com WEOL")
+                nw_sist_result = task_instance.xcom_pull(task_ids='atualizar_sist_com_weol')
+            
+            # Dados do CADIC sempre vêm do processamento direto
+            nw_cadic_result = task_instance.xcom_pull(task_ids='processar_deck_nw_cadic')
+            
+            if not nw_sist_result or not nw_sist_result.get('success') or not nw_cadic_result or not nw_cadic_result.get('success'):
+                raise Exception("Dados necessários não encontrados ou inválidos nos XComs")
+
+            nw_sist_records = nw_sist_result.get('nw_sist_records', [])
+            nw_cadic_records = nw_cadic_result.get('nw_cadic_records', [])
+            product_datetime_str = nw_sist_result.get('product_datetime') or nw_cadic_result.get('product_datetime')
+
+            print(f"Preparando dados para envio à API (versão {versao}): {len(nw_sist_records)} registros de SISTEMA e {len(nw_cadic_records)} registros CADIC")
+
+            # ...existing code for data formatting and API calls...
+            for record in nw_sist_records:
+                if isinstance(record.get('dt_deck'), datetime.date):
+                    record['dt_deck'] = record['dt_deck'].isoformat()
+
+            for record in nw_cadic_records:
+                if isinstance(record.get('dt_deck'), str) and 'T' in record['dt_deck']:
+                    record['dt_deck'] = record['dt_deck'].split('T')[0]  
+
+            sistema_url = f"{api_url}/decks/newave/sistema"
+            cadic_url = f"{api_url}/decks/newave/cadic"
+
+            print(f"Enviando dados para: {sistema_url}")
+            
+            request_sistema = requests.post(
+                sistema_url,
+                headers=headers,
+                json=nw_sist_records,
+            )
+            
+            if request_sistema.status_code != 200:
+                raise Exception(f"Erro ao enviar carga do SISTEMA para API: {request_sistema.text}")
+
+            print(f"Enviando dados para: {cadic_url}")
+
+            request_cadic = requests.post(
+                cadic_url,
+                headers=headers,
+                json=nw_cadic_records,
+            )
+            
+            if request_cadic.status_code != 200:
+                raise Exception(f"Erro ao enviar carga do CADIC para API: {request_cadic.text}")
+            
+            xcom_data = {
+                'success': True,
+                'message': f'Dados do SISTEMA e CADIC enviados para a API com sucesso (versão {versao})',
+                'product_datetime': product_datetime_str,
+                'versao_processada': versao
+            }
+
+            print(f"task(enviar_dados_sistema_cadic_para_api_conditional) - Retornando dados para XCom: {xcom_data}")
+
+            return xcom_data
+        except Exception as e:
+            error_msg = f"Erro ao enviar dados para API: {str(e)}"
+            print(error_msg)
+            raise Exception(error_msg)
+    
 if __name__ == "__main__":
     service = DecksNewaveService()
     class MockTaskInstance:

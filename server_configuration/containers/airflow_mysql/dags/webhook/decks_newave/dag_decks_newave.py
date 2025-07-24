@@ -72,29 +72,33 @@ with DAG(
         doc_md='Processa o arquivo SISTEMA.DAT do produto com a lib Inewave',
     )
     
-    # 6. Atualizar o SISTEMA com os dados do WEOL
+    # 6. Atualizar o SISTEMA com os dados do WEOL (PULA para versão definitiva)
     atualizar_sist_com_weol = PythonOperator(
         task_id='atualizar_sist_com_weol',
         python_callable=DecksNewaveService.atualizar_sist_com_weol,
         provide_context=True,
-        doc_md='Atualiza o SISTEMA com os dados do WEOL',
+        doc_md='Atualiza o SISTEMA com os dados do WEOL (PULA para versão definitiva)',
+        skip_on_failure=False,
+        pre_execute=lambda context: context['task_instance'].skip() if DecksNewaveService.should_skip_weol_update(**context) else None,
     )
     
-    # 7. Atualizar o CADIC com as cargas do SISTEMA
+    # 7. Atualizar o CADIC com as cargas do SISTEMA (PULA para versão definitiva)
     atualizar_cadic_com_cargas = PythonOperator(
         task_id='atualizar_cadic_com_cargas',
         python_callable=DecksNewaveService.atualizar_cadic_com_cargas,
         provide_context=True,
-        doc_md='Atualiza o CADIC com as cargas do SISTEMA',
+        doc_md='Atualiza o CADIC com as cargas do SISTEMA (PULA para versão definitiva)',
+        skip_on_failure=False,
+        pre_execute=lambda context: context['task_instance'].skip() if DecksNewaveService.should_skip_cargas_update(**context) else None,
     )
     
-    # 8. Enviar os dados processados do SISTEMA e CADIC para a API Middle
+    # 8. Enviar os dados processados do SISTEMA e CADIC para a API Middle (CONDICIONAL)
     enviar_dados_sistema_cadic_para_api = PythonOperator(
         task_id='enviar_dados_sistema_cadic_para_api',
-        python_callable=DecksNewaveService.enviar_dados_sistema_cadic_para_api,
+        python_callable=DecksNewaveService.enviar_dados_sistema_cadic_para_api_conditional,
         provide_context=True,
-        doc_md='Envia os dados do SISTEMA e CADIC para a API Middle',
-        trigger_rule=TriggerRule.ALL_SUCCESS,  # Só executa se ambos processamentos foram bem-sucedidos
+        doc_md='Envia os dados do SISTEMA e CADIC para a API Middle (obtém dados condicionalmente baseado na versão)',
+        trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS,  # Executa mesmo se algumas tasks anteriores foram puladas
     )
     
     # 9. Gerar tabela de diferença de cargas
@@ -157,16 +161,21 @@ with DAG(
     # Fluxo comum inicial
     validar_dados_entrada >> download_arquivos >> extrair_arquivos
     
-    # FLUXO 1: Sistema e Cadic (independente)
+    # FLUXO 1: Sistema e Cadic
     extrair_arquivos >> [processar_deck_nw_cadic, processar_deck_nw_sist]
-    [processar_deck_nw_cadic, processar_deck_nw_sist] >> atualizar_sist_com_weol >> enviar_dados_sistema_cadic_para_api 
+    
+    # Tasks de atualização (podem ser puladas para versão definitiva)
+    processar_deck_nw_sist >> atualizar_sist_com_weol
+    processar_deck_nw_cadic >> atualizar_cadic_com_cargas
+    
+    # Envio para API (condicional baseado na versão)
+    [atualizar_sist_com_weol, atualizar_cadic_com_cargas, processar_deck_nw_cadic, processar_deck_nw_sist] >> enviar_dados_sistema_cadic_para_api
+    
+    # Continuação do fluxo
     enviar_dados_sistema_cadic_para_api >> gerar_tabela_diferenca_cargas >> enviar_tabela_whatsapp_email >> finalizar_sistema_cadic
     
     # FLUXO 2: Patamares (independente)
     extrair_arquivos >> processar_patamar_nw >> enviar_dados_patamares_para_api >> finalizar_patamares
-    
-    # Branch direto para geração de tabela (quando vem de outra origem)
-    gerar_tabela_diferenca_cargas >> enviar_tabela_whatsapp_email >> finalizar_sistema_cadic
     
     # Finalização geral (aguarda ambos os fluxos terminarem, com sucesso ou falha)
     [finalizar_sistema_cadic, finalizar_patamares] >> finalizar
