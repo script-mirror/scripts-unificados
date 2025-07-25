@@ -864,13 +864,13 @@ class DecksNewaveService:
                 print("Versão preliminar detectada - obtendo dados do sistema atualizado com WEOL")
                 nw_sist_result = task_instance.xcom_pull(task_ids='atualizar_sist_com_weol')
             
-            # Dados do CADIC sempre vêm do processamento direto
+            # Dados do CADIC sempre vêm diretamente do processo pois ainda não teve atualização de cargas implementada
             nw_cadic_result = task_instance.xcom_pull(task_ids='processar_deck_nw_cadic')
 
             if not nw_sist_result or not nw_sist_result.get('success') or not nw_cadic_result or not nw_cadic_result.get('success'):
                 raise Exception("Dados necessários não encontrados ou inválidos nos XComs")
 
-            nw_sist_records = nw_sist_result.get('nw_sist_records', [])
+            nw_sist_records = nw_sist_result.get('nw_sistema_records', [])
             nw_cadic_records = nw_cadic_result.get('nw_cadic_records', [])
             product_datetime_str = nw_sist_result.get('product_datetime') or nw_cadic_result.get('product_datetime')
 
@@ -1265,117 +1265,13 @@ class DecksNewaveService:
         
         return should_skip
 
-    @staticmethod
-    def enviar_dados_sistema_cadic_para_api_conditional(**kwargs):
-        """
-        Método condicional que obtém dados do sistema de diferentes fontes dependendo da versão.
-        Para versão preliminar: obtém de 'atualizar_sist_com_weol' se disponível, senão de 'processar_deck_nw_sist'
-        Para versão definitiva: obtém de 'processar_deck_nw_sist'
-        """
-        try:
-            repository = SharedRepository()
-            
-            # Determinar versão do produto
-            params = kwargs.get('params', {})
-            product_details = params.get('product_details', {})
-            filename = product_details.get('filename', '')
-            versao = DecksNewaveService.determinar_versao_por_filename(filename)
-            
-            auth_headers = repository.get_auth_token()
-            headers = {
-                **auth_headers, 
-                'Content-Type': 'application/json',
-                'accept': 'application/json'
-            }
 
-            print(f"Headers: {headers}")
-
-            api_url = os.getenv("DNS", "http://localhost:8000")
-            api_url += "/api/v2"
-            
-            task_instance = kwargs['task_instance']
-            
-            # Obter dados do sistema baseado na versão e disponibilidade
-            if versao == 'definitivo':
-                print("Versão definitiva detectada - obtendo dados diretamente do processamento do sistema")
-                nw_sist_result = task_instance.xcom_pull(task_ids='processar_deck_nw_sist')
-            else:
-                print("Versão preliminar detectada - tentando obter dados do sistema atualizado com WEOL")
-                # Tentar obter dados atualizados primeiro
-                nw_sist_result = task_instance.xcom_pull(task_ids='atualizar_sist_com_weol')
-                
-                # Se não encontrou (task foi pulada), usar dados originais
-                if not nw_sist_result or not nw_sist_result.get('success'):
-                    print("Dados do WEOL não encontrados, usando dados originais do sistema")
-                    nw_sist_result = task_instance.xcom_pull(task_ids='processar_deck_nw_sist')
-            
-            # Dados do CADIC sempre vêm do processamento direto
-            nw_cadic_result = task_instance.xcom_pull(task_ids='processar_deck_nw_cadic')
-            
-            if not nw_sist_result or not nw_sist_result.get('success') or not nw_cadic_result or not nw_cadic_result.get('success'):
-                raise Exception("Dados necessários não encontrados ou inválidos nos XComs")
-
-            nw_sist_records = nw_sist_result.get('nw_sist_records', [])
-            nw_cadic_records = nw_cadic_result.get('nw_cadic_records', [])
-            product_datetime_str = nw_sist_result.get('product_datetime') or nw_cadic_result.get('product_datetime')
-
-            print(f"Preparando dados para envio à API (versão {versao}): {len(nw_sist_records)} registros de SISTEMA e {len(nw_cadic_records)} registros CADIC")
-
-            for record in nw_sist_records:
-                if isinstance(record.get('dt_deck'), datetime.date):
-                    record['dt_deck'] = record['dt_deck'].isoformat()
-
-            for record in nw_cadic_records:
-                if isinstance(record.get('dt_deck'), str) and 'T' in record['dt_deck']:
-                    record['dt_deck'] = record['dt_deck'].split('T')[0]  
-
-            sistema_url = f"{api_url}/decks/newave/sistema"
-            cadic_url = f"{api_url}/decks/newave/cadic"
-
-
-            print(f"Enviando dados para: {sistema_url}")
-            
-            request_sistema = requests.post(
-                sistema_url,
-                headers=headers,
-                json=nw_sist_records,
-            )
-            
-            if request_sistema.status_code != 200:
-                raise Exception(f"Erro ao enviar carga do SISTEMA para API: {request_sistema.text}")
-
-            print(f"Enviando dados para: {cadic_url}")
-
-            request_cadic = requests.post(
-                cadic_url,
-                headers=headers,
-                json=nw_cadic_records,
-            )
-            
-            if request_cadic.status_code != 200:
-                raise Exception(f"Erro ao enviar carga do CADIC para API: {request_cadic.text}")
-            
-            xcom_data = {
-                'success': True,
-                'message': f'Dados do SISTEMA e CADIC enviados para a API com sucesso (versão {versao})',
-                'product_datetime': product_datetime_str,
-                'versao_processada': versao
-            }
-
-            print(f"task(enviar_dados_para_api) - Retornando dados para XCom: {xcom_data}")
-
-            return xcom_data
-        except Exception as e:
-            error_msg = f"Erro ao enviar dados para API: {str(e)}"
-            print(error_msg)
-            raise Exception(error_msg)
-    
 if __name__ == "__main__":
     service = DecksNewaveService()
     class MockTaskInstance:
         def xcom_pull(self, task_ids, key=None):
             return {''}
-    
+        
     try:
         params = {
             "function_name": "WEBHOOK",
@@ -1394,7 +1290,7 @@ if __name__ == "__main__":
             }
         }
         
-        result = DecksNewaveService.processar_deck_nw_sist(
+        result = DecksNewaveService.enviar_dados_sistema_cadic_para_api(
             task_instance=MockTaskInstance(),
             params=params
         )
