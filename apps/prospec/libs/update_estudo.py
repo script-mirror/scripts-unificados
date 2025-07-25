@@ -32,10 +32,13 @@ api = RzProspec()
 _DNS = os.getenv("DNS", "http://localhost:8000")
 
 def get_ids_to_modify():
-    res = requests.get(f"{_DNS}/estudos-middle/api/prospec/base-studies")
+    res = requests.get(
+        f"{_DNS}/estudos-middle/api/prospec/base-studies",
+        headers=get_auth_header()
+        )
     if res.status_code != 200 or not res.json():
         logger.error("Failed to fetch base studies")
-        raise Exception("Failed to fetch base studies")
+        raise Exception(f"Failed to fetch base studies {res.status_code} {res.text}")
     return res.json()
 
 
@@ -587,6 +590,7 @@ if __name__ == "__main__":
 
     # update_cvu_estudo(ids_to_modify,ano_referencia_cvu,mes_referencia_cvu)
     # update_carga_estudo(ids_to_modify,file_path)
-    
-    update_cvu_clast_nw_estudo([
-        "CCEE_merchant"], datetime.date(2025, 7, 4),)
+    print(get_ids_to_modify())
+    # update_cvu_clast_nw_estudo([
+        # "CCEE_merchant"], datetime.date(2025, 7, 4),)
+# 
