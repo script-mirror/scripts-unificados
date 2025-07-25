@@ -365,12 +365,37 @@ def post_prev_chuva(df_previsao_modelos):
         print(f'{modelo} - > Código POST: {response.status_code}')
 
 
-
 #===================UTILS=========================
 
 def cria_diretorio(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
+    try:
+        os.makedirs(path, exist_ok=True)
+        logger.info(f"Directory created successfully: {path}")
+    except PermissionError:
+        logger.error(f"Permission denied when creating directory: {path}")
+        raise
+    except OSError as e:
+        logger.error(f"OS error when creating directory {path}: {e}")
+        try:
+            path_parts = path.split(os.sep)
+            current_path = ""
+            
+            for part in path_parts:
+                if not part:
+                    current_path = os.sep
+                    continue
+                
+                current_path = os.path.join(current_path, part)
+                if not os.path.exists(current_path):
+                    try:
+                        os.mkdir(current_path)
+                        logger.info(f"Created intermediate directory: {current_path}")
+                    except OSError as mkdir_error:
+                        logger.error(f"Failed to create directory {current_path}: {mkdir_error}")
+                        raise
+        except Exception as fallback_error:
+            logger.error(f"Fallback directory creation failed for {path}: {fallback_error}")
+            raise
 
 def copia_arquivos(arquivos_copia,path_dst):
 
