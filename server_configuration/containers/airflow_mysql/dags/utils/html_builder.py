@@ -89,12 +89,10 @@ class HtmlBuilder:
             
             .positive {{
                 color: green;
-                background-color: rgba(0, 128, 0, 0.1);
             }}
             
             .negative {{
                 color: red;
-                background-color: rgba(255, 0, 0, 0.1);
             }}
             
             .caption {{
@@ -220,12 +218,10 @@ class HtmlBuilder:
             
             .positive {{
                 color: green;
-                background-color: rgba(0, 128, 0, 0.1);
             }}
             
             .negative {{
                 color: red;
-                background-color: rgba(255, 0, 0, 0.1);
             }}
             
             .caption {{
@@ -351,12 +347,10 @@ class HtmlBuilder:
             
             .positive {{
                 color: green;
-                background-color: rgba(0, 128, 0, 0.1);
             }}
             
             .negative {{
                 color: red;
-                background-color: rgba(255, 0, 0, 0.1);
             }}
             
             .caption {{
@@ -482,12 +476,10 @@ class HtmlBuilder:
             
             .positive {{
                 color: green;
-                background-color: rgba(0, 128, 0, 0.1);
             }}
             
             .negative {{
                 color: red;
-                background-color: rgba(255, 0, 0, 0.1);
             }}
             
             .caption {{
@@ -613,12 +605,10 @@ class HtmlBuilder:
             
             .positive {{
                 color: green;
-                background-color: rgba(0, 128, 0, 0.1);
             }}
             
             .negative {{
                 color: red;
-                background-color: rgba(255, 0, 0, 0.1);
             }}
             
             .caption {{
@@ -755,12 +745,10 @@ class HtmlBuilder:
             
             .positive {{
                 color: green;
-                background-color: rgba(0, 128, 0, 0.1);
             }}
             
             .negative {{
                 color: red;
-                background-color: rgba(255, 0, 0, 0.1);
             }}
             
             .caption {{
