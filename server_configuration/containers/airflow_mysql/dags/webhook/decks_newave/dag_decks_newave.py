@@ -107,7 +107,7 @@ with DAG(
     # 10. Enviar os dados processados do SISTEMA e CADIC para a API Middle (CONDICIONAL)
     enviar_dados_sistema_cadic_para_api = PythonOperator(
         task_id='enviar_dados_sistema_cadic_para_api',
-        python_callable=DecksNewaveService.enviar_dados_sistema_cadic_para_api_conditional,
+        python_callable=DecksNewaveService.enviar_dados_sistema_cadic_para_api,
         provide_context=True,
         doc_md='Envia os dados do SISTEMA e CADIC para a API Middle (obtém dados condicionalmente baseado na versão)',
         trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS,  # Executa mesmo se algumas tasks anteriores foram puladas
@@ -183,7 +183,7 @@ with DAG(
     processar_deck_nw_cadic >> should_run_cargas_update >> atualizar_cadic_com_cargas
     
     # Envio para API - conectado apenas aos processadores originais (sempre executa)
-    [processar_deck_nw_cadic, processar_deck_nw_sist] >> enviar_dados_sistema_cadic_para_api
+    [processar_deck_nw_cadic, processar_deck_nw_sist, atualizar_sist_com_weol, atualizar_cadic_com_cargas] >> enviar_dados_sistema_cadic_para_api
     
     # Continuação do fluxo
     enviar_dados_sistema_cadic_para_api >> gerar_tabela_diferenca_cargas >> enviar_tabela_whatsapp_email >> finalizar_sistema_cadic
