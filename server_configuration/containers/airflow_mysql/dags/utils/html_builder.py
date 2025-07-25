@@ -850,27 +850,27 @@ class HtmlBuilder:
         <body>
             <div class="container">
                 <div class="table-section">
-                    <h2>Usinas Não Simuladas (UNSI)</h2>
+                    <h2>Diferença de Usinas Não Simuladas (UNSI)</h2>
                     {html_tabela_diff_unsi}
                 </div>
                 
                 <div class="table-section">
-                    <h2>Carga ANDE</h2>
+                    <h2>ANDE</h2>
                     {html_tabela_diff_ande}
                 </div>
 
                 <div class="table-section">
-                    <h2>MMGD Total (Base + Expansão)</h2>
+                    <h2>Diferença de MMGD Total (Base + Expansão)</h2>
                     {html_tabela_diff_mmgd_total}
                 </div>
 
                 <div class="table-section">
-                    <h2>Carga Global</h2>
+                    <h2>Diferença de Carga Global</h2>
                     {html_tabela_diff_carga_global}
                 </div>
 
                 <div class="table-section">
-                    <h2>Carga Líquida</h2>
+                    <h2>Diferença de Carga Líquida</h2>
                     {html_tabela_diff_carga_liquida}
                 </div>
             </div>
