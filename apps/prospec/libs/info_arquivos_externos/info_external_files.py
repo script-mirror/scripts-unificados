@@ -1,26 +1,29 @@
+import datetime
+import glob
+import logging
 import os
+import pdb
 import re
 import sys
-import pdb
-import csv
-import glob
-import datetime
-import pdfplumber
+from typing import List
+
 import numpy as np
 import pandas as pd
-
-
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import rz_dir_tools,wx_opweek
-from PMO.scripts_unificados.apps.prospec.libs.ccee import service as ccee_api
-from PMO.scripts_unificados.apps.prospec.libs.decomp.dadger import dadger
-from PMO.scripts_unificados.apps.prospec.libs.newave.sistema import sistema
-from PMO.scripts_unificados.apps.prospec.libs import utils
-
-from typing import List
-import logging
+import pdfplumber
 import requests as r
 from dotenv import load_dotenv
+
+from middle.utils import get_auth_header
+
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
+PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
+sys.path.insert(1, f"{PATH_PROJETO}/scripts_unificados")
+
+from apps.prospec.libs.newave.sistema import sistema
+from apps.prospec.libs.decomp.dadger import dadger
+from apps.prospec.libs import utils
+from bibliotecas import rz_dir_tools, wx_opweek
+
 
 logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
@@ -32,23 +35,16 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger(__name__)
 
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
-__HOST_SERVIDOR = os.getenv('HOST_SERVIDOR')
+DNS = os.getenv('DNS', 'http://localhost:8000')
 URL_COGNITO = os.getenv('URL_COGNITO')
 CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
 
 PATH_DOWNLOAD_TMP = os.path.join(os.path.dirname(__file__),"tmp")
 
-def get_access_token() -> str:
-    response = r.post(
-        URL_COGNITO,
-        data=CONFIG_COGNITO,
-        headers={'Content-Type': 'application/x-www-form-urlencoded'}
-    )
-    return response.json()['access_token']
 
 def organizar_info_cvu(fontes_to_search:List[str], dt_atualizacao:datetime.date):
 
-    URL_API_RAIZEN = f'http://{__HOST_SERVIDOR}:8000/api/v2'
+    URL_API_RAIZEN = f'{DNS}/api/v2'
 
     df_aux = pd.DataFrame()
     for title_fonte in fontes_to_search:
@@ -58,9 +54,7 @@ def organizar_info_cvu(fontes_to_search:List[str], dt_atualizacao:datetime.date)
                 'fonte': title_fonte
             },
             url = f"{URL_API_RAIZEN}/decks/cvu",
-            headers={
-                'Authorization': f'Bearer {get_access_token()}'
-            }
+            headers=get_auth_header()
         )
         answer = response.json()
         df_result = pd.DataFrame(answer)
@@ -71,7 +65,7 @@ def organizar_info_cvu(fontes_to_search:List[str], dt_atualizacao:datetime.date)
         df_aux = pd.concat([df_aux,df_result]) if not df_aux.empty else df_result
         
     df_aux.dropna(subset=['vl_cvu'], inplace=True)
-    df_aux.drop_duplicates(['cd_usina'], keep='last', inplace=True)
+    df_aux.drop_duplicates(['cd_usina', 'ano_horizonte'], keep='last', inplace=True)
     return df_aux
 
 
@@ -193,11 +187,9 @@ def df_pq_to_dadger_carga(df: pd.DataFrame) -> str:
     return result.rstrip("&\n").rstrip("\n")
 
 def get_weol(data_produto:datetime.date, data_inicio_semana:datetime.datetime) -> pd.DataFrame:
-    weol_decomp = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol/start-week-date",
+    weol_decomp = r.get(f"{DNS}/api/v2/decks/weol/start-week-date",
                         params={"dataProduto":str(data_produto), "inicioSemana":str(data_inicio_semana)},
-                        headers={
-                'Authorization': f'Bearer {get_access_token()}'
-            })
+                        headers=get_auth_header())
     weol_decomp.raise_for_status()
     if weol_decomp.json() == []:
         logger.info("Nenhum dado encontrado")
@@ -212,11 +204,9 @@ def get_weol(data_produto:datetime.date, data_inicio_semana:datetime.datetime) -
 
 
 def get_carga_decomp(data_produto:datetime.date) -> pd.DataFrame:
-    res = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/carga-patamar",
+    res = r.get(f"{DNS}/api/v2/decks/carga-patamar",
                         params={"dataProduto":str(data_produto)},
-                        headers={
-                'Authorization': f'Bearer {get_access_token()}'
-            })
+                        headers=get_auth_header())
     res.raise_for_status()
     if res.json() == []:
         logger.info("Nenhum dado encontrado")
@@ -438,10 +428,9 @@ def organizar_info_carga_nw(path_carga_zip):
 
 def organizar_info_eolica_nw(paths_sistema:List[str], data_produto:datetime.date):
     novos_blocos = {}
-    weol_decomp = r.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol/weighted-average", params={"dataProduto":str(data_produto)}, 
-                        headers={
-                'Authorization': f'Bearer {get_access_token()}'
-            })
+    weol_decomp = r.get(f"{DNS}/api/v2/decks/weol/weighted-average", params={"dataProduto":str(data_produto)}, 
+                        headers=get_auth_header()
+                        )
     weol_decomp.raise_for_status()
         
     df_weol = pd.DataFrame(weol_decomp.json())

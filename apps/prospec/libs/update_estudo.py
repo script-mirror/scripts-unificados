@@ -4,7 +4,6 @@ import pdb
 import sys
 import glob
 import shutil
-import logging
 import datetime
 import pandas as pd
 from typing import List
@@ -24,21 +23,14 @@ from apps.prospec.libs.newave.clast import updater as clast_updater
 from apps.prospec.prospec import RzProspec
 from apps.prospec.libs import utils
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(levelname)s:\t%(asctime)s\t '
-           '%(name)s.py:%(lineno)d\t %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    handlers=[
-        logging.StreamHandler()])
-
-logging.getLogger().setLevel(logging.INFO)
-logger = logging.getLogger(__name__)
+from middle.utils import sanitize_string, setup_logger
+logger = setup_logger()
 
 api = RzProspec()
 
 
 def get_ids_to_modify():
+    return [26797, 26796, 26795, 26794, 26793, 26792, 26791, 26790]
     path = "/WX2TB/Documentos/fontes/PMO/API_Prospec/ConfigProspecAPI/ConfigRodadaDiaria.csv"
     with open(path, 'r') as file:
         csv_text = file.read()
@@ -279,8 +271,7 @@ def update_cvu_clast_nw_estudo(
     dt_atualizacao: datetime.datetime,
     ids_to_modify: List[int] = None
 ):
-    tipos_cvu = [x.replace('CCEE_', '').replace('_revisado', '')
-                 for x in fontes_to_search]
+    paths_modified = []
     tag = [f'CVU {datetime.datetime.now().strftime("%d/%m %H:%M")}']
     if not ids_to_modify:
         ids_to_modify = get_ids_to_modify()
@@ -290,6 +281,13 @@ def update_cvu_clast_nw_estudo(
         fontes_to_search=fontes_to_search,
         dt_atualizacao=dt_atualizacao
     )
+    
+    estrutural_mask = (info_cvu['fonte'].str.contains('estrutural', case=False, na=False))
+    
+    info_cvu_estrutural = info_cvu[estrutural_mask]
+
+    # conjuntural inclui merchant
+    info_cvu_conjuntural = info_cvu[~estrutural_mask]
 
     for id_estudo in ids_to_modify:
 
@@ -325,11 +323,17 @@ def update_cvu_clast_nw_estudo(
             raise Exception(
                 "Não foi encontrado nenhum arquivo"
                 f" clast no estudo {id_estudo}")
-        paths_modified = clast_updater.atualizar_cvu_NW(
-            info_cvu,
-            clast_to_modify,
-            tipos_cvu
-        )
+            
+        if not info_cvu_conjuntural.empty:
+            paths_modified += clast_updater.atualizar_cvu_clast_conjuntural(
+                arquivos_filtrados,
+                info_cvu_conjuntural,
+            )
+        if not info_cvu_estrutural.empty:
+            paths_modified += clast_updater.atualizar_cvu_clast_estrutural(
+                arquivos_filtrados,
+                info_cvu_estrutural,
+            )
 
         send_files_to_api(id_estudo, paths_modified, tag)
 
