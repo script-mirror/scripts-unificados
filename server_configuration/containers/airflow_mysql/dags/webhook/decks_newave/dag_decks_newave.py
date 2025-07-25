@@ -176,14 +176,14 @@ with DAG(
     # FLUXO 1: Sistema e Cadic
     extrair_arquivos >> [processar_deck_nw_cadic, processar_deck_nw_sist]
     
-    # Branch para atualização WEOL (só para versão preliminar)
+    # Branch para atualização WEOL (só para versão preliminar) - SEM CONEXÃO DOWNSTREAM
     processar_deck_nw_sist >> should_run_weol_update >> atualizar_sist_com_weol
     
-    # Branch para atualização cargas (só para versão preliminar)
+    # Branch para atualização cargas (só para versão preliminar) - SEM CONEXÃO DOWNSTREAM  
     processar_deck_nw_cadic >> should_run_cargas_update >> atualizar_cadic_com_cargas
     
-    # Envio para API (condicional baseado na versão)
-    [atualizar_sist_com_weol, atualizar_cadic_com_cargas, processar_deck_nw_cadic, processar_deck_nw_sist, should_run_weol_update, should_run_cargas_update] >> enviar_dados_sistema_cadic_para_api
+    # Envio para API - conectado apenas aos processadores originais (sempre executa)
+    [processar_deck_nw_cadic, processar_deck_nw_sist] >> enviar_dados_sistema_cadic_para_api
     
     # Continuação do fluxo
     enviar_dados_sistema_cadic_para_api >> gerar_tabela_diferenca_cargas >> enviar_tabela_whatsapp_email >> finalizar_sistema_cadic

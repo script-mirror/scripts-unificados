@@ -1252,7 +1252,7 @@ class DecksNewaveService:
     def enviar_dados_sistema_cadic_para_api_conditional(**kwargs):
         """
         Método condicional que obtém dados do sistema de diferentes fontes dependendo da versão.
-        Para versão preliminar: obtém de 'atualizar_sist_com_weol'
+        Para versão preliminar: obtém de 'atualizar_sist_com_weol' se disponível, senão de 'processar_deck_nw_sist'
         Para versão definitiva: obtém de 'processar_deck_nw_sist'
         """
         try:
@@ -1278,13 +1278,19 @@ class DecksNewaveService:
             
             task_instance = kwargs['task_instance']
             
-            # Obter dados do sistema baseado na versão
+            # Obter dados do sistema baseado na versão e disponibilidade
             if versao == 'definitivo':
                 print("Versão definitiva detectada - obtendo dados diretamente do processamento do sistema")
                 nw_sist_result = task_instance.xcom_pull(task_ids='processar_deck_nw_sist')
             else:
-                print("Versão preliminar detectada - obtendo dados do sistema atualizado com WEOL")
+                print("Versão preliminar detectada - tentando obter dados do sistema atualizado com WEOL")
+                # Tentar obter dados atualizados primeiro
                 nw_sist_result = task_instance.xcom_pull(task_ids='atualizar_sist_com_weol')
+                
+                # Se não encontrou (task foi pulada), usar dados originais
+                if not nw_sist_result or not nw_sist_result.get('success'):
+                    print("Dados do WEOL não encontrados, usando dados originais do sistema")
+                    nw_sist_result = task_instance.xcom_pull(task_ids='processar_deck_nw_sist')
             
             # Dados do CADIC sempre vêm do processamento direto
             nw_cadic_result = task_instance.xcom_pull(task_ids='processar_deck_nw_cadic')
@@ -1298,7 +1304,6 @@ class DecksNewaveService:
 
             print(f"Preparando dados para envio à API (versão {versao}): {len(nw_sist_records)} registros de SISTEMA e {len(nw_cadic_records)} registros CADIC")
 
-            # ...existing code for data formatting and API calls...
             for record in nw_sist_records:
                 if isinstance(record.get('dt_deck'), datetime.date):
                     record['dt_deck'] = record['dt_deck'].isoformat()
