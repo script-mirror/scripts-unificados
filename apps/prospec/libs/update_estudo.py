@@ -6,6 +6,7 @@ import glob
 import shutil
 import datetime
 import pandas as pd
+import requests
 from typing import List
 from io import StringIO
 
@@ -24,24 +25,19 @@ from apps.prospec.prospec import RzProspec
 from apps.prospec.libs import utils
 
 from middle.utils import sanitize_string, setup_logger
+from middle.utils.auth import get_auth_header
 logger = setup_logger()
 
 api = RzProspec()
-
+_DNS = os.getenv("DNS", "http://localhost:8000")
 
 def get_ids_to_modify():
-    return [26797, 26796, 26795, 26794, 26793, 26792, 26791, 26790]
-    path = "/WX2TB/Documentos/fontes/PMO/API_Prospec/ConfigProspecAPI/ConfigRodadaDiaria.csv"
-    with open(path, 'r') as file:
-        csv_text = file.read()
+    res = requests.get(f"{_DNS}/estudos-middle/api/prospec/base-studies")
+    if res.status_code != 200 or not res.json():
+        logger.error("Failed to fetch base studies")
+        raise Exception("Failed to fetch base studies")
+    return res.json()
 
-    csv_text = csv_text[:csv_text.find('prospecStudyIdToAssociate')]
-    df = pd.read_csv(StringIO(csv_text), sep=';')
-    df.columns = df.columns.str.strip()
-    df.set_index('username', inplace=True)
-    ids_mask = df.index[df.index.str.startswith('prospecStudyIdToDuplicate')]
-    ids_to_modify = df.loc[ids_mask, df.columns[0]].values.tolist()
-    return list(set(ids_to_modify))
 
 
 def send_files_to_api(id_estudo: int, paths_modified: List[str], tag: str):
