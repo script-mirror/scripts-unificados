@@ -835,6 +835,12 @@ class DecksNewaveService:
     def enviar_dados_sistema_cadic_para_api(**kwargs):
         try:
             repository = SharedRepository()
+            
+            # Determinar versão do produto
+            params = kwargs.get('params', {})
+            product_details = params.get('product_details', {})
+            filename = product_details.get('filename', '')
+            versao = DecksNewaveService.determinar_versao_por_filename(filename)
 
             auth_headers = repository.get_auth_token()
             headers = {
@@ -849,7 +855,16 @@ class DecksNewaveService:
             api_url += "/api/v2"
             
             task_instance = kwargs['task_instance']
-            nw_sist_result = task_instance.xcom_pull(task_ids='atualizar_sist_com_weol')
+            
+            # Obter dados do sistema baseado na versão
+            if versao == 'definitivo':
+                print("Versão definitiva detectada - obtendo dados diretamente do processamento do sistema")
+                nw_sist_result = task_instance.xcom_pull(task_ids='processar_deck_nw_sist')
+            else:
+                print("Versão preliminar detectada - obtendo dados do sistema atualizado com WEOL")
+                nw_sist_result = task_instance.xcom_pull(task_ids='atualizar_sist_com_weol')
+            
+            # Dados do CADIC sempre vêm do processamento direto
             nw_cadic_result = task_instance.xcom_pull(task_ids='processar_deck_nw_cadic')
 
             if not nw_sist_result or not nw_sist_result.get('success') or not nw_cadic_result or not nw_cadic_result.get('success'):
@@ -859,7 +874,7 @@ class DecksNewaveService:
             nw_cadic_records = nw_cadic_result.get('nw_cadic_records', [])
             product_datetime_str = nw_sist_result.get('product_datetime') or nw_cadic_result.get('product_datetime')
 
-            print(f"Preparando dados para envio à API: {len(nw_sist_records)} registros de SISTEMA e {len(nw_cadic_records)} registros CADIC")
+            print(f"Preparando dados para envio à API (versão {versao}): {len(nw_sist_records)} registros de SISTEMA e {len(nw_cadic_records)} registros CADIC")
 
             for record in nw_sist_records:
                 if isinstance(record.get('dt_deck'), datetime.date):
@@ -1079,6 +1094,8 @@ class DecksNewaveService:
                 raise Exception(f"Erro ao obter dados de geração de carga liquida: {carga_liquida_response.text}")
             carga_liquida_values = carga_liquida_response.json()
             
+            import pdb
+            pdb.set_trace()
             
             # Gerar o HTML usando o método gerar_html
             html_tabela_diferenca = html_builder.gerar_html(
@@ -1315,6 +1332,7 @@ class DecksNewaveService:
             sistema_url = f"{api_url}/decks/newave/sistema"
             cadic_url = f"{api_url}/decks/newave/cadic"
 
+
             print(f"Enviando dados para: {sistema_url}")
             
             request_sistema = requests.post(
@@ -1344,7 +1362,7 @@ class DecksNewaveService:
                 'versao_processada': versao
             }
 
-            print(f"task(enviar_dados_sistema_cadic_para_api_conditional) - Retornando dados para XCom: {xcom_data}")
+            print(f"task(enviar_dados_para_api) - Retornando dados para XCom: {xcom_data}")
 
             return xcom_data
         except Exception as e:
@@ -1362,21 +1380,21 @@ if __name__ == "__main__":
         params = {
             "function_name": "WEBHOOK",
             "product_details": {
-                "dataProduto": "06/2025",
+                "dataProduto": "08/2025",
                 "enviar": True,
-                "filename": "Deck NEWAVE Preliminar.zip",
+                "filename": "DECK NEWAVE DEFINITIVO.zip",
                 "macroProcesso": "Programação da Operação",
-                "nome": "Deck NEWAVE Preliminar",
-                "periodicidade": "2025-06-01T03:00:00.000Z",
-                "periodicidadeFinal": "2025-07-01T02:59:59.000Z",
+                "nome": "DECK NEWAVE DEFINITIVO",
+                "periodicidade": "2025-08-01T03:00:00.000Z",
+                "periodicidadeFinal": "2025-09-01T02:59:59.000Z",
                 "processo": "Médio Prazo",
-                "s3Key": "webhooks/Deck NEWAVE Preliminar/68347a7abd270c7eb3fac7cb_Deck NEWAVE Preliminar.zip",
-                "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjYtMDUtMjAyNV8xMTI2MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc0ODM1NjMyOSwibmJmIjoxNzQ4MjY5Njg5fQ.EWzTvWRcHywDyfTpVxGbRZ4phTok-Kw9uVypsPN5sXI",
-                "webhookId": "68347a7abd270c7eb3fac7cb"
+                "s3Key": "webhooks/DECK NEWAVE DEFINITIVO/6882a3e1d49e380e81e2aba1_DECK NEWAVE DEFINITIVO.zip",
+                "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODYvMjQtMDctMjAyNV8xODE5MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiREVDSyBORVdBVkUgREVGSU5JVElVTyIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1MzQ3ODczNiwibmJmIjoxNzUzMzkyMDk2fQ.dyDpbj7ZHoefq82ZdUE_GMFTmdfUWSzSlOAsGvhL8nc",
+                "webhookId": "6882a3e1d49e380e81e2aba1"
             }
         }
         
-        result = DecksNewaveService.atualizar_sist_com_weol(
+        result = DecksNewaveService.processar_deck_nw_sist(
             task_instance=MockTaskInstance(),
             params=params
         )
