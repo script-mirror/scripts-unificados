@@ -1094,9 +1094,6 @@ class DecksNewaveService:
                 raise Exception(f"Erro ao obter dados de geração de carga liquida: {carga_liquida_response.text}")
             carga_liquida_values = carga_liquida_response.json()
             
-            import pdb
-            pdb.set_trace()
-            
             # Gerar o HTML usando o método gerar_html
             html_tabela_diferenca = html_builder.gerar_html(
                 'diferenca_cargas', 
