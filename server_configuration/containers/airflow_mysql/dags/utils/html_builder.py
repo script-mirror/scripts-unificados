@@ -118,6 +118,7 @@ class HtmlBuilder:
                     <th>Out</th>
                     <th>Nov</th>
                     <th>Dez</th>
+                    <th>Média</th>
                 </tr>
             </thead>
             <tbody>
@@ -126,6 +127,7 @@ class HtmlBuilder:
         # Preencher os dados na tabela
         for ano in anos:
             html += f"<tr><td>{ano}</td>"
+            valores_ano = []
             
             for mes in meses:
                 valor_antigo = dados_antigo.get((ano, mes), None)
@@ -139,10 +141,18 @@ class HtmlBuilder:
                         diferenca = valor_novo - valor_antigo
                     
                     classe_css = "positive" if diferenca >= 0 else "negative"
-                    
                     html += f'<td class="{classe_css}">{diferenca:.0f}</td>'
+                    valores_ano.append(diferenca)
                 else:
                     html += "<td>-</td>"
+            
+            # Calcular e adicionar a média
+            if valores_ano:
+                media = sum(valores_ano) / len(valores_ano)
+                classe_css_media = "positive" if media >= 0 else "negative"
+                html += f'<td class="{classe_css_media}"><strong>{media:.0f}</strong></td>'
+            else:
+                html += "<td>-</td>"
             
             html += "</tr>"
         
@@ -237,6 +247,7 @@ class HtmlBuilder:
                     <th>Out</th>
                     <th>Nov</th>
                     <th>Dez</th>
+                    <th>Média</th>
                 </tr>
             </thead>
             <tbody>
@@ -245,6 +256,7 @@ class HtmlBuilder:
         # Preencher os dados na tabela
         for ano in anos:
             html += f"<tr><td>{ano}</td>"
+            valores_ano = []
             
             for mes in meses:
                 valor_antigo = dados_antigo.get((ano, mes), None)
@@ -258,10 +270,18 @@ class HtmlBuilder:
                         diferenca = valor_novo - valor_antigo
                     
                     classe_css = "positive" if diferenca >= 0 else "negative"
-                    
                     html += f'<td class="{classe_css}">{diferenca:.0f}</td>'
+                    valores_ano.append(diferenca)
                 else:
                     html += "<td>-</td>"
+            
+            # Calcular e adicionar a média
+            if valores_ano:
+                media = sum(valores_ano) / len(valores_ano)
+                classe_css_media = "positive" if media >= 0 else "negative"
+                html += f'<td class="{classe_css_media}"><strong>{media:.0f}</strong></td>'
+            else:
+                html += "<td>-</td>"
             
             html += "</tr>"
         
@@ -356,6 +376,7 @@ class HtmlBuilder:
                     <th>Out</th>
                     <th>Nov</th>
                     <th>Dez</th>
+                    <th>Média</th>
                 </tr>
             </thead>
             <tbody>
@@ -364,6 +385,7 @@ class HtmlBuilder:
         # Preencher os dados na tabela
         for ano in anos:
             html += f"<tr><td>{ano}</td>"
+            valores_ano = []
             
             for mes in meses:
                 valor_antigo = dados_antigo.get((ano, mes), None)
@@ -377,10 +399,18 @@ class HtmlBuilder:
                         diferenca = valor_novo - valor_antigo
                     
                     classe_css = "positive" if diferenca >= 0 else "negative"
-                    
                     html += f'<td class="{classe_css}">{diferenca:.0f}</td>'
+                    valores_ano.append(diferenca)
                 else:
                     html += "<td>-</td>"
+            
+            # Calcular e adicionar a média
+            if valores_ano:
+                media = sum(valores_ano) / len(valores_ano)
+                classe_css_media = "positive" if media >= 0 else "negative"
+                html += f'<td class="{classe_css_media}"><strong>{media:.0f}</strong></td>'
+            else:
+                html += "<td>-</td>"
             
             html += "</tr>"
         
@@ -475,6 +505,7 @@ class HtmlBuilder:
                     <th>Out</th>
                     <th>Nov</th>
                     <th>Dez</th>
+                    <th>Média</th>
                 </tr>
             </thead>
             <tbody>
@@ -483,6 +514,7 @@ class HtmlBuilder:
         # Preencher os dados na tabela
         for ano in anos:
             html += f"<tr><td>{ano}</td>"
+            valores_ano = []
             
             for mes in meses:
                 valor_antigo = dados_antigo.get((ano, mes), None)
@@ -496,10 +528,18 @@ class HtmlBuilder:
                         diferenca = valor_novo - valor_antigo
                     
                     classe_css = "positive" if diferenca >= 0 else "negative"
-                    
                     html += f'<td class="{classe_css}">{diferenca:.0f}</td>'
+                    valores_ano.append(diferenca)
                 else:
                     html += "<td>-</td>"
+            
+            # Calcular e adicionar a média
+            if valores_ano:
+                media = sum(valores_ano) / len(valores_ano)
+                classe_css_media = "positive" if media >= 0 else "negative"
+                html += f'<td class="{classe_css_media}"><strong>{media:.0f}</strong></td>'
+            else:
+                html += "<td>-</td>"
             
             html += "</tr>"
         
@@ -594,6 +634,7 @@ class HtmlBuilder:
                     <th>Out</th>
                     <th>Nov</th>
                     <th>Dez</th>
+                    <th>Média</th>
                 </tr>
             </thead>
             <tbody>
@@ -602,6 +643,7 @@ class HtmlBuilder:
         # Preencher os dados na tabela
         for ano in anos:
             html += f"<tr><td>{ano}</td>"
+            valores_ano = []
             
             for mes in meses:
                 valor_antigo = dados_antigo.get((ano, mes), None)
@@ -615,10 +657,18 @@ class HtmlBuilder:
                         diferenca = valor_novo - valor_antigo
                     
                     classe_css = "positive" if diferenca >= 0 else "negative"
-                    
                     html += f'<td class="{classe_css}">{diferenca:.0f}</td>'
+                    valores_ano.append(diferenca)
                 else:
                     html += "<td>-</td>"
+            
+            # Calcular e adicionar a média
+            if valores_ano:
+                media = sum(valores_ano) / len(valores_ano)
+                classe_css_media = "positive" if media >= 0 else "negative"
+                html += f'<td class="{classe_css_media}"><strong>{media:.0f}</strong></td>'
+            else:
+                html += "<td>-</td>"
             
             html += "</tr>"
         
@@ -724,6 +774,7 @@ class HtmlBuilder:
                     <th>Out</th>
                     <th>Nov</th>
                     <th>Dez</th>
+                    <th>Média</th>
                 </tr>
             </thead>
             <tbody>
@@ -732,6 +783,7 @@ class HtmlBuilder:
         # Preencher os dados na tabela
         for ano in anos:
             html += f"<tr><td>{ano}</td>"
+            valores_ano = []
             
             for mes in meses:
                 valor_antigo = dados_antigo.get((ano, mes), None)
@@ -745,10 +797,18 @@ class HtmlBuilder:
                         diferenca = valor_novo - valor_antigo
                     
                     classe_css = "positive" if diferenca >= 0 else "negative"
-                    
                     html += f'<td class="{classe_css}">{diferenca:.0f}</td>'
+                    valores_ano.append(diferenca)
                 else:
                     html += "<td>-</td>"
+            
+            # Calcular e adicionar a média
+            if valores_ano:
+                media = sum(valores_ano) / len(valores_ano)
+                classe_css_media = "positive" if media >= 0 else "negative"
+                html += f'<td class="{classe_css_media}"><strong>{media:.0f}</strong></td>'
+            else:
+                html += "<td>-</td>"
             
             html += "</tr>"
         
