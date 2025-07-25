@@ -1200,7 +1200,7 @@ class DecksNewaveService:
                     table_type=f"Diferença de Cargas NEWAVE {tipo_deck_label}",
                     product_datetime=product_datetime_str or "Data não informada",
                     image_path=image_path,
-                    # destinatario="Premissas Preco"
+                    destinatario="Premissas Preco"
                 )
                 
                 if success:
