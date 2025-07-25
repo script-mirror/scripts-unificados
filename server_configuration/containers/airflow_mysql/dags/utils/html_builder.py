@@ -89,10 +89,12 @@ class HtmlBuilder:
             
             .positive {{
                 color: green;
+                background-color: rgba(0, 128, 0, 0.1);
             }}
             
             .negative {{
                 color: red;
+                background-color: rgba(255, 0, 0, 0.1);
             }}
             
             .caption {{
@@ -148,7 +150,7 @@ class HtmlBuilder:
             
             # Calcular e adicionar a média
             if valores_ano:
-                media = sum(valores_ano) / len(valores_ano)
+                media = sum(valores_ano) / 12
                 classe_css_media = "positive" if media >= 0 else "negative"
                 html += f'<td class="{classe_css_media}"><strong>{media:.0f}</strong></td>'
             else:
@@ -218,10 +220,12 @@ class HtmlBuilder:
             
             .positive {{
                 color: green;
+                background-color: rgba(0, 128, 0, 0.1);
             }}
             
             .negative {{
                 color: red;
+                background-color: rgba(255, 0, 0, 0.1);
             }}
             
             .caption {{
@@ -277,7 +281,7 @@ class HtmlBuilder:
             
             # Calcular e adicionar a média
             if valores_ano:
-                media = sum(valores_ano) / len(valores_ano)
+                media = sum(valores_ano) / 12
                 classe_css_media = "positive" if media >= 0 else "negative"
                 html += f'<td class="{classe_css_media}"><strong>{media:.0f}</strong></td>'
             else:
@@ -347,10 +351,12 @@ class HtmlBuilder:
             
             .positive {{
                 color: green;
+                background-color: rgba(0, 128, 0, 0.1);
             }}
             
             .negative {{
                 color: red;
+                background-color: rgba(255, 0, 0, 0.1);
             }}
             
             .caption {{
@@ -406,7 +412,7 @@ class HtmlBuilder:
             
             # Calcular e adicionar a média
             if valores_ano:
-                media = sum(valores_ano) / len(valores_ano)
+                media = sum(valores_ano) / 12
                 classe_css_media = "positive" if media >= 0 else "negative"
                 html += f'<td class="{classe_css_media}"><strong>{media:.0f}</strong></td>'
             else:
@@ -476,10 +482,12 @@ class HtmlBuilder:
             
             .positive {{
                 color: green;
+                background-color: rgba(0, 128, 0, 0.1);
             }}
             
             .negative {{
                 color: red;
+                background-color: rgba(255, 0, 0, 0.1);
             }}
             
             .caption {{
@@ -535,7 +543,7 @@ class HtmlBuilder:
             
             # Calcular e adicionar a média
             if valores_ano:
-                media = sum(valores_ano) / len(valores_ano)
+                media = sum(valores_ano) / 12
                 classe_css_media = "positive" if media >= 0 else "negative"
                 html += f'<td class="{classe_css_media}"><strong>{media:.0f}</strong></td>'
             else:
@@ -605,10 +613,12 @@ class HtmlBuilder:
             
             .positive {{
                 color: green;
+                background-color: rgba(0, 128, 0, 0.1);
             }}
             
             .negative {{
                 color: red;
+                background-color: rgba(255, 0, 0, 0.1);
             }}
             
             .caption {{
@@ -664,7 +674,7 @@ class HtmlBuilder:
             
             # Calcular e adicionar a média
             if valores_ano:
-                media = sum(valores_ano) / len(valores_ano)
+                media = sum(valores_ano) / 12
                 classe_css_media = "positive" if media >= 0 else "negative"
                 html += f'<td class="{classe_css_media}"><strong>{media:.0f}</strong></td>'
             else:
@@ -745,10 +755,12 @@ class HtmlBuilder:
             
             .positive {{
                 color: green;
+                background-color: rgba(0, 128, 0, 0.1);
             }}
             
             .negative {{
                 color: red;
+                background-color: rgba(255, 0, 0, 0.1);
             }}
             
             .caption {{
@@ -804,7 +816,7 @@ class HtmlBuilder:
             
             # Calcular e adicionar a média
             if valores_ano:
-                media = sum(valores_ano) / len(valores_ano)
+                media = sum(valores_ano) / 12
                 classe_css_media = "positive" if media >= 0 else "negative"
                 html += f'<td class="{classe_css_media}"><strong>{media:.0f}</strong></td>'
             else:
