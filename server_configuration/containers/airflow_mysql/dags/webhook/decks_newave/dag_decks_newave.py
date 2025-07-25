@@ -183,7 +183,7 @@ with DAG(
     processar_deck_nw_cadic >> should_run_cargas_update >> atualizar_cadic_com_cargas
     
     # Envio para API - conectado apenas aos processadores originais (sempre executa)
-    [processar_deck_nw_cadic, processar_deck_nw_sist, atualizar_sist_com_weol, atualizar_cadic_com_cargas] >> enviar_dados_sistema_cadic_para_api
+    [processar_deck_nw_cadic, processar_deck_nw_sist] >> enviar_dados_sistema_cadic_para_api    
     
     # Continuação do fluxo
     enviar_dados_sistema_cadic_para_api >> gerar_tabela_diferenca_cargas >> enviar_tabela_whatsapp_email >> finalizar_sistema_cadic
