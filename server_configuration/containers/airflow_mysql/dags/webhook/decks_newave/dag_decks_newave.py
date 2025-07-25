@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 from airflow.models.dag import DAG
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.operators.python import PythonOperator, BranchPythonOperator
+from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from airflow.utils.trigger_rule import TriggerRule
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
@@ -72,27 +72,39 @@ with DAG(
         doc_md='Processa o arquivo SISTEMA.DAT do produto com a lib Inewave',
     )
     
-    # 6. Atualizar o SISTEMA com os dados do WEOL (PULA para versão definitiva)
+    # 6. Verificar se deve executar atualização WEOL (ShortCircuit para versão definitiva)
+    should_run_weol_update = ShortCircuitOperator(
+        task_id='should_run_weol_update',
+        python_callable=lambda **context: not DecksNewaveService.should_skip_weol_update(**context),
+        provide_context=True,
+        doc_md='Verifica se deve executar atualização WEOL (False para versão definitiva)',
+    )
+    
+    # 7. Atualizar o SISTEMA com os dados do WEOL (só executa se passou pelo ShortCircuit)
     atualizar_sist_com_weol = PythonOperator(
         task_id='atualizar_sist_com_weol',
         python_callable=DecksNewaveService.atualizar_sist_com_weol,
         provide_context=True,
-        doc_md='Atualiza o SISTEMA com os dados do WEOL (PULA para versão definitiva)',
-        skip_on_failure=False,
-        pre_execute=lambda context: context['task_instance'].skip() if DecksNewaveService.should_skip_weol_update(**context) else None,
+        doc_md='Atualiza o SISTEMA com os dados do WEOL (só para versão preliminar)',
     )
     
-    # 7. Atualizar o CADIC com as cargas do SISTEMA (PULA para versão definitiva)
+    # 8. Verificar se deve executar atualização de cargas (ShortCircuit para versão definitiva)
+    should_run_cargas_update = ShortCircuitOperator(
+        task_id='should_run_cargas_update',
+        python_callable=lambda **context: not DecksNewaveService.should_skip_cargas_update(**context),
+        provide_context=True,
+        doc_md='Verifica se deve executar atualização de cargas (False para versão definitiva)',
+    )
+    
+    # 9. Atualizar o CADIC com as cargas do SISTEMA (só executa se passou pelo ShortCircuit)
     atualizar_cadic_com_cargas = PythonOperator(
         task_id='atualizar_cadic_com_cargas',
         python_callable=DecksNewaveService.atualizar_cadic_com_cargas,
         provide_context=True,
-        doc_md='Atualiza o CADIC com as cargas do SISTEMA (PULA para versão definitiva)',
-        skip_on_failure=False,
-        pre_execute=lambda context: context['task_instance'].skip() if DecksNewaveService.should_skip_cargas_update(**context) else None,
+        doc_md='Atualiza o CADIC com as cargas do SISTEMA (só para versão preliminar)',
     )
     
-    # 8. Enviar os dados processados do SISTEMA e CADIC para a API Middle (CONDICIONAL)
+    # 10. Enviar os dados processados do SISTEMA e CADIC para a API Middle (CONDICIONAL)
     enviar_dados_sistema_cadic_para_api = PythonOperator(
         task_id='enviar_dados_sistema_cadic_para_api',
         python_callable=DecksNewaveService.enviar_dados_sistema_cadic_para_api_conditional,
@@ -101,7 +113,7 @@ with DAG(
         trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS,  # Executa mesmo se algumas tasks anteriores foram puladas
     )
     
-    # 9. Gerar tabela de diferença de cargas
+    # 11. Gerar tabela de diferença de cargas
     gerar_tabela_diferenca_cargas = PythonOperator(
         task_id='gerar_tabela_diferenca_cargas',
         python_callable=DecksNewaveService.gerar_tabela_diferenca_cargas,
@@ -109,7 +121,7 @@ with DAG(
         doc_md='Gera tabela de diferença de cargas entre os decks processados',
     )
     
-    # 10. Enviar tabela para whatsapp e e-mail
+    # 12. Enviar tabela para whatsapp e e-mail
     enviar_tabela_whatsapp_email = PythonOperator(
         task_id='enviar_tabela_whatsapp_email',
         python_callable=DecksNewaveService.enviar_tabela_whatsapp_email,
@@ -117,7 +129,7 @@ with DAG(
         doc_md='Envia a tabela de diferença de cargas via WhatsApp e e-mail',
     )
     
-    # 11. Finalizar o fluxo Sistema/Cadic
+    # 13. Finalizar o fluxo Sistema/Cadic
     finalizar_sistema_cadic = DummyOperator(
         task_id='finalizar_sistema_cadic',
         doc_md='Finaliza o processamento do fluxo Sistema/Cadic',
@@ -125,7 +137,7 @@ with DAG(
     
     # ====== FLUXO 2: PATAMARES (apenas envio para API) ======
     
-    # 12. Processar o arquivo PATAMAR.DAT do produto com a lib Inewave
+    # 14. Processar o arquivo PATAMAR.DAT do produto com a lib Inewave
     processar_patamar_nw = PythonOperator(
         task_id='processar_patamar_nw',
         python_callable=DecksNewaveService.processar_patamar_nw,
@@ -133,7 +145,7 @@ with DAG(
         doc_md='Processa o arquivo PATAMAR.DAT do produto com a lib Inewave',
     )
     
-    # 13. Enviar os dados dos Patamares para a API Middle
+    # 15. Enviar os dados dos Patamares para a API Middle
     enviar_dados_patamares_para_api = PythonOperator(
         task_id='enviar_dados_patamares_para_api',
         python_callable=DecksNewaveService.enviar_dados_patamares_para_api,
@@ -141,7 +153,7 @@ with DAG(
         doc_md='Envia os dados dos Patamares para a API Middle',
     )
     
-    # 14. Finalizar o fluxo Patamares
+    # 16. Finalizar o fluxo Patamares
     finalizar_patamares = DummyOperator(
         task_id='finalizar_patamares',
         doc_md='Finaliza o processamento do fluxo Patamares',
@@ -149,7 +161,7 @@ with DAG(
     
     # ====== FINALIZAÇÃO GERAL ======
     
-    # 15. Finalizar DAG (executa independentemente do sucesso/falha dos fluxos)
+    # 17. Finalizar DAG (executa independentemente do sucesso/falha dos fluxos)
     finalizar = DummyOperator(
         task_id='finalizar',
         doc_md='Finaliza o processamento do Deck Preliminar Newave',
@@ -164,9 +176,11 @@ with DAG(
     # FLUXO 1: Sistema e Cadic
     extrair_arquivos >> [processar_deck_nw_cadic, processar_deck_nw_sist]
     
-    # Tasks de atualização (podem ser puladas para versão definitiva)
-    processar_deck_nw_sist >> atualizar_sist_com_weol
-    processar_deck_nw_cadic >> atualizar_cadic_com_cargas
+    # Branch para atualização WEOL (só para versão preliminar)
+    processar_deck_nw_sist >> should_run_weol_update >> atualizar_sist_com_weol
+    
+    # Branch para atualização cargas (só para versão preliminar)
+    processar_deck_nw_cadic >> should_run_cargas_update >> atualizar_cadic_com_cargas
     
     # Envio para API (condicional baseado na versão)
     [atualizar_sist_com_weol, atualizar_cadic_com_cargas, processar_deck_nw_cadic, processar_deck_nw_sist] >> enviar_dados_sistema_cadic_para_api
