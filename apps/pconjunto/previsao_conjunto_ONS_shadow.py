@@ -369,8 +369,10 @@ def post_prev_chuva(df_previsao_modelos):
 #===================UTILS=========================
 
 def cria_diretorio(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
+    parent_dir = os.path.dirname(path)
+    if parent_dir and not os.path.exists(parent_dir):
+        os.makedirs(parent_dir, exist_ok=True)
+    os.makedirs(path, exist_ok=True)
 
 def copia_arquivos(arquivos_copia,path_dst):
 
