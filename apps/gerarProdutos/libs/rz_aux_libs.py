@@ -158,7 +158,7 @@ def gerarCompiladoPrevPrecipt(data, modelo, rodada):
     elif modelo.lower() == 'ecmwf-ens-estendido':
         pattern = os.path.join(path,modelo,dtRodada,'semana-energ','EC-ENS-ESTENDIDO_[0-9]semana_energ-r{}*'.format(dtRodada))
 
-    elif modelo.lower() == 'diferença-ecmwf-estendido':
+    elif modelo.lower() == 'diferenCa-ecmwf-estendido':
         pattern = os.path.join(path,'ecmwf-ens-estendido',dtRodada,'dif_prec','*_dif_acumulado_*-r{}*'.format(dtRodada))
 
     else:
@@ -237,7 +237,7 @@ def geraRelatorioBbce(data = datetime.datetime.now()):
             for i_produtos in range(quantidade_produtos[graniularidade]):
                 if graniularidade == 'mensal':
                     dt_referente = data + relativedelta.relativedelta(months=i_produtos)
-                    produto = f"SE CON MEN {dt_referente.strftime('%B').upper()[:3]}/{dt_referente.strftime('%y')} - Preço Fixo"
+                    produto = f"SE CON MEN {dt_referente.strftime('%B').upper()[:3]}/{dt_referente.strftime('%y')} - PreCo Fixo"
 
                 elif graniularidade == 'trimestral':
                     dt_inicial = data
@@ -245,21 +245,21 @@ def geraRelatorioBbce(data = datetime.datetime.now()):
                         dt_inicial = dt_inicial + relativedelta.relativedelta(months=1)
                     dt_inicial = dt_inicial + relativedelta.relativedelta(months=i_produtos*3)
                     dt_final = dt_inicial + relativedelta.relativedelta(months=2)
-                    produto = f"SE CON TRI {dt_inicial.strftime('%B').upper()[:3]}/{dt_inicial.strftime('%y')} {dt_final.strftime('%B').upper()[:3]}/{dt_final.strftime('%y')} - Preço Fixo"
+                    produto = f"SE CON TRI {dt_inicial.strftime('%B').upper()[:3]}/{dt_inicial.strftime('%y')} {dt_final.strftime('%B').upper()[:3]}/{dt_final.strftime('%y')} - PreCo Fixo"
                 elif graniularidade == 'semestral':
                     dt_inicial = data
                     while dt_inicial.month%6 != 0:
                         dt_inicial = dt_inicial + relativedelta.relativedelta(months=1)
                     dt_inicial = dt_inicial + relativedelta.relativedelta(months=1+i_produtos*6)
                     dt_final = dt_inicial + relativedelta.relativedelta(months=5)
-                    produto = f"SE CON SEM {dt_inicial.strftime('%B').upper()[:3]}/{dt_inicial.strftime('%y')} {dt_final.strftime('%B').upper()[:3]}/{dt_final.strftime('%y')} - Preço Fixo"
+                    produto = f"SE CON SEM {dt_inicial.strftime('%B').upper()[:3]}/{dt_inicial.strftime('%y')} {dt_final.strftime('%B').upper()[:3]}/{dt_final.strftime('%y')} - PreCo Fixo"
                 elif graniularidade == 'anual':
                     dt_inicial = data
                     while dt_inicial.month%12 != 0:
                         dt_inicial = dt_inicial + relativedelta.relativedelta(months=1)
                     dt_inicial = dt_inicial + relativedelta.relativedelta(months=1+i_produtos*12)
                     dt_final = dt_inicial + relativedelta.relativedelta(months=11)
-                    produto = f"SE CON ANU {dt_inicial.strftime('%B').upper()[:3]}/{dt_inicial.strftime('%y')} {dt_final.strftime('%B').upper()[:3]}/{dt_final.strftime('%y')} - Preço Fixo"
+                    produto = f"SE CON ANU {dt_inicial.strftime('%B').upper()[:3]}/{dt_inicial.strftime('%y')} {dt_final.strftime('%B').upper()[:3]}/{dt_final.strftime('%y')} - PreCo Fixo"
 
                 lista_produtos.append(produto)
 
@@ -372,7 +372,7 @@ def gerarResultadoDessem(data):
     fig = plt.figure(figsize=(20, 10))
     gs = gridspec.GridSpec(2, 3)
     
-    fig.suptitle('CMO horário ({})'.format(data.strftime('%d/%m/%Y')), fontsize=16)
+    fig.suptitle('CMO horArio ({})'.format(data.strftime('%d/%m/%Y')), fontsize=16)
 
     table_image = [['Submercado', 'Fonte', 'PLD']]
     tabela = []
@@ -393,8 +393,8 @@ def gerarResultadoDessem(data):
     table.set_fontsize(12)
     table.scale(0.7, 1.3)
 
-    corpoEmail += '<p>Média diária</p>'
-    header = ['Submercado', 'Fonte', 'Média', 'Mínima', 'Máxima']
+    corpoEmail += '<p>Média diAria</p>'
+    header = ['Submercado', 'Fonte', 'Média', 'MInima', 'MAxima']
     corpoEmail += wx_emailSender.gerarTabela(tabela, header, nthColor=len(precos['FONTE'].unique()))
 
     precos = pd.pivot_table(precos, index=['HORARIO', 'FONTE'], columns='SUBMERCADO', values='CMO', aggfunc='first')
@@ -428,7 +428,7 @@ def gerarResultadoDessem(data):
 
         ax.legend()
         ax.tick_params(axis='x', labelrotation=-40)
-        ax.set_ylabel('Preço [R$]')
+        ax.set_ylabel('PreCo [R$]')
         ax.grid(color = 'gray', linestyle = '--', linewidth = 0.2)
 
     pathFileOut = os.path.join(pathArquivos, 'tmp', 'CMO_HORARIO.PNG')
@@ -442,7 +442,7 @@ def gerarResultadoDessem(data):
             linhaTabela.append(('R${:.2f}'.format(row[sub])).replace('.', ','))
         tabela.append(linhaTabela)
 
-    corpoEmail += '<p>Preço horário</p>'
+    corpoEmail += '<p>PreCo horArio</p>'
     header = ['Horario', 'Fonte', 'Sudeste', 'Sul', 'Nordeste', 'Norte']
     corpoEmail += wx_emailSender.gerarTabela(tabela, header, nthColor=len(precos['FONTE'].unique()))
 
@@ -477,8 +477,8 @@ def gerarPrevisaoEnaSubmercado(data:datetime):
 
     tabela = wx_emailSender.gerarTabela(tabela, header, nthColor=2)
     
-    texto = "<b>Relatório de Previsão de Vazões Diárias</b><br>"
-    texto = texto + "ENAS Diárias ONS - DESSEM<br><br>"
+    texto = "<b>Relatório de PrevisAo de Vazões DiArias</b><br>"
+    texto = texto + "ENAS DiArias ONS - DESSEM<br><br>"
 
     texto = texto + tabela
     texto = texto + "<br><br>Envio por WX"
@@ -565,8 +565,8 @@ def compare_fontes_cv(dt_rodada,src_path):
             referencia = fonte if fonte == 'pdp' else referencia
             diff[tipo][fonte] = pd.read_csv(os.path.join(src_path,f"obs_{tipo}_{fonte}.txt"),sep=" ",header=None)
 
-        html = f"<b><h3>Diferenças do chuva-vazão {dt_rodada.strftime('%d/%m/%Y')}</h3></b><br/>"
-        html += f"<p><small>A coluna {referencia} representa o valor obtido e o restante das colunas apresentam a diferença relativa ao {referencia} </small></p><br/>"
+        html = f"<b><h3>DiferenCas do chuva-vazAo {dt_rodada.strftime('%d/%m/%Y')}</h3></b><br/>"
+        html += f"<p><small>A coluna {referencia} representa o valor obtido e o restante das colunas apresentam a diferenCa relativa ao {referencia} </small></p><br/>"
         files = []
 
         for dado in diff.keys():
@@ -596,14 +596,14 @@ def compare_fontes_cv(dt_rodada,src_path):
             maiores_valores = df_out.loc[dez_maiores_diff].values.tolist()
             header = list(df_out.columns)
             
-            html += f"<br/>Diferença na {dado} com referencia o {referencia}:<br/>"
+            html += f"<br/>DiferenCa na {dado} com referencia o {referencia}:<br/>"
             html += wx_emailSender.gerarTabela(maiores_valores, header=header, nthColor=1)
 
         print(files)
         html += "<br><br>Envio por WX"
         return html,files
     else:
-        print("Não há arquivos o suficiente para comparar.")
+        print("NAo hA arquivos o suficiente para comparar.")
         print(f"Verificar {src_path}")
         quit()
 
@@ -1032,7 +1032,7 @@ def gerarTabelasEmailAcomph(data):
         tabelaEna.append(enaAux)
 
     html = "<h4>Submercado</h4>"
-    header = ['Submercado <br><small>mês anter | mês atual</small>']+list(enaSubmercadoFormatado.columns.strftime('%d/%m/%Y')) + ['<span style="font-weight: bold;">Média</span><br><smal>(semana)</smal>']
+    header = ['Submercado <br><small>mEs anter | mEs atual</small>']+list(enaSubmercadoFormatado.columns.strftime('%d/%m/%Y')) + ['<span style="font-weight: bold;">Média</span><br><smal>(semana)</smal>']
     tamanhoColunas = [85] + [61 for i in range(len(header))]
     html += wx_emailSender.gerarTabela(body=tabelaEna, header=header, widthColunas=tamanhoColunas)
 
@@ -1055,7 +1055,7 @@ def gerarTabelasEmailAcomph(data):
         tabelaEnaBacia.append(enaAux)
 
     html += "<h4>Bacias</h4>"
-    header = ['Bacia <br><small>mês anter | mês atual</small>']+list(enaBaciasFormatado.columns.strftime('%d/%m/%Y')) + ['<span style="font-weight: bold;">Média</span><br><smal>(semana)</smal>']
+    header = ['Bacia <br><small>mEs anter | mEs atual</small>']+list(enaBaciasFormatado.columns.strftime('%d/%m/%Y')) + ['<span style="font-weight: bold;">Média</span><br><smal>(semana)</smal>']
     tamanhoColunas = [85] + [61 for i in range(len(header))]
     html += wx_emailSender.gerarTabela(body=tabelaEnaBacia, header=header, widthColunas=tamanhoColunas)
 
@@ -1075,7 +1075,7 @@ def gerarTabelasEmailAcomph(data):
         tabelaDifEnaSub.append(enaAux)
 
     header = ['Submercado']+list(diferencaSubmercadoEnaFormatado.columns.strftime('%d/%m/%Y'))
-    html += "<h3>Diferenças ACOMPH do dia {} com o acomph do dia {}</h3>".format(data.strftime('%d/%m/%Y'), (data-datetime.timedelta(days=1)).strftime('%d/%m/%Y'))
+    html += "<h3>DiferenCas ACOMPH do dia {} com o acomph do dia {}</h3>".format(data.strftime('%d/%m/%Y'), (data-datetime.timedelta(days=1)).strftime('%d/%m/%Y'))
     html += "<h4>Submercados</h4>"
     html += wx_emailSender.gerarTabela(body=tabelaDifEnaSub, header=header)
 
