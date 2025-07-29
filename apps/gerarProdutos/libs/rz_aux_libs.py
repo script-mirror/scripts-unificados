@@ -910,9 +910,9 @@ def gerarTabelasEmailAcomph(data):
 
     numDiasNaLinha = 7
     submercados = {'SE':'SUDESTE','S':'SUL','NE':'NORDESTE','N':'NORTE'}
-    bacias = ['GRANDE','PARANAÍBA','TIETÊ','PARANAPANEMA','ALTO PARANÁ','BAIXO PARANÁ','ALTO TIETÊ','PARAÍBA DO SUL']
-    bacias += ['ITABAPOANA','MUCURI','DOCE','PARAGUAI','IGUAÇU','JACUÍ','URUGUAI','CAPIVARI','ITAJAÍ-AÇU']
-    bacias += ['SÃO FRANCISCO','PARNAÍBA','PARAGUAÇU','JEQUITINHONHA','TOCANTINS','AMAZONAS','ARAGUARI','XINGU']
+    bacias = ['GRANDE','PARANAIBA','TIETE','PARANAPANEMA','ALTO PARANA','BAIXO PARANA','ALTO TIETE','PARAIBA DO SUL']
+    bacias += ['ITABAPOANA','MUCURI','DOCE','PARAGUAI','IGUACU','JACUI','URUGUAI','CAPIVARI','ITAJAI-ACU']
+    bacias += ['SAO FRANCISCO','PARNAIBA','PARAGUACU','JEQUITINHONHA','TOCANTINS','AMAZONAS','ARAGUARI','XINGU']
 
     iMesAtual = (data-datetime.timedelta(days=1)).replace(day=1)
     fMesAnterior = iMesAtual-datetime.timedelta(days=1)
