@@ -923,7 +923,6 @@ def gerarTabelasEmailAcomph(data):
     df_acomph_ena_sub.index = pd.to_datetime(df_acomph_ena_sub.index)
 
     enaSubmercados = df_acomph_ena_sub.loc[(data-datetime.timedelta(days=numDiasNaLinha)).strftime('%Y-%m-%d'):].copy()
-
     mediaMesAnteriorSubm = df_acomph_ena_sub.loc[iMesAnterior.strftime('%Y-%m-%d'):fMesAnterior.strftime('%Y-%m-%d')].mean()
     mediaMesAtualSubm = df_acomph_ena_sub.loc[iMesAtual.strftime('%Y-%m-%d'):].mean()
 
@@ -972,11 +971,11 @@ def gerarTabelasEmailAcomph(data):
             enaBac = enaBacias['JEQUITINHONHA (SE)'] + enaBacias['JEQUITINHONHA (NE)']
             difEnaBac = diferencaEnaBaciasDiaAnterior['JEQUITINHONHA (SE)'] + diferencaEnaBaciasDiaAnterior['JEQUITINHONHA (NE)']
 
-        elif bac == 'SÃO FRANCISCO':
-            mediaMesAnteriorBacias[bac] = mediaMesAnteriorBacias['SÃO FRANCISCO (SE)'] + mediaMesAnteriorBacias['SÃO FRANCISCO (NE)']
-            mediaMesAtualBacias[bac] = mediaMesAtualBacias['SÃO FRANCISCO (SE)'] + mediaMesAtualBacias['SÃO FRANCISCO (NE)']
-            enaBac = enaBacias['SÃO FRANCISCO (SE)'] + enaBacias['SÃO FRANCISCO (NE)']
-            difEnaBac = diferencaEnaBaciasDiaAnterior['SÃO FRANCISCO (SE)'] + diferencaEnaBaciasDiaAnterior['SÃO FRANCISCO (NE)']
+        elif bac == 'SAO FRANCISCO':
+            mediaMesAnteriorBacias[bac] = mediaMesAnteriorBacias['SAO FRANCISCO (SE)'] + mediaMesAnteriorBacias['SAO FRANCISCO (NE)']
+            mediaMesAtualBacias[bac] = mediaMesAtualBacias['SAO FRANCISCO (SE)'] + mediaMesAtualBacias['SAO FRANCISCO (NE)']
+            enaBac = enaBacias['SAO FRANCISCO (SE)'] + enaBacias['SAO FRANCISCO (NE)']
+            difEnaBac = diferencaEnaBaciasDiaAnterior['SAO FRANCISCO (SE)'] + diferencaEnaBaciasDiaAnterior['SAO FRANCISCO (NE)']
 
         elif bac == 'TOCANTINS':
             mediaMesAnteriorBacias[bac] = mediaMesAnteriorBacias['TOCANTINS (N)'] + mediaMesAnteriorBacias['TOCANTINS (SE)']
@@ -1101,4 +1100,4 @@ def gerarTabelasEmailAcomph(data):
     return html
 
 if __name__ == "__main__":
-    geraRelatorioBbce(datetime.datetime(2024, 9, 2))
+    gerarTabelasEmailAcomph(datetime.datetime(2025, 7, 29))
