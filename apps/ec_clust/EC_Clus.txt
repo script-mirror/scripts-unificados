@@ -1,0 +1,4 @@
+ECMWF       !modelo
+101         !numero de membros
+10          !numero de clusters
+15/07/2024  !DATA

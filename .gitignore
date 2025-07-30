@@ -43,7 +43,7 @@ apps/dessem/config.json
 apps/gerarProdutos/config.json
 apps/ec_clust/Arq_Entrada/*
 bibliotecas/config.json
-
+*.bin
 
 # Bot Whatsapp
 apps/bot_whatsapp/.wwebjs_auth/

@@ -1,0 +1,90 @@
+services:
+  grafana:
+      image: grafana/grafana:latest
+      container_name: grafana
+      ports:
+          - "6004:3000"
+      environment:
+          - GF_SECURITY_ADMIN_USER=admin
+          - GF_SECURITY_ADMIN_PASSWORD=raizen2025!@#
+          - GF_SERVER_ROOT_URL=http://localhost:6004/grafana
+          - GF_SERVER_SERVE_FROM_SUB_PATH=true
+          # InfluxDB v2.x Connection Variables
+          - GF_AUTH_INFLUXDB_ENABLED=true
+          - GF_INFLUXDB_URL=http://influxdb:8086
+          - GF_INFLUXDB_TOKEN=mysuper-secret-auth-token
+          - GF_INFLUXDB_VERSION=influxql
+          - GF_INFLUXDB_DEFAULT_BUCKET=raizen_bucket
+          - GF_INFLUXDB_ORGANIZATION=raizen
+          # SMTP Configuration
+          - GF_SMTP_ENABLED=true
+          - GF_SMTP_HOST=smtpi.kinghost.net:587
+          - GF_SMTP_USER=climenergy@climenergy.com
+          - GF_SMTP_PASSWORD=clime2sam
+          - GF_SMTP_FROM_ADDRESS=climenergy@climenergy.com
+          - GF_SMTP_FROM_NAME=Grafana Alerts
+          - GF_SMTP_STARTTLS_POLICY=MandatoryStartTLS
+      volumes:
+          - grafana-data:/var/lib/grafana
+      networks:
+          - server_database_network
+          - monitoring_network
+      restart: always
+
+  prometheus:
+      image: prom/prometheus:latest
+      container_name: prometheus
+      restart: unless-stopped
+      volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+      command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=730d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      ports:
+      - "9090:9090"
+      networks:
+      - monitoring_network
+
+  node_exporter:
+      image: prom/node-exporter:latest
+      container_name: node_exporter
+      restart: unless-stopped
+      volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      ports:
+      - "9100:9100"
+      networks:
+      - monitoring_network
+  blackbox:
+    image: prom/blackbox-exporter:latest
+    container_name: blackbox
+    ports:
+      - "9115:9115"
+    volumes:
+      - ./blackbox:/etc/blackbox_exporter
+    command:
+      - "--config.file=/etc/blackbox_exporter/blackbox.yml"
+    networks:
+    - monitoring_network
+
+networks:
+  server_database_network:
+      external: true
+  monitoring_network:
+      driver: bridge
+
+volumes:
+  grafana-data:
+  prometheus_data:
