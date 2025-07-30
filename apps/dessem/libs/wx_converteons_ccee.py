@@ -50,7 +50,7 @@ def converter_entdados(dt_referente):
     path_ultimo_deck_ccee = os.path.join(path_decks_ccee,f'DS_CCEE_{mes_ref_anterior:0>2}{ano_ref_anterior}_SEMREDE_RV{rev_ref_anterior}D{dt_referente_anterior.strftime("%d")}')
     ultimo_entdados_ons = open(os.path.join(path_ultimo_deck_ons,'entdados.dat'), 'r', encoding="utf8").readlines()
     penultimo_entdados_ons = open(os.path.join(path_penultimo_deck_ons,'entdados.dat'), 'r', encoding="utf8").readlines()
-    print(path_ultimo_deck_ccee)
+    print(f'path_ultimo_deck_ccee {path_ultimo_deck_ccee}')
     try:
         penultimo_entdados_ccee = open(os.path.join(path_ultimo_deck_ccee,'entdados.dat'), 'r', encoding="utf8").readlines()
     except:
@@ -129,6 +129,7 @@ def converter_entdados(dt_referente):
         apenas_ccee[mnemonico] = set(deck_penultimo_ccee[mnemonico]) - set(deck_penultimo_ons[mnemonico])
 
     #Atualizar a demanda [DP]
+    
     pmoSist = wx_pdoSist.leituraSist(os.path.join(path_ultimo_deck_ons,'PDO_SIST.dat'))
     formatacao_DP = '{:>2}  {:>2}  {:>2} {:>2} {:>1} {:>2} {:>2} {:>1} {:>10}\n'
     id_submercado = {'SE':1,'S':2,'NE':3,'N':4,}
@@ -217,7 +218,7 @@ def converter_entdados(dt_referente):
     with open(path_saida_entdados, 'w', encoding="utf8") as f:
         for linha in ultimo_entdados_ons:
             f.write(linha)
-    print(path_saida_entdados)
+    print(f'path_saida_entdados {path_saida_entdados}')
 
     path_ultimo_renovaveis_ons = os.path.join(path_ultimo_deck_ons,'renovaveis.dat')
     ultimo_renovaveis_ons = open(path_ultimo_renovaveis_ons, 'r').readlines()
@@ -230,7 +231,7 @@ def converter_entdados(dt_referente):
     with open(path_saida_renovaveis, 'w') as f:
         for linha in ultimo_renovaveis_ons:
             f.write(linha)
-    print(path_saida_renovaveis)
+    print(f'path_saida_renovaveis {path_saida_renovaveis}')
     
     
     arquivos_ultimo_deck_ccee = [f'cortdeco.rv{rev_ref_anterior}','dessem.arq',f'mapcut.rv{rev_ref_anterior}','restseg.dat','rstlpp.dat']
@@ -243,7 +244,7 @@ def converter_entdados(dt_referente):
         pathSource = os.path.join(path_ultimo_deck_ons, f)
         pathDest = os.path.join(path_saida, f)
         shutil.copyfile(pathSource, pathDest)
-        print(pathDest)
+        print(f'pathDest {pathDest}')
 
     # Arquivos copiados do ultimo deck CCEE sem nenhuma alteracao
     for arq in arquivos_ultimo_deck_ccee:
@@ -251,7 +252,7 @@ def converter_entdados(dt_referente):
         pathSrc = os.path.join(path_ultimo_deck_ccee, arq.format(rev_ref_anterior))
         pathDest = os.path.join(path_saida, arq.format(rev_ref_seguinte))
         shutil.copyfile(pathSrc, pathDest)
-        print(pathDest)
+        print(f'pathDest {pathDest}')
         
     return path_saida
 

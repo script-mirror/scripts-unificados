@@ -106,7 +106,12 @@ def enviar_whatsapp_erro(context):
     }
     headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
     response = requests.post(WHATSAPP_API, data=fields, headers=headers)
-    print("Status Code:", response.status_code)
+    print("Status Code envio para wpp:", response.status_code)
+    fields = {
+        "destinatario": "debug",
+        "mensagem": msg
+    }
+    response = requests.post(WHATSAPP_API, data=fields, headers=headers)
     
 def enviar_whatsapp_erro_weol(context):
     task_instance = context['task_instance']
@@ -119,6 +124,12 @@ def enviar_whatsapp_erro_weol(context):
         "mensagem": msg
     }
     headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
+    response = requests.post(WHATSAPP_API, data=fields, headers=headers)
+    print("Status Code:", response.status_code)
+    fields = {
+        "destinatario": "debug",
+        "mensagem": msg
+    }
     response = requests.post(WHATSAPP_API, data=fields, headers=headers)
     print("Status Code:", response.status_code)
  

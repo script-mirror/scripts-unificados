@@ -160,6 +160,25 @@ with DAG(
         get_pty=True,
     )
 
+with DAG(
+    dag_id='OBS_CHUVA_DB_CEMADEN',
+    tags=["Verificador", "Chuva Observada", "Metereologia"],
+    start_date=datetime(2024, 4, 28),
+    schedule_interval="5 * * * * ",
+    catchup=False,
+) as dag:
+
+    run = SSHOperator(
+        do_xcom_push=False,
+        task_id='get_cemaden_data',
+        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/dados_cemaden/produtos.sh'}}",
+        dag=dag,
+        ssh_conn_id='ssh_master',
+        conn_timeout = TIME_OUT,
+        cmd_timeout = TIME_OUT,
+        get_pty=True,
+    )
+
 
 with DAG(
     dag_id='OBS_CHUVA_DB_SIMEPAR',

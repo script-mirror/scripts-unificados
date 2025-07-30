@@ -40,22 +40,24 @@ def get_ena_smap(
     df_ena = df_ena.T
 
     if granularidade == 'bacia':
+        pass
         # df_ena['INCREMENTAL DE ITAIPU'] = INCREMENTAL_ITAIPU
-        df_pluviaBaciasinteresse = df_pluviaBaciasinteresse.pivot(index='DT_REFERENTE', columns='CD_BACIA', values='VL_ENA')
-        df_pluviaBaciasinteresse = df_pluviaBaciasinteresse.rename(columns={21:'SÃO FRANCISCO (NE)'})
+        # df_pluviaBaciasinteresse = df_pluviaBaciasinteresse.pivot(index='DT_REFERENTE', columns='CD_BACIA', values='VL_ENA')
+        # df_pluviaBaciasinteresse = df_pluviaBaciasinteresse.rename(columns={21:'SÃO FRANCISCO (NE)'})
     
     if granularidade == "submercado":
+        pass
 
-        df_pluviaBaciasinteresse = (
-        df_pluviaBaciasinteresse[['VL_ENA', 'DT_REFERENTE', 'STR_SUBMERCADO']]
-        .groupby(['STR_SUBMERCADO', 'DT_REFERENTE'])
-        .sum()
-        .reset_index()
-        .pivot(index='DT_REFERENTE', columns='STR_SUBMERCADO', values='VL_ENA')
-    )
+    #     df_pluviaBaciasinteresse = (
+    #     df_pluviaBaciasinteresse[['VL_ENA', 'DT_REFERENTE', 'STR_SUBMERCADO']]
+    #     .groupby(['STR_SUBMERCADO', 'DT_REFERENTE'])
+    #     .sum()
+    #     .reset_index()
+    #     .pivot(index='DT_REFERENTE', columns='STR_SUBMERCADO', values='VL_ENA')
+    # )
     
     df_ena.index = pd.to_datetime(df_ena.index, format="%Y/%m/%d")
-    df_ena = df_ena.add(df_pluviaBaciasinteresse, fill_value=0).dropna()
+    # df_ena = df_ena.add(df_pluviaBaciasinteresse, fill_value=0).dropna()
 
     # limite_dias = {'PZERADA':30 ,'GFS':16 ,'ETA40':10 ,'PRECMEDIA_ETA40.GEFS':12 ,
     # 'GEFS':16, 'EC':9, 'EC-ens':14, 'PMEDIA':14, 'PDESSEM':14, 'ECMWF-tok':9,
@@ -208,15 +210,15 @@ def get_ena_modelos_smap(ids_to_search,dt_rodada, granularidade, dias: int = 7):
 
             if ids_sem_pzeraza:
 
-                df_pluviaBaciasinteresse = query_ultimo_id_pluvia_df(dt_rodada,flag_pzerada=False)
-                
+                # df_pluviaBaciasinteresse = query_ultimo_id_pluvia_df(dt_rodada,flag_pzerada=False)
+                df_pluviaBaciasinteresse = pd.DataFrame()
                 ids_smap = df_smap_result[df_smap_result['str_modelo'] != "PZERADA"]['id_smap'].unique()
                 futures += [executor.submit(get_ena_smap, id,dt_rodada,df_smap_result[df_smap_result['id_smap'] == id],df_pluviaBaciasinteresse,granularidade, dias=dias) for id in ids_smap]
 
             if ids_com_pzeraza:
 
-                df_pluviaBaciasinteresse = query_ultimo_id_pluvia_df(dt_rodada,flag_pzerada=True)
-
+                # df_pluviaBaciasinteresse = query_ultimo_id_pluvia_df(dt_rodada,flag_pzerada=True)
+                df_pluviaBaciasinteresse = pd.DataFrame()
                 ids_smap = df_smap_result[df_smap_result['str_modelo'] == "PZERADA"]['id_smap'].unique()
                 futures += [executor.submit(get_ena_smap, id,dt_rodada,df_smap_result[df_smap_result['id_smap'] == id],df_pluviaBaciasinteresse,granularidade, dias=dias) for id in ids_smap]
 

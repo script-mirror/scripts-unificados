@@ -183,7 +183,7 @@ with DAG(
     )
 
     trigger_dag_prospec = TriggerDagRunOperator(
-        task_id='trigger_dag_prospec_2.0',
+        task_id='trigger_dag_prospec_atualizacao',
         trigger_dag_id='1.11-PROSPEC_ATUALIZACAO',
         conf={'nome_estudo': "{{dag_run.conf.external_params.task_to_execute}}"},  
         wait_for_completion=False,  

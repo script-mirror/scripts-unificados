@@ -252,7 +252,7 @@ def mapa_interativo():
   return render_template('mapa_interativo.html')
 
 @bp.route('/mapa-interativo-tv')
-@login_required
+# @login_required
 def mapa_interativo_tv():
   return render_template('mapa_interativo_tv.html')
 
@@ -2414,19 +2414,14 @@ def API_get_datas_atualizadas_dessem():
 
 
 @bp.route('API/get/estacoes-meteorologicas', methods=['GET'])
-@cache.cached(timeout=60*60*24*30, query_string=True)
-@login_required
 def API_get_lista_estacoes():
   return db_meteorologia.tb_inmet_estacoes.listar_estacoes(), 200
 
 @bp.route('API/get/estacoes-meteorologicas/bacias', methods=['GET'])
-@cache.cached(timeout=60*60*24*30, query_string=True)
-@login_required
 def API_get_lista_bacias_estacoes_meteorologicas():
   return db_meteorologia.tb_inmet_estacoes.listar_bacias(), 200
 
 @bp.route('API/get/estacoes-meteorologicas/chuva-acumulada', methods=['GET'])
-@login_required
 def API_get_chuva_acumulada_por_estacao_data_entre():
   no_cache = request.args.get('noCache', default=False)
   atualizar = request.args.get('atualizar', default=False, type=utils.str_to_bool)
@@ -2439,7 +2434,6 @@ def API_get_chuva_acumulada_por_estacao_data_entre():
 
 
 @bp.route('API/get/estacoes-meteorologicas/datas-coleta', methods=['GET'])
-@login_required
 def API_get_listar_datas_coleta():
   no_cache = request.args.get('noCache', default=True)
   atualizar = request.args.get('atualizar', default=False, type=utils.str_to_bool)
@@ -2450,7 +2444,6 @@ def API_get_listar_datas_coleta():
 
 
 @bp.route('API/get/estacoes-meteorologicas/chuva-acumulada/media', methods=['GET'])
-@login_required
 def API_get_media_chuva_acumulada_por_bacia_data_entre():
   no_cache = request.args.get('noCache', default=False)
   atualizar = request.args.get('atualizar', default=False, type=utils.str_to_bool)

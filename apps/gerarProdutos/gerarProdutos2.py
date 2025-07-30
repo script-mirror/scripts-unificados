@@ -122,7 +122,7 @@ class GeradorProdutos():
                     print("\033[91mErro de Autenticacao\033[0m")
 
                 except Exception as e:
-                    print(f"\033[91mErro nao mapeado \033[0m\n{e}\n")
+                    print(f"\033[91mErro ao enviar email \033[0m\n{e}\n")
                     
             if resultado.flagWhats:
 

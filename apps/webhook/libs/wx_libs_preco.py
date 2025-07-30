@@ -65,10 +65,14 @@ def envia_email_wx(send_from,send_to,assunto,texto,anexo,server,port,username,pa
     smtp = smtplib.SMTP(server, port)
     if isTls:
         smtp.starttls()
-    smtp.login(username,password)
-    smtp.sendmail(send_from, send_to, msg.as_string())
+    try:
+        smtp.login(username,password)
+        smtp.sendmail(send_from, send_to, msg.as_string())
 
-    smtp.quit()
+        smtp.quit()
+    except Exception as e:
+        print("Erro ao enviar email: ", e)
+        smtp.quit()
 
 
 def monitora_cmo(arquivo):

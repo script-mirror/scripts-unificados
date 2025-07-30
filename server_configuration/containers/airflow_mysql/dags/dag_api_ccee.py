@@ -68,7 +68,7 @@ def post_cvu(body: dict, tipo_cvu: str):
     res = req.post(url,
                    json=body,
                    headers=get_auth_header())
-    if res.status_code == 201:
+    if res.status_code >= 200 and res.status_code < 300:
         return res.json()
     else:
         raise Exception("Erro ao postar dados CVU:"

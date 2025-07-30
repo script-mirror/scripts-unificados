@@ -42,7 +42,7 @@ with DAG(
     t_run_smap = SSHOperator(
         task_id='run_smap',
         ssh_conn_id='ssh_master',
-        command='cd /WX2TB/Documentos/fontes/PMO/'
+        command='cd /projetos/'
                 'raizen-power-trading-smap && env/bin/python '
                 'main.py {{ dag_run.conf.get("id_chuva") }}',
         do_xcom_push=True,

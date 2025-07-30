@@ -1759,15 +1759,20 @@ def enviar(parametros):
 		# Cria um corpo de email caso nao for configurado anteriormente
 		if corpoEmail == '':
 			corpoEmail = '<h3>{} referente a data {}</h3><br><h4>{}</h4>'.format(parametros["produto"], parametros["data"].strftime('%d/%m/%Y'), file.split('/')[-1])
-
-		if file != '' and file != []:
-			if type(file) == type(''):
-				serv_email.sendEmail(texto=corpoEmail, assunto=assuntoEmail, anexos=[file])
-			elif type(file) == type([]):
-				serv_email.sendEmail(texto=corpoEmail, assunto=assuntoEmail, anexos=file)
-		else:
-			serv_email.sendEmail(texto=corpoEmail, assunto=assuntoEmail, anexos=[])
-
+		try:
+			if file != '' and file != []:
+				if type(file) == type(''):
+					serv_email.sendEmail(texto=corpoEmail, assunto=assuntoEmail, anexos=[file])
+				elif type(file) == type([]):
+					serv_email.sendEmail(texto=corpoEmail, assunto=assuntoEmail, anexos=file)
+			else:
+				serv_email.sendEmail(texto=corpoEmail, assunto=assuntoEmail, anexos=[])
+		except Exception as e:
+			print("\033[91mErro ao enviar email: {}\033[0m".format(e))
+			print("\033[91mArquivo: {}\033[0m".format(file))
+			print("\033[91mCorpo do email: {}\033[0m".format(corpoEmail))
+			print("\033[91mAssunto do email: {}\033[0m".format(assuntoEmail))
+			print("\033[91mDestinatario do email: {}\033[0m".format(destinatarioEmail))
 	# Envia o produto via whatsapp caso a  flagWhats estiver ativada
 	if flagWhats:
 		if msgWhats == '':

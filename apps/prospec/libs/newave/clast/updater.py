@@ -325,7 +325,7 @@ def process_cvu_estrutural_data(cvu_data: pd.DataFrame) -> pd.DataFrame:
 
 
 def _create_change_comment_estrutural(
-    timestamp: str, changes: list[tuple[int, float, float]]
+    timestamp: str, changes: List,
 ) -> str:
     corpo = " | ".join(
         f"{indice}:\t{new-old:>7.2f}\t" for indice, old, new in changes

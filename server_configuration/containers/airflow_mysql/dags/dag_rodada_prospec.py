@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from datetime import timedelta
 from airflow import DAG
@@ -8,7 +9,12 @@ from airflow.models import DagRun
 from airflow.exceptions import AirflowSkipException
 from airflow.utils.db import create_session
 import subprocess
-
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+PATH_PROJETOS: str = os.getenv('PATH_PROJETOS')
+ATIVAR_ENV: str = os.getenv('ATIVAR_ENV')
+CMD_BASE = str(ATIVAR_ENV) + " python " + str(PATH_PROJETOS) + "/estudos-middle/estudos_prospec/rodada_automatica_prospec/main_roda_estudos.py "
+CMD_BASE_SENS = str(ATIVAR_ENV) + " python " + str(PATH_PROJETOS) + "/estudos-middle/estudos_prospec/roda_sensibilidades/gerar_sensibilidade.py "
 
 default_args = {
     'execution_timeout': timedelta(hours=8)
@@ -35,20 +41,18 @@ def check_if_dag_is_running(**kwargs):
 
 # Função que executa o script com parâmetros dinâmicos
 def run_python_script_with_dynamic_params(**kwargs):
+
     # Recuperando todos os parâmetros passados para a DAG
-    print(kwargs.get('params'))
     params = kwargs.get('params', {})
-    print(params)
+    #conteudo = ' '.join(f'"{k}" "{v}"' for k, v in params.items())
+    conteudo = ' '.join( f'"{k}" \'{v}\'' if k == "list_email" else f'"{k}" "{v}"' for k, v in params.items()
+)    
     # Iniciando a construção do comando para o script
-    command = " . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script/mainRodadaAutoProspec.py"
+    command = CMD_BASE + conteudo
     
-    # Adicionando parâmetros ao comando dinamicamente, se existirem
-    for key, value in params.items():
-        if value is not None:  # Verifica se o valor não é None
-            # Adiciona o parâmetro e o valor ao comando
-            command += f" {key} '{value}'"
     print(command)
     kwargs['ti'].xcom_push(key='command', value=command)
+
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '1.00-ENVIAR-EMAIL-ESTUDOS' (adicionada)
@@ -103,7 +107,7 @@ with DAG(
     run_prospec_on_host = SSHOperator(
         task_id='run_prospec_on_host',
         ssh_conn_id='ssh_master',
-        command="{{ 'cd /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script; ./rodaProspec2rvsDefinitivo.ksh' }}",
+        command= CMD_BASE +"prevs P.CONJ rodada Definitiva",
         conn_timeout=36000,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -128,7 +132,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_pconj_prel',
         ssh_conn_id='ssh_master',  
-        command="{{ 'cd /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script; ./rodaProspec3rvs.ksh' }}",
+        command= CMD_BASE +"prevs P.CONJ rodada Preliminar",
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -149,7 +153,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_1rv',
         ssh_conn_id='ssh_master',  
-        command="{{ 'cd /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script; ./rodaProspec1rv_pluvia_raizen.ksh' }}",
+        command= CMD_BASE +"prevs NEXT-RV rodada Preliminar",
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -169,8 +173,8 @@ with DAG(
     run_prospec_on_host = SSHOperator(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_ec_ext',
-        ssh_conn_id='ssh_master',  
-        command="{{ 'cd /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script; ./rodaProspec5rvs.ksh' }}",
+        ssh_conn_id='ssh_master',
+        command= CMD_BASE +"prevs EC-EXT rodada Definitiva", 
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -190,8 +194,8 @@ with DAG(
     run_prospec_on_host = SSHOperator(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_cenario_10',
-        ssh_conn_id='ssh_master',  
-        command="{{ 'cd /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script; ./rodaProspecCenarios.ksh 10' }}",
+        ssh_conn_id='ssh_master',
+        command= CMD_BASE +"prevs CENARIOS rodada Preliminar, cenario 10",  
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -212,7 +216,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_cenario_11',
         ssh_conn_id='ssh_master',  
-        command="{{ 'cd /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script; ./rodaProspecCenarios.ksh 11' }}",
+        command= CMD_BASE +"prevs CENARIOS rodada Preliminar, cenario 11",
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -232,8 +236,8 @@ with DAG(
     run_prospec_on_host = SSHOperator(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_chuva0',
-        ssh_conn_id='ssh_master',  
-        command="{{ 'cd /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script; ./rodaProspecPzero.ksh' }}",
+        ssh_conn_id='ssh_master', 
+        command= CMD_BASE +"prevs P.ZERO rodada Preliminar", 
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -250,7 +254,7 @@ def run_python_gfs(**kwargs):
     params = kwargs.get('params', {})
     print(params)
     # Iniciando a construção do comando para o script
-    command = " . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script/mainRodadaAutoProspec.py prevs PREVS_PLUVIA_GFS rvs 8 mapas GFS"
+    command= CMD_BASE + "prevs PREVS_PLUVIA_GFS rvs 8 mapas GFS",
     
     # Adicionando parâmetros ao comando dinamicamente, se existirem
     for key, value in params.items():
@@ -296,7 +300,7 @@ def run_python_update_with_dynamic_params(**kwargs):
     params = kwargs.get('params', {})
     print(params)
     # Iniciando a construção do comando para o script
-    command = " . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script/mainRodadaAutoProspec.py prevs PREVS_PLUVIA_RAIZEN rvs 1 mapas ONS_Pluvia"
+    command= CMD_BASE + "prevs UPDATE rodada Preliminar"
     
     # Adicionando parâmetros ao comando dinamicamente, se existirem
     for key, value in params.items():
@@ -305,6 +309,8 @@ def run_python_update_with_dynamic_params(**kwargs):
             command += f" {key} '{value}'"
     print(command)
     kwargs['ti'].xcom_push(key='command', value=command)
+
+    
 
 # Definindo a DAG para '1.00-ENVIAR-EMAIL-ESTUDOS' (adicionada)
 with DAG(
@@ -335,14 +341,13 @@ with DAG(
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '2.1-PROSPEC_NAO-CONSISTIDO'
-# Função que executa o script com parâmetros dinâmicos
 def run_python_with_dynamic_params(**kwargs):
     # Recuperando todos os parâmetros passados para a DAG
     print(kwargs.get('params'))
     params = kwargs.get('params', {})
     print(params)
     # Iniciando a construção do comando para o script
-    command = " . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script/mainRodadaAutoProspec.py prevs PREVS_NAO_CONSISTIDO rvs 1"
+    command= CMD_BASE + "prevs NAO-CONSISTIDO",
     
     # Adicionando parâmetros ao comando dinamicamente, se existirem
     for key, value in params.items():
@@ -428,7 +433,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_decomp_ons_grupos',
         ssh_conn_id='ssh_master',  # Verifique se isso corresponde ao ID de conexão configurado na UI do Airflow
-        command=" . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script/mainRodadaAutoProspec.py prevs PREVS_ONS_GRUPOS preliminar 0",
+        command= CMD_BASE + "prevs ONS-GRUPOS rodada Preliminar",
         conn_timeout=None,
         cmd_timeout=None,
         get_pty=True,
@@ -451,6 +456,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_decomp',
         ssh_conn_id='ssh_master',  # Ensure this matches the connection ID set in the Airflow UI
+        #command= CMD_BASE + "prevs PREVS_ONS_GRUPOS preliminar 0",
         command=" . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX/WX2TB/Documentos/fontes/PMO/backTest_DC/script/back_teste_decomp.py",
         conn_timeout = None,
         cmd_timeout = None,
@@ -471,7 +477,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_pconjunto_prel_precipitacao',
         ssh_conn_id='ssh_master',  # Ensure this matches the connection ID set in the Airflow UI
-        command=" . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/script/mainRodadaAutoProspec.py prevs PREVS_PLUVIA_APR rvs 2 preliminar 0",
+        command= CMD_BASE + "prevs P.APR rodada Preliminar",
         conn_timeout = None,
         cmd_timeout = None,
         get_pty=True,
@@ -492,9 +498,8 @@ def run_sensibilidades_params(**kwargs):
     #print("parametros recebidos: ", type(params))
     
     # Iniciando a construção do comando para o script
-    command = ". /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python  /WX2TB/Documentos/fontes/PMO/gera_sens_prospec/gerar_sens.py"
     
-    command +=' "'  + str(params) + '"'
+    command = CMD_BASE_SENS + ' "'  + str(params) + '"'
     #command += f" str(kwargs.get('params'))'"
     print(command)
     kwargs['ti'].xcom_push(key='command', value=command)

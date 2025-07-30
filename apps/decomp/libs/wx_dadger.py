@@ -6,9 +6,6 @@ import codecs
 import datetime
 import pandas as pd
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import wx_dbLib
-
 
 info_blocos = {}
 info_blocos['TE'] = {'campos':['mnemonico',
@@ -793,151 +790,11 @@ def escrever_dadger(df_dadger, comentarios, filePath):
     print(filePath)
     return filePath
 
-import os
 
-def comentar_dadger_ons_ccee(df_dadger, comentarios):
-    
-    restricoes_comentadas = [141, 143, 145, 147, 272, 449, 451, 453,
-        464, 470, 471, 501, 503, 505, 509, 513, 515, 517, 519, 521,
-        525, 527, 529, 531, 533, 535, 537, 539, 541, 543, 545, 547,
-        561, 562, 564, 570, 571, 604, 606, 608, 654, 611, 612,  613,
-        614, 615]
-    
-    df_restricoes_comentadas = df_dadger['RE'].loc[df_dadger['RE']['id_restricao'].astype('int').isin(restricoes_comentadas)]
-    for index, row in df_restricoes_comentadas.iterrows():
-        
-        restricao_comentada = []
-        
-        if index in comentarios['RE']:
-            restricao_comentada = comentarios['RE'][index]
-        
-        restricao_comentada += ['&{}\n'.format(info_blocos['RE']['formatacao'].format(*row.values).strip())]
-
-        for mnemon_info_rest in ['LU','FU','FT','FI']:
-            for idx_inf_rest, inf_rest in df_dadger[mnemon_info_rest].loc[df_dadger[mnemon_info_rest]['id_restricao'].astype('int') == int(row['id_restricao'])].iterrows():
-                restricao_comentada.append('&{}\n'.format(info_blocos[mnemon_info_rest]['formatacao'].format(*inf_rest.values).strip()))
-                df_dadger[mnemon_info_rest].drop(idx_inf_rest, inplace=True)
-                
-        if index+1 in comentarios['RE']:
-            comentarios['RE'][index+1] = restricao_comentada + comentarios['RE'][index+1]
-        else :
-            comentarios['RE'][index+1] = restricao_comentada
-
-        df_dadger['RE'].drop(index, inplace=True)
-
-    return df_dadger, comentarios
-
-
-def add_protecao_gap_negativo(df_dadger, comentarios):
-
-    if 'UH' not in comentarios:
-        comentarios['UH'] = {}
-    if 0 not in comentarios['UH']:
-        comentarios['UH'][0] = []
-
-    novos_comentarios = []
-    novos_comentarios.append('&\n')
-    novos_comentarios.append('&-----------------------------------------------------------------------------------------------\n')
-    novos_comentarios.append('&      ELIMINA DE SOLUCOES NAO OTIMAS\n')
-    novos_comentarios.append('&       (REGISTRO TS)\n')
-    novos_comentarios.append('&-----------------------------------------------------------------------------------------------\n')
-    novos_comentarios.append('&TS\n')
-    novos_comentarios.append('&   XXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXX   X\n')
-    novos_comentarios.append('TS                                       1\n')
-    novos_comentarios.append('&\n')
-    novos_comentarios.append('&\n')
-    novos_comentarios.append('&-----------------------------------------------------------------------------------------------\n')
-    novos_comentarios.append('&      PENALIDADE DAS VARIAVEIS DE FOLGA\n')
-    novos_comentarios.append('&       (REGISTRO PV)\n')
-    novos_comentarios.append('&-----------------------------------------------------------------------------------------------\n')
-    novos_comentarios.append('&PV\n')
-    novos_comentarios.append('&   XXXXXXXXXXXXXXXXXXXX   XXXXXXXXXXXXXXXXXXXX   XXX   XXX   XXXXXXXXXXXXXXXXXXXX   XXXXXXXXXXXXXXXXXXXX\n')
-    novos_comentarios.append('PV       16208.0               0.0100\n')
-    novos_comentarios.append('&\n')
-
-    comentarios['UH'][0] = novos_comentarios + comentarios['UH'][0]
-
-    return df_dadger, comentarios
-
-def importar_dadger_decomp(dt_inicio_rv, path_arquivo, fonte):
-
-    
-    dicionario_sub = {'SE': 1, 'S': 2, 'NE': 3, 'N': 4}
-    dicionario_fonte = {'ons': 1, 'ccee':2}
-    
-    cd_fonte = dicionario_fonte[fonte.lower()]
-    
-    df_dadger, comentarios = leituraArquivo(path_dadger)
-    
-    df_bloco_pq = df_dadger['PQ']
-    
-    df_bloco_pq['tipo'] = df_bloco_pq['nome'].str.strip().str[-3:]
-    df_bloco_pq['sub'] = df_bloco_pq['sub'].astype(int)
-    df_bloco_pq['estagio'] = df_bloco_pq['estagio'].astype(int)
-    df_bloco_pq['gerac_p1'] = df_bloco_pq['gerac_p1'].astype(int)
-    df_bloco_pq['gerac_p2'] = df_bloco_pq['gerac_p2'].astype(int)
-    df_bloco_pq['gerac_p3'] = df_bloco_pq['gerac_p3'].astype(int)
-
-    datab = wx_dbLib.WxDataB('mysql')
-    datab.dbDatabase = 'db_decks'
-    
-    query_get_id_rodada = 'SELECT id FROM tb_cadastro_decomp where dt_inicio_rv = %s and id_fonte = %s;'
-    answer = datab.execute(query_get_id_rodada, (dt_inicio_rv ,cd_fonte))
-    
-    if len(answer) == 0:
-        query_insert_rodada = 'INSERT INTO tb_cadastro_decomp (dt_inicio_rv, id_fonte) VALUES(%s, %s);'
-        datab.execute(query_insert_rodada, (dt_inicio_rv, cd_fonte))
-        answer = datab.execute(query_get_id_rodada, (dt_inicio_rv ,cd_fonte))
-        if len(answer) != 1:
-            print('Problema em cadastrar a rodada')
-            return
-        else:
-            id_deck = answer[0][0]
-            print('Rodada cadastrada com sucesso')
-    else:
-        id_deck = answer[0][0]
-        print('Rodada já estava cadastrada no banco de dados!')
-        
-        query_delete_linhas_pequenas_ger = 'DELETE FROM tb_dc_dadger_pq WHERE id_deck = {};'.format(id_deck)
-        answer = datab.requestServer(query_delete_linhas_pequenas_ger)
-        
-
-    df_geracao_p1 = df_bloco_pq.pivot(index=['sub','estagio'], values='gerac_p1', columns='tipo').reset_index()
-    df_geracao_p1['patamar'] = 1
-    df_geracao_p1['id_deck'] = id_deck
-    
-    df_geracao_p2 = df_bloco_pq.pivot(index=['sub','estagio'], values='gerac_p2', columns='tipo').reset_index()
-    df_geracao_p2['patamar'] = 2
-    df_geracao_p2['id_deck'] = id_deck
-    
-    df_geracao_p3 = df_bloco_pq.pivot(index=['sub','estagio'], values='gerac_p3', columns='tipo').reset_index()
-    df_geracao_p3['patamar'] = 3
-    df_geracao_p3['id_deck'] = id_deck
-    
-    orden_colunas = ['id_deck', 'estagio', 'patamar', 'sub', 'PCT','PCH','EOL','UFV']
-    
-    geracoes = []
-    geracoes += list(df_geracao_p1[orden_colunas].itertuples(index=False, name=None))
-    geracoes += list(df_geracao_p2[orden_colunas].itertuples(index=False, name=None))
-    geracoes += list(df_geracao_p3[orden_colunas].itertuples(index=False, name=None))
-     
-    query_insert_geracao = '''INSERT INTO db_decks.tb_dc_dadger_pq
-    (id_deck, vl_estagio, vl_patamar, cd_submercado, vl_geracao_pct, vl_geracao_pch, vl_geracao_eol, vl_geracao_ufv)
-    VALUES(%s, %s, %s, %s, %s, %s, %s, %s);'''
-    
-    answer = datab.executemany(query_insert_geracao, geracoes)
-    print('Inserido {} linhas na tabela tb_dc_dadger_pq'.format(answer))
-    
 
 if __name__ == '__main__':
     
-    path_dadger = os.path.abspath(r"C:\Users\cs341052\Downloads\deck_202207_r3\PMO_deck_preliminar\DEC_ONS_072022_RV3_VE\dadger.rv3")
-    # path_novo_dadger = path_dadger.replace('dadger.rv', 'dadger_rz2.rv')
-    # df_dadger, comentarios = leituraArquivo(path_dadger)
-    # escrever_dadger(df_dadger, comentarios, path_novo_dadger)
-    # df_dadger, comentarios = comentar_dadger_ons_ccee(df_dadger, comentarios)
+    path_dadger = os.path.abspath(r"dadger.rv2")
+    df_dadger, comentarios = leituraArquivo(path_dadger)
+    escrever_dadger(df_dadger, comentarios, 'dadger_lido.rv2')
     
-    path_dadger = os.path.abspath(r"C:\Users\cs341052\Downloads\decks_ds\PMO_deck_preliminar(1)\DEC_ONS_082022_RV1_VE\dadger.rv1")
-    data_deck = datetime.datetime(2022,8,6)
-    fonte = 'ons'
-    importar_dadger_decomp(data_deck, path_dadger, fonte=fonte)

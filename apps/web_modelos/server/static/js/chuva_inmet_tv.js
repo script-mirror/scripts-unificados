@@ -266,7 +266,12 @@ class Mapa {
     document.getElementById("mm-chuva").addEventListener('change', () => { slider.filtro() })
     const mapa = new Mapa('main', cores, dtInicial.value, dtFinal.value);
     criarLabelCores(cores, 'labelColors', 'labelText')
-  
+
+    // Auto refresh page every 10 minutes
+    setInterval(() => {
+      window.location.reload();
+    }, 600000); // 600000ms = 10 minutes
+
   })
   
   function criarLabelCores(listColors, idColors, idText) {
@@ -312,4 +317,3 @@ class Mapa {
     };
     if (global) global.include(MarkerMixin);
   })(L.Marker);
-  

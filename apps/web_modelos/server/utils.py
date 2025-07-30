@@ -8,7 +8,7 @@ import os.path
 from os import path
 
 import locale
-locale.setlocale(locale.LC_ALL, '')
+# locale.setlocale(locale.LC_ALL, '')
 
 #date is a list with the format [day, month, year]
 def timeStampGmt(date):

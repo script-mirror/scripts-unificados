@@ -1176,9 +1176,15 @@ class db_mysql_master():
 
             )
 
+        elif table_name.lower() == 'tb_indices_diarios_sst':
+            table_schema = db.Table('tb_indices_diarios_sst', self.meta,
+                db.Column('dt_observada', db.Date),
+                db.Column('vl_indice', db.Float),
+                db.Column('str_indice', db.String(255)),
+            extend_existing=True
+            )
+
         return table_schema
-
-
 
     def get_db_schemas(self, tables=[]):
 
@@ -1196,7 +1202,8 @@ if __name__ == '__main__':
     database.connect()
     
     # database.create_table('tb_cadastro_vento_previsto')
-    database.create_table('tb_valores_vento_previsto')
+    # database.create_table('tb_valores_vento_previsto')
+    database.create_table('tb_indices_diarios_sst')
     
     # # Descomente para criar a tabela
     # # database.create_table('tb_chuva')
