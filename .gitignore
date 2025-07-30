@@ -35,7 +35,7 @@ apps/pluvia/log*
 server_configuration/containers/nginx/tradingenergiarz*
 *.key
 *.csr
-
+*env_activate
 apps/verificadores/aneel/verificador_pauta/*
 apps/gerarProdutos/libs/arquivos
 apps/dbUpdater/config.json
