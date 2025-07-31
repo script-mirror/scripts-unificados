@@ -443,25 +443,7 @@ with DAG(
     # Definindo a ordem das tarefas
     check_dag_state_task >> [run_decomp_ons_grupos, skip_task]
 
-# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-with DAG(
-    dag_id = '1.14-BACKTEST-DECOMP', 
-    start_date=datetime(2024, 4, 28), 
-    schedule_interval=None, 
-    catchup=False,
-    tags=['Prospec'],
-    ) as dag:
-    
-    run_decomp_on_host = SSHOperator(
-        trigger_rule="none_failed_min_one_success",
-        task_id='run_decomp',
-        ssh_conn_id='ssh_master',  # Ensure this matches the connection ID set in the Airflow UI
-        #command= CMD_BASE + "prevs PREVS_ONS_GRUPOS preliminar 0",
-        command=" . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX/WX2TB/Documentos/fontes/PMO/backTest_DC/script/back_teste_decomp.py",
-        conn_timeout = None,
-        cmd_timeout = None,
-        get_pty=True,
-    )
+
 
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -484,8 +466,6 @@ with DAG(
         execution_timeout=timedelta(hours=20),
     )
 
-
-
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '1.15-PROSPEC_RODAR_SENSIBILIDADE'
 # Função que executa o script com parâmetros dinâmicos
@@ -506,7 +486,7 @@ def run_sensibilidades_params(**kwargs):
 
 with DAG(
     default_args=default_args,
-    dag_id='1.15-PROSPEC_RODAR_SENSIBILIDADE', 
+    dag_id='1.14-PROSPEC_RODAR_SENSIBILIDADE', 
     start_date=datetime(2025, 1, 23), 
     schedule_interval=None, 
     catchup=False,
@@ -529,3 +509,46 @@ with DAG(
     )
 
     run_script_task >> run_prospec_on_host 
+    
+    
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+with DAG(
+    dag_id = '1.16-DECOMP_ONS-TO-CCEE', 
+    start_date=datetime(2024, 4, 28), 
+    schedule_interval=None, 
+    catchup=False,
+    tags=['Prospec'],
+    ) as dag:
+    
+    run_decomp_on_host = SSHOperator(
+        trigger_rule="none_failed_min_one_success",
+        task_id='run_decomp',
+        ssh_conn_id='ssh_master',  # Ensure this matches the connection ID set in the Airflow UI
+        #command= CMD_BASE + "prevs PREVS_ONS_GRUPOS preliminar 0",
+        command=" . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX/WX2TB/Documentos/fontes/PMO/backTest_DC/script/back_teste_decomp.py",
+        conn_timeout = None,
+        cmd_timeout = None,
+        get_pty=True,
+    )
+    
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+with DAG(
+    dag_id = '1.17-NEWAVE_ONS-TO-CCEE', 
+    start_date=datetime(2024, 4, 28), 
+    schedule_interval=None, 
+    catchup=False,
+    tags=['Prospec'],
+    ) as dag:
+    
+    run_decomp_on_host = SSHOperator(
+        trigger_rule="none_failed_min_one_success",
+        task_id='run_decomp',
+        ssh_conn_id='ssh_master',  # Ensure this matches the connection ID set in the Airflow UI
+        #command= CMD_BASE + "prevs PREVS_ONS_GRUPOS preliminar 0",
+        command=" . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX/WX2TB/Documentos/fontes/PMO/backTest_DC/script/back_teste_decomp.py",
+        conn_timeout = None,
+        cmd_timeout = None,
+        get_pty=True,
+    )
