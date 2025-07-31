@@ -5,7 +5,7 @@ import warnings
 from datetime import datetime
 import pandas as pd
 from dotenv import load_dotenv
-os.load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # Suppress cryptography deprecation warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -48,7 +48,7 @@ def connect_to_sftp():
     """Establish connection to the SFTP server using private key"""
     try:
         # Initialize transport
-        transport = paramiko.Transport((SFTP_HOST, SFTP_PORT))
+        transport = paramiko.Transport((SFTP_HOST, int(SFTP_PORT)))
         
         # Load private key
         private_key = paramiko.RSAKey(filename=PRIVATE_KEY_PATH)
