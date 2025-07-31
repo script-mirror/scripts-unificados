@@ -13,8 +13,9 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 PATH_PROJETOS: str = os.getenv('PATH_PROJETOS')
 ATIVAR_ENV: str = os.getenv('ATIVAR_ENV')
-CMD_BASE = str(ATIVAR_ENV) + " python " + str(PATH_PROJETOS) + "/estudos-middle/estudos_prospec/rodada_automatica_prospec/main_roda_estudos.py "
-CMD_BASE_SENS = str(ATIVAR_ENV) + " python " + str(PATH_PROJETOS) + "/estudos-middle/estudos_prospec/roda_sensibilidades/gerar_sensibilidade.py "
+CMD_BASE = str(ATIVAR_ENV) + " python " + str(PATH_PROJETOS) + "/estudos-middle/estudos_prospec/main_roda_estudos.py "
+CMD_BASE_DECOMP = str(ATIVAR_ENV) + " python " + str(PATH_PROJETOS) + "/estudos-middle/estudos_prospec/decomp_ons_to_ccee.py "
+CMD_BASE_SENS = str(ATIVAR_ENV) + " python " + str(PATH_PROJETOS) + "/estudos-middle/estudos_prospec/gerar_sensibilidade.py "
 
 default_args = {
     'execution_timeout': timedelta(hours=8)
@@ -525,7 +526,7 @@ with DAG(
         task_id='run_decomp',
         ssh_conn_id='ssh_master',  # Ensure this matches the connection ID set in the Airflow UI
         #command= CMD_BASE + "prevs PREVS_ONS_GRUPOS preliminar 0",
-        command=" . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX/WX2TB/Documentos/fontes/PMO/backTest_DC/script/back_teste_decomp.py",
+        command=CMD_BASE_DECOMP,
         conn_timeout = None,
         cmd_timeout = None,
         get_pty=True,
