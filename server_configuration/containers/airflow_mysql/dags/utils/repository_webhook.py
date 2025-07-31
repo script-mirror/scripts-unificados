@@ -17,7 +17,7 @@ class SharedRepository:
         self.EVENTS_API = os.getenv("URL_EVENTS_API")
         self.URL_COGNITO = os.getenv("URL_COGNITO")
         self.CONFIG_COGNITO = os.getenv("CONFIG_COGNITO")
-        self.WEBHOOK_BASE_URL = "https://tradingenergiarz.com/new-webhook/api/webhooks"
+        self.WEBHOOK_BASE_URL = "https://tradingenergiarz.com/webhook/api/webhooks"
     
     def get_auth_token(self) -> Dict[str, str]:
         """

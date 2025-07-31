@@ -132,12 +132,12 @@ def _handle_sqs_sintegre_file(dadosProduto: dict, path_download: str) -> str:
         file.write(file_bytes)
     return filename
 
-def _handle_webhook_file(dadosProduto: dict, path_download: str) -> str:
-    filename = os.path.join(path_download, dadosProduto['filename'])
+def _handle_webhook_file(payload_webhook: dict, path_download: str) -> str:
+    filename = os.path.join(path_download, payload_webhook['filename'])
     auth = get_auth()
     
     res = req.get(
-        f"https://tradingenergiarz.com/new-webhook/api/webhooks/{dadosProduto['webhookId']}/download", 
+        f"https://tradingenergiarz.com/webhook/api/webhooks/{payload_webhook['webhookId']}/download", 
         headers=auth
     )
     if res.status_code != 200:
@@ -168,7 +168,7 @@ def _verify_file_is_new(filename: str, product_name: str) -> None:
     if not is_new:
         raise Exception("Produto ja inserido")
 
-def resultados_preliminares_consistidos(dadosProduto):
+def resultados_preliminares_consistidos(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -181,7 +181,7 @@ def resultados_preliminares_consistidos(dadosProduto):
     revisao.importar_rev_consistido(filename)
     
 
-def entrada_saida_previvaz(dadosProduto):
+def entrada_saida_previvaz(dadosProduto: dict):
     filename = get_filename(dadosProduto)
     logger.info(filename)
 
@@ -189,7 +189,7 @@ def entrada_saida_previvaz(dadosProduto):
 
 
 
-def arquivos_modelo_pdp(dadosProduto):
+def arquivos_modelo_pdp(dadosProduto: dict):
     filename = get_filename(dadosProduto)
     logger.info(filename)
 
@@ -214,7 +214,7 @@ def arquivos_modelo_pdp(dadosProduto):
     })
 
     
-def arquivo_acomph(dadosProduto):
+def arquivo_acomph(dadosProduto: dict):
     filename = get_filename(dadosProduto)
     logger.info(filename)
 
@@ -257,7 +257,7 @@ def arquivo_acomph(dadosProduto):
                 'dt_ref':dadosProduto['dataProduto']
                 })
 
-def arquivo_rdh(dadosProduto):
+def arquivo_rdh(dadosProduto: dict):
     filename = get_filename(dadosProduto)
     logger.info(filename)
 
@@ -277,7 +277,7 @@ def arquivo_rdh(dadosProduto):
         "path":filename
     })
 
-def historico_preciptacao(dadosProduto):
+def historico_preciptacao(dadosProduto: dict):
     
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -331,7 +331,7 @@ def historico_preciptacao(dadosProduto):
         
 
 
-def modelo_eta(dadosProduto):
+def modelo_eta(dadosProduto: dict):
     filename = get_filename(dadosProduto)
     logger.info(filename)
 
@@ -362,7 +362,7 @@ def modelo_eta(dadosProduto):
                 })
 
 
-def carga_patamar(dadosProduto):
+def carga_patamar(dadosProduto: dict):
     filename = get_filename(dadosProduto)
 
     logger.info(filename)
@@ -401,7 +401,7 @@ def carga_patamar(dadosProduto):
     }
 
 
-def deck_preliminar_decomp(dadosProduto):
+def deck_preliminar_decomp(dadosProduto: dict):
 
     path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
 
@@ -427,15 +427,15 @@ def deck_preliminar_decomp(dadosProduto):
         "produto":"CMO_DC_PRELIMINAR",
         "path":filename,
     })
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True) == True: 
+        dadosProduto['dt_ref'] = dadosProduto['dataProduto']
         airflow_tools.trigger_airflow_dag(
             dag_id="1.14-BACKTEST-DECOMP",
-            json_produtos={
-                'dt_ref':dadosProduto['dataProduto']
-                })
+            json_produtos=dadosProduto,
+            )
 
     
-def deck_entrada_saida_dessem(dadosProduto):
+def deck_entrada_saida_dessem(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -477,7 +477,7 @@ def deck_entrada_saida_dessem(dadosProduto):
     
 
     
-def previsao_carga_dessem(dadosProduto):
+def previsao_carga_dessem(dadosProduto: dict):
     
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -508,7 +508,7 @@ def previsao_carga_dessem(dadosProduto):
     })
 
  
-def prevCarga_dessem(dadosProduto):
+def prevCarga_dessem(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
 
@@ -532,7 +532,7 @@ def prevCarga_dessem(dadosProduto):
         revisao.atualizar_patamar_ano_atual(filename,dtRef )
 
 
-def carga_patamar_nw(dadosProduto):
+def carga_patamar_nw(dadosProduto: dict):
     
 
     filename = get_filename(dadosProduto)
@@ -568,7 +568,7 @@ def carga_patamar_nw(dadosProduto):
     }
 
 
-def carga_IPDO(dadosProduto):
+def carga_IPDO(dadosProduto: dict):
     
 
     filename = get_filename(dadosProduto)
@@ -593,7 +593,7 @@ def carga_IPDO(dadosProduto):
     })
     
     
-def modelo_ECMWF(dadosProduto):
+def modelo_ECMWF(dadosProduto: dict):
     filename = get_filename(dadosProduto)
     logger.info(filename)
     
@@ -614,7 +614,7 @@ def modelo_ECMWF(dadosProduto):
                 })
 
             
-def dados_geracaoEolica(dadosProduto):
+def dados_geracaoEolica(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -628,7 +628,7 @@ def dados_geracaoEolica(dadosProduto):
     geracao.importar_eolica_files(path_zip = filename)
     
     
-def prevCarga_dessem_saida(dadosProduto):
+def prevCarga_dessem_saida(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -642,7 +642,7 @@ def prevCarga_dessem_saida(dadosProduto):
     carga_ons.importar_prev_carga_dessem_saida(path_zip = filename)
     
 
-def modelo_gefs(dadosProduto):
+def modelo_gefs(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -664,7 +664,7 @@ def modelo_gefs(dadosProduto):
                 })
 
 
-def vazoes_observadas(dadosProduto):
+def vazoes_observadas(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -685,7 +685,7 @@ def vazoes_observadas(dadosProduto):
     
 
 
-def psat_file(dadosProduto):
+def psat_file(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -709,7 +709,7 @@ def psat_file(dadosProduto):
     # wx_plota_pconjunto.plota_psat(dtRef)
 
 
-def resultados_nao_consistidos_semanal(dadosProduto):
+def resultados_nao_consistidos_semanal(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -788,7 +788,7 @@ def resultados_nao_consistidos_semanal(dadosProduto):
     
     
 
-def relatorio_resutados_finais_consistidos(dadosProduto):
+def relatorio_resutados_finais_consistidos(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -811,7 +811,7 @@ def relatorio_resutados_finais_consistidos(dadosProduto):
     
     })
 
-def niveis_partida_dessem(dadosProduto):
+def niveis_partida_dessem(dadosProduto: dict):
     filename = get_filename(dadosProduto)
     logger.info(filename)
 
@@ -821,7 +821,7 @@ def niveis_partida_dessem(dadosProduto):
     vazao.importNiveisDessem(filename)
 
 
-def dadvaz_vaz_prev(dadosProduto):
+def dadvaz_vaz_prev(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -831,7 +831,7 @@ def dadvaz_vaz_prev(dadosProduto):
     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_dessem_diario)
     logger.info(path_copia_tmp)
     
-def deck_resultados_decomp(dadosProduto):
+def deck_resultados_decomp(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -845,7 +845,7 @@ def deck_resultados_decomp(dadosProduto):
     logger.info(path_copia_tmp)
     
 
-def resultados_finais_consistidos(dadosProduto):
+def resultados_finais_consistidos(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -858,7 +858,7 @@ def resultados_finais_consistidos(dadosProduto):
     logger.info(path_copia_tmp)
 
 
-def carga_newave_preliminar(dadosProduto):
+def carga_newave_preliminar(dadosProduto: dict):
     filename = get_filename(dadosProduto)
     logger.info(filename)
     logger.info(dadosProduto)
@@ -906,7 +906,7 @@ def ler_csv_prev_weol_para_dicionario(file):
     
     
     
-def deck_prev_eolica_semanal_patamares(dadosProduto):
+def deck_prev_eolica_semanal_patamares(dadosProduto: dict):
     try:
         res  = req.get(dadosProduto["url"])
         zip_file = zipfile.ZipFile(io.BytesIO(res.content))
@@ -932,7 +932,7 @@ def deck_prev_eolica_semanal_patamares(dadosProduto):
     else:
         logger.error(f"Erro ao inserir patamares. status code: {post_patamates.status_code}")
 
-def deck_prev_eolica_semanal_previsao_final(dadosProduto):
+def deck_prev_eolica_semanal_previsao_final(dadosProduto: dict):
     res  = req.get(dadosProduto["url"])
     try:
         res  = req.get(dadosProduto["url"])
@@ -1001,7 +1001,7 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
     })
 
         
-def relatorio_limites_intercambio(dadosProduto):
+def relatorio_limites_intercambio(dadosProduto: dict):
     
     filename = get_filename(dadosProduto)
     logger.info(filename)
@@ -1047,7 +1047,7 @@ def relatorio_limites_intercambio(dadosProduto):
     }
 
 
-def notas_tecnicas_medio_prazo(dadosProduto):
+def notas_tecnicas_medio_prazo(dadosProduto: dict):
     
     arquivo_zip = get_filename(dadosProduto)
     logger.info(arquivo_zip)
