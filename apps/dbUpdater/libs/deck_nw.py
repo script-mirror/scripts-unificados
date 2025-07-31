@@ -232,12 +232,12 @@ def importar_deck_values_nw(path_zip):
     df_sist_intercambio_values = processar_sist_limites_intercambio_NW(dict_final)
     df_sist_values = processar_sist_energia_geracao_NW(dict_final)
     
-    df_cadic_values['fonte'] = 'ccee'
-    df_sist_values['fonte'] = 'ccee'
+    df_cadic_values['versao'] = 'definitivo'
+    df_sist_values['versao'] = 'definitivo'
     table_values = [
-        ("tb_nw_cadic", df_cadic_values[['Ano','Mês','CONS.ITAIPU','ANDE','MMGD SE','MMGD S','MMGD NE','BOA VISTA','MMGD N', 'fonte']].copy()),
+        ("tb_nw_cadic", df_cadic_values[['Ano','Mês','CONS.ITAIPU','ANDE','MMGD SE','MMGD S','MMGD NE','BOA VISTA','MMGD N', 'versao']].copy()),
         ("tb_nw_sist_intercambio", df_sist_intercambio_values[['Ano','Mês','sistema_src','sistema_dst','intercambio']].copy()),
-        ("tb_nw_sist_energia", df_sist_values[['cd_submercado','Ano','Mês','Energia Total','PCH','PCT','EOL','UFV','PCHMMGD','PCTMMGD','EOLMMGD','UFVMMGD', 'fonte']].copy())
+        ("tb_nw_sist_energia", df_sist_values[['cd_submercado','Ano','Mês','Energia Total','PCH','PCT','EOL','UFV','PCHMMGD','PCTMMGD','EOLMMGD','UFVMMGD', 'versao']].copy())
         ]
     
     db_decks = wx_dbClass.db_mysql_master('db_decks')
