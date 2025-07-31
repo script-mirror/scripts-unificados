@@ -153,8 +153,12 @@ with DAG(
     tags=["Verificador","CCEE","DS","DC","NW","WhatsApp"],
     start_date=datetime.datetime(2024, 4, 28),
     catchup=False,
-    schedule="0 16 * * *"
-    
+    schedule="0 16 * * *",
+    default_args={
+        'retries': 2,
+        'retry_delay': datetime.timedelta(minutes=1),
+        
+    },
 ) as dag:
 
     # começo estrutura para rodar a sequencia das tarefas
