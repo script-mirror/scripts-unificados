@@ -555,11 +555,12 @@ def carga_patamar_nw(dadosProduto: dict):
         str_fonte = id_fonte)
 
     #gerar Produto
-    if dadosProduto.get('enviar', True) == True:
-        GERAR_PRODUTO.enviar({
-        "produto":"REVISAO_CARGA_NW",
-        "path":filename,
-    })
+    # if dadosProduto.get('enviar', True) == True:
+    #     GERAR_PRODUTO.enviar({
+    #     "produto":"REVISAO_CARGA_NW",
+    #     "path":filename,
+    #     "data_ref": dtRef
+    # })
         
     if dadosProduto.get('enviar', True) == True: 
         dadosProduto['dt_ref'] = dadosProduto['dataProduto']
