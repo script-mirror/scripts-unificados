@@ -771,7 +771,9 @@ def resultados_nao_consistidos_semanal(dadosProduto: dict):
         month = int(yearmonth[-2:])
         
         new_filename = f'prevs.rv{revision}'
-        target_dir = f'/WX2TB/Documentos/fontes/PMO/API_Prospec/GerarDecks/PREVS/Pld1Click/ALL/{month}'
+        load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+        target_dir = os.getenv('PATH_PREVS_PROSPEC')
+        target_dir += f'/nao_consistido/{month}'
         
         if os.path.exists(target_dir):
             logger.info(f"Removendo diretório existente: {target_dir}")
