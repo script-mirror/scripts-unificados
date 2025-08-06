@@ -1,11 +1,11 @@
-version: '3'
 x-airflow-common: &airflow-common
   build: .
   environment:
     &airflow-common-env
-    AIRFLOW__CORE__EXECUTOR: LocalExecutor
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql/airflow
-    AIRFLOW__CELERY__RESULT_BACKEND: db+mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql/airflow
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/airflow
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/airflow
+    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
     AIRFLOW__CORE__FERNET_KEY: ''
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
@@ -29,31 +29,44 @@ x-airflow-common: &airflow-common
     - /home/admin/s3-drive:/home/airflow/s3-drive
     - /home/admin/.env:/home/airflow/.env
     - /home/admin/jose:/home/admin/jose
-
-
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
-    mysql:
+    postgres:
+      condition: service_healthy
+    redis:
       condition: service_healthy
 
 services:
-  mysql:
-    image: mysql:8.4
-    container_name: db_mysql_new
+  postgres:
+    image: postgres:13
+    container_name: airflow_postgres
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=airflow
     volumes:
-      - /banco_dados_01/data:/var/lib/mysql
-      - ./init-db:/docker-entrypoint-initdb.d
+      - postgres-db-volume:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      test: ["CMD", "pg_isready", "-U", "airflow"]
       interval: 10s
       retries: 5
-      start_period: 60s
-      timeout: 600s
+      start_period: 5s
+    restart: always
     ports:
-      - "3306:3306"
+      - "5432:5432"
+
+  redis:
+    image: redis:latest
+    container_name: airflow_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 30s
+      retries: 50
+      start_period: 30s
     restart: always
 
   airflow-web:
@@ -61,7 +74,6 @@ services:
     command: webserver
     ports:
       - "8080:8080"
-      # - "443:443"
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/airflow/health"]
       interval: 30s
@@ -79,6 +91,23 @@ services:
     command: scheduler
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-worker:
+    <<: *airflow-common
+    command: celery worker
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - 'celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}" || exit 1'
       interval: 30s
       timeout: 10s
       retries: 5
@@ -109,3 +138,22 @@ services:
     volumes:
       - ${AIRFLOW_PROJ_DIR:-.}:/sources
 
+  flower:
+    <<: *airflow-common
+    command: celery flower
+    ports:
+      - "5555:5555"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:5555/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+volumes:
+  postgres-db-volume:

@@ -1,0 +1,24 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: db_mysql_new
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - /banco_dados_01/data:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+      start_period: 60s
+      timeout: 600s
+    ports:
+      - "3306:3306"
+    restart: always
+    networks:
+      - mysql-network
+
+networks:
+  mysql-network:
+    name: mysql-network
