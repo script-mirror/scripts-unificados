@@ -1,7 +1,12 @@
+"""
+Tasks específicas para processamento de Carga por Patamar DECOMP.
+"""
+
 import re
 import os
 import sys
 import pandas as pd  # Adicionando pandas para processamento de Excel
+import requests  # Para envio de dados para API
 from datetime import datetime
 from typing import Dict, Any, Optional, List, Tuple
 
@@ -10,7 +15,7 @@ sys.path.insert(0, utils_path)
 from utils.repository_webhook import SharedRepository
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))) #NEVER REMOVE THIS LINE
-from validator_carga_patamar_decomp import CargaPatamarDecompValidator, ValidationError, CargaPMOValidator # type: ignore
+from validator import CargaPatamarDecompValidator # type: ignore
 
 
 class CargaPatamarDecompService:
@@ -22,9 +27,8 @@ class CargaPatamarDecompService:
     def __init__(self):
         self.repository = SharedRepository()
         self.validator = CargaPatamarDecompValidator()
-
     @staticmethod
-    def validar_dados_entrada(**kwargs):
+    def validar_dados(**kwargs):
         """Valida os dados de entrada usando o validador"""
         validator = CargaPatamarDecompValidator()
         params = kwargs.get('params', {})
@@ -422,15 +426,6 @@ class CargaPatamarDecompService:
             # Inicializa o repositório
             repository = SharedRepository()
             
-            
-            
-            try:
-                validator = CargaPMOValidator()
-                carga_data = validator.validate(carga_data)
-                print("✅ Validação dos dados de carga concluída com sucesso")
-            except ValidationError as e:
-                raise Exception(f"Erro na validação dos dados: {str(e)}")
-            
             # Obtém token de autenticação
             auth_headers = repository.get_auth_token()
             
@@ -438,7 +433,6 @@ class CargaPatamarDecompService:
             api_url = os.getenv("URL_API_CARGA", "https://tradingenergiarz.com/api/v2/decks/carga-pmo")
             
             # Envia os dados para a API
-            import requests
             
             print(f"Enviando dados para: {api_url}")
             
@@ -531,3 +525,8 @@ class CargaPatamarDecompService:
             
             # IMPORTANTE: Lançar a exceção novamente para que o Airflow marque a tarefa como falha
             raise
+
+if __name__ == "__main__":
+    # Teste local
+    service = CargaPatamarDecompService()
+    print("Service de Carga por Patamar DECOMP inicializado com sucesso")

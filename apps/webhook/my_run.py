@@ -78,7 +78,7 @@ PRODUCT_MAPPING = {
     "Decks de entrada e saída - Modelo DESSEM": {"funcao": "deck_entrada_saida_dessem", "id_dag": None},
     "Arquivos de Previsão de Carga para o DESSEM": {"funcao": "previsao_carga_dessem", "id_dag": None},
     "Decks de entrada do PrevCargaDESSEM": {"funcao": "prevCarga_dessem", "id_dag": None},
-    "Previsões de carga mensal e por patamar - NEWAVE": {"funcao": "carga_patamar_nw", "id_dag": None},
+    "Previsões de carga mensal e por patamar - NEWAVE": {"funcao": "carga_patamar_nw", "id_dag": "PREVISOES_CARGA_MENSAL_PATAMAR_NEWAVE"},
     "IPDO (Informativo Preliminar Diário da Operação)": {"funcao": "carga_IPDO", "id_dag": None},
     "Modelo ECMWF": {"funcao": "modelo_ECMWF", "id_dag": None},
     "Dados utilizados na previsão de geração eólica": {"funcao": "dados_geracaoEolica", "id_dag": None},

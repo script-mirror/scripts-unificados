@@ -1,30 +1,76 @@
+"""
+Tasks específicas para processamento dos Decks do NEWAVE.
+"""
+
 import requests
 import os
 import sys
+import zipfile
+import pickle
 import numpy as np
 import pandas as pd 
 from inewave.newave import Patamar, Cadic, Sistema
 import datetime
+from typing import Dict, Any
 
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
 from utils.repository_webhook import SharedRepository
 from utils.html_builder import HtmlBuilder
-from validator_decks_newave import DecksNewaveValidator
+from validator import DecksNewaveValidator
+
 
 class DecksNewaveService:
+    
     def __init__(self):
         self.repository = SharedRepository()
         self.validator = DecksNewaveValidator()
     
     @staticmethod
-    def determinar_versao_por_filename(filename):
+    def should_execute_normal_flow(**kwargs) -> str:
+        """
+        Verifica se deve executar o fluxo normal ou pular para gerar tabela diretamente.
+
+        LÓGICA DO FLUXO:
+        - Trigger NORMAL (webhook de Decks Newave): Retorna 'validar_dados_entrada' → executa fluxo completo
+        - Trigger EXTERNO (DAG de previsões): Retorna 'gerar_tabela_diferenca_cargas_externo' → pula fluxo normal
+        """
+        try:
+            dag_run_conf = kwargs.get('dag_run').conf or {}
+            print(f"Configuração do DAG Run: {dag_run_conf}")
+
+            filename = dag_run_conf.get('product_details', {}).get('filename', '')
+            is_external_trigger = False
+
+            if 'carga_mensal' in filename.lower():
+                is_external_trigger = True
+                print(f"Trigger externo detectado pelo nome do arquivo: {filename}")
+            elif dag_run_conf.get('task_to_execute') == 'revisao_carga_nw' or dag_run_conf.get('trigger_dag_id') == 'PROSPEC_UPDATER':
+                is_external_trigger = True
+                print("Trigger externo detectado por parâmetros de execução")
+            elif 'Previsões de carga' in dag_run_conf.get('product_details', {}).get('nome', ''):
+                is_external_trigger = True
+                print("Trigger externo detectado pelo nome do produto")
+
+            print(f"Resultado da verificação: {'EXTERNO' if is_external_trigger else 'NORMAL'}")
+
+            if is_external_trigger:
+                return 'gerar_tabela_diferenca_cargas_externo'  # <- nome atualizado
+            else:
+                return 'validar_dados_entrada'
+
+        except Exception as e:
+            print(f"Erro na verificação do tipo de execução: {str(e)} ({e.__class__.__name__})")
+            return 'validar_dados_entrada'
+    
+    @staticmethod
+    def determinar_versao_por_filename(filename: str) -> str:
         """
         Determina a versão do deck baseada no nome do arquivo.
         Retorna 'preliminar' para deck preliminar ou 'definitivo' para deck definitivo.
         """
         if not filename:
-            return 'preliminar'  # Default para compatibilidade
+            return 'preliminar'  
         
         filename_upper = filename.upper()
         
@@ -32,22 +78,25 @@ class DecksNewaveService:
             return 'definitivo'
         elif 'PRELIMINAR' in filename_upper:
             return 'preliminar'
+        elif 'CARGA_MENSAL' in filename_upper:
+            return 'preliminar_atualizado'
         else:
-            # Se não encontrar nem preliminar nem definitivo, assume preliminar como padrão
+            # Se não conseguir determinar, assume preliminar como padrão
             return 'preliminar'
 
     @staticmethod
-    def validar_dados_entrada(**kwargs):
+    def validar_dados_entrada(**kwargs) -> Dict[str, Any]:
+        """Valida os dados de entrada do webhook"""
         validator = DecksNewaveValidator()
         params = kwargs.get('params', {})
         return validator.validate(params)
     
     @staticmethod
-    def download_arquivos(**kwargs):
+    def download_arquivos(**kwargs) -> Dict[str, Any]:
+        """Faz o download dos arquivos recebidos via webhook"""
         repository = SharedRepository()
         params = kwargs.get('params', {})
         print("Parâmetros recebidos para download:", params)
-        
         
         try:
             product_details = params.get('product_details', {})
@@ -58,9 +107,17 @@ class DecksNewaveService:
             if not webhook_id or not filename or not product_date:
                 raise ValueError("webhookId, filename e product_date são obrigatórios")
             
+            # Processar data do produto
+            product_datetime = None
             if product_date:
-                month, year = product_date.split('/')
-                product_datetime = datetime.datetime(int(year), int(month), 1, 0, 0, 0)
+                if '/' in product_date:
+                    month, year = product_date.split('/')
+                    product_datetime = datetime.datetime(int(year), int(month), 1, 0, 0, 0)
+                else:
+                    try:
+                        product_datetime = datetime.datetime.strptime(product_date, '%Y-%m-%d')
+                    except ValueError:
+                        product_datetime = datetime.datetime.now()
             
             download_path = "/tmp/decks_newave"
             
@@ -89,11 +146,11 @@ class DecksNewaveService:
         except Exception as e:
             error_msg = f"Erro ao baixar arquivos: {str(e)}"
             print(error_msg)
-            # Raise the exception instead of returning an error dictionary
             raise Exception(error_msg)
     
     @staticmethod
-    def extrair_arquivos(**kwargs):
+    def extrair_arquivos(**kwargs) -> Dict[str, Any]:
+        """Extrai os arquivos do ZIP recebido via webhook"""
         try:
             task_instance = kwargs['task_instance']
             download_result = task_instance.xcom_pull(task_ids='download_arquivos')
@@ -147,7 +204,7 @@ class DecksNewaveService:
                             except Exception as e:
                                 print(f"Erro ao extrair {file}: {str(e)}")
                 
-                # Agora buscar pelos arquivos .DAT uma única vez
+                # Buscar pelos arquivos .DAT
                 print("Buscando arquivos .DAT...")
                 dat_files_found = []
                 all_files = []
@@ -208,7 +265,8 @@ class DecksNewaveService:
             raise Exception(error_msg)
     
     @staticmethod
-    def processar_deck_nw_cadic(**kwargs):
+    def processar_deck_nw_cadic(**kwargs) -> Dict[str, Any]:
+        """Processa o arquivo C_ADIC.DAT do produto com a lib Inewave"""
         try:
             task_instance = kwargs['task_instance']
             extract_result = task_instance.xcom_pull(task_ids='extrair_arquivos')
@@ -227,74 +285,82 @@ class DecksNewaveService:
             # Determinar versão baseada no filename
             versao = DecksNewaveService.determinar_versao_por_filename(filename)
             
-            cadic_file = os.path.join(extract_result['extract_path'], 'C_ADIC.DAT')
-            if not os.path.exists(cadic_file):
-                raise FileNotFoundError(f"Arquivo C_ADIC.DAT não encontrado em {extract_result['extract_path']}")
+            # Buscar arquivo C_ADIC.DAT
+            cadic_file = None
+            extract_path = extract_result['extract_path']
+            
+            for root, dirs, files in os.walk(extract_path):
+                for file in files:
+                    if file.upper() == 'C_ADIC.DAT':
+                        cadic_file = os.path.join(root, file)
+                        break
+                if cadic_file:
+                    break
+            
+            if not cadic_file or not os.path.exists(cadic_file):
+                raise FileNotFoundError(f"Arquivo C_ADIC.DAT não encontrado em {extract_path}")
             
             print(f"Processando arquivo C_ADIC.DAT: {cadic_file}")
             
+            # Processar com inewave
             cadic_object = Cadic.read(cadic_file)
+            nw_cadic_df = cadic_object.cargas.copy()
             
-            nw_cadic_df:pd.DataFrame = cadic_object.cargas.copy()
-            
-            # Correção temporária do erro da lib inewave
-            nw_cadic_df['nome_submercado'] = nw_cadic_df['nome_submercado'].replace('ORDESTE', 'NORDESTE')
-            
-            if nw_cadic_df is None:
+            if nw_cadic_df is None or nw_cadic_df.empty:
                 print("Aviso: Não foram encontrados dados de cargas adicionais no arquivo")
+                nw_cadic_records = []
             else:
                 print(f"Dados de cargas adicionais encontrados: {nw_cadic_df} ")
                 print(f"Cargas adicionais carregadas com sucesso. Total de registros: {len(nw_cadic_df)}")
 
-            nw_cadic_df['data'] = pd.to_datetime(nw_cadic_df['data'], errors='coerce')
+                # Processamento dos dados
+                nw_cadic_df['data'] = pd.to_datetime(nw_cadic_df['data'], errors='coerce')
+                nw_cadic_df = nw_cadic_df[nw_cadic_df['data'].dt.year < 9999]
+                nw_cadic_df['vl_ano'] = nw_cadic_df['data'].dt.year.astype(int)
+                nw_cadic_df['vl_mes'] = nw_cadic_df['data'].dt.month.astype(int)
+                nw_cadic_df = nw_cadic_df.dropna(subset=['valor'])
+                
+                # Mapeamento das razões
+                mapeamento_razao = {
+                    'CONS.ITAIPU': 'vl_const_itaipu',
+                    'ANDE': 'vl_ande',
+                    'MMGD SE': 'vl_mmgd_se',
+                    'MMGD S': 'vl_mmgd_s',
+                    'MMGD NE': 'vl_mmgd_ne',
+                    'BOA VISTA': 'vl_boa_vista',
+                    'MMGD N': 'vl_mmgd_n'
+                }
             
-            nw_cadic_df = nw_cadic_df[nw_cadic_df['data'].dt.year < 9999]
-            
-            nw_cadic_df['vl_ano'] = nw_cadic_df['data'].dt.year.astype(int)
-            nw_cadic_df['vl_mes'] = nw_cadic_df['data'].dt.month.astype(int)
-            
-            nw_cadic_df = nw_cadic_df.dropna(subset=['valor'])
-            
-            mapeamento_razao = {
-                'CONS.ITAIPU': 'vl_const_itaipu',
-                'ANDE': 'vl_ande',
-                'MMGD SE': 'vl_mmgd_se',
-                'MMGD S': 'vl_mmgd_s',
-                'MMGD NE': 'vl_mmgd_ne',
-                'BOA VISTA': 'vl_boa_vista',
-                'MMGD N': 'vl_mmgd_n'
-            }
-        
-            nw_cadic_df['coluna'] = nw_cadic_df['razao'].map(mapeamento_razao)
+                nw_cadic_df['coluna'] = nw_cadic_df['razao'].map(mapeamento_razao)
 
-            nw_cadic_df = nw_cadic_df.pivot_table(
-                index=['vl_ano', 'vl_mes'], 
-                columns='coluna',
-                values='valor',
-                aggfunc='first'  
-            ).reset_index()
+                nw_cadic_df = nw_cadic_df.pivot_table(
+                    index=['vl_ano', 'vl_mes'], 
+                    columns='coluna',
+                    values='valor',
+                    aggfunc='first'  
+                ).reset_index()
+                
+                # Adicionar metadados
+                product_datetime_str = download_result.get('product_datetime') if download_result else None
+                if product_datetime_str:
+                    dt_deck = datetime.datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
+                    nw_cadic_df['dt_deck'] = dt_deck.strftime('%Y-%m-%d')
+                
+                nw_cadic_df['versao'] = versao
+                nw_cadic_records = nw_cadic_df.to_dict('records')
             
-            product_datetime_str = download_result.get('product_datetime') if download_result else None
-            dt_deck = datetime.datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
-                    
-            nw_cadic_df['dt_deck'] = dt_deck
-            nw_cadic_df['dt_deck'] = nw_cadic_df['dt_deck'].dt.strftime('%Y-%m-%d')  # Formata como string
-            
-            nw_cadic_df['versao'] = versao
-
-            nw_cadic_records = nw_cadic_df.to_dict('records')
-            
-            print(f"Processamento concluído:")
+            print(f"Processamento do C_ADIC concluído. Registros processados: {len(nw_cadic_records)}")
             
             xcom_data = {
                 'success': True,
                 'cadic_path': cadic_file,
                 'nw_cadic_records': nw_cadic_records,
-                'product_datetime': product_datetime_str,
+                'product_datetime': download_result.get('product_datetime') if download_result else None,
+                'versao': versao,
                 'message': 'Arquivo C_ADIC.DAT processado com sucesso'
             }
             
-            print(f"Retornando dados para XCom: {xcom_data}")
+            print(f"Retornando dados para XCom: {len(str(xcom_data))} caracteres")
             
             return xcom_data
             
@@ -304,7 +370,8 @@ class DecksNewaveService:
             raise Exception(error_msg)
     
     @staticmethod
-    def processar_deck_nw_sist(**kwargs):
+    def processar_deck_nw_sist(**kwargs) -> Dict[str, Any]:
+        """Processa o arquivo SISTEMA.DAT do produto com a lib Inewave"""
         try:
             task_instance = kwargs['task_instance']
             extract_result = task_instance.xcom_pull(task_ids='extrair_arquivos')
@@ -323,8 +390,24 @@ class DecksNewaveService:
             # Determinar versão baseada no filename
             versao = DecksNewaveService.determinar_versao_por_filename(filename)
             
-            sistema_file = os.path.join(extract_result['extract_path'], 'SISTEMA.DAT')
+            # Buscar arquivo SISTEMA.DAT
+            sistema_file = None
+            extract_path = extract_result['extract_path']
             
+            for root, dirs, files in os.walk(extract_path):
+                for file in files:
+                    if file.upper() == 'SISTEMA.DAT':
+                        sistema_file = os.path.join(root, file)
+                        break
+                if sistema_file:
+                    break
+            
+            if not sistema_file or not os.path.exists(sistema_file):
+                raise FileNotFoundError(f"Arquivo SISTEMA.DAT não encontrado em {extract_path}")
+            
+            print(f"Processando arquivo SISTEMA.DAT: {sistema_file}")
+            
+            # Processar com inewave
             sistema_object = Sistema.read(sistema_file)
             
             # Manipulando dataframe de valores de mercado de energia total
@@ -339,7 +422,6 @@ class DecksNewaveService:
                 print(f"Mercado de energia total carregado com sucesso. Total de registros: {len(sistema_mercado_energia_df)}")
             
             sistema_mercado_energia_df['data'] = pd.to_datetime(sistema_mercado_energia_df['data'], errors='coerce')
-
             sistema_mercado_energia_df = sistema_mercado_energia_df.dropna(subset=['data'])
             
             sistema_mercado_energia_df['vl_ano'] = sistema_mercado_energia_df['data'].dt.year.astype(int)
@@ -385,10 +467,9 @@ class DecksNewaveService:
             )
             
             product_datetime_str = download_result.get('product_datetime') if download_result else None
-            dt_deck = datetime.datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
-                
-            nw_sistema_df['dt_deck'] = dt_deck
-            nw_sistema_df['dt_deck'] = nw_sistema_df['dt_deck'].dt.date 
+            if product_datetime_str:
+                dt_deck = datetime.datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
+                nw_sistema_df['dt_deck'] = dt_deck.date()
             
             nw_sistema_df = nw_sistema_df[~((nw_sistema_df['vl_geracao_pch'].fillna(0) == 0) &
                      (nw_sistema_df['vl_geracao_pct'].fillna(0) == 0) &
@@ -420,7 +501,6 @@ class DecksNewaveService:
             ]
             
             nw_sistema_df = nw_sistema_df.reindex(columns=ordem_colunas)
-            
             nw_sistema_records = nw_sistema_df.to_dict('records')
             
             print(f"Processamento concluído:")
@@ -430,6 +510,7 @@ class DecksNewaveService:
                 'sistema_file': sistema_file,
                 'nw_sistema_records': nw_sistema_records,
                 'product_datetime': product_datetime_str,
+                'versao': versao,
                 'message': 'Arquivo SISTEMA.DAT processado com sucesso',
             }
             
@@ -443,115 +524,8 @@ class DecksNewaveService:
             raise Exception(error_msg)
     
     @staticmethod
-    def atualizar_sist_com_weol(**kwargs):
-        try:
-            repository = SharedRepository()
-
-            task_instance = kwargs['task_instance']
-            nw_sist_result  = task_instance.xcom_pull(task_ids='processar_deck_nw_sist')
-            nw_sist_records = nw_sist_result.get('nw_sistema_records', [])
-            
-            nw_sist_df = pd.DataFrame(nw_sist_records)
-            
-            auth_headers = repository.get_auth_token()
-            headers = {
-                **auth_headers, 
-                'Content-Type': 'application/json',
-                'accept': 'application/json'
-            }
-
-            print(f"Headers: {headers}")
-
-            api_url = os.getenv("DNS", "http://localhost:8000")
-            api_url += "/api/v2"
-            
-            
-            last_deck_date = requests.get(
-                f"{api_url}/decks/weol/last-deck-date",
-                headers=headers
-            )
-            
-       
-            
-            if last_deck_date.status_code != 200:
-                error_msg = f"Erro ao obter a última data do deck WEOL: {last_deck_date.text}"
-                print(error_msg)
-                raise Exception(error_msg)
-            
-            weol_decomp = requests.get(
-                f"{api_url}/decks/weol/weighted-average", 
-                params={"dataProduto": datetime.datetime.strptime(last_deck_date.json(), '%Y-%m-%d')}, 
-                headers= headers
-            )
-            
-            if weol_decomp.status_code != 200:
-                error_msg = f"Erro ao obter o WEOL decomp: {weol_decomp.text}"
-                print(error_msg)
-                raise Exception(error_msg)
-            
-            weol_decomp_df = pd.DataFrame(weol_decomp.json())
-            
-            weol_decomp_df['inicioSemana'] = pd.to_datetime(weol_decomp_df['inicioSemana'])
-            
-            weol_decomp_df['ano_mes'] = weol_decomp_df['inicioSemana'].dt.to_period('M')
-            
-            weol_mensal_por_submercado = weol_decomp_df.groupby(['submercado', 'ano_mes'])['mediaPonderada'].mean().reset_index()
-            
-            weol_mensal_por_submercado['vl_ano'] = weol_mensal_por_submercado['ano_mes'].dt.year
-            weol_mensal_por_submercado['vl_mes'] = weol_mensal_por_submercado['ano_mes'].dt.month
-            
-            weol_mensal_por_submercado = weol_mensal_por_submercado.drop(columns=['ano_mes'])
-            
-            weol_mensal_por_submercado['mediaPonderada'] = weol_mensal_por_submercado['mediaPonderada'].astype(int)
-
-            submercados = {
-                'SE': '1',
-                'S': '2',
-                'NE': '3',
-                'N': '4',
-            }
-            
-            weol_mensal_por_submercado['cd_submercado'] = weol_mensal_por_submercado['submercado'].map(submercados)
-            weol_mensal_por_submercado = weol_mensal_por_submercado.drop(columns=['submercado'])
-            weol_mensal_por_submercado = weol_mensal_por_submercado.rename(columns={'mediaPonderada': 'vl_geracao_eol'})
-            
-            weol_mensal_por_submercado['cd_submercado'] = weol_mensal_por_submercado['cd_submercado'].astype(int)
-            
-            # Fazer merge para atualizar os valores de vl_geracao_eol
-            nw_sist_df = nw_sist_df.merge(
-                weol_mensal_por_submercado[['cd_submercado', 'vl_ano', 'vl_mes', 'vl_geracao_eol']],
-                on=['cd_submercado', 'vl_ano', 'vl_mes'],
-                how='left',
-                suffixes=('', '_weol')
-            )
-
-            nw_sist_df['vl_geracao_eol'] = nw_sist_df['vl_geracao_eol_weol'].fillna(nw_sist_df['vl_geracao_eol'])
-
-            nw_sist_df = nw_sist_df.drop(columns=['vl_geracao_eol_weol'])
-            
-            nw_sist_records = nw_sist_df.to_dict('records')
-            
-            print(f"Processamento concluído:")
-            
-            xcom_data = {
-                'success': True,
-                'nw_sist_records': nw_sist_records,
-                'message': 'Arquivo SISTEMA.DAT atualizado pelo WEOL com sucesso',
-            }
-            
-            return xcom_data
-            
-        except Exception as e:
-            error_msg = f"Erro ao atualizar os valores do sistema com o WEOL Semanal: {str(e)}"
-            print(error_msg)
-            raise Exception(error_msg)
-        
-    @staticmethod
-    def atualizar_cadic_com_cargas(**kwargs):
-        return "Atualização do CADIC com cargas não implementada"
-            
-    @staticmethod
-    def processar_patamar_nw(**kwargs):
+    def processar_patamar_nw(**kwargs) -> Dict[str, Any]:
+        """Processa o arquivo PATAMAR.DAT do produto com a lib Inewave"""
         try:
             task_instance = kwargs['task_instance']
             extract_result = task_instance.xcom_pull(task_ids='extrair_arquivos')
@@ -570,11 +544,21 @@ class DecksNewaveService:
             # Determinar versão baseada no filename
             versao = DecksNewaveService.determinar_versao_por_filename(filename)
             
-            patamar_file = os.path.join(extract_result['extract_path'], 'PATAMAR.DAT')
+            # Buscar arquivo PATAMAR.DAT
+            patamar_file = None
+            extract_path = extract_result['extract_path']
+            
+            for root, dirs, files in os.walk(extract_path):
+                for file in files:
+                    if file.upper() == 'PATAMAR.DAT':
+                        patamar_file = os.path.join(root, file)
+                        break
+                if patamar_file:
+                    break
 
             # Corrigir a verificação de existência do arquivo
-            if not os.path.exists(patamar_file):
-                error_msg = f"Arquivo PATAMAR.DAT não encontrado em {extract_result['extract_path']}"
+            if not patamar_file or not os.path.exists(patamar_file):
+                error_msg = f"Arquivo PATAMAR.DAT não encontrado em {extract_path}"
                 print(error_msg)
                 raise FileNotFoundError(error_msg)
 
@@ -832,7 +816,133 @@ class DecksNewaveService:
             raise Exception(error_msg)
     
     @staticmethod
-    def enviar_dados_sistema_cadic_para_api(**kwargs):
+    def should_execute_weol_update_branch(**kwargs) -> str:
+        """
+        Decide se deve executar a task de atualização do WEOL com base nos parâmetros de entrada.
+        Retorna o task_id a ser seguido pelo BranchPythonOperator.
+        """
+        try:
+            params = kwargs.get('params', {})
+            product_details = params.get('product_details', {})
+            filename = product_details.get('filename', '')
+            versao = DecksNewaveService.determinar_versao_por_filename(filename)
+            
+            if versao == 'definitivo':
+                print("Versão definitiva detectada — pular atualização do WEOL.")
+                return 'enviar_dados_sistema_cadic_para_api'
+            else:
+                print("Versão preliminar detectada — executar atualização do WEOL.")
+                return 'atualizar_sist_com_weol'
+    
+        except Exception as e:
+            print(f"Erro ao decidir execução do WEOL: {e}")
+            return 'atualizar_sist_com_weol'
+
+    @staticmethod
+    def atualizar_sist_com_weol(**kwargs) -> Dict[str, Any]:
+        """Atualiza o arquivo SISTEMA.DAT com dados WEOL mais recentes"""
+        try:
+            repository = SharedRepository()
+
+            task_instance = kwargs['task_instance']
+            nw_sist_result  = task_instance.xcom_pull(task_ids='processar_deck_nw_sist')
+            nw_sist_records = nw_sist_result.get('nw_sistema_records', [])
+            
+            nw_sist_df = pd.DataFrame(nw_sist_records)
+            
+            auth_headers = repository.get_auth_token()
+            headers = {
+                **auth_headers, 
+                'Content-Type': 'application/json',
+                'accept': 'application/json'
+            }
+
+            print(f"Headers: {headers}")
+
+            api_url = os.getenv("DNS", "https://tradingenergiarz.com")
+            api_url += "/api/v2"
+            
+            last_deck_date = requests.get(
+                f"{api_url}/decks/weol/last-deck-date",
+                headers=headers
+            )
+            
+            if last_deck_date.status_code != 200:
+                error_msg = f"Erro ao obter a última data do deck WEOL: {last_deck_date.text}"
+                print(error_msg)
+                raise Exception(error_msg)
+            
+            weol_decomp = requests.get(
+                f"{api_url}/decks/weol/weighted-average", 
+                params={"dataProduto": datetime.datetime.strptime(last_deck_date.json(), '%Y-%m-%d')}, 
+                headers= headers
+            )
+            
+            if weol_decomp.status_code != 200:
+                error_msg = f"Erro ao obter o WEOL decomp: {weol_decomp.text}"
+                print(error_msg)
+                raise Exception(error_msg)
+            
+            weol_decomp_df = pd.DataFrame(weol_decomp.json())
+            
+            weol_decomp_df['inicioSemana'] = pd.to_datetime(weol_decomp_df['inicioSemana'])
+            
+            weol_decomp_df['ano_mes'] = weol_decomp_df['inicioSemana'].dt.to_period('M')
+            
+            weol_mensal_por_submercado = weol_decomp_df.groupby(['submercado', 'ano_mes'])['mediaPonderada'].mean().reset_index()
+            
+            weol_mensal_por_submercado['vl_ano'] = weol_mensal_por_submercado['ano_mes'].dt.year
+            weol_mensal_por_submercado['vl_mes'] = weol_mensal_por_submercado['ano_mes'].dt.month
+            
+            weol_mensal_por_submercado = weol_mensal_por_submercado.drop(columns=['ano_mes'])
+            
+            weol_mensal_por_submercado['mediaPonderada'] = weol_mensal_por_submercado['mediaPonderada'].astype(int)
+
+            submercados = {
+                'SE': '1',
+                'S': '2',
+                'NE': '3',
+                'N': '4',
+            }
+            
+            weol_mensal_por_submercado['cd_submercado'] = weol_mensal_por_submercado['submercado'].map(submercados)
+            weol_mensal_por_submercado = weol_mensal_por_submercado.drop(columns=['submercado'])
+            weol_mensal_por_submercado = weol_mensal_por_submercado.rename(columns={'mediaPonderada': 'vl_geracao_eol'})
+            
+            weol_mensal_por_submercado['cd_submercado'] = weol_mensal_por_submercado['cd_submercado'].astype(int)
+            
+            # Fazer merge para atualizar os valores de vl_geracao_eol
+            nw_sist_df = nw_sist_df.merge(
+                weol_mensal_por_submercado[['cd_submercado', 'vl_ano', 'vl_mes', 'vl_geracao_eol']],
+                on=['cd_submercado', 'vl_ano', 'vl_mes'],
+                how='left',
+                suffixes=('', '_weol')
+            )
+
+            nw_sist_df['vl_geracao_eol'] = nw_sist_df['vl_geracao_eol_weol'].fillna(nw_sist_df['vl_geracao_eol'])
+
+            nw_sist_df = nw_sist_df.drop(columns=['vl_geracao_eol_weol'])
+            
+            nw_sist_records = nw_sist_df.to_dict('records')
+            
+            print(f"Processamento concluído:")
+            
+            xcom_data = {
+                'success': True,
+                'nw_sistema_records': nw_sist_records,
+                'message': 'Arquivo SISTEMA.DAT atualizado pelo WEOL com sucesso',
+            }
+            
+            return xcom_data
+            
+        except Exception as e:
+            error_msg = f"Erro ao atualizar os valores do sistema com o WEOL Semanal: {str(e)}"
+            print(error_msg)
+            raise Exception(error_msg)
+            
+    @staticmethod
+    def enviar_dados_sistema_cadic_para_api(**kwargs) -> Dict[str, Any]:
+        """Envia os dados processados de Sistema e Cadic para a API"""
         try:
             repository = SharedRepository()
             
@@ -862,13 +972,20 @@ class DecksNewaveService:
                 nw_sist_result = task_instance.xcom_pull(task_ids='processar_deck_nw_sist')
             else:
                 print("Versão preliminar detectada - obtendo dados do sistema atualizado com WEOL")
+                # Tenta obter de atualizar_sist_com_weol, mas se não tiver, pega de processar_deck_nw_sist
                 nw_sist_result = task_instance.xcom_pull(task_ids='atualizar_sist_com_weol')
+                if not nw_sist_result:
+                    print("Não encontrou dados na task atualizar_sist_com_weol, obtendo de processar_deck_nw_sist")
+                    nw_sist_result = task_instance.xcom_pull(task_ids='processar_deck_nw_sist')
             
             # Dados do CADIC sempre vêm diretamente do processo pois ainda não teve atualização de cargas implementada
             nw_cadic_result = task_instance.xcom_pull(task_ids='processar_deck_nw_cadic')
-
-            if not nw_sist_result or not nw_sist_result.get('success') or not nw_cadic_result or not nw_cadic_result.get('success'):
-                raise Exception("Dados necessários não encontrados ou inválidos nos XComs")
+            
+            if not nw_sist_result:
+                raise Exception(f"Não foi possível obter dados do sistema. Verifique se as tarefas anteriores foram executadas.")
+            
+            if not nw_cadic_result:
+                raise Exception(f"Não foi possível obter dados do CADIC. Verifique se as tarefas anteriores foram executadas.")
 
             nw_sist_records = nw_sist_result.get('nw_sistema_records', [])
             nw_cadic_records = nw_cadic_result.get('nw_cadic_records', [])
@@ -887,7 +1004,6 @@ class DecksNewaveService:
             sistema_url = f"{api_url}/decks/newave/sistema"
             cadic_url = f"{api_url}/decks/newave/cadic"
 
-
             print(f"Enviando dados para: {sistema_url}")
             
             request_sistema = requests.post(
@@ -898,7 +1014,6 @@ class DecksNewaveService:
             
             if request_sistema.status_code != 200:
                 raise Exception(f"Erro ao enviar carga do SISTEMA para API: {request_sistema.text}")
-
 
             print(f"Enviando dados para: {cadic_url}")
 
@@ -926,7 +1041,8 @@ class DecksNewaveService:
             raise Exception(error_msg)
     
     @staticmethod
-    def enviar_dados_patamares_para_api(**kwargs):
+    def enviar_dados_patamares_para_api(**kwargs) -> Dict[str, Any]:
+        """Envia os dados processados de Patamares para a API"""
         try:
             import pickle
             
@@ -942,7 +1058,6 @@ class DecksNewaveService:
             print(f"Headers: {headers}")
 
             api_url = os.getenv("DNS", "http://localhost:8000")
-            
             api_url += "/api/v2"
             
             task_instance = kwargs['task_instance']
@@ -970,7 +1085,6 @@ class DecksNewaveService:
             patamar_carga_usinas_url = f"{api_url}/decks/newave/patamar/carga_usinas"
             patamar_intercambio_url = f"{api_url}/decks/newave/patamar/intercambio"
             
-            
             print(f"Enviando dados para: {patamar_carga_usinas_url}")
             
             request_patamar_carga_usinas = requests.post(
@@ -981,7 +1095,6 @@ class DecksNewaveService:
             
             if request_patamar_carga_usinas.status_code != 200:
                 raise Exception(f"Erro ao enviar patamar do newave de carga e usina para API: {request_patamar_carga_usinas.text}")
-            
             
             print(f"Enviando dados para: {patamar_intercambio_url}")
             
@@ -1008,21 +1121,38 @@ class DecksNewaveService:
             error_msg = f"Erro ao enviar dados dos Patamares para API: {str(e)}"
             print(error_msg)
             raise Exception(error_msg)
-            
+    
     @staticmethod
-    def gerar_tabela_diferenca_cargas(**kwargs):
-        try:
-            product_datetime_str = kwargs.get('dag_run').conf.get('product_details').get('dataProduto')
-            if product_datetime_str:
-                product_datetime_str = product_datetime_str.replace('/', '')
+    def gerar_tabela_diferenca_cargas(**kwargs) -> Dict[str, Any]:
+        """Gera tabela comparativa de diferenças nas cargas"""
+        try: 
             
-            # Obter informações do produto para determinar o tipo de deck
-            product_details = kwargs.get('dag_run').conf.get('product_details', {})
+            # Obter product_details do dag_run.conf
+            dag_run_conf = kwargs.get('dag_run').conf or {}
+            product_details = dag_run_conf.get('product_details', {})
+            
+            # Extrair a data do produto e o nome do arquivo
+            product_datetime_str = product_details.get('dataProduto', '')
+            if product_datetime_str:
+                # Garantir que a data esteja em um formato consistente
+                if '/' in product_datetime_str:
+                    # Formato MM/YYYY
+                    month, year = product_datetime_str.split('/')
+                    product_datetime_str = f"{year}{month.zfill(2)}"
+                elif '-' in product_datetime_str:
+                    # Formato ISO
+                    product_datetime_str = product_datetime_str.replace('-', '')[:6]  # Extrair YYYYMM
+            
             filename = product_details.get('filename', '')
             
-            # Determinar tipo de deck baseado no filename
-            tipo_deck = DecksNewaveService.determinar_versao_por_filename(filename)
+            # Determinar o tipo de deck baseado no nome do arquivo
+            if 'carga_mensal' in filename.lower():
+                tipo_deck = 'preliminar_atualizado'
+                print(f"Processando tabela para deck de tipo: {tipo_deck} (via trigger externo)")
+            else:
+                tipo_deck = DecksNewaveService.determinar_versao_por_filename(filename)
             
+            # Configurar as URLs da API
             api_url = os.getenv("URL_API_V2", "http://localhost:8000/api/v2")
             image_api_url = "https://tradingenergiarz.com/html-to-img"
             
@@ -1036,9 +1166,8 @@ class DecksNewaveService:
                 'accept': 'application/json'
             }
             
-            
             # Pegando valores do sistema de geração de usinas não simuladas (UNSI)
-            sistema_unsi_url = f"{api_url}/decks/newave/sistema/unsi"
+            sistema_unsi_url = f"{api_url}/decks/newave/sistema/total_unsi"
             sistema_unsi_response = requests.get(
                 sistema_unsi_url,
                 headers=headers
@@ -1048,9 +1177,8 @@ class DecksNewaveService:
             
             sistema_unsi_values = sistema_unsi_response.json() 
             
-            
             # Pegando valores de carga de ANDE
-            cadic_ande_url = f"{api_url}/decks/newave/cadic/ande"
+            cadic_ande_url = f"{api_url}/decks/newave/cadic/total_ande"
             cadic_ande_response = requests.get(
                 cadic_ande_url,
                 headers=headers
@@ -1059,7 +1187,6 @@ class DecksNewaveService:
                 raise Exception(f"Erro ao obter dados de carga do ANDE: {cadic_ande_response.text}")
             
             cadic_ande_values = cadic_ande_response.json() 
-            
             
             # Pegando valores de MMGD Total 
             sistema_mmgd_total_url = f"{api_url}/decks/newave/sistema/mmgd_total"
@@ -1072,9 +1199,8 @@ class DecksNewaveService:
             
             sistema_mmgd_total_values = sistema_mmgd_total_response.json()
             
-            
             # Pegando valores de geração de Carga Global
-            carga_global_url = f"{api_url}/decks/newave/sistema/cargas/carga_global"
+            carga_global_url = f"{api_url}/decks/newave/sistema/cargas/total_carga_global"
             carga_global_response = requests.get(
                 carga_global_url,
                 headers=headers
@@ -1083,9 +1209,8 @@ class DecksNewaveService:
                 raise Exception(f"Erro ao obter dados de geração de carga global: {carga_global_response.text}")
             carga_global_values = carga_global_response.json()
             
-            
             # Pegando valores de geração de Carga Líquida
-            carga_liquida_url = f"{api_url}/decks/newave/sistema/cargas/carga_liquida"
+            carga_liquida_url = f"{api_url}/decks/newave/sistema/cargas/total_carga_liquida"
             carga_liquida_response = requests.get(
                 carga_liquida_url,
                 headers=headers
@@ -1134,7 +1259,6 @@ class DecksNewaveService:
             
             # Gerar nome do arquivo baseado na data do produto e tipo de deck
             if product_datetime_str:
-                # dt = datetime.datetime.strptime(product_datetime_str, '%Y-%m-%d %H:%M:%S')
                 image_filename = f"tabela_diferenca_cargas_{tipo_deck}_{product_datetime_str}.png"
             else:
                 image_filename = f"tabela_diferenca_cargas_{tipo_deck}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
@@ -1163,23 +1287,30 @@ class DecksNewaveService:
             raise Exception(error_msg)
     
     @staticmethod
-    def enviar_tabela_whatsapp_email(**kwargs):
+    def enviar_tabela_whatsapp_email(**kwargs) -> Dict[str, Any]:
+        """Envia a tabela de diferenças via WhatsApp e Email"""
         try:
             task_instance = kwargs['task_instance']
-            tabela_result = task_instance.xcom_pull(task_ids='gerar_tabela_diferenca_cargas')
-            params = kwargs.get('params', {})
+            tabela_result = task_instance.xcom_pull(task_ids='gerar_tabela_diferenca_cargas_normal') or task_instance.xcom_pull(task_ids='gerar_tabela_diferenca_cargas_externo')
             
             if not tabela_result or not tabela_result.get('success'):
                 raise Exception("Tabela de diferença não foi gerada com sucesso")
             
-            # Obter informações do produto para determinar o tipo de deck
-            product_details = kwargs.get('dag_run').conf.get('product_details', {})
-            filename = product_details.get('filename', '')
-            product_datetime_str = product_details.get('dataProduto')
+            # Obter product_details do dag_run.conf
+            dag_run_conf = kwargs.get('dag_run').conf or {}
+            product_details = dag_run_conf.get('product_details', {})
             
-            # Determinar tipo de deck baseado no filename
-            tipo_deck = DecksNewaveService.determinar_versao_por_filename(filename)
-            tipo_deck_label = 'PRELIMINAR' if tipo_deck == 'preliminar' else 'DEFINITIVO'
+            product_datetime_str = tabela_result.get('product_datetime')
+            
+            filename = product_details.get('filename', '')
+            
+            # Determinar o tipo de deck e label baseado no nome do arquivo
+            if 'carga_mensal' in filename.lower():
+                tipo_deck = 'preliminar_atualizado'
+                tipo_deck_label = 'PRELIMINAR ATUALIZADO'
+            else:
+                tipo_deck = DecksNewaveService.determinar_versao_por_filename(filename)
+                tipo_deck_label = 'PRELIMINAR' if tipo_deck == 'preliminar' else 'DEFINITIVO'
             
             image_path = tabela_result.get('image_path')
             image_filename = tabela_result.get('image_filename')
@@ -1194,13 +1325,14 @@ class DecksNewaveService:
             from utils.whatsapp_sender import WhatsAppSender
             
             whatsapp_sender = WhatsAppSender()
+            success = False
             
             try:
                 success = whatsapp_sender.send_table_notification(
                     table_type=f"Diferença de Cargas NEWAVE {tipo_deck_label}",
-                    product_datetime=product_datetime_str or "Data não informada",
+                    product_datetime=product_datetime_str,
                     image_path=image_path,
-                    destinatario="Premissas Preco"
+                    # destinatario="Premissas Preco"
                 )
                 
                 if success:
@@ -1216,7 +1348,7 @@ class DecksNewaveService:
                 'message': f'Imagem {image_filename} enviada com sucesso',
                 'image_sent': True,
                 'product_datetime': product_datetime_str,
-                'whatsapp_sent': success if 'success' in locals() else False
+                'whatsapp_sent': success
             }
             
             print(f"task(enviar_tabela_whatsapp_email) - Retornando dados para XCom: {xcom_data}")
@@ -1227,47 +1359,15 @@ class DecksNewaveService:
             error_msg = f"Erro ao enviar tabela por WhatsApp ou email: {str(e)}"
             print(error_msg)
             raise Exception(error_msg)
-    
-    @staticmethod
-    def should_skip_weol_update(**kwargs):
-        """
-        Determina se deve pular a atualização com WEOL baseado na versão do produto.
-        Retorna True para pular (versão definitiva), False para executar (versão preliminar).
-        """
-        params = kwargs.get('params', {})
-        product_details = params.get('product_details', {})
-        filename = product_details.get('filename', '')
-        
-        versao = DecksNewaveService.determinar_versao_por_filename(filename)
-        
-        should_skip = versao == 'definitivo'
-        print(f"Verificando se deve pular atualização WEOL - Versão: {versao}, Pular: {should_skip}")
-        
-        return should_skip
-
-    @staticmethod
-    def should_skip_cargas_update(**kwargs):
-        """
-        Determina se deve pular a atualização de cargas baseado na versão do produto.
-        Retorna True para pular (versão definitiva), False para executar (versão preliminar).
-        """
-        params = kwargs.get('params', {})
-        product_details = params.get('product_details', {})
-        filename = product_details.get('filename', '')
-        
-        versao = DecksNewaveService.determinar_versao_por_filename(filename)
-        
-        should_skip = versao == 'definitivo'
-        print(f"Verificando se deve pular atualização de cargas - Versão: {versao}, Pular: {should_skip}")
-        
-        return should_skip
 
 
 if __name__ == "__main__":
+    # Teste local
     service = DecksNewaveService()
+    
     class MockTaskInstance:
         def xcom_pull(self, task_ids, key=None):
-            return {''}
+            return {'success': True}
         
     try:
         params = {
@@ -1287,12 +1387,8 @@ if __name__ == "__main__":
             }
         }
         
-        result = DecksNewaveService.enviar_dados_sistema_cadic_para_api(
-            task_instance=MockTaskInstance(),
-            params=params
-        )
+        result = DecksNewaveService.validar_dados_entrada(params=params)
+        print("Service de Decks NEWAVE inicializado com sucesso")
     except Exception as e:
         print(f"Erro ao debugar manualmente: {str(e)}")
-
-
-
+        print("Service de Decks NEWAVE inicializado com sucesso")
