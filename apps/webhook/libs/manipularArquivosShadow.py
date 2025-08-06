@@ -430,7 +430,7 @@ def deck_preliminar_decomp(dadosProduto: dict):
     if dadosProduto.get('enviar', True) == True: 
         dadosProduto['dt_ref'] = dadosProduto['dataProduto']
         airflow_tools.trigger_airflow_dag(
-            dag_id="1.14-BACKTEST-DECOMP",
+            dag_id="1.16-DECOMP_ONS-TO-CCEE",
             json_produtos=dadosProduto,
             )
 
@@ -555,11 +555,19 @@ def carga_patamar_nw(dadosProduto: dict):
         str_fonte = id_fonte)
 
     #gerar Produto
-    if dadosProduto.get('enviar', True) == True:
-        GERAR_PRODUTO.enviar({
-        "produto":"REVISAO_CARGA_NW",
-        "path":filename,
-    })
+    # if dadosProduto.get('enviar', True) == True:
+    #     GERAR_PRODUTO.enviar({
+    #     "produto":"REVISAO_CARGA_NW",
+    #     "path":filename,
+    #     "data_ref": dtRef
+    # })
+        
+    if dadosProduto.get('enviar', True) == True: 
+        dadosProduto['dt_ref'] = dadosProduto['dataProduto']
+        airflow_tools.trigger_airflow_dag(
+            dag_id="1.17-NEWAVE_ONS-TO-CCEE",
+            json_produtos=dadosProduto,
+        )
 
     return {
         "file_path": filename,
@@ -841,6 +849,12 @@ def deck_resultados_decomp(dadosProduto: dict):
     dataEletrica =  wx_opweek.ElecData(dtInicial.date())
     # /WX2TB/Documentos/fontes/PMO/arquivos/decks/202101_RV1
     path_decks = '/WX2TB/Documentos/fontes/PMO/arquivos/decks/{}{:0>2}_RV{}'.format(dataEletrica.anoReferente, dataEletrica.mesReferente, dataEletrica.atualRevisao)
+    if dadosProduto.get('enviar', True) == True: 
+        dadosProduto['dt_ref'] = dadosProduto['dataProduto']
+        airflow_tools.trigger_airflow_dag(
+            dag_id="1.16-DECOMP_ONS-TO-CCEE",
+            json_produtos=dadosProduto,
+            )
     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_decks)
     logger.info(path_copia_tmp)
     
@@ -882,6 +896,12 @@ def carga_newave_preliminar(dadosProduto: dict):
         "path":filename,
         "data":dtRef,
     }) 
+    if dadosProduto.get('enviar', True) == True: 
+        dadosProduto['dt_ref'] = dadosProduto['dataProduto']
+        airflow_tools.trigger_airflow_dag(
+            dag_id="1.17-NEWAVE_ONS-TO-CCEE",
+            json_produtos=dadosProduto,
+        )
     
 
 
@@ -1091,21 +1111,21 @@ if __name__ == '__main__':
     dadosProduto = {
     "function_name": "WEBHOOK",
     "product_details": {
-        "dataProduto": "07/2025",
-        "enviar": 1,
-        "filename": "Deck NEWAVE Preliminar.zip",
+        "dataProduto": "09/2025",
+        "enviar": True,
+        "filename": "CargaMensal_2revquad2529.zip",
         "macroProcesso": "Programação da Operação",
-        "nome": "Deck NEWAVE Preliminar",
-        "periodicidade": "2025-07-01T03:00:00.000Z",
-        "periodicidadeFinal": "2025-08-01T02:59:59.000Z",
-        "processo": "Médio Prazo",
-        "s3Key": "webhooks/Deck NEWAVE Preliminar/68596b2ab1c148748afd166c_Deck NEWAVE Preliminar.zip",
-        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODcvMjMtMDYtMjAyNV8xMTU0MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiRGVjayBORVdBVkUgUHJlbGltaW5hciIsIklzRmlsZSI6IkZhbHNlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1MDc3NzI0MiwibmJmIjoxNzUwNjkwNjAyfQ.BMzBppjFOa47kjJHndtMoTDj00NZJWEJo1n1sQa1btM",
-        "webhookId": "68596b2ab1c148748afd166c"
+        "nome": "Previsões de carga mensal e por patamar - NEWAVE",
+        "periodicidade": "2025-09-01T03:00:00.000Z",
+        "periodicidadeFinal": "2025-10-01T02:59:59.000Z",
+        "processo": "Previsão de Carga para o PMO",
+        "s3Key": "webhooks/Previsões de carga mensal e por patamar - NEWAVE/688d2cb494f9e32e8e798756_CargaMensal_2revquad2529.zip",
+        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ny9Qcm9kdXRvcy8yMjkvQ2FyZ2FNZW5zYWxfMnJldnF1YWQyNTI5LnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJQcmV2aXPDtWVzIGRlIGNhcmdhIG1lbnNhbCBlIHBvciBwYXRhbWFyIC0gTkVXQVZFIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTQxNjkxMjMsIm5iZiI6MTc1NDA4MjQ4M30.kdmb2eKSpSmXep832Vrw6B7NAAdG_4On23P7cZlj3uM",
+        "webhookId": "688d2cb494f9e32e8e798756"
     }
 }
     dadosProduto = dadosProduto["product_details"]
-    carga_newave_preliminar(dadosProduto)
+    carga_patamar_nw(dadosProduto)
     
 #     dadosProduto = {
 #     "function_name": "WEBHOOK",
