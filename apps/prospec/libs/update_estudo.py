@@ -322,12 +322,13 @@ def update_cvu_clast_nw_estudo(
             raise Exception(
                 "Não foi encontrado nenhum arquivo"
                 f" clast no estudo {id_estudo}")
-            
+        info_cvu_conjuntural['fonte'].unique()
         if not info_cvu_conjuntural.empty:
-            paths_modified += clast_updater.atualizar_cvu_clast_conjuntural(
-                arquivos_filtrados,
-                info_cvu_conjuntural,
-            )
+            for fonte in info_cvu_conjuntural['fonte'].unique():
+                paths_modified += clast_updater.atualizar_cvu_clast_conjuntural(
+                    arquivos_filtrados,
+                    info_cvu_conjuntural[info_cvu_conjuntural['fonte'] == fonte].copy(),
+                )
         if not info_cvu_estrutural.empty:
             paths_modified += clast_updater.atualizar_cvu_clast_estrutural(
                 arquivos_filtrados,
