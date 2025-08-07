@@ -180,6 +180,13 @@ def resultados_preliminares_consistidos(dadosProduto: dict):
 
     revisao.importar_rev_consistido(filename)
     
+    params = dadosProduto.copy()
+    
+    airflow_tools.trigger_airflow_dag(
+        dag_id="1.12-PROSPEC_NAO_CONSISTIDO",
+        json_produtos=params
+    )
+    
 
 def entrada_saida_previvaz(dadosProduto: dict):
     filename = get_filename(dadosProduto)
@@ -760,31 +767,8 @@ def resultados_nao_consistidos_semanal(dadosProduto: dict):
     
     prevs_file = prevs_files[0]
     logger.info(f"Arquivo de previsão encontrado em: {prevs_file}")
-    if rev_match:
-        revision = rev_match.group(1)
-    elif "PMO" in zip_filename:
-        revision = 0
-    else:
-        raise Exception("Não foi possivel extrair a revisão do nome do arquivo.")
+    
     if month_match:
-        yearmonth = month_match.group(1)  
-        month = int(yearmonth[-2:])
-        
-        new_filename = f'prevs.rv{revision}'
-        load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
-        target_dir = os.getenv('PATH_PREVS_PROSPEC')
-        target_dir += f'/nao_consistido/{month}'
-        
-        if os.path.exists(target_dir):
-            logger.info(f"Removendo diretório existente: {target_dir}")
-            shutil.rmtree(target_dir)
-        
-        os.makedirs(target_dir, exist_ok=True)
-        
-        dest_file = os.path.join(target_dir, new_filename)
-        
-        shutil.copy2(prevs_file, dest_file)
-        logger.info(f"Arquivo copiado para: {dest_file}")
         
         params = dadosProduto.copy()
         params["sensibilidade"] = "NÃO CONSISTIDO"
