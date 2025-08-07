@@ -183,7 +183,7 @@ def resultados_preliminares_consistidos(dadosProduto: dict):
     params = dadosProduto.copy()
     
     airflow_tools.trigger_airflow_dag(
-        dag_id="1.12-PROSPEC_NAO_CONSISTIDO",
+        dag_id="1.12-PROSPEC_CONSISTIDO",
         json_produtos=params
     )
     
@@ -774,7 +774,7 @@ def resultados_nao_consistidos_semanal(dadosProduto: dict):
         params["sensibilidade"] = "NÃO CONSISTIDO"
         
         airflow_tools.trigger_airflow_dag(
-            dag_id="1.12-PROSPEC_NAO_CONSISTIDO",
+            dag_id="1.12-PROSPEC_CONSISTIDO",
             json_produtos=params
         )
     else:
