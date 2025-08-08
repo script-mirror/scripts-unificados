@@ -9,13 +9,13 @@ from airflow.models import DagRun
 from airflow.exceptions import AirflowSkipException
 from airflow.utils.db import create_session
 import subprocess
-from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
-PATH_PROJETOS: str = os.getenv('PATH_PROJETOS')
-ATIVAR_ENV: str = os.getenv('ATIVAR_ENV')
-CMD_BASE = str(ATIVAR_ENV) + " python " + str(PATH_PROJETOS) + "/estudos-middle/estudos_prospec/main_roda_estudos.py "
-CMD_BASE_DECOMP = str(ATIVAR_ENV) + " python " + str(PATH_PROJETOS) + "/estudos-middle/estudos_prospec/decomp_ons_to_ccee.py "
-CMD_BASE_SENS = str(ATIVAR_ENV) + " python " + str(PATH_PROJETOS) + "/estudos-middle/estudos_prospec/gerar_sensibilidade.py "
+from middle.utils.constants import Constants 
+consts = Constants()
+
+CMD_BASE      = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/main_roda_estudos.py "
+CMD_BASE_SENS = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/gerar_sensibilidade.py "
+CMD_BASE_NW   = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/run_nw_ons_to_ccee.py "
+CMD_BASE_DC   = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/run_dc_ons_to_ccee.py "
 
 default_args = {
     'execution_timeout': timedelta(hours=8)
@@ -196,7 +196,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_cenario_10',
         ssh_conn_id='ssh_master',
-        command= CMD_BASE +"prevs CENARIOS rodada Preliminar, cenario 10",  
+        command= CMD_BASE +"prevs CENARIOS rodada Preliminar",  
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -341,49 +341,25 @@ with DAG(
     run_script_task >> run_prospec_on_host
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Definindo a DAG para '2.1-PROSPEC_NAO-CONSISTIDO'
-def run_python_with_dynamic_params(**kwargs):
-    # Recuperando todos os parâmetros passados para a DAG
-    print(kwargs.get('params'))
-    params = kwargs.get('params', {})
-    print(params)
-    # Iniciando a construção do comando para o script
-    command= CMD_BASE + "prevs NAO-CONSISTIDO",
-    
-    # Adicionando parâmetros ao comando dinamicamente, se existirem
-    for key, value in params.items():
-        if value is not None:  # Verifica se o valor não é None
-            # Adiciona o parâmetro e o valor ao comando
-            command += f" {key} '{value}'"
-    print(command)
-    kwargs['ti'].xcom_push(key='command', value=command)
-
+# Definindo a DAG para '2.1-PROSPEC_CONSISTIDO'
 with DAG(
     default_args=default_args,
-    dag_id='1.12-PROSPEC_NAO_CONSISTIDO', 
-    start_date=datetime(2025, 1, 23), 
-    schedule_interval=None, 
+    dag_id='1.12-PROSPEC_CONSISTIDO', 
+    start_date=datetime(2024, 4, 28), 
+    schedule_interval='00 8 * * 1', 
     catchup=False,
     tags=['Prospec'],
 ) as dag:
-    run_script_task = PythonOperator(
-        task_id='run_update_dynamic_params',
-        python_callable=run_python_with_dynamic_params,
-
-    )
     run_prospec_on_host = SSHOperator(
         trigger_rule="none_failed_min_one_success",
-        task_id='run',
-        ssh_conn_id='ssh_master',  
-        command="{{ ti.xcom_pull(task_ids='run_update_dynamic_params', key='command')}}",
-        conn_timeout=36000,
+        task_id='run_prospec_consistido',
+        ssh_conn_id='ssh_master', 
+        command= CMD_BASE +"prevs CONSISTIDO rodada Preliminar", 
+        conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
         get_pty=True,
     )
-
-    run_script_task >> run_prospec_on_host 
-
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para 1.08-PROSPEC_GRUPOS-ONS
 # Função que verifica o estado da DAG
@@ -525,8 +501,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_decomp',
         ssh_conn_id='ssh_master',  # Ensure this matches the connection ID set in the Airflow UI
-        #command= CMD_BASE + "prevs PREVS_ONS_GRUPOS preliminar 0",
-        command=CMD_BASE_DECOMP,
+        command=CMD_BASE_DC,
         conn_timeout = None,
         cmd_timeout = None,
         get_pty=True,
@@ -545,10 +520,9 @@ with DAG(
     
     run_decomp_on_host = SSHOperator(
         trigger_rule="none_failed_min_one_success",
-        task_id='run_decomp',
-        ssh_conn_id='ssh_master',  # Ensure this matches the connection ID set in the Airflow UI
-        #command= CMD_BASE + "prevs PREVS_ONS_GRUPOS preliminar 0",
-        command=" . /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python /WX/WX2TB/Documentos/fontes/PMO/backTest_DC/script/back_teste_decomp.py",
+        task_id='run_newave',
+        ssh_conn_id='ssh_master',  
+        command=CMD_BASE_DC,
         conn_timeout = None,
         cmd_timeout = None,
         get_pty=True,
