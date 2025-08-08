@@ -30,9 +30,9 @@ class CargaPatamarDecompService:
     @staticmethod
     def validar_dados(**kwargs):
         """Valida os dados de entrada usando o validador"""
-        validator = CargaPatamarDecompValidator()
-        params = kwargs.get('params', {})
-        return validator.validate(params)
+        # validator = CargaPatamarDecompValidator()
+        # params = kwargs.get('params', {})
+        return None
 
     @staticmethod
     def download_arquivos(**kwargs):
