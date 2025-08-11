@@ -16,6 +16,7 @@ CMD_BASE      = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) 
 CMD_BASE_SENS = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/gerar_sensibilidade.py "
 CMD_BASE_NW   = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/run_nw_ons_to_ccee.py "
 CMD_BASE_DC   = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/run_dc_ons_to_ccee.py "
+CMD_UPDATE_DC = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/update_estudos/update_decomp.py "
 
 default_args = {
     'execution_timeout': timedelta(hours=8)
@@ -527,3 +528,37 @@ with DAG(
         cmd_timeout = None,
         get_pty=True,
     )
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Definindo a DAG para '1.18-PROSPEC_UPDATE_DECOMP' (adicionada)
+
+# Função que executa o script com parâmetros dinâmicos
+def run_update_dc(**kwargs):
+    params   = kwargs.get('params', {})
+    conteudo = ' '.join( f'"{k}" \'{v}\'' if k == "list_email" else f'"{k}" "{v}"' for k, v in params.items())    
+    command = CMD_UPDATE_DC + conteudo    
+    print(command)
+    kwargs['ti'].xcom_push(key='command', value=command)
+
+with DAG(
+    default_args=default_args,
+    dag_id='1.18-PROSPEC_UPDATE_DECOMP', 
+    start_date=datetime(2025, 1, 23), 
+    schedule_interval=None, 
+    catchup=False,
+    tags=['Prospec'],
+) as dag:
+    run_script_task = PythonOperator(
+        task_id='run_script_with_dynamic_params',
+        python_callable=run_update_dc,
+    )
+    run_prospec_on_host = SSHOperator(
+        trigger_rule="none_failed_min_one_success",
+        task_id='run',
+        ssh_conn_id='ssh_master',  
+        command="{{ ti.xcom_pull(task_ids='run_script_with_dynamic_params', key='command')}}",
+        conn_timeout=36000,
+        cmd_timeout=28800,
+        execution_timeout=timedelta(hours=20),
+        get_pty=True,
+    )
+    run_script_task >> run_prospec_on_host  

@@ -369,7 +369,7 @@ def extract_carga_nw(path_carga,path_saida=PATH_DOWNLOAD_TMP):
 
         extracted_zip_carga = DIR_TOOLS.extract_specific_files_from_zip(
                 path=path_carga,
-                files_name_template=['PLAN*_CargaGlobal*','CargaMensal_PMO-*'],
+                files_name_template=['PLAN*_CargaGlobal*','CargaMensal*'],
                 dst=path_saida,
                 extracted_files=[]
                 )  
