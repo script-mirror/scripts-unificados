@@ -34,8 +34,7 @@ def convert_to_clean_name(**kwargs):
     
     try:
         params = kwargs.get('dag_run').conf
-        product_details = params.get('product_details')
-        product_name = product_details.get('nome')
+        product_name = params.get('nome')
 
     except KeyError as e:
         raise AirflowException(f"KeyError: {e}. {product_name} não encontrado no dicionario.")
@@ -47,15 +46,14 @@ def convert_to_clean_name(**kwargs):
 def trigger_function(**kwargs):
 
     params = kwargs.get('dag_run').conf
-    product_details = params.get('product_details')
-    product_name = product_details.get('nome')
+    product_name = params.get('nome')
 
     product = PRODUCT_MAPPING.get(product_name)
     next_tasks = []
     if product.get("funcao") != None:
         try:
             func = getattr(manipularArquivosShadow, product.get("funcao"), None)
-            aditional_params = func(product_details)
+            aditional_params = func(params)
             if aditional_params != None:
                 kwargs.get('dag_run').conf.update(aditional_params)	
                 next_tasks.append('trigger_external_dag')
@@ -74,8 +72,7 @@ def trigger_function(**kwargs):
         
 def trigger_external_dag(**kwargs):
     params = kwargs.get('dag_run').conf
-    product_details = params.get('product_details')
-    product_name = product_details.get('nome')
+    product_name = params.get('nome')
 
     product = PRODUCT_MAPPING.get(product_name)
     
@@ -99,7 +96,7 @@ def enviar_whatsapp_erro(context):
     dag_id = context['dag'].dag_id
     task_id = task_instance.task_id
     
-    msg = f"❌ Erro no Produto: *{context['params']['product_details']['nome']}*"
+    msg = f"❌ Erro no Produto: *{context['params']['nome']}*"
     fields = {
         "destinatario": "Airflow",
         "mensagem": msg
@@ -142,7 +139,7 @@ def enviar_whatsapp_sucesso(context):
     dag_id = context['dag'].dag_id
     task_id = task_instance.task_id
     
-    msg = f"✅ Sucesso no Produto: *{context['params']['product_details']['nome']}*"
+    msg = f"✅ Sucesso no Produto: *{context['params']['nome']}*"
     fields = {
         "destinatario": "Airflow",
         "mensagem": msg
@@ -165,11 +162,10 @@ def enviar_evento_event_tracker(context):
     #   "metadata": {}
     # }
 
-    print("product_details", context['params'])
     fields = {
         "eventType": "product_processed",
         "systemOrigin": "airflow_"+context['params']['function_name'],
-        "sessionId": context['params']['product_details']['nome'],
+        "sessionId": context['params']['nome'],
         # "value": 0
     }
     #debug events_api url
