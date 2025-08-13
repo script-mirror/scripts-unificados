@@ -142,9 +142,13 @@ with DAG(
         trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS,
     )
 
+    # FN (Deck Newave Preliminar e Definitivo)
     should_execute_normal_flow >> validar_dados_entrada
+    
+    # FE (Cargas mensais por Patamar)
     should_execute_normal_flow >> gerar_tabela_diferenca_cargas_externo
 
+    # FN (Processando SISTEMA.DAT e C_ADIC.DAT)
     validar_dados_entrada >> download_arquivos >> extrair_arquivos
     extrair_arquivos >> [processar_deck_nw_cadic, processar_deck_nw_sist]
     processar_deck_nw_sist >> should_execute_weol_update
@@ -152,9 +156,11 @@ with DAG(
     [atualizar_sist_com_weol, should_execute_weol_update, processar_deck_nw_cadic] >> enviar_dados_sistema_cadic_para_api
     enviar_dados_sistema_cadic_para_api >> gerar_tabela_diferenca_cargas_normal
     gerar_tabela_diferenca_cargas_normal >> enviar_tabela_whatsapp_email_normal >> finalizar_sistema_cadic
-
+    # FN (Processando PATAMAR.DAT)
     extrair_arquivos >> processar_patamar_nw >> enviar_dados_patamares_para_api >> finalizar_patamares
 
+    # FE
     gerar_tabela_diferenca_cargas_externo >> enviar_tabela_whatsapp_email_externo >> finalizar_fluxo_externo
 
+    # Finalização dos Fluxos
     [finalizar_sistema_cadic, finalizar_patamares, finalizar_fluxo_externo] >> finalizar

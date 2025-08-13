@@ -878,7 +878,7 @@ def get_valores_Newave(dtref):
     db_decks = wx_dbClass.db_mysql_master('db_decks')
     db_decks.connect()
     tb_cadastro_newave = db_decks.getSchema('tb_cadastro_newave')
-    tb_nw_carga = db_decks.getSchema('tb_nw_carga')	
+    tb_nw_carga = db_decks.getSchema('newave_previsoes_cargas')	
 
     # query para pegar o ultimo ID da tabela cadastro newave para poder pegar as ultimas cargas da tabela carga newave.
     query_get_ultimo_id_cadastro_newave = (db.select([tb_cadastro_newave.c.id, tb_cadastro_newave.c.dt_inicio_rv]).where(db.func.extract('year', tb_cadastro_newave.c.dt_inicio_rv) == dtref.year).order_by(desc(tb_cadastro_newave.c.dt_inicio_rv)).limit(1))
@@ -896,12 +896,12 @@ def get_valores_Newave(dtref):
         data_referencia_mes = data_referencia_quatroSemanas
   # criando uma variavel id para fazer a query e buscar o ultimo id cadastrado na tabela carga newave.
     id = ultimo_id_cadastro_carga_newave
-    query_get_newave_carga = db.select(tb_nw_carga.c.dt_referente,tb_nw_carga.c.vl_carga,tb_nw_carga.c.cd_submercado).where(db.and_(tb_nw_carga.c.id_deck == id))
+    query_get_newave_carga = db.select(tb_nw_carga.c.dt_referente,tb_nw_carga.c.vl_energia_total,tb_nw_carga.c.cd_submercado).where(db.and_(tb_nw_carga.c.id_deck == id))
     carga_newave = db_decks.conn.execute(query_get_newave_carga).all()
     # criando data frame com a data pesquisada.
     carga_newaveDF = pd.DataFrame(carga_newave)
     # renomeando colunas do dataframe 
-    carga_newaveDF = carga_newaveDF.rename(columns={0:'dt_referente',1:'vl_carga',2:'cd_submercado'})
+    carga_newaveDF = carga_newaveDF.rename(columns={0:'dt_referente',1:'vl_energia_total',2:'cd_submercado'})
     # Convertendo a coluna 'dt_referente' para o tipo datetime
     carga_newaveDF['dt_referente'] = pd.to_datetime(carga_newaveDF['dt_referente'])
     # Extrair o mês da coluna 'dt_referente'
@@ -923,7 +923,7 @@ def get_valores_Newave(dtref):
             elif row['cd_submercado'] == 4:
                     submercado = 'N'
             data_referencia = row['dt_referente']
-            valor_carga = row['vl_carga']
+            valor_carga = row['vl_energia_total']
             if submercado not in dicionario_carga_Newave:
                     dicionario_carga_Newave[submercado] = {}  # Se não existir, crie um dicionário interno
             dicionario_carga_Newave[submercado][data_referencia] = valor_carga
@@ -1420,7 +1420,7 @@ def get_newave_submercado(data_deck):
     for linha in id_escolhido:
             id = linha.id
 
-    query_carga_newave = db.select(tb_nw_carga.c.id_deck, tb_nw_carga.c.dt_referente, tb_nw_carga.c.cd_submercado, tb_nw_carga.c.vl_carga).where(tb_nw_carga.c.id_deck == id)
+    query_carga_newave = db.select(tb_nw_carga.c.id_deck, tb_nw_carga.c.dt_referente, tb_nw_carga.c.cd_submercado, tb_nw_carga.c.vl_energia_total).where(tb_nw_carga.c.id_deck == id)
     cargas_newave = db_decks.conn.execute(query_carga_newave).all()
 
     colunas = ["id_deck", "dt_referente", "cd_submercado", "vl_carga"]

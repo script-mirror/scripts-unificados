@@ -1095,60 +1095,26 @@ def notas_tecnicas_medio_prazo(dadosProduto: dict):
 if __name__ == '__main__':
     
     dadosProduto = {
-    "function_name": "WEBHOOK",
-    "product_details": {
-        "dataProduto": "09/2025",
-        "enviar": True,
-        "filename": "CargaMensal_2revquad2529.zip",
-        "macroProcesso": "Programação da Operação",
-        "nome": "Previsões de carga mensal e por patamar - NEWAVE",
-        "periodicidade": "2025-09-01T03:00:00.000Z",
-        "periodicidadeFinal": "2025-10-01T02:59:59.000Z",
-        "processo": "Previsão de Carga para o PMO",
-        "s3Key": "webhooks/Previsões de carga mensal e por patamar - NEWAVE/688d2cb494f9e32e8e798756_CargaMensal_2revquad2529.zip",
-        "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ny9Qcm9kdXRvcy8yMjkvQ2FyZ2FNZW5zYWxfMnJldnF1YWQyNTI5LnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJQcmV2aXPDtWVzIGRlIGNhcmdhIG1lbnNhbCBlIHBvciBwYXRhbWFyIC0gTkVXQVZFIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTQxNjkxMjMsIm5iZiI6MTc1NDA4MjQ4M30.kdmb2eKSpSmXep832Vrw6B7NAAdG_4On23P7cZlj3uM",
-        "webhookId": "688d2cb494f9e32e8e798756"
+        "file_path": "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/webhook/arquivos/tmp/Previsões de carga mensal e por patamar - NEWAVE/CargaMensal_2revquad2529.zip",
+        "function_name": "WEBHOOK",
+        "product_details": {
+            "dataProduto": "09/2025",
+            "enviar": True,
+            "filename": "CargaMensal_2revquad2529.zip",
+            "macroProcesso": "Programação da Operação",
+            "nome": "Previsões de carga mensal e por patamar - NEWAVE",
+            "periodicidade": "2025-09-01T03:00:00.000Z",
+            "periodicidadeFinal": "2025-10-01T02:59:59.000Z",
+            "processo": "Previsão de Carga para o PMO",
+            "s3Key": "webhooks/Previsões de carga mensal e por patamar - NEWAVE/688d2cb494f9e32e8e798756_CargaMensal_2revquad2529.zip",
+            "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ny9Qcm9kdXRvcy8yMjkvQ2FyZ2FNZW5zYWxfMnJldnF1YWQyNTI5LnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJQcmV2aXPDtWVzIGRlIGNhcmdhIG1lbnNhbCBlIHBvciBwYXRhbWFyIC0gTkVXQVZFIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTQxNjkxMjMsIm5iZiI6MTc1NDA4MjQ4M30.kdmb2eKSpSmXep832Vrw6B7NAAdG_4On23P7cZlj3uM",
+            "webhookId": "688d2cb494f9e32e8e798756"
+        },
+        "task_to_execute": "revisao_carga_nw",
+        "trigger_dag_id": "PROSPEC_UPDATER"
     }
-}
+    
     dadosProduto = dadosProduto["product_details"]
     carga_patamar_nw(dadosProduto)
     
-#     dadosProduto = {
-#     "function_name": "WEBHOOK",
-#     "product_details": {
-#         "dataProduto": "23/06/2025",
-#         "enviar": 0,
-#         "filename": "Eta40_precipitacao10d_20250623.zip",
-#         "macroProcesso": "Programação da Operação",
-#         "nome": "Modelo ETA",
-#         "periodicidade": "2025-06-23T03:00:00.000Z",
-#         "periodicidadeFinal": "2025-06-24T02:59:59.000Z",
-#         "processo": "Meteorologia e clima",
-#         "s3Key": "webhooks/Modelo ETA/6859284ab1c148748afd15dd_Eta40_precipitacao10d_20250623.zip",
-#         "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8zOC9Qcm9kdXRvcy81NDkvRXRhNDBfcHJlY2lwaXRhY2FvMTBkXzIwMjUwNjIzLnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJNb2RlbG8gRVRBIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTA3NjAxMjIsIm5iZiI6MTc1MDY3MzQ4Mn0.YscW7FP2ADuLS53tAxlG29mVjO_YoQWCxO76luEltWs",
-#         "webhookId": "6859284ab1c148748afd15dd"
-#     }
-# }
-#     dadosProduto = dadosProduto["product_details"]
-    
-#     modelo_eta(dadosProduto) 
-    
-#     dadosProduto = {
-#     "function_name": "WEBHOOK",
-#     "product_details": {
-#         "dataProduto": "23/06/2025",
-#         "enviar": 0,
-#         "filename": "GEFS50_precipitacao14d_20250623.zip",
-#         "macroProcesso": "Programação da Operação",
-#         "nome": "Modelo GEFS",
-#         "periodicidade": "2025-06-23T03:00:00.000Z",
-#         "periodicidadeFinal": "2025-06-24T02:59:59.000Z",
-#         "processo": "Meteorologia e clima",
-#         "s3Key": "webhooks/Modelo GEFS/68593650b1c148748afd15e4_GEFS50_precipitacao14d_20250623.zip",
-#         "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8zOC9Qcm9kdXRvcy81NTAvR0VGUzUwX3ByZWNpcGl0YWNhbzE0ZF8yMDI1MDYyMy56aXAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiTW9kZWxvIEdFRlMiLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1MDc2MzcxMSwibmJmIjoxNzUwNjc3MDcxfQ.NICaGwXdS0vbAn5llT-5IHXGdMU88gq9Ow1D0yb-eGM",
-#         "webhookId": "68593650b1c148748afd15e4"
-#     }
-# }
-#     dadosProduto = dadosProduto["product_details"]
-#     modelo_gefs(dadosProduto)
 
