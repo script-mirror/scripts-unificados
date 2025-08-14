@@ -16,7 +16,7 @@ import shutil
 import subprocess
 
 from dotenv import load_dotenv
-
+from middle.utils import get_auth_header, Constants
 
 logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
@@ -37,7 +37,7 @@ path_libs = os.path.dirname(os.path.abspath(__file__))
 path_webhook = os.path.dirname(path_libs)
 
 path_fontes = "/WX2TB/Documentos/fontes/"
-
+constants = Constants()
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 sys.path.insert(1, f"{PATH_PROJETO}/scripts_unificados")
@@ -401,12 +401,13 @@ def carga_patamar(dadosProduto: dict):
         "path":filename,
     })
     
-    return {
-        "file_path": filename,
-        "trigger_dag_id":"PROSPEC_UPDATER",
-        "task_to_execute": "revisao_carga_dc"
-    }
-
+    cmd = f"cd {constants.PATH_PROJETOS}; source env/bin/activate; python estudos-middle/update_estudos/update_decomp.py produto CARGA-DECOMP dt_produto {dadosProduto['dataProduto'][:10]}"
+    logger.info(f"Executando comando: {cmd}")
+    try:
+        subprocess.run(cmd, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Erro ao executar comando: {e}")
+        raise Exception(f"Erro ao executar comando: {e}")
 
 def deck_preliminar_decomp(dadosProduto: dict):
 
