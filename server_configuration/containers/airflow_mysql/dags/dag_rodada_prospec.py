@@ -147,7 +147,7 @@ with DAG(
     default_args=default_args,
     dag_id='1.03-PROSPEC_1RV', 
     start_date=datetime(2024, 4, 28), 
-    schedule_interval="51 06 * * 1-4", 
+    schedule_interval="21 06 * * *", 
     catchup=False,
     tags=['Prospec'],
 ) as dag:
@@ -168,7 +168,7 @@ with DAG(
     default_args=default_args,
     dag_id='1.04-PROSPEC_EC_EXT', 
     start_date=datetime(2024, 4, 28), 
-    schedule_interval="00 19 * * 1-4", 
+    schedule_interval="00 19 * * *", 
     catchup=False,
     tags=['Prospec'],
 ) as dag:
@@ -189,7 +189,7 @@ with DAG(
     default_args=default_args,
     dag_id='1.05-PROSPEC_CENARIO_10', 
     start_date=datetime(2024, 4, 28), 
-    schedule_interval='42 6 * * 1-5', 
+    schedule_interval='42 6 * * *', 
     catchup=False,
     tags=['Prospec'],
 ) as dag:
@@ -548,17 +548,19 @@ with DAG(
     tags=['Prospec'],
 ) as dag:
     run_script_task = PythonOperator(
-        task_id='run_script_with_dynamic_params',
+        task_id='run_update_dc',
         python_callable=run_update_dc,
+        do_xcom_push=False,
     )
     run_prospec_on_host = SSHOperator(
         trigger_rule="none_failed_min_one_success",
         task_id='run',
         ssh_conn_id='ssh_master',  
-        command="{{ ti.xcom_pull(task_ids='run_script_with_dynamic_params', key='command')}}",
+        command="{{ ti.xcom_pull(task_ids='run_update_dc', key='command')}}",
         conn_timeout=36000,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
         get_pty=True,
+        do_xcom_push=False,
     )
     run_script_task >> run_prospec_on_host  
