@@ -9,7 +9,7 @@ from airflow.models import DagRun
 from airflow.exceptions import AirflowSkipException
 from airflow.utils.db import create_session
 import subprocess
-from middle.utils.constants import Constants 
+from middle.utils import Constants 
 consts = Constants()
 
 CMD_BASE      = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/main_roda_estudos.py "
