@@ -20,8 +20,16 @@ from apps.dbUpdater.libs import deck_nw,deck_ds
 from apps.verificadores.ccee import rz_download_decks_ccee
 from apps.gerarProdutos import gerarProdutos2 
 from bibliotecas import wx_opweek, rz_dir_tools
+from middle.utils import get_auth_header
+from middle.message import send_whatsapp_message
 
+def enviar_whatsapp_erro(context):
+    task_instance = context['task_instance']
+    dag_id = context['dag'].dag_id
+    task_id = task_instance.task_id
 
+    msg = f"❌ Erro na DAG: *{dag_id}*\nTask: *{task_id}*"
+    send_whatsapp_message("debug", msg)
 
 
 def check_file_exist(path_zip,dt_ref):
@@ -169,6 +177,7 @@ with DAG(
         python_callable=download_deck_ds,
         provide_context=True,
         execution_timeout=datetime.timedelta(hours=8),
+        on_failure_callback=enviar_whatsapp_erro,
     )
 
     dbUpdater_ds = BranchPythonOperator(
