@@ -546,6 +546,7 @@ with DAG(
     schedule_interval=None, 
     catchup=False,
     tags=['Prospec'],
+    max_active_runs=1,
 ) as dag:
     run_script_task = PythonOperator(
         task_id='run_update_dc',

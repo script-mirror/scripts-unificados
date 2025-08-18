@@ -184,11 +184,6 @@ with DAG(
     catchup=False,
     schedule=None,
     tags=['Webhook', 'Prospec'],
-    default_args={
-        'retries': 2,
-        'retry_delay': datetime.timedelta(minutes=1),
-        
-    },
     render_template_as_native_obj=True
 
 ) as dag:
