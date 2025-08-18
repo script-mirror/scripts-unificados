@@ -461,16 +461,19 @@ def organizarArquivosOns(data, pathArquivos, importarDb=False, enviarEmail=False
 
     fileName = 'ds_ons_{:0>2}{}_rv{}d{}.zip'.format(dataEletrica.mesReferente, dataEletrica.anoReferente, dataEletrica.atualRevisao, data.strftime('%d'))
     folderName, _zipextension = fileName.split('.')
+    zips_disponiveis = glob.glob("*.zip", root_dir=pathArqDia)
     deckDessemOnsPath = os.path.join(pathArqDia, fileName)
+    for _zip in zips_disponiveis:
+        if _zip.lower() in deckDessemOnsPath.lower():
+            deckDessemOnsPath = os.path.join(pathArqDia, _zip)
+            break
 
     pathDeckExtract = os.path.join(pathArqEntrada, 'ons_entrada_saida')
     pathDeckExtract2 = os.path.join(path_decks, 'ons', 'ds', folderName)
-
     for pathDst in [pathDeckExtract, pathDeckExtract2]:
 
         if os.path.exists(pathDst):
             shutil.rmtree(pathDst) 
-
         with zipfile.ZipFile(deckDessemOnsPath, 'r') as zip_ref:
             zip_ref.extractall(pathDst)
         print(pathDst)
