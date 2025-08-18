@@ -2,7 +2,7 @@ import os
 import pdb
 import sqlalchemy as db
 from sqlalchemy.engine import Connection
-
+import sys
 home_path =  os.path.expanduser("~")
 dropbox_middle_path = os.path.join(home_path, 'Dropbox', 'WX - Middle')
 
@@ -101,7 +101,8 @@ class db_mysql_master():
 
         self.connect()
         result = self.conn.execute(query)
-        if commit:
+        if sys.version_info[0] == 3 and sys.version_info[1] >= 9:
+            print("commitando transacao")
             self.conn.commit()
         #devolve a conexao ao pool 
         self.conn.close()

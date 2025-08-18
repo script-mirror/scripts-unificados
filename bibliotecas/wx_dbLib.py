@@ -16,10 +16,11 @@ import matplotlib.dates as mdates
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.bibliotecas import wx_dbClass,wx_opweek
 from PMO.scripts_unificados.apps.web_modelos.server.caches import rz_cache
+from middle.utils import setup_logger
 
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
-
+logger = setup_logger()
 
 class WxDataB:
 
@@ -341,35 +342,68 @@ def getGeracaoHoraria(data):
     return answer
 
 def getCargaHoraria(data):
-    dateFormat = "%Y-%m-%d"
-
-    db_ons = wx_dbClass.db_mysql_master("db_ons", connect=True)
-    tb_carga_horaria = db_ons.db_schemas['tb_carga_horaria']
+    logger.info(f"Iniciando busca de carga horária para data: {data}")
     
-    sql_select = db.select([
-        tb_carga_horaria.c.str_submercado,
-        tb_carga_horaria.c.dt_referente,
-        tb_carga_horaria.c.vl_carga,
-    ]).where(
-        tb_carga_horaria.c.dt_update == data.strftime(dateFormat)
-    ).order_by(
-        tb_carga_horaria.c.dt_referente
+    dateFormat = "%Y-%m-%d"
+    formatted_date = data.strftime(dateFormat)
+    logger.debug(f"Data formatada: {formatted_date}")
+
+    try:
+        logger.info("Conectando ao banco de dados db_ons")
+        db_ons = wx_dbClass.db_mysql_master("db_ons", connect=True)
+        tb_carga_horaria = db_ons.db_schemas['tb_carga_horaria']
+        logger.debug("Conexão com banco estabelecida e tabela tb_carga_horaria carregada")
+        
+        logger.info(f"Executando consulta SQL para data: {formatted_date}")
+        sql_select = db.select(
+            tb_carga_horaria.c.str_submercado,
+            tb_carga_horaria.c.dt_referente,
+            tb_carga_horaria.c.vl_carga,
+        ).where(
+            tb_carga_horaria.c.dt_update == formatted_date
+        ).order_by(
+            tb_carga_horaria.c.dt_referente
         )
-    answer = db_ons.db_execute(sql_select).fetchall()
-    db_ons.db_dispose()
+        
+        answer = db_ons.db_execute(sql_select).fetchall()
+        logger.info(f"Consulta executada com sucesso. {len(answer)} registros encontrados")
+        
+        if not answer:
+            logger.warning(f"Nenhum registro encontrado para a data: {formatted_date}")
+        
+    except Exception as e:
+        logger.error(f"Erro ao executar consulta de carga horária: {str(e)}")
+        raise
+    logger.info("Função getCargaHoraria finalizada com sucesso")
     return answer
 
 
 def get_Balanco_Dessem(data):
-
-    db_decks = wx_dbClass.db_mysql_master("db_decks")
-    db_decks.connect()	
-    tb_balanco_dessem = db_decks.getSchema('tb_balanco_dessem')
+    logger.info(f"Iniciando busca de balanço DESSEM para data: {data}")
     
-    sql_select = tb_balanco_dessem.select().where(tb_balanco_dessem.c.dt_data_hora >= data)
-    answer = db_decks.conn.execute(sql_select).all()
-
-    return answer
+    try:
+        logger.info("Conectando ao banco de dados db_decks")
+        db_decks = wx_dbClass.db_mysql_master("db_decks")
+        db_decks.connect()
+        logger.info("Conexão com banco de dados estabelecida com sucesso")
+        
+        logger.debug("Obtendo schema da tabela tb_balanco_dessem")
+        tb_balanco_dessem = db_decks.getSchema('tb_balanco_dessem')
+        
+        logger.debug(f"Executando consulta SQL com filtro de data >= {data}")
+        sql_select = tb_balanco_dessem.select().where(tb_balanco_dessem.c.dt_data_hora >= data)
+        answer = db_decks.db_execute(sql_select).all()
+        
+        logger.info(f"Consulta executada com sucesso. Registros encontrados: {len(answer)}")
+        
+        if not answer:
+            logger.warning(f"Nenhum registro encontrado para data >= {data}")
+        
+        return answer
+        
+    except Exception as e:
+        logger.error(f"Erro ao buscar balanço DESSEM para data {data}: {str(e)}")
+        raise
 
 
 def prev_carga_dessem(dt_prev):
@@ -535,8 +569,10 @@ def get_gereracao_termica_min_semana(dt_prev):
                 ultimo_balanco_com_valor = balanco
             else:
                 balanco = ultimo_balanco_com_valor
-
-        days_to_sum = dt_aux - balanco[0][0]
+        try:
+            days_to_sum = dt_aux - balanco[0][0]
+        except:
+            logger.error("Sem dados de balanco do dessem, verificar dag DOWNLOAD CCEE")
         df_balanco = pd.DataFrame(balanco, columns = ['dt_data_hora', 'str_subsistema', 'vl_cmo', 'vl_demanda','vl_geracao_renovaveis', 'vl_geracao_hidreletrica','vl_geracao_termica', 'vl_gtmin', 'vl_gtmax', 'vl_intercambio','vl_pld'])
         df_geracao_termica_min = df_balanco[df_balanco['dt_data_hora'] < dt_aux + datetime.timedelta(days=1) ][['dt_data_hora','str_subsistema','vl_gtmin']]
         df_geracao_termica_min['horario'] = df_geracao_termica_min['dt_data_hora'] + days_to_sum
