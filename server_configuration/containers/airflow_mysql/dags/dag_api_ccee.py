@@ -27,6 +27,24 @@ def enviar_whatsapp_erro(context):
     response = req.post(WHATSAPP_API, data=fields, headers=headers)
     print("Enviando log para whatsapp:", response.status_code)
 
+def enviar_whatsapp_sucesso(context):
+    task_instance = context['task_instance']
+    if task_instance.state == 'skipped':
+        return
+
+    task_instance = context['task_instance']
+    dag_id = context['dag'].dag_id
+    task_id = task_instance.task_id
+    msg = f"✅ Sucesso na DAG: *{dag_id}*\nTask: *{task_id}*"
+    fields = {
+        "destinatario": "Airflow",
+        "mensagem": msg
+    }
+    headers = get_auth_header()
+    response = req.post(WHATSAPP_API, data=fields, headers=headers)
+    print("Enviando log para whatsapp:", response.status_code)
+    fields['destinatario'] = 'debug'
+    response = req.post(WHATSAPP_API, data=fields, headers=headers)
 
 def get_cvu_mapping():
     res = req.get('https://tradingenergiarz.com/'
@@ -191,6 +209,7 @@ with DAG(
         task_id='export_data_to_db',
         python_callable=export_data_to_db,
         provide_context=True,
+        on_success_callback=enviar_whatsapp_sucesso,
     )
 
     trigger_updater_estudo = TriggerDagRunOperator(
