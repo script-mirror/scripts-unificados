@@ -167,7 +167,7 @@ def enviar_evento_event_tracker(context):
 
     fields = {
         "eventType": "product_processed",
-        "systemOrigin": "airflow_"+context['params']['function_name'],
+        "systemOrigin": "airflow_WEBHOOK",
         "sessionId": context['params']['nome'],
         # "value": 0
     }
