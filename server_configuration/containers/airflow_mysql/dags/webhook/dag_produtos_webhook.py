@@ -319,7 +319,7 @@ with DAG(
 
     executar_comando_decomp = SSHOperator(
         task_id='executar_comando_decomp',
-        ssh_conn_id='ssh_default',
+        ssh_conn_id='ssh_master',
         command='cd {{ params.PATH_PROJETOS }}; source env/bin/activate; python estudos-middle/update_estudos/update_decomp.py produto EOLICA-DECOMP dt_produto {{ dag_run.conf.dataProduto }}',
         params={'PATH_PROJETOS': constants.PATH_PROJETOS},
         retries=2,
