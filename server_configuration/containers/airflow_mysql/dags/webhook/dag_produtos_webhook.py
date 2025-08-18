@@ -327,5 +327,5 @@ with DAG(
     )
 
     inicio >> patamares
-    patamares >> previsao_final >> gerar_produtos >> executar_comando_decomp >> atualizar_estudos >> trigger_dag_prospec
+    patamares >> previsao_final >> gerar_produtos >> atualizar_estudos >> executar_comando_decomp >> trigger_dag_prospec
 
