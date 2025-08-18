@@ -114,7 +114,7 @@ with DAG(
     )
 
     carga_dadger_decomp = TriggerDagRunOperator(
-        task_id='cvu_dadger_decomp',
+        task_id='carga_dadger_decomp',
         trigger_dag_id='1.18-PROSPEC_UPDATE_DECOMP',
         conf={'produto': 'CARGA-DECOMP'},
         wait_for_completion=True,
