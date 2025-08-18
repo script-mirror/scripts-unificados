@@ -297,8 +297,8 @@ with DAG(
         retry_delay=datetime.timedelta(minutes=2),
         provide_context=True
     )
-    atualizar_estudos = PythonOperator(
-        task_id='atualizar_estudos_prospec_eolica',
+    atualizar_newave = PythonOperator(
+        task_id='atualizar_estudos_newave',
         python_callable=deck_prev_eolica_semanal_update_estudos,
         provide_context=True
     )
@@ -317,15 +317,13 @@ with DAG(
 
     )
 
-    executar_comando_decomp = SSHOperator(
-        task_id='executar_comando_decomp',
-        ssh_conn_id='ssh_master',
-        command='cd {{ params.PATH_PROJETOS }}; source env/bin/activate; python estudos-middle/update_estudos/update_decomp.py produto EOLICA-DECOMP dt_produto {{ dag_run.conf.dataProduto }}',
-        params={'PATH_PROJETOS': constants.PATH_PROJETOS},
-        retries=2,
-        retry_delay=datetime.timedelta(minutes=1),
+    atualizar_decomp = TriggerDagRunOperator(
+        task_id='cvu_dadger_decomp',
+        trigger_dag_id='1.18-PROSPEC_UPDATE_DECOMP',
+        conf={'produto': 'EOLICA-DECOMP'},
+        wait_for_completion=True,
     )
 
     inicio >> patamares
-    patamares >> previsao_final >> gerar_produtos >> atualizar_estudos >> executar_comando_decomp >> trigger_dag_prospec
+    patamares >> previsao_final >> gerar_produtos >> [atualizar_newave, atualizar_decomp] >> trigger_dag_prospec
 

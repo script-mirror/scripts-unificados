@@ -8,6 +8,7 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.providers.ssh.operators.ssh import SSHOperator
+from middle.utils import Constants, get_auth_header
 import requests
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 WHATSAPP_API = os.getenv("WHATSAPP_API")
@@ -105,37 +106,19 @@ with DAG(
         task_id='revisao_restricao',
     )
 
-    cvu_dadger_decomp = PythonOperator(
+    cvu_dadger_decomp = TriggerDagRunOperator(
         task_id='cvu_dadger_decomp',
-        python_callable=update_estudo.update_cvu_dadger_dc_estudo,
-        provide_context=True,
-        op_kwargs={
-            "fontes_to_search": '{{ dag_run.conf.get("external_params").get("fontes_to_search")}}',
-            "dt_atualizacao": '{{ dag_run.conf.get("external_params").get("dt_atualizacao")}}',
-            "ids_to_modify":'{{ dag_run.conf.get("ids_to_modify") }}'
-            },
+        trigger_dag_id='1.18-PROSPEC_UPDATE_DECOMP',
+        conf={'produto': 'CVU-DECOMP'},
+        wait_for_completion=True,
     )
 
-    carga_dadger_decomp = PythonOperator(
-        task_id='carga_dadger_decomp',
-        python_callable=update_estudo.update_carga_dadger_dc_estudo,
-        provide_context=True,
-        op_kwargs={
-            "file_path": '{{ dag_run.conf.get("external_params").get("file_path")}}',
-            "ids_to_modify":'{{ dag_run.conf.get("ids_to_modify") }}'
-            },
-        
+    carga_dadger_decomp = TriggerDagRunOperator(
+        task_id='cvu_dadger_decomp',
+        trigger_dag_id='1.18-PROSPEC_UPDATE_DECOMP',
+        conf={'produto': 'CARGA-DECOMP'},
+        wait_for_completion=True,
     )
-    carga_pq_dadger_dc = PythonOperator(
-        task_id='carga_pq_dadger_dc',
-        python_callable=update_carga_pq_dadger_dc,
-        provide_context=True,
-        op_kwargs={
-            "data_produto": '{{ dag_run.conf.get("external_params").get("product_details").get("dataProduto")}}',
-            "ids_to_modify":'{{ dag_run.conf.get("ids_to_modify") }}'
-            },
-    )
-    
 
 
     cvu_clast_newave = PythonOperator(
@@ -196,6 +179,6 @@ with DAG(
 
 inicio >> revisao_cvu >> cvu_dadger_decomp >> cvu_clast_newave >> trigger_dag_prospec
 inicio >> revisao_cvu >> cvu_dadger_decomp >> trigger_dag_prospec
-inicio >> revisao_carga_dc >> carga_dadger_decomp >> carga_pq_dadger_dc >> trigger_dag_prospec
+inicio >> revisao_carga_dc >> carga_dadger_decomp >> trigger_dag_prospec
 inicio >> revisao_carga_nw >> carga_c_adic_newave >> carga_sistema_newave >> trigger_dag_prospec
 inicio >> revisao_restricao >> restricao_dadger_decomp >> trigger_dag_prospec
