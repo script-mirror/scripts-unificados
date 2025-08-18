@@ -461,7 +461,7 @@ def organizarArquivosOns(data, pathArquivos, importarDb=False, enviarEmail=False
 
     fileName = 'ds_ons_{:0>2}{}_rv{}d{}.zip'.format(dataEletrica.mesReferente, dataEletrica.anoReferente, dataEletrica.atualRevisao, data.strftime('%d'))
     folderName, _zipextension = fileName.split('.')
-    zips_disponiveis = glob.glob("*.zip", root_dir=pathArqDia)
+    zips_disponiveis = glob.glob(os.path.join(pathArqDia, "*.zip"))
     deckDessemOnsPath = os.path.join(pathArqDia, fileName)
     for _zip in zips_disponiveis:
         if _zip.lower() in deckDessemOnsPath.lower():
