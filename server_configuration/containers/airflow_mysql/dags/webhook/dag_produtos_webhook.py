@@ -6,6 +6,7 @@ from airflow.models.dag import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.providers.ssh.operators.ssh import SSHOperator
 import requests
 import traceback
 import os
@@ -258,14 +259,6 @@ def deck_prev_eolica_semanal_update_estudos(**kwargs):
     params = kwargs.get('dag_run').conf
     data_produto = datetime.datetime.strptime(params.get('dataProduto'), "%d/%m/%Y")
     
-    cmd = f"cd {constants.PATH_PROJETOS}; source env/bin/activate; python estudos-middle/update_estudos/update_decomp.py produto EOLICA-DECOMP dt_produto {params.get('dataProduto')}"
-    print(f"Executando comando: {cmd}")
-    try:
-        subprocess.run(cmd, shell=True, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Erro ao executar comando: {e}")
-        raise Exception(f"Erro ao executar comando: {e}")
-
     update_weol_sistema_nw_estudo(data_produto.date())
     
 def gerar_produto(**kwargs):
@@ -324,7 +317,15 @@ with DAG(
 
     )
 
+    executar_comando_decomp = SSHOperator(
+        task_id='executar_comando_decomp',
+        ssh_conn_id='ssh_default',
+        command='cd {{ params.PATH_PROJETOS }}; source env/bin/activate; python estudos-middle/update_estudos/update_decomp.py produto EOLICA-DECOMP dt_produto {{ dag_run.conf.dataProduto }}',
+        params={'PATH_PROJETOS': constants.PATH_PROJETOS},
+        retries=2,
+        retry_delay=datetime.timedelta(minutes=1),
+    )
+
     inicio >> patamares
-    patamares >> previsao_final >> gerar_produtos >> atualizar_estudos >> trigger_dag_prospec
-    
-    
+    patamares >> previsao_final >> gerar_produtos >> executar_comando_decomp >> atualizar_estudos >> trigger_dag_prospec
+
