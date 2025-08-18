@@ -465,7 +465,9 @@ def organizarArquivosOns(data, pathArquivos, importarDb=False, enviarEmail=False
     deckDessemOnsPath = os.path.join(pathArqDia, fileName)
     for _zip in zips_disponiveis:
         if _zip.lower() in deckDessemOnsPath.lower():
-            deckDessemOnsPath = os.path.join(pathArqDia, _zip)
+            old_path = os.path.join(pathArqDia, _zip)
+            new_path = deckDessemOnsPath
+            os.rename(old_path, new_path)
             break
 
     pathDeckExtract = os.path.join(pathArqEntrada, 'ons_entrada_saida')
