@@ -1,4 +1,3 @@
-
 import datetime
 import sys
 from dotenv import load_dotenv
@@ -10,6 +9,9 @@ from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 import requests
 import traceback
 import os
+import subprocess
+from middle.utils import Constants
+constants = Constants()
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 WHATSAPP_API = os.getenv("WHATSAPP_API")
 EVENTS_API = os.getenv("URL_EVENTS_API")
@@ -255,7 +257,15 @@ def deck_prev_eolica_semanal_previsao_final(**kwargs):
 def deck_prev_eolica_semanal_update_estudos(**kwargs):
     params = kwargs.get('dag_run').conf
     data_produto = datetime.datetime.strptime(params.get('dataProduto'), "%d/%m/%Y")
-    update_weol_dadger_dc_estudo(data_produto.date())
+    
+    cmd = f"cd {constants.PATH_PROJETOS}; source env/bin/activate; python estudos-middle/update_estudos/update_decomp.py produto EOLICA-DECOMP dt_produto {params.get('dataProduto')}"
+    print(f"Executando comando: {cmd}")
+    try:
+        subprocess.run(cmd, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Erro ao executar comando: {e}")
+        raise Exception(f"Erro ao executar comando: {e}")
+
     update_weol_sistema_nw_estudo(data_produto.date())
     
 def gerar_produto(**kwargs):

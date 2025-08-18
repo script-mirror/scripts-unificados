@@ -3,29 +3,31 @@ import re
 import pdb
 import sys
 import glob
-import shutil
 import datetime
 import pandas as pd
 import requests
 from typing import List
-from io import StringIO
-
+import subprocess
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
 PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
 sys.path.insert(1, f"/WX2TB/Documentos/fontes/")
 sys.path.insert(1, f"{PATH_PROJETO}/scripts_unificados")
 
-from apps.prospec.libs.info_arquivos_externos import info_external_files
-from apps.prospec.libs.newave.sistema import updater as sistema_updater
-from apps.prospec.libs.newave.c_adic import updater as c_adic_updater
-from apps.prospec.libs.decomp.dadger import updater as dadger_updater
-from apps.prospec.libs.newave.clast import updater as clast_updater
-from apps.prospec.prospec import RzProspec
-from apps.prospec.libs import utils
+from apps.prospec.libs.info_arquivos_externos import info_external_files  # noqa: E402
+from apps.prospec.libs.newave.sistema import updater as sistema_updater  # noqa: E402
+from apps.prospec.libs.newave.c_adic import updater as c_adic_updater  # noqa: E402
+from apps.prospec.libs.decomp.dadger import updater as dadger_updater  # noqa: E402
+from apps.prospec.libs.newave.clast import updater as clast_updater  # noqa: E402
+from apps.prospec.prospec import RzProspec  # noqa: E402
+from apps.prospec.libs import utils  # noqa: E402
 
-from middle.utils import sanitize_string, setup_logger
-from middle.utils.auth import get_auth_header
+from middle.utils import ( # noqa: E402
+    setup_logger,
+    get_auth_header,
+    Constants,
+)
+constants = Constants()
 logger = setup_logger()
 
 api = RzProspec()
@@ -77,52 +79,60 @@ def update_cvu_dadger_dc_estudo(
     dt_atualizacao: datetime.datetime,
     ids_to_modify: List[int] = None
 ):
-    tag = [f'CVU {datetime.datetime.now().strftime("%d/%m %H:%M")}']
-    if not ids_to_modify:
-        ids_to_modify = get_ids_to_modify()
+    cmd = f"cd {constants.PATH_PROJETOS}; source env/bin/activate; python estudos-middle/update_estudos/update_decomp.py produto CVU-DECOMP dt_produto {dt_atualizacao.strftime('%d/%m/%Y')}"
+    print(f"Executando comando: {cmd}")
+    try:
+        subprocess.run(cmd, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Erro ao executar comando: {e}")
+        raise Exception(f"Erro ao executar comando: {e}")
+    
+    # tag = [f'CVU {datetime.datetime.now().strftime("%d/%m %H:%M")}']
+    # if not ids_to_modify:
+    #     ids_to_modify = get_ids_to_modify()
 
-    info_cvu = info_external_files.organizar_info_cvu(
-        fontes_to_search=fontes_to_search,
-        dt_atualizacao=dt_atualizacao
-    )
+    # info_cvu = info_external_files.organizar_info_cvu(
+    #     fontes_to_search=fontes_to_search,
+    #     dt_atualizacao=dt_atualizacao
+    # )
 
-    for id_estudo in ids_to_modify:
+    # for id_estudo in ids_to_modify:
 
-        logger.info("\n\n")
-        logger.info(f"Modificando estudo {id_estudo}")
+    #     logger.info("\n\n")
+    #     logger.info(f"Modificando estudo {id_estudo}")
 
-        path_to_modify = api.downloadEstudoPorId(id_estudo)
+    #     path_to_modify = api.downloadEstudoPorId(id_estudo)
 
-        extracted_zip_estudo = utils.extract_file_estudo(
-            path_to_modify,
-        )
-        if not os.path.exists(extracted_zip_estudo):
-            logger.info(f"erro ao fazer download de estudo com id {id_estudo}")
-            continue
+    #     extracted_zip_estudo = utils.extract_file_estudo(
+    #         path_to_modify,
+    #     )
+    #     if not os.path.exists(extracted_zip_estudo):
+    #         logger.info(f"erro ao fazer download de estudo com id {id_estudo}")
+    #         continue
 
-        # ALTERAR CVU EM DECKS DC
-        dadgers_to_modify = glob.glob(
-            os.path.join(
-                extracted_zip_estudo,
-                "**",
-                "*dadger*"),
-            recursive=True)
-        arquivos_filtrados = [
-            arquivo for arquivo in dadgers_to_modify if not re.search(
-                r'\.0+$', arquivo)]
-        if arquivos_filtrados == []:
-            raise Exception(
-                "Não foi encontrado nenhum arquivo"
-                f" dadger no estudo {id_estudo}")
-        paths_modified = dadger_updater.atualizar_cvu_dadger_decomp(
-            info_cvu,
-            arquivos_filtrados,
-            id_estudo
-        )
+    #     # ALTERAR CVU EM DECKS DC
+    #     dadgers_to_modify = glob.glob(
+    #         os.path.join(
+    #             extracted_zip_estudo,
+    #             "**",
+    #             "*dadger*"),
+    #         recursive=True)
+    #     arquivos_filtrados = [
+    #         arquivo for arquivo in dadgers_to_modify if not re.search(
+    #             r'\.0+$', arquivo)]
+    #     if arquivos_filtrados == []:
+    #         raise Exception(
+    #             "Não foi encontrado nenhum arquivo"
+    #             f" dadger no estudo {id_estudo}")
+    #     paths_modified = dadger_updater.atualizar_cvu_dadger_decomp(
+    #         info_cvu,
+    #         arquivos_filtrados,
+    #         id_estudo
+    #     )
 
-        send_files_to_api(id_estudo, paths_modified, tag)
+    #     send_files_to_api(id_estudo, paths_modified, tag)
 
-        logger.info("============================================")
+    #     logger.info("============================================")
 
 
 def update_carga_dadger_dc_estudo(
