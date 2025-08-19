@@ -117,8 +117,8 @@ def enviar_whatsapp_erro_weol(context):
     task_instance = context['task_instance']
     dag_id = context['dag'].dag_id
     task_id = task_instance.task_id
-    
-    msg = f"❌ Erro em {dag_id} na task {task_id}"
+
+    msg = f"❌ Erro na DAG: *{dag_id}*\nTask: *{task_id}*"
     fields = {
         "destinatario": "Airflow",
         "mensagem": msg
@@ -141,8 +141,8 @@ def enviar_whatsapp_sucesso(context):
     task_instance = context['task_instance']
     dag_id = context['dag'].dag_id
     task_id = task_instance.task_id
+    msg = f"✅ Sucesso na DAG: *{dag_id}*\nTask: *{task_id}*"
     
-    msg = f"✅ Sucesso no Produto: *{context['params']['nome']}*"
     fields = {
         "destinatario": "Airflow",
         "mensagem": msg
