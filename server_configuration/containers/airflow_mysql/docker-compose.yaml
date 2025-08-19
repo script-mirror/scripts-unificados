@@ -6,7 +6,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@172.31.14.62:3306/airflow
     AIRFLOW__CELERY__RESULT_BACKEND: db+mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@172.31.14.62:3306/airflow
-    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
+    AIRFLOW__CELERY__BROKER_URL: redis://:@localhost:6379/0
     AIRFLOW__CORE__FERNET_KEY: ''
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
