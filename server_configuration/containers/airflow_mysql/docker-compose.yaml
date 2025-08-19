@@ -59,8 +59,13 @@ services:
       - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
       - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
       - ${AIRFLOW_PROJ_DIR:-.}/airflow.cfg:/opt/airflow/airflow.cfg
+      - /WX/WX2TB:/WX2TB
+      - /WX/WX4TB:/WX4TB
+      - /WX/SERVER_NW:/WX/SERVER_NW
       - /home/admin/Dropbox:/home/airflow/Dropbox
       - /home/admin/s3-drive:/home/airflow/s3-drive
+      - /home/admin/.env:/home/airflow/.env
+      - /home/admin/jose:/home/admin/jose
 
   airflow-scheduler:
     build: .
@@ -88,5 +93,10 @@ services:
       - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
       - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
       - ${AIRFLOW_PROJ_DIR:-.}/airflow.cfg:/opt/airflow/airflow.cfg
+      - /WX/WX2TB:/WX2TB
+      - /WX/WX4TB:/WX4TB
+      - /WX/SERVER_NW:/WX/SERVER_NW
       - /home/admin/Dropbox:/home/airflow/Dropbox
       - /home/admin/s3-drive:/home/airflow/s3-drive
+      - /home/admin/.env:/home/airflow/.env
+      - /home/admin/jose:/home/admin/jose
