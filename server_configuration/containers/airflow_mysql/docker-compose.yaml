@@ -1,12 +1,11 @@
+version: '3'
 x-airflow-common: &airflow-common
   build: .
-  network_mode: "host"
   environment:
     &airflow-common-env
-    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@172.31.14.62:3306/airflow
     AIRFLOW__CELERY__RESULT_BACKEND: db+mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@172.31.14.62:3306/airflow
-    AIRFLOW__CELERY__BROKER_URL: http://172.31.13.224:6379/0
     AIRFLOW__CORE__FERNET_KEY: ''
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
@@ -17,21 +16,6 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
     NEW_RELIC_INSERT_KEY: '7fbf1e391a7b4ca633fb6d9d176b810dFFFFNRAL'
     AIRFLOW__CORE__LOGGING_LEVEL: INFO
-    # Celery worker configuration
-    AIRFLOW__CELERY__WORKER_CONCURRENCY: 4
-    AIRFLOW__CELERY__TASK_SOFT_TIME_LIMIT: 600
-    AIRFLOW__CELERY__TASK_TIME_LIMIT: 1200
-    AIRFLOW__CELERY__WORKER_PREFETCH_MULTIPLIER: 1
-    AIRFLOW__CELERY__OPERATION_TIMEOUT: 10.0
-    AIRFLOW__CELERY__TASK_TRACK_STARTED: 'true'
-    AIRFLOW__CELERY__TASK_REJECT_ON_WORKER_LOST: 'true'
-    AIRFLOW__CELERY__WORKER_ENABLE_REMOTE_CONTROL: 'false'
-    # Core configuration for better task handling
-    AIRFLOW__CORE__DAGBAG_IMPORT_TIMEOUT: 300
-    AIRFLOW__CORE__TASK_RUNNER: StandardTaskRunner
-    AIRFLOW__CORE__PARALLELISM: 32
-    AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG: 16
-    AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG: 16
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
@@ -45,46 +29,15 @@ x-airflow-common: &airflow-common
     - /home/admin/s3-drive:/home/airflow/s3-drive
     - /home/admin/.env:/home/airflow/.env
     - /home/admin/jose:/home/admin/jose
+
+
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
-    # postgres:
-    #   condition: service_healthy
-    redis:
-      condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
 
 services:
-  # postgres:
-  #   image: postgres:13
-  #   container_name: airflow_postgres
-  #   environment:
-  #     - POSTGRES_USER=${POSTGRES_USER}
-  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-  #     - POSTGRES_DB=airflow
-  #   volumes:
-  #     - postgres-db-volume:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD", "pg_isready", "-U", "airflow"]
-  #     interval: 10s
-  #     retries: 5
-  #     start_period: 5s
-  #   restart: always
-  #   ports:
-  #     - "5432:5432"
-
-  redis:
-    image: redis:latest
-    container_name: airflow_redis
-    ports:
-      - "6379:6379"
-    command: redis-server --maxmemory 1gb --maxmemory-policy allkeys-lru --save 60 1000
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 30s
-      retries: 50
-      start_period: 30s
-    restart: always
 
   airflow-web:
     <<: *airflow-common
@@ -100,8 +53,6 @@ services:
     restart: always
     depends_on:
       <<: *airflow-common-depends-on
-      airflow-init:
-        condition: service_completed_successfully
 
   airflow-scheduler:
     <<: *airflow-common
@@ -115,31 +66,6 @@ services:
     restart: always
     depends_on:
       <<: *airflow-common-depends-on
-      airflow-init:
-        condition: service_completed_successfully
-
-  airflow-worker:
-    <<: *airflow-common
-    command: celery worker --concurrency=4
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-        reservations:
-          memory: 1G
-    healthcheck:
-      test:
-        - "CMD-SHELL"
-        - 'celery --app airflow.providers.celery.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}" --timeout=30 || exit 1'
-      interval: 60s
-      timeout: 30s
-      retries: 3
-      start_period: 60s
-    restart: always
-    depends_on:
-      <<: *airflow-common-depends-on
-      airflow-init:
-        condition: service_completed_successfully
 
   airflow-init:
     <<: *airflow-common
@@ -160,23 +86,3 @@ services:
     user: "0:0"
     volumes:
       - ${AIRFLOW_PROJ_DIR:-.}:/sources
-
-  flower:
-    <<: *airflow-common
-    command: celery flower
-    ports:
-      - "5555:5555"
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:5555/"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    restart: always
-    depends_on:
-      <<: *airflow-common-depends-on
-      airflow-init:
-        condition: service_completed_successfully
-
-# volumes:
-#   postgres-db-volume:
