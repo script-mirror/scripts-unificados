@@ -74,6 +74,30 @@ def update_carga_pq_dadger_dc(data_produto, ids_to_modify):
         ids_to_modify
     )
 
+def prepare_cvu_params(**kwargs):
+    """
+    Prepares the parameters for CVU updates, converting date format
+    from yyyy-mm-dd to dd/mm/yyyy and setting up CVU types to search
+    """
+    dag_run = kwargs.get('dag_run')
+    external_params = dag_run.conf.get('external_params', {})
+    
+    dt_atualizacao = external_params.get('dt_atualizacao', '')
+    
+    dt_produto = ''
+    if dt_atualizacao:
+        try:
+            date_obj = datetime.datetime.strptime(dt_atualizacao[:10], "%Y-%m-%d")
+            dt_produto = date_obj.strftime("%d/%m/%Y")
+        except Exception as e:
+            print(f"Error converting date: {e}")
+    
+    dag_run.conf['dt_produto'] = dt_produto
+    dag_run.conf['tipo_cvu'] = external_params.get('cvus_to_search', '')
+    
+    print(f"Prepared CVU params: dt_produto={dt_produto}, tipo_cvu={external_params.get('cvus_to_search', '')}")
+    return True
+
 with DAG(
     dag_id='PROSPEC_UPDATER',
     start_date= datetime.datetime(2024, 4, 28),
@@ -93,8 +117,10 @@ with DAG(
         provide_context=True,
     )
 
-    revisao_cvu = DummyOperator(
+    revisao_cvu = PythonOperator(
         task_id='revisao_cvu',
+        python_callable=prepare_cvu_params,
+        provide_context=True,
     )
     revisao_carga_dc = DummyOperator(
         task_id='revisao_carga_dc',
@@ -111,8 +137,8 @@ with DAG(
         trigger_dag_id='1.18-PROSPEC_UPDATE_DECOMP',
         conf={
             'produto': 'CVU-DECOMP',
-            'dt_produto': '{{ dag_run.conf.get("external_params").get("dt_atualizacao", "")|replace("-", "/")[:10]|reverse|replace("/", "-", 1)|reverse|replace("-", "/", 1) }}',
-            'tipo_cvu': '{{ dag_run.conf.get("external_params").get("cvus_to_search", "") }}'
+            'dt_produto': "{{ dag_run.conf.get('dt_produto', '') }}",
+            'tipo_cvu': "{{ dag_run.conf.get('tipo_cvu', '') }}"
         },
         wait_for_completion=True,
     )
