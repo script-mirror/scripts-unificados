@@ -139,8 +139,8 @@ def _create_change_comment_conjuntural(
     tipo_cvu: str,
 ) -> str:
     """Create a comment string for cost changes."""
-    old_cost_str = str(old_cost) if old_cost is not None else "None"
-    return f"{timestamp}\t{old_cost_str:>8} -> {str(new_cost):>8} {tipo_cvu}"
+    diff = float(new_cost) - float(old_cost) if old_cost is not None else 0.00
+    return f"{timestamp} {diff:>5.2} {tipo_cvu}"
 
 
 def log_conjuntural_plant_changes(
@@ -334,15 +334,7 @@ def _create_change_comment_estrutural(
 
 
 # comentario com diff ao inves de comparação: validar com gilseu
-def _create_change_comment_conjuntural(
-    timestamp: str,
-    old_cost: Optional[float],
-    new_cost: float,
-    tipo_cvu: str,
-) -> str:
-    """Create a comment string for cost changes."""
-    diff = new_cost - old_cost if old_cost is not None else 0.00
-    return f"{timestamp} {diff:>5.2} {tipo_cvu}"
+
 
 
 def update_estrutural_modifications_with_cvu(
@@ -377,8 +369,7 @@ def update_estrutural_modifications_with_cvu(
                         group["valor_new"],
                     )
                 ),
-            ),
-            include_groups=False,
+            )
         )
         .to_dict()
     )
@@ -459,4 +450,5 @@ def atualizar_cvu_clast_estrutural(
 
 
 if __name__ == "__main__":
+    pass
     pass
