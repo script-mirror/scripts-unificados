@@ -109,7 +109,11 @@ with DAG(
     cvu_dadger_decomp = TriggerDagRunOperator(
         task_id='cvu_dadger_decomp',
         trigger_dag_id='1.18-PROSPEC_UPDATE_DECOMP',
-        conf={'produto': 'CVU-DECOMP'},
+        conf={
+            'produto': 'CVU-DECOMP',
+            'dt_produto': '{{ dag_run.conf.get("external_params").get("dt_atualizacao", "")|replace("-", "/")[:10]|reverse|replace("/", "-", 1)|reverse|replace("-", "/", 1) }}',
+            'tipo_cvu': '{{ dag_run.conf.get("external_params").get("cvus_to_search", "") }}'
+        },
         wait_for_completion=True,
     )
 
