@@ -136,7 +136,7 @@ with DAG(
         task_id='cvu_dadger_decomp',
         trigger_dag_id='1.18-PROSPEC_UPDATE_DECOMP',
         conf={
-            'produto': 'CVU-DECOMP',
+            'produto': 'CVU',
             'dt_produto': "{{ dag_run.conf.get('dt_produto', '') }}",
             'tipo_cvu': "{{ dag_run.conf.get('tipo_cvu', '') }}"
         },
