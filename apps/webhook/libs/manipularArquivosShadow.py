@@ -371,43 +371,25 @@ def modelo_eta(dadosProduto: dict):
 
 def carga_patamar(dadosProduto: dict):
     filename = get_filename(dadosProduto)
-
-    logger.info(filename)
-    extracted_files = DIR_TOOLS.extrair_zip_e_buscar_arquivo(
-        filename,
-        f"{PATH_WEBHOOK_TMP}/{dadosProduto['nome']}",
-        "Semanal*.xlsx"
+    res = req.post(
+        "http://0.0.0.0:8002/api/webhook",
+        json=dadosProduto,
     )
-    df = pd.read_excel(extracted_files[0])
-    df.drop(columns=['cod_ss', 'cod_pat'], inplace=True)
-    df.columns = [str.lower(x) for x in df.columns]
-    df['patamar'] = df['patamar'].str.replace('é', 'e').str.lower()
-    df.rename(columns={"so":"semana_operativa", "subsistema":"submercado"}, inplace=True)
-    df['data_produto'] = str(datetime.datetime.strptime(dadosProduto['dataProduto'][:10], "%d/%m/%Y").date())
-    df['semana_operativa'] = df['semana_operativa'].dt.strftime("%Y-%m-%d")
     
-    df['submercado'] = df['submercado'].str.replace('/', '')
-    req.post(f"https://tradingenergiarz.com/api/v2/decks/carga-decomp",
-                               json=df.to_dict('records'),
-                               headers={
-                'Authorization': f'Bearer {get_access_token()}'
-        })
-    
-    
+    logger.info(res.text)
+    logger.info(res.status_code)
     # gerar Produto
     if dadosProduto.get('enviar', True) == True:
         GERAR_PRODUTO.enviar({
         "produto":"REVISAO_CARGA",
         "path":filename,
     })
-    
-    cmd = f"cd {constants.PATH_PROJETOS}; source env/bin/activate; python estudos-middle/update_estudos/update_decomp.py produto CARGA-DECOMP dt_produto {dadosProduto['dataProduto'][:10]}"
-    logger.info(f"Executando comando: {cmd}")
-    try:
-        subprocess.run(cmd, shell=True, check=True)
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Erro ao executar comando: {e}")
-        raise Exception(f"Erro ao executar comando: {e}")
+        
+    airflow_tools.trigger_airflow_dag(
+        dag_id="1.18-PROSPEC_UPDATE",
+        json_produtos=dadosProduto,
+        )
+
 
 def deck_preliminar_decomp(dadosProduto: dict):
 
