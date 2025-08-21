@@ -387,7 +387,7 @@ def carga_patamar(dadosProduto: dict):
         
     airflow_tools.trigger_airflow_dag(
         dag_id="1.18-PROSPEC_UPDATE",
-        json_produtos=dadosProduto,
+        json_produtos={"produto": "CARGA-DECOMP"},
         )
 
 
