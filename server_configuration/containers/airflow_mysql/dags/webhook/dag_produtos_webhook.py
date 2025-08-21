@@ -318,8 +318,8 @@ with DAG(
     )
 
     atualizar_decomp = TriggerDagRunOperator(
-        task_id='cvu_dadger_decomp',
-        trigger_dag_id='1.18-PROSPEC_UPDATE_DECOMP',
+        task_id='eolica_dadger_decomp',
+        trigger_dag_id='1.18-PROSPEC_UPDATE',
         conf={'produto': 'EOLICA-DECOMP'},
         wait_for_completion=True,
     )
