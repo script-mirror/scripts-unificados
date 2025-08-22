@@ -254,12 +254,7 @@ def deck_prev_eolica_semanal_patamares(**kwargs):
 def deck_prev_eolica_semanal_previsao_final(**kwargs):
     params = kwargs.get('dag_run').conf
     manipularArquivosShadow.deck_prev_eolica_semanal_previsao_final(params)
-    
-def deck_prev_eolica_semanal_update_estudos(**kwargs):
-    params = kwargs.get('dag_run').conf
-    data_produto = datetime.datetime.strptime(params.get('dataProduto'), "%d/%m/%Y")
-    
-    update_weol_sistema_nw_estudo(data_produto.date())
+
     
 def gerar_produto(**kwargs):
     params = kwargs.get('dag_run').conf
@@ -297,11 +292,7 @@ with DAG(
         retry_delay=datetime.timedelta(minutes=2),
         provide_context=True
     )
-    atualizar_newave = PythonOperator(
-        task_id='atualizar_estudos_newave',
-        python_callable=deck_prev_eolica_semanal_update_estudos,
-        provide_context=True
-    )
+
     gerar_produtos = PythonOperator(
         task_id='enviar_tabela_comparacao_weol_whatsapp_email',
         python_callable=gerar_produto,
@@ -325,5 +316,5 @@ with DAG(
     )
 
     inicio >> patamares
-    patamares >> previsao_final >> gerar_produtos >> [atualizar_newave, atualizar_decomp] >> trigger_dag_prospec
+    patamares >> previsao_final >> gerar_produtos >> atualizar_decomp >> trigger_dag_prospec
 
