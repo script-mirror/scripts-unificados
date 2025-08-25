@@ -859,12 +859,15 @@ def carga_newave_preliminar(dadosProduto: dict):
     dtRef = datetime.datetime.strptime(f"01/{mes}/{ano}", "%d/%m/%Y")
     
     #gerar Produto
-    if dadosProduto.get('enviar', True) == True:
-        GERAR_PRODUTO.enviar({
-        "produto":"REVISAO_CARGA_NW_PRELIMINAR",
-        "path":filename,
-        "data":dtRef,
-    }) 
+    try:
+        if dadosProduto.get('enviar', True) == True:
+            GERAR_PRODUTO.enviar({
+            "produto":"REVISAO_CARGA_NW_PRELIMINAR",
+            "path":filename,
+            "data":dtRef,
+        })
+    except Exception as e:
+        print(e)
     if dadosProduto.get('enviar', True) == True: 
         dadosProduto['dt_ref'] = dadosProduto['dataProduto']
         airflow_tools.trigger_airflow_dag(
