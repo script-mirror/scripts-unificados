@@ -532,7 +532,7 @@ with DAG(
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '1.18-PROSPEC_UPDATE
 # Função que executa o script com parâmetros dinâmicos
-def run_update_dc(**kwargs):
+def run_prospec_update(**kwargs):
     params = kwargs.get('params', {})
     produto  = params['produto']
     conteudo = ' '.join(f'"{k}" \'{v}\'' if k == "list_email" else f'"{k}" "{v}"' for k, v in params.items())
@@ -552,8 +552,8 @@ with DAG(
 ) as dag:
 
     run_script_task = PythonOperator(
-        task_id='run_update_dc',
-        python_callable=run_update_dc,
+        task_id='run_prospec_update',
+        python_callable=run_prospec_update,
         do_xcom_push=True,  
 
     )
