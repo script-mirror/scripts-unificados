@@ -535,7 +535,7 @@ with DAG(
     trigger_atualizacao = TriggerDagRunOperator(
         task_id='trigger_atualizacao',
         trigger_dag_id='1.11-PROSPEC_ATUALIZACAO',
-        conf={"nome_estudo": 'NEWAVE-PRELIMINAR'},
+        conf={"nome_estudo": 'REVISAO-NEWAVE'},
         wait_for_completion=False,
         dag=dag,
         do_xcom_push=False,
