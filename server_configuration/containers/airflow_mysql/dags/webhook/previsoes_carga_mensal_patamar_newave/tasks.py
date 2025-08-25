@@ -308,7 +308,7 @@ class PrevisoesCargaMensalNewaveService:
             api_url = os.getenv("DNS", "http://localhost:8000")
             api_url += "/api/v2"
             
-            update_sistema_url = f"{api_url}/decks/newave/sistema/total_mmgd_expansao"
+            update_sistema_url = f"{api_url}/decks//newave/sistema/mmgd_total"
             
             request_sist = requests.put(
                 update_sistema_url,

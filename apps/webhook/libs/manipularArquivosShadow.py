@@ -541,6 +541,7 @@ def carga_patamar_nw(dadosProduto: dict):
 
     deck_nw.importar_carga_nw(
         pathZip = filename, 
+        dataProduto = dtRef, 
         dataReferente = dtRef_last_saturday, 
         str_fonte = id_fonte)
 
