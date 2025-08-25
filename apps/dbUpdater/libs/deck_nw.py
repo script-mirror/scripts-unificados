@@ -232,12 +232,12 @@ def importar_deck_values_nw(path_zip):
     df_sist_intercambio_values = processar_sist_limites_intercambio_NW(dict_final)
     df_sist_values = processar_sist_energia_geracao_NW(dict_final)
     
-    df_cadic_values['versao'] = 'definitivo'
-    df_sist_values['versao'] = 'definitivo'
+    df_cadic_values['fonte'] = 'ccee'
+    df_sist_values['fonte'] = 'ccee'
     table_values = [
-        ("tb_nw_cadic", df_cadic_values[['Ano','Mês','CONS.ITAIPU','ANDE','MMGD SE','MMGD S','MMGD NE','BOA VISTA','MMGD N', 'versao']].copy()),
+        ("tb_nw_cadic", df_cadic_values[['Ano','Mês','CONS.ITAIPU','ANDE','MMGD SE','MMGD S','MMGD NE','BOA VISTA','MMGD N', 'fonte']].copy()),
         ("tb_nw_sist_intercambio", df_sist_intercambio_values[['Ano','Mês','sistema_src','sistema_dst','intercambio']].copy()),
-        ("tb_nw_sist_energia", df_sist_values[['cd_submercado','Ano','Mês','Energia Total','PCH','PCT','EOL','UFV','PCHMMGD','PCTMMGD','EOLMMGD','UFVMMGD', 'versao']].copy())
+        ("tb_nw_sist_energia", df_sist_values[['cd_submercado','Ano','Mês','Energia Total','PCH','PCT','EOL','UFV','PCHMMGD','PCTMMGD','EOLMMGD','UFVMMGD', 'fonte']].copy())
         ]
     
     db_decks = wx_dbClass.db_mysql_master('db_decks')
@@ -257,7 +257,8 @@ def importar_deck_values_nw(path_zip):
     return str_date
     
 
-def importar_carga_nw(pathZip, dataProduto, dataReferente, str_fonte, tx_comentario=""):
+def importar_carga_nw(pathZip, dataReferente, str_fonte, tx_comentario=""):
+
 
     dicionario_fonte = {'ons': 1, 'ccee': 2}
 
@@ -270,7 +271,7 @@ def importar_carga_nw(pathZip, dataProduto, dataReferente, str_fonte, tx_comenta
     db_decks = wx_dbClass.db_mysql_master("db_decks")
     db_decks.connect()
     tb_cadastro_newave = db_decks.getSchema('tb_cadastro_newave')
-    tb_nw_carga = db_decks.getSchema('newave_previsoes_cargas')
+    tb_nw_carga = db_decks.getSchema('tb_nw_carga')
     
     # Verifica se o caminho do arquivo que foi enviado existe no diretorio correto.
     isExist = os.path.exists(pathZip)
@@ -287,59 +288,69 @@ def importar_carga_nw(pathZip, dataProduto, dataReferente, str_fonte, tx_comenta
             dataReferente = dataReferente + datetime.timedelta(days=dataReferente.weekday()-7)
         else:
             dataReferente = dataReferente - datetime.timedelta(days=dataReferente.weekday()+2)
-        
-        columns_to_skip = ['WEEK', 'GAUGE', 'Base_MMGD','Exp_MMGD','LOAD_cMMGD']
+        # Faz a primeira query para buscar o ID e Data referente da tabela cadastro newave.
+        querySelect = db.select([tb_cadastro_newave.c.id])\
+        .where(db.and_(tb_cadastro_newave.c.dt_inicio_rv == dataReferente, tb_cadastro_newave.c.id_fonte == id_fonte))
+        idCadastro = db_decks.conn.execute(querySelect).fetchone()
+        # Faz a filtragem do arquivo excel e cria um dataframe com os dados necessários.
+        columns_to_skip = ['WEEK', 'GAUGE','Base_CGH','Base_EOL','Base_UFV','Base_UTE','Base_MMGD','LOAD_cMMGD']
         try:
             pmo_mes = pd.read_excel(xlfile, usecols=lambda x: x not in columns_to_skip,sheet_name=1)
         except:
             pmo_mes = pd.read_excel(xlfile, usecols=lambda x: x not in columns_to_skip)
-            
-        pmo_mes_rename = pmo_mes.rename(columns={'DATE':'data_referente',
-        'SOURCE':'submercado', 'TYPE': 'patamar', 'LOAD_sMMGD':'vl_energia_total', 'Base_CGH': 'vl_base_pch_mmgd', 'Base_EOL': 'vl_base_eol_mmgd', 'Base_UFV': 'vl_base_ufv_mmgd', 'Base_UTE': 'vl_base_pct_mmgd', 'Exp_CGH': 'vl_exp_pch_mmgd', 'Exp_EOL': 'vl_exp_eol_mmgd', 'Exp_UFV': 'vl_exp_ufv_mmgd', 'Exp_UTE': 'vl_exp_pct_mmgd', 'REVISION':'data_revisao'})
-        pmo_mes_rename['submercado'] = pmo_mes_rename['submercado'].apply(lambda x : 'SE' if x == 'SUDESTE' 
-        else 'S' if x  == 'SUL' else 'NE' if x == 'NORDESTE' else 'N')
-        pmo_mes_rename['patamar'] = pmo_mes_rename['patamar'].apply(lambda x : 'leve' if x == 'LOW' 
-        else 'medio' if x  == 'MIDDLE' else 'pesado' if x == 'HIGH' else 'media')
-        pmo_mes_rename
+        pmo_mes_filtrado = pmo_mes[(pmo_mes.TYPE == "MEDIUM")]
+        pmo_mes_filtrado.reset_index(inplace=True, drop=True)
+        pmo_mes_filtrado_rename = pmo_mes_filtrado.reset_index().rename(columns={'index':'id','DATE':'dt_referente',
+        'SOURCE':'cd_submercado','LOAD_sMMGD':'vl_carga','REVISION':'dt_inicio_rv'}).drop(['TYPE'],axis=1)
         
-        dt_inicio_rv_atual = pmo_mes_rename['data_revisao'].unique()
+        pmo_mes_filtrado_rename['cd_submercado'] = pmo_mes_filtrado_rename['cd_submercado'].apply(lambda x : 1 if x == 'SUDESTE' 
+        else 2 if x  == 'SUL' else 3 if x == 'NORDESTE' else 4)
+        # Filtro para armazenar a data da revisão que está dentro do arquivo da ONS.
+        dt_inicio_rv_atual = pmo_mes_filtrado_rename['dt_inicio_rv'].unique()
         dt_inicio_rv_atual_dateTime = pd.to_datetime(dt_inicio_rv_atual[0])
         datetime_O = datetime.datetime.strftime(dt_inicio_rv_atual_dateTime, "%Y/%m/%d %H:%M:%S")
         data_Filtrada = datetime.datetime.strptime(datetime_O, "%Y/%m/%d %H:%M:%S")
         ultima_data_Filtrada = data_Filtrada.replace(day=1) + datetime.timedelta(monthrange(data_Filtrada.year, data_Filtrada.month)[1] - 1)
         ultima_data_Filtrada += datetime.timedelta(days = 1)
-        
+        # Verifica se a revisão após a filtragem é o primeiro sabado do proximo mês ou o ultimo.
         if ultima_data_Filtrada.weekday() == 5:
             ultimoSabadoFiltrado = ultima_data_Filtrada
         elif ultima_data_Filtrada.weekday() == 6:
             ultimoSabadoFiltrado = ultima_data_Filtrada + datetime.timedelta(days=ultima_data_Filtrada.weekday()-7)
         else:
             ultimoSabadoFiltrado = ultima_data_Filtrada - datetime.timedelta(days=ultima_data_Filtrada.weekday()+2)
-            
+        # Filtro para verificar se a data referente digitada/recebida pela ONS é a mesma data revisao que está dentro do arquivo da ONS.
         if dataReferente == ultimoSabadoFiltrado:
+            # Após a filtrar o id, será verificado se tem o id na tabela e caso não tenha o id, ele adiciona nas duas tabelas e caso tenha o id, ele apenas atualiza a carga da tabela nw carga.
+            if idCadastro == None :
+                tb_cadastro_newave_list = [idCadastro, dataReferente,id_fonte,tx_comentario]
+                db_decks.conn.execute(tb_cadastro_newave.insert().values(tb_cadastro_newave_list))
                 print(f'Inserido novo cadastro na tabela Newave!')
-                
-                df_nw_carga = pmo_mes_rename.copy()
-                
-                df_nw_carga['data_produto'] = dataProduto
-                
-                df_nw_carga = df_nw_carga[['data_produto', 'data_revisao', 'data_referente', 'submercado', 
-                            'patamar', 'vl_energia_total', 'vl_base_pch_mmgd', 'vl_base_eol_mmgd', 'vl_base_ufv_mmgd', 'vl_base_pct_mmgd', 
-                            'vl_exp_pch_mmgd', 'vl_exp_eol_mmgd', 'vl_exp_ufv_mmgd', 'vl_exp_pct_mmgd']]
-                
-                df_nw_carga['data_referente'] = pd.to_datetime(df_nw_carga['data_referente'])
-                df_nw_carga['data_revisao'] = pd.to_datetime(df_nw_carga['data_revisao'])
-                df_nw_carga['data_produto'] = pd.to_datetime(df_nw_carga['data_produto'])
-                
-                df_nw_carga['data_referente'] = df_nw_carga['data_referente'].dt.strftime('%Y-%m-%d')
-                df_nw_carga['data_revisao'] = df_nw_carga['data_revisao'].dt.strftime('%Y-%m-%d')
-                df_nw_carga['data_produto'] = df_nw_carga['data_produto'].dt.strftime('%Y-%m-%d')
-
-                tb_nw_carga_list = df_nw_carga.to_dict(orient='records')
-                
-                linhasDeletadas = db_decks.db_execute(tb_nw_carga.delete().where(tb_nw_carga.c.data_produto == dataProduto)).rowcount
+                # Faz a query para filtragem do id com o maior valor da tabela cadastro newave, ou seja do ultimo id que foi adicionado na tabela cadastro newave.
+                querySelect = db.select([db.func.max(tb_cadastro_newave.c.id)])
+                idCadastro = db_decks.conn.execute(querySelect).scalar()
+                id = int(idCadastro)
+                # Com o id da tabela cadastro newave em maos, alteramos o id do dataframe para poder adicionar as informacoes na tabela carga nw.
+                pmo_mes_filtrado_rename['id'] = pmo_mes_filtrado_rename['id'].apply(lambda x : id)
+                df_nw_carga = pmo_mes_filtrado_rename.drop(['dt_inicio_rv'], axis=1)
+                tb_nw_carga_list = df_nw_carga.values.tolist()
+                linhasInseridas = db_decks.conn.execute(tb_nw_carga.insert().values(tb_nw_carga_list)).rowcount
+                print(f"Inserido, {linhasInseridas} linhas novas na tabela nw carga.")
+                # Caso o id for existente na tabela cadastro newave, vamos apenas fazer a atualizacao da carga na tabela carga nw.
+            else:
+                # Faz a query para buscar o ID e Data referente da tabela cadastro newave.
+                querySelect = db.select([tb_cadastro_newave.c.id])\
+                .where(db.and_(tb_cadastro_newave.c.dt_inicio_rv == dataReferente, tb_cadastro_newave.c.id_fonte == id_fonte))
+                idCadastro = db_decks.conn.execute(querySelect).scalar()
+                id = int(idCadastro)
+                # Com o id da tabela cadastro newave em maos, alteramos o id do dataframe para poder adicionar as informacoes na tabela carga nw.
+                pmo_mes_filtrado_rename['id'] = pmo_mes_filtrado_rename['id'].apply(lambda x : id)
+                df_nw_carga = pmo_mes_filtrado_rename.drop(['dt_inicio_rv'], axis=1)
+                tb_nw_carga_list = df_nw_carga.values.tolist()
+                # Caso o id for existente na tabela cadastro newave, vamos apenas fazer a atualizacao da carga na tabela carga nw.
+                linhasDeletadas = db_decks.conn.execute(tb_nw_carga.delete().where(tb_nw_carga.c.id_deck == id)).rowcount
                 print(f"Cargas com data inicio rev: {dataReferente.strftime(format='%d/%m/%Y')} um total de {linhasDeletadas} linhas deletadas, na tabela nw carga!")
-                linhasInseridas = db_decks.db_execute(tb_nw_carga.insert().values(tb_nw_carga_list)).rowcount
+                linhasInseridas = db_decks.conn.execute(tb_nw_carga.insert().values(tb_nw_carga_list)).rowcount
                 print(f"Cargas atualizadas, {linhasInseridas} linhas inseridas na tabela nw carga.") 
         else:
             print(f'A data correta da revisão é: {ultimoSabadoFiltrado.strftime(format="%d/%m/%Y")}')
@@ -354,7 +365,4 @@ if __name__ == '__main__':
     path = r"C:/Users/cs399274/Downloads/NW202404 (1).zip"
 
     # path  = "/WX2TB/Documentos/fontes/PMO/decks/ccee/nw/NW202404.zip"
-    # teste = importar_deck_values_nw('/WX2TB/Documentos/fontes/PMO/decks/ccee/nw/NW202506.zip')
-    
-    importar_carga_nw('/home/diogopolastrine/MAIN/produtos/CargaMensal_2revquad2529.zip', datetime.datetime(2025, 8, 30, 0, 0), datetime.datetime(2025, 8, 30, 0, 0),'ons')
-
+    teste = importar_deck_values_nw('/WX2TB/Documentos/fontes/PMO/decks/ccee/nw/NW202506.zip')
