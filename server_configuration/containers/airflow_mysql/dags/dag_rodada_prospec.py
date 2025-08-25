@@ -4,6 +4,7 @@ from datetime import timedelta
 from airflow import DAG
 from airflow.providers.ssh.operators.ssh import SSHOperator
 from airflow.operators.python_operator import PythonOperator, BranchPythonOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.models import DagBag
 from airflow.models import DagRun
 from airflow.exceptions import AirflowSkipException
@@ -16,7 +17,7 @@ CMD_BASE      = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) 
 CMD_BASE_SENS = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/gerar_sensibilidade.py "
 CMD_BASE_NW   = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/run_nw_ons_to_ccee.py "
 CMD_BASE_DC   = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/run_dc_ons_to_ccee.py "
-CMD_UPDATE_DC = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/update_estudos/update_decomp.py "
+CMD_UPDATE_DC = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/update_estudos/update_prospec.py "
 
 default_args = {
     'execution_timeout': timedelta(hours=8)
@@ -529,34 +530,37 @@ with DAG(
         get_pty=True,
     )
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Definindo a DAG para '1.18-PROSPEC_UPDATE_DECOMP' (adicionada)
-
+# Definindo a DAG para '1.18-PROSPEC_UPDATE
 # Função que executa o script com parâmetros dinâmicos
 def run_update_dc(**kwargs):
-    params   = kwargs.get('params', {})
-    conteudo = ' '.join( f'"{k}" \'{v}\'' if k == "list_email" else f'"{k}" "{v}"' for k, v in params.items())    
-    command = CMD_UPDATE_DC + conteudo    
+    params = kwargs.get('params', {})
+    produto  = conteudo['produto']
+    conteudo = ' '.join(f'"{k}" \'{v}\'' if k == "list_email" else f'"{k}" "{v}"' for k, v in params.items())
+    command = CMD_UPDATE_DC + conteudo 
     print(command)
     kwargs['ti'].xcom_push(key='command', value=command)
+    kwargs['ti'].xcom_push(key='produto', value=produto)
 
 with DAG(
     default_args=default_args,
-    dag_id='1.18-PROSPEC_UPDATE_DECOMP', 
-    start_date=datetime(2025, 1, 23), 
-    schedule_interval=None, 
+    dag_id='1.18-PROSPEC_UPDATE',
+    start_date=datetime(2025, 1, 23),
+    schedule_interval=None,
     catchup=False,
     tags=['Prospec'],
     max_active_runs=1,
 ) as dag:
+
     run_script_task = PythonOperator(
         task_id='run_update_dc',
         python_callable=run_update_dc,
-        do_xcom_push=False,
+        do_xcom_push=True,  
+
     )
     run_prospec_on_host = SSHOperator(
         trigger_rule="none_failed_min_one_success",
         task_id='run',
-        ssh_conn_id='ssh_master',  
+        ssh_conn_id='ssh_master',
         command="{{ ti.xcom_pull(task_ids='run_update_dc', key='command')}}",
         conn_timeout=36000,
         cmd_timeout=28800,
@@ -564,4 +568,15 @@ with DAG(
         get_pty=True,
         do_xcom_push=False,
     )
-    run_script_task >> run_prospec_on_host  
+
+    # Tarefa para acionar a DAG 1.11-PROSPEC_ATUALIZACAO com parâmetro
+    trigger_atualizacao = TriggerDagRunOperator(
+        task_id='trigger_atualizacao',
+        trigger_dag_id='1.11-PROSPEC_ATUALIZACAO',
+        conf={"nome_estudo": "{{ ti.xcom_pull(task_ids='run_update_dc', key='produto') }}"},
+        wait_for_completion=False,
+        dag=dag,
+    )
+
+    # Definindo a ordem das tarefas
+    run_script_task >> run_prospec_on_host >> trigger_atualizacao
