@@ -253,14 +253,19 @@ class db_mysql_master():
             table_schema = db.Table('newave_previsoes_cargas', self.meta,
             db.Column('id', db.Integer,primary_key=True,autoincrement=True),
             db.Column('data_produto',db.Date),
+            db.Column('data_revisao',db.Date),
             db.Column('data_referente',db.Date), 
             db.Column('submercado',db.String(2)),
             db.Column('patamar', db.String(6)),
             db.Column('vl_energia_total',db.FLOAT),
-            db.Column('vl_geracao_pch_mmgd',db.FLOAT),
-            db.Column('vl_geracao_eol_mmgd',db.FLOAT),
-            db.Column('vl_geracao_ufv_mmgd',db.FLOAT),
-            db.Column('vl_geracao_pct_mmgd',db.FLOAT)
+            db.Column('vl_base_pch_mmgd',db.FLOAT),
+            db.Column('vl_base_eol_mmgd',db.FLOAT),
+            db.Column('vl_base_ufv_mmgd',db.FLOAT),
+            db.Column('vl_base_pct_mmgd',db.FLOAT),
+            db.Column('vl_exp_pch_mmgd',db.FLOAT),
+            db.Column('vl_exp_eol_mmgd',db.FLOAT),
+            db.Column('vl_exp_ufv_mmgd',db.FLOAT),
+            db.Column('vl_exp_pct_mmgd',db.FLOAT)
             )
                         
                         

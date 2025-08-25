@@ -288,22 +288,21 @@ def importar_carga_nw(pathZip, dataProduto, dataReferente, str_fonte, tx_comenta
         else:
             dataReferente = dataReferente - datetime.timedelta(days=dataReferente.weekday()+2)
         
-        columns_to_skip = ['WEEK', 'GAUGE','Base_CGH','Base_EOL','Base_UFV','Base_UTE','Base_MMGD','Exp_MMGD','LOAD_cMMGD']
+        columns_to_skip = ['WEEK', 'GAUGE', 'Base_MMGD','Exp_MMGD','LOAD_cMMGD']
         try:
             pmo_mes = pd.read_excel(xlfile, usecols=lambda x: x not in columns_to_skip,sheet_name=1)
         except:
             pmo_mes = pd.read_excel(xlfile, usecols=lambda x: x not in columns_to_skip)
             
         pmo_mes_rename = pmo_mes.rename(columns={'DATE':'data_referente',
-        'SOURCE':'submercado', 'TYPE': 'patamar', 'LOAD_sMMGD':'vl_energia_total', 'Exp_CGH': 'vl_geracao_pch_mmgd', 'Exp_EOL': 'vl_geracao_eol_mmgd', 'Exp_UFV': 'vl_geracao_ufv_mmgd', 'Exp_UTE': 'vl_geracao_pct_mmgd', 'REVISION':'dt_inicio_rv'})
-        pmo_mes_rename['submercado'] = pmo_mes_rename['submercado'].apply(lambda x : 'se' if x == 'SUDESTE' 
-        else 's' if x  == 'SUL' else 'ne' if x == 'NORDESTE' else 'n')
+        'SOURCE':'submercado', 'TYPE': 'patamar', 'LOAD_sMMGD':'vl_energia_total', 'Base_CGH': 'vl_base_pch_mmgd', 'Base_EOL': 'vl_base_eol_mmgd', 'Base_UFV': 'vl_base_ufv_mmgd', 'Base_UTE': 'vl_base_pct_mmgd', 'Exp_CGH': 'vl_exp_pch_mmgd', 'Exp_EOL': 'vl_exp_eol_mmgd', 'Exp_UFV': 'vl_exp_ufv_mmgd', 'Exp_UTE': 'vl_exp_pct_mmgd', 'REVISION':'data_revisao'})
+        pmo_mes_rename['submercado'] = pmo_mes_rename['submercado'].apply(lambda x : 'SE' if x == 'SUDESTE' 
+        else 'S' if x  == 'SUL' else 'NE' if x == 'NORDESTE' else 'N')
         pmo_mes_rename['patamar'] = pmo_mes_rename['patamar'].apply(lambda x : 'leve' if x == 'LOW' 
         else 'medio' if x  == 'MIDDLE' else 'pesado' if x == 'HIGH' else 'media')
         pmo_mes_rename
         
-        # Filtro para armazenar a data da revisão que está dentro do arquivo da ONS.
-        dt_inicio_rv_atual = pmo_mes_rename['dt_inicio_rv'].unique()
+        dt_inicio_rv_atual = pmo_mes_rename['data_revisao'].unique()
         dt_inicio_rv_atual_dateTime = pd.to_datetime(dt_inicio_rv_atual[0])
         datetime_O = datetime.datetime.strftime(dt_inicio_rv_atual_dateTime, "%Y/%m/%d %H:%M:%S")
         data_Filtrada = datetime.datetime.strptime(datetime_O, "%Y/%m/%d %H:%M:%S")
@@ -320,16 +319,22 @@ def importar_carga_nw(pathZip, dataProduto, dataReferente, str_fonte, tx_comenta
         if dataReferente == ultimoSabadoFiltrado:
                 print(f'Inserido novo cadastro na tabela Newave!')
                 
-                df_nw_carga = pmo_mes_rename.drop(['dt_inicio_rv'], axis=1)
+                df_nw_carga = pmo_mes_rename.copy()
                 
-                df_nw_carga = df_nw_carga[['data_referente', 'submercado', 
-                            'patamar', 'vl_energia_total', 'vl_geracao_pch_mmgd', 
-                            'vl_geracao_eol_mmgd', 'vl_geracao_ufv_mmgd', 
-                            'vl_geracao_pct_mmgd']]
-                df_nw_carga['data_referente'] = pd.to_datetime(df_nw_carga['data_referente']).dt.date
                 df_nw_carga['data_produto'] = dataProduto
-                df_nw_carga = df_nw_carga[['data_produto', 'data_referente', 'submercado','patamar', 'vl_energia_total', 'vl_geracao_pch_mmgd', 'vl_geracao_eol_mmgd', 'vl_geracao_ufv_mmgd', 'vl_geracao_pct_mmgd']]
                 
+                df_nw_carga = df_nw_carga[['data_produto', 'data_revisao', 'data_referente', 'submercado', 
+                            'patamar', 'vl_energia_total', 'vl_base_pch_mmgd', 'vl_base_eol_mmgd', 'vl_base_ufv_mmgd', 'vl_base_pct_mmgd', 
+                            'vl_exp_pch_mmgd', 'vl_exp_eol_mmgd', 'vl_exp_ufv_mmgd', 'vl_exp_pct_mmgd']]
+                
+                df_nw_carga['data_referente'] = pd.to_datetime(df_nw_carga['data_referente'])
+                df_nw_carga['data_revisao'] = pd.to_datetime(df_nw_carga['data_revisao'])
+                df_nw_carga['data_produto'] = pd.to_datetime(df_nw_carga['data_produto'])
+                
+                df_nw_carga['data_referente'] = df_nw_carga['data_referente'].dt.strftime('%Y-%m-%d')
+                df_nw_carga['data_revisao'] = df_nw_carga['data_revisao'].dt.strftime('%Y-%m-%d')
+                df_nw_carga['data_produto'] = df_nw_carga['data_produto'].dt.strftime('%Y-%m-%d')
+
                 tb_nw_carga_list = df_nw_carga.to_dict(orient='records')
                 
                 linhasDeletadas = db_decks.db_execute(tb_nw_carga.delete().where(tb_nw_carga.c.data_produto == dataProduto)).rowcount
