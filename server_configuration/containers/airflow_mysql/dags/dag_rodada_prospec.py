@@ -17,7 +17,7 @@ CMD_BASE      = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) 
 CMD_BASE_SENS = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/gerar_sensibilidade.py "
 CMD_BASE_NW   = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/run_nw_ons_to_ccee.py "
 CMD_BASE_DC   = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/run_dc_ons_to_ccee.py "
-CMD_UPDATE_DC = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/update_estudos/update_prospec.py "
+CMD_UPDATE    = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/update_estudos/update_prospec.py "
 
 default_args = {
     'execution_timeout': timedelta(hours=8)
@@ -536,7 +536,7 @@ def run_prospec_update(**kwargs):
     params = kwargs.get('params', {})
     produto  = params['produto']
     conteudo = ' '.join(f'"{k}" \'{v}\'' if k == "list_email" else f'"{k}" "{v}"' for k, v in params.items())
-    command = CMD_UPDATE_DC + conteudo 
+    command = CMD_UPDATE + conteudo 
     print(command)
     kwargs['ti'].xcom_push(key='command', value=command)
     kwargs['ti'].xcom_push(key='produto', value=produto)
@@ -561,7 +561,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run',
         ssh_conn_id='ssh_master',
-        command="{{ ti.xcom_pull(task_ids='run_update_dc', key='command')}}",
+        command="{{ ti.xcom_pull(task_ids='run_prospec_update', key='command')}}",
         conn_timeout=36000,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -573,7 +573,7 @@ with DAG(
     trigger_atualizacao = TriggerDagRunOperator(
         task_id='trigger_atualizacao',
         trigger_dag_id='1.11-PROSPEC_ATUALIZACAO',
-        conf={"nome_estudo": "{{ ti.xcom_pull(task_ids='run_update_dc', key='produto') }}"},
+        conf={"nome_estudo": "{{ ti.xcom_pull(task_ids='run_prospec_update', key='produto') }}"},
         wait_for_completion=False,
         dag=dag,
     )
