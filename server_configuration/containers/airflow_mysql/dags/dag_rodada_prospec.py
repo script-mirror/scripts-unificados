@@ -539,7 +539,7 @@ def run_prospec_update(**kwargs):
     command = CMD_UPDATE + conteudo 
     print(command)
     kwargs['ti'].xcom_push(key='command', value=command)
-    kwargs['ti'].xcom_push(key='produto', value=produto)
+    kwargs['ti'].xcom_push(key='produto', value='REVISAO-'+produto)
 
 with DAG(
     default_args=default_args,
