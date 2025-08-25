@@ -506,6 +506,7 @@ with DAG(
         conn_timeout = None,
         cmd_timeout = None,
         get_pty=True,
+        do_xcom_push=False,
     )
 
 
