@@ -529,16 +529,7 @@ with DAG(
         get_pty=True,
     )
     
-    # Tarefa para acionar a DAG 1.11-PROSPEC_ATUALIZACAO com parâmetro
-    trigger_atualizacao = TriggerDagRunOperator(
-        task_id='trigger_atualizacao',
-        trigger_dag_id='1.11-PROSPEC_ATUALIZACAO',
-        conf={"nome_estudo": 'NEWAVE-PRELIMINAR'},
-        wait_for_completion=False,
-        dag=dag,
-    )
 
-    run_nw_on_host >> trigger_atualizacao
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '1.18-PROSPEC_UPDATE
