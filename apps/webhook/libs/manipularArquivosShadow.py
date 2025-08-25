@@ -1073,8 +1073,7 @@ def notas_tecnicas_medio_prazo(dadosProduto: dict):
         "data": datetime.datetime.strptime(dadosProduto.get('dataProduto'), "%m/%Y"),
         "arquivo": arquivo_xls
     })
-    
-    if arquivo_xls.upper().startswith(f"GTMIN_CCEE_{datetime.date.today().strftime('%m%Y')}"):
+    if f"GTMIN_CCEE_{(datetime.date.today().replace(day=1, month=datetime.date.today().month+1)).strftime('%m%Y')}" in arquivo_xls.upper():
         airflow_tools.trigger_airflow_dag(
             dag_id="1.17-NEWAVE_ONS-TO-CCEE",
             json_produtos=dadosProduto,
@@ -1087,26 +1086,19 @@ def notas_tecnicas_medio_prazo(dadosProduto: dict):
 if __name__ == '__main__':
     
     dadosProduto = {
-        "file_path": "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/webhook/arquivos/tmp/Previsões de carga mensal e por patamar - NEWAVE/CargaMensal_2revquad2529.zip",
-        "function_name": "WEBHOOK",
-        "product_details": {
-            "dataProduto": "09/2025",
-            "enviar": True,
-            "filename": "CargaMensal_2revquad2529.zip",
-            "macroProcesso": "Programação da Operação",
-            "nome": "Previsões de carga mensal e por patamar - NEWAVE",
-            "periodicidade": "2025-09-01T03:00:00.000Z",
-            "periodicidadeFinal": "2025-10-01T02:59:59.000Z",
-            "processo": "Previsão de Carga para o PMO",
-            "s3Key": "webhooks/Previsões de carga mensal e por patamar - NEWAVE/688d2cb494f9e32e8e798756_CargaMensal_2revquad2529.zip",
-            "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ny9Qcm9kdXRvcy8yMjkvQ2FyZ2FNZW5zYWxfMnJldnF1YWQyNTI5LnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJQcmV2aXPDtWVzIGRlIGNhcmdhIG1lbnNhbCBlIHBvciBwYXRhbWFyIC0gTkVXQVZFIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTQxNjkxMjMsIm5iZiI6MTc1NDA4MjQ4M30.kdmb2eKSpSmXep832Vrw6B7NAAdG_4On23P7cZlj3uM",
-            "webhookId": "688d2cb494f9e32e8e798756"
-        },
-        "task_to_execute": "revisao_carga_nw",
-        "trigger_dag_id": "PROSPEC_UPDATER"
-    }
+    "dataProduto": "09/2025",
+    "filename": "Notas Técnicas - Medio Prazo.zip",
+    "macroProcesso": "Programação da Operação",
+    "nome": "Notas Técnicas - Medio Prazo",
+    "periodicidade": "2025-09-01T03:00:00.000Z",
+    "periodicidadeFinal": "2025-10-01T02:59:59.000Z",
+    "processo": "Médio Prazo",
+    "s3Key": "webhooks/Notas Técnicas - Medio Prazo/68ac8613b790e437d6529fa1_Notas Técnicas - Medio Prazo.zip",
+    "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODgvMjUtMDgtMjAyNV8xMjQ0MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiTm90YXMgVMOpY25pY2FzIC0gTWVkaW8gUHJhem8iLCJJc0ZpbGUiOiJGYWxzZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTYyMjM2MTgsIm5iZiI6MTc1NjEzNjk3OH0.XVN4hoL9U_d4aPscNto7UdvKxc7XOLCCvhfKYudDnNU",
+    "webhookId": "68ac8613b790e437d6529fa1"
+}
     
-    dadosProduto = dadosProduto["product_details"]
-    carga_patamar_nw(dadosProduto)
+
+    notas_tecnicas_medio_prazo(dadosProduto)
     
 
