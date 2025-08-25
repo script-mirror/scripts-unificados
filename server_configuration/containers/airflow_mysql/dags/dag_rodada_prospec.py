@@ -423,8 +423,6 @@ with DAG(
     check_dag_state_task >> [run_decomp_ons_grupos, skip_task]
 
 
-
-
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 with DAG(
     dag_id = '1.13-PROSPEC_PCONJUNTO_PREL_PRECIPITACAO', 
@@ -508,7 +506,14 @@ with DAG(
         cmd_timeout = None,
         get_pty=True,
     )
-    
+        # Tarefa para acionar a DAG 1.11-PROSPEC_ATUALIZACAO com parâmetro
+    trigger_atualizacao = TriggerDagRunOperator(
+        task_id='trigger_atualizacao',
+        trigger_dag_id='1.11-PROSPEC_ATUALIZACAO',
+        conf={"nome_estudo": "{{ ti.xcom_pull(task_ids='run_prospec_update', key='produto') }}"},
+        wait_for_completion=False,
+        dag=dag,
+    )
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -524,14 +529,25 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_newave',
         ssh_conn_id='ssh_master',  
-        command=CMD_BASE_DC,
+        command=CMD_BASE_NW,
         conn_timeout = None,
         cmd_timeout = None,
         get_pty=True,
     )
+    
+    # Tarefa para acionar a DAG 1.11-PROSPEC_ATUALIZACAO com parâmetro
+    trigger_atualizacao = TriggerDagRunOperator(
+        task_id='trigger_atualizacao',
+        trigger_dag_id='1.11-PROSPEC_ATUALIZACAO',
+        conf={"nome_estudo": 'NEWAVE-PRELIMINAR'},
+        wait_for_completion=False,
+        dag=dag,
+    )
+
+    run_decomp_on_host >> trigger_atualizacao
+
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '1.18-PROSPEC_UPDATE
-# Função que executa o script com parâmetros dinâmicos
 def run_prospec_update(**kwargs):
     params = kwargs.get('params', {})
     produto  = params['produto']
