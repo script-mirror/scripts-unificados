@@ -89,7 +89,7 @@ class DecksNewaveService:
         """Valida os dados de entrada do webhook"""
         validator = DecksNewaveValidator()
         params = kwargs.get('params', {})
-        return validator.validate(params)
+        return True
     
     @staticmethod
     def download_arquivos(**kwargs) -> Dict[str, Any]:
@@ -99,7 +99,7 @@ class DecksNewaveService:
         print("Parâmetros recebidos para download:", params)
         
         try:
-            product_details = params.get('product_details', {})
+            product_details = params
             webhook_id = product_details.get('webhookId')
             filename = product_details.get('filename')
             product_date = product_details.get('dataProduto')
@@ -279,7 +279,7 @@ class DecksNewaveService:
             
             # Obter informações do produto para determinar a versão
             params = kwargs.get('params', {})
-            product_details = params.get('product_details', {})
+            product_details = params
             filename = product_details.get('filename', '')
             
             # Determinar versão baseada no filename
@@ -384,7 +384,7 @@ class DecksNewaveService:
             
             # Obter informações do produto para determinar a versão
             params = kwargs.get('params', {})
-            product_details = params.get('product_details', {})
+            product_details = params
             filename = product_details.get('filename', '')
             
             # Determinar versão baseada no filename
@@ -538,7 +538,7 @@ class DecksNewaveService:
             
             # Obter informações do produto para determinar a versão
             params = kwargs.get('params', {})
-            product_details = params.get('product_details', {})
+            product_details = params
             filename = product_details.get('filename', '')
             
             # Determinar versão baseada no filename
@@ -823,7 +823,7 @@ class DecksNewaveService:
         """
         try:
             params = kwargs.get('params', {})
-            product_details = params.get('product_details', {})
+            product_details = params
             filename = product_details.get('filename', '')
             versao = DecksNewaveService.determinar_versao_por_filename(filename)
             
@@ -948,7 +948,7 @@ class DecksNewaveService:
             
             # Determinar versão do produto
             params = kwargs.get('params', {})
-            product_details = params.get('product_details', {})
+            product_details = params
             filename = product_details.get('filename', '')
             versao = DecksNewaveService.determinar_versao_por_filename(filename)
 
@@ -1129,7 +1129,7 @@ class DecksNewaveService:
             
             # Obter product_details do dag_run.conf
             dag_run_conf = kwargs.get('dag_run').conf or {}
-            product_details = dag_run_conf.get('product_details', {})
+            product_details = dag_run_conf
             
             # Extrair a data do produto e o nome do arquivo
             product_datetime_str = product_details.get('dataProduto', '')
@@ -1284,7 +1284,7 @@ class DecksNewaveService:
         except Exception as e:
             error_msg = f"Erro ao gerar tabela de diferença de cargas: {str(e)}"
             print(error_msg)
-            raise Exception(error_msg)
+            raise Exception(e)
     
     @staticmethod
     def enviar_tabela_whatsapp_email(**kwargs) -> Dict[str, Any]:
@@ -1298,7 +1298,7 @@ class DecksNewaveService:
             
             # Obter product_details do dag_run.conf
             dag_run_conf = kwargs.get('dag_run').conf or {}
-            product_details = dag_run_conf.get('product_details', {})
+            product_details = dag_run_conf
             
             product_datetime_str = tabela_result.get('product_datetime')
             
