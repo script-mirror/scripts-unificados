@@ -1284,7 +1284,7 @@ class DecksNewaveService:
         except Exception as e:
             error_msg = f"Erro ao gerar tabela de diferença de cargas: {str(e)}"
             print(error_msg)
-            raise Exception(error_msg)
+            raise Exception(e)
     
     @staticmethod
     def enviar_tabela_whatsapp_email(**kwargs) -> Dict[str, Any]:
