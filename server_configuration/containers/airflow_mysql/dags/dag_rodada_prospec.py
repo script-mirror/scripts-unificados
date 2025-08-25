@@ -489,6 +489,7 @@ with DAG(
     
     
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#Converte DC e roda no prospec
 with DAG(
     dag_id = '1.16-DECOMP_ONS-TO-CCEE', 
     start_date=datetime(2024, 4, 28), 
@@ -506,17 +507,10 @@ with DAG(
         cmd_timeout = None,
         get_pty=True,
     )
-        # Tarefa para acionar a DAG 1.11-PROSPEC_ATUALIZACAO com parâmetro
-    trigger_atualizacao = TriggerDagRunOperator(
-        task_id='trigger_atualizacao',
-        trigger_dag_id='1.11-PROSPEC_ATUALIZACAO',
-        conf={"nome_estudo": "{{ ti.xcom_pull(task_ids='run_prospec_update', key='produto') }}"},
-        wait_for_completion=False,
-        dag=dag,
-    )
+
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+#Converte NW e roda no prospec
 with DAG(
     dag_id = '1.17-NEWAVE_ONS-TO-CCEE', 
     start_date=datetime(2024, 4, 28), 
@@ -525,7 +519,7 @@ with DAG(
     tags=['Prospec'],
     ) as dag:
     
-    run_decomp_on_host = SSHOperator(
+    run_nw_on_host = SSHOperator(
         trigger_rule="none_failed_min_one_success",
         task_id='run_newave',
         ssh_conn_id='ssh_master',  
@@ -544,7 +538,7 @@ with DAG(
         dag=dag,
     )
 
-    run_decomp_on_host >> trigger_atualizacao
+    run_nw_on_host >> trigger_atualizacao
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '1.18-PROSPEC_UPDATE
