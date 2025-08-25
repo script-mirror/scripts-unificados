@@ -298,15 +298,7 @@ with DAG(
         python_callable=gerar_produto,
         provide_context=True
     )
-    
-    trigger_dag_prospec = TriggerDagRunOperator(
-        task_id='trigger_dag_prospec_2.0',
-        trigger_dag_id='1.11-PROSPEC_ATUALIZACAO',
-        conf={'nome_estudo': "revisao_weol"},  
-        wait_for_completion=False,  
-        trigger_rule="none_failed_min_one_success",
 
-    )
 
     atualizar_decomp = TriggerDagRunOperator(
         task_id='eolica_dadger_decomp',
@@ -316,5 +308,5 @@ with DAG(
     )
 
     inicio >> patamares
-    patamares >> previsao_final >> gerar_produtos >> atualizar_decomp >> trigger_dag_prospec
+    patamares >> previsao_final >> gerar_produtos >> atualizar_decomp
 
