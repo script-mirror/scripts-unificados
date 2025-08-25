@@ -1074,7 +1074,7 @@ def notas_tecnicas_medio_prazo(dadosProduto: dict):
         "arquivo": arquivo_xls
     })
     
-    if dadosProduto.get('filename').upper().startswith(f"GTMIN_CCEE_{datetime.today().strftime('%m%Y')}"):
+    if dadosProduto.get('filename').upper().startswith(f"GTMIN_CCEE_{datetime.date.today().strftime('%m%Y')}"):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.17-NEWAVE_ONS-TO-CCEE",
             json_produtos=dadosProduto,
