@@ -534,7 +534,7 @@ with DAG(
 # Função que executa o script com parâmetros dinâmicos
 def run_update_dc(**kwargs):
     params = kwargs.get('params', {})
-    produto  = conteudo['produto']
+    produto  = params['produto']
     conteudo = ' '.join(f'"{k}" \'{v}\'' if k == "list_email" else f'"{k}" "{v}"' for k, v in params.items())
     command = CMD_UPDATE_DC + conteudo 
     print(command)
