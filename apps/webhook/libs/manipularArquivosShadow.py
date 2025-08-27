@@ -14,7 +14,7 @@ import hashlib
 import re
 import shutil
 import subprocess
-
+from time import sleep
 from dotenv import load_dotenv
 from middle.utils import get_auth_header, Constants
 
@@ -214,7 +214,7 @@ def arquivos_modelo_pdp(dadosProduto: dict):
     #     )
 
     #gerar Produto
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
         "produto":"DIFERENCA_CV",
         "data":dtRef,
@@ -236,7 +236,7 @@ def arquivo_acomph(dadosProduto: dict):
         )
     #gerar Produto
 
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
         "produto":"ACOMPH",
         "data" : dtRef,
@@ -244,7 +244,7 @@ def arquivo_acomph(dadosProduto: dict):
         "destinatarioWhats": ["Condicao Hidrica"]
 
     })
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
         "produto":"ACOMPH_TABELA",
         "data" : dtRef,
@@ -252,7 +252,7 @@ def arquivo_acomph(dadosProduto: dict):
         "destinatarioWhats": ["Condicao Hidrica"]
 
     })
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.08-PROSPEC_GRUPOS-ONS",
             json_produtos={}
@@ -277,7 +277,7 @@ def arquivo_rdh(dadosProduto: dict):
     vazao.importRdh(filename)
 
     #gerar Produto
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
         "produto":"RDH",
         "data":dtRef,
@@ -317,7 +317,7 @@ def historico_preciptacao(dadosProduto: dict):
     airflow_tools.trigger_airflow_dag(
             dag_id="Mapas_PSAT")
     try:
-        if dadosProduto.get('enviar', True) == True:
+        if dadosProduto.get('enviar', True):
             GERAR_PRODUTO.enviar({
             "produto":"PSATH_DIFF",
             "path":filename,
@@ -361,7 +361,7 @@ def modelo_eta(dadosProduto: dict):
         date_format='%d%m%y',
         dst=dst)
     logger.info(extracted_files)
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         airflow_tools.trigger_airflow_dag(
             dag_id="PCONJUNTO",
             json_produtos={
@@ -371,24 +371,23 @@ def modelo_eta(dadosProduto: dict):
 
 def carga_patamar(dadosProduto: dict):
     filename = get_filename(dadosProduto)
-    res = req.post(
-        "http://0.0.0.0:8002/api/webhook",
-        json=dadosProduto,
+    airflow_tools.trigger_airflow_dag(
+        dag_id="webhook-sintegre",
+        json_produtos=dadosProduto,
+        url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2",
     )
     
-    logger.info(res.text)
-    logger.info(res.status_code)
     # gerar Produto
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
-        "produto":"REVISAO_CARGA",
-        "path":filename,
-    })
+            "produto":"REVISAO_CARGA",
+            "path":filename,
+        })
         
-    airflow_tools.trigger_airflow_dag(
-        dag_id="1.18-PROSPEC_UPDATE",
-        json_produtos={"produto": "CARGA-DECOMP"},
-        )
+        airflow_tools.trigger_airflow_dag(
+            dag_id="1.18-PROSPEC_UPDATE",
+            json_produtos={"produto": "CARGA-DECOMP"},
+            )
 
 
 def deck_preliminar_decomp(dadosProduto: dict):
@@ -412,12 +411,12 @@ def deck_preliminar_decomp(dadosProduto: dict):
     # decomp.importar_deck_entrada(path_copia_tmp, True)
 
     #gerar Produto
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
         "produto":"CMO_DC_PRELIMINAR",
         "path":filename,
     })
-    if dadosProduto.get('enviar', True) == True: 
+    if dadosProduto.get('enviar', True): 
         dadosProduto['dt_ref'] = dadosProduto['dataProduto']
         airflow_tools.trigger_airflow_dag(
             dag_id="1.16-DECOMP_ONS-TO-CCEE",
@@ -442,7 +441,7 @@ def deck_entrada_saida_dessem(dadosProduto: dict):
     deck_ds.importar_ds_bloco_dp(filename,dtRef,str_fonte='ons')
     deck_ds.importar_pdo_cmosist_ds(path_file=filename, dt_ref=dtRef, str_fonte='ons')
 
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
         "produto":"RESULTADO_DESSEM",
         "data":dtRef,
@@ -450,7 +449,7 @@ def deck_entrada_saida_dessem(dadosProduto: dict):
     
     dessem.organizarArquivosOns(dtRef, path_arquivos_ds, importarDb=False, enviarEmail=True)
     logger.info(f"Triggering DESSEM_convertido, dt_ref: {dadosProduto['dataProduto']}")
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         airflow_tools.trigger_airflow_dag(
             dag_id="DESSEM_convertido",
             json_produtos={
@@ -459,7 +458,7 @@ def deck_entrada_saida_dessem(dadosProduto: dict):
     
     deck_ds.importar_renovaveis_ds(path_file=filename, dt_ref=dtRef, str_fonte='ons')
     
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
         "produto":"PREVISAO_CARGA_DESSEM",
         "data":dtRef,
@@ -491,7 +490,7 @@ def previsao_carga_dessem(dadosProduto: dict):
         deck_ds.importar_ds_bloco_tm(filename,dtRef)
 
     #gerar Produto
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
         "produto":"PREVISAO_CARGA_DESSEM",
         "data":dtRef,
@@ -546,14 +545,14 @@ def carga_patamar_nw(dadosProduto: dict):
         str_fonte = id_fonte)
 
     #gerar Produto
-    # if dadosProduto.get('enviar', True) == True:
+    # if dadosProduto.get('enviar', True):
     #     GERAR_PRODUTO.enviar({
     #     "produto":"REVISAO_CARGA_NW",
     #     "path":filename,
     #     "data_ref": dtRef
     # })
         
-    if dadosProduto.get('enviar', True) == True: 
+    if dadosProduto.get('enviar', True): 
         dadosProduto['dt_ref'] = dadosProduto['dataProduto']
         airflow_tools.trigger_airflow_dag(
             dag_id="1.17-NEWAVE_ONS-TO-CCEE",
@@ -583,7 +582,7 @@ def carga_IPDO(dadosProduto: dict):
     carga_ons.importar_carga_ipdo(filename,dtRef)
 
     #gerar Produto
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
         "produto":"IPDO",
         "data":dtRef,
@@ -605,7 +604,7 @@ def modelo_ECMWF(dadosProduto: dict):
         dst=dst,
         extracted_files=[])
     logger.info(extracted_files)
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         airflow_tools.trigger_airflow_dag(
             dag_id="PCONJUNTO",
             json_produtos={
@@ -655,7 +654,7 @@ def modelo_gefs(dadosProduto: dict):
         dst=dst,
         extracted_files=[])
     logger.info(extracted_files)
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         airflow_tools.trigger_airflow_dag(
             dag_id="PCONJUNTO",
             json_produtos={
@@ -700,7 +699,7 @@ def psat_file(dadosProduto: dict):
 
     #cria figuras
     plot.plotPrevDiaria(modelo="psat",dataPrevisao=dtRef,rodada=0)
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
     "produto":"MAPA_PSAT",
     "data":dtRef.date()
@@ -724,7 +723,7 @@ def resultados_nao_consistidos_semanal(dadosProduto: dict):
     # manda arquivo .zip para maquina newave'
     cmd = f"cp {filename} /WX/SERVER_NW/WX4TB/Documentos/fontes/PMO/decomp/entradas/DC_preliminar/;"
     os.system(cmd)
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
             "produto":"PREV_ENA_CONSISTIDO",
             "data":data_produto,
@@ -782,7 +781,7 @@ def relatorio_resutados_finais_consistidos(dadosProduto: dict):
     dtPrevisao = datetime.datetime(anoPrevisao, mesPrevisao, diaPrevisao)
 
     revisao.importar_prev_ena_consistido(filename)
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
     "produto":"PREVISAO_ENA_SUBMERCADO",
     "data":dtPrevisao,
@@ -819,7 +818,7 @@ def deck_resultados_decomp(dadosProduto: dict):
     dataEletrica =  wx_opweek.ElecData(dtInicial.date())
     # /WX2TB/Documentos/fontes/PMO/arquivos/decks/202101_RV1
     path_decks = '/WX2TB/Documentos/fontes/PMO/arquivos/decks/{}{:0>2}_RV{}'.format(dataEletrica.anoReferente, dataEletrica.mesReferente, dataEletrica.atualRevisao)
-    if dadosProduto.get('enviar', True) == True: 
+    if dadosProduto.get('enviar', True): 
         dadosProduto['dt_ref'] = dadosProduto['dataProduto']
         airflow_tools.trigger_airflow_dag(
             dag_id="1.16-DECOMP_ONS-TO-CCEE",
@@ -861,7 +860,7 @@ def carga_newave_preliminar(dadosProduto: dict):
     
     #gerar Produto
     try:
-        if dadosProduto.get('enviar', True) == True:
+        if dadosProduto.get('enviar', True):
             GERAR_PRODUTO.enviar({
             "produto":"REVISAO_CARGA_NW_PRELIMINAR",
             "path":filename,
@@ -869,7 +868,7 @@ def carga_newave_preliminar(dadosProduto: dict):
         })
     except Exception as e:
         print(e)
-    if dadosProduto.get('enviar', True) == True: 
+    if dadosProduto.get('enviar', True): 
         dadosProduto['dt_ref'] = dadosProduto['dataProduto']
         airflow_tools.trigger_airflow_dag(
             dag_id="1.17-NEWAVE_ONS-TO-CCEE",
@@ -977,17 +976,17 @@ def deck_prev_eolica_semanal_weol(dadosProduto:dict):
     
 def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
     data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto'), "%d/%m/%Y")
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
         "produto":"TABELA_WEOL_MENSAL",
         "data":data_produto.date(),
     })
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
         "produto":"TABELA_WEOL_SEMANAL",
         "data":data_produto.date(),
     })
-    if dadosProduto.get('enviar', True) == True:
+    if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
         "produto":"TABELA_WEOL_DIFF",
         "data":data_produto.date(),
@@ -995,49 +994,59 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
 
         
 def relatorio_limites_intercambio(dadosProduto: dict):
+    airflow_tools.trigger_airflow_dag(
+        dag_id="webhook-sintegre",
+        json_produtos=dadosProduto,
+        url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2",
+    )
+    sleep(10)
+    airflow_tools.trigger_airflow_dag(
+        dag_id="1.18-PROSPEC_UPDATE",
+        json_produtos={"produto": "RE-DECOMP"},
+    )
     
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
-    PREFIXO_PADRAO = "RT-ONS DPL"
-    arquivo = get_filename(dadosProduto)
-    if '.pdf' in arquivo:
-        arquivo_selecionado = arquivo
-    else:
-        path_arquivo = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(arquivo)[:-4])
-        os.makedirs(path_arquivo, exist_ok=True)
+    # filename = get_filename(dadosProduto)
+    # logger.info(filename)
+    # PREFIXO_PADRAO = "RT-ONS DPL"
+    # arquivo = get_filename(dadosProduto)
+    # if '.pdf' in arquivo:
+    #     arquivo_selecionado = arquivo
+    # else:
+    #     path_arquivo = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(arquivo)[:-4])
+    #     os.makedirs(path_arquivo, exist_ok=True)
         
-        with zipfile.ZipFile(arquivo, 'r') as zip_ref:
-            zip_content_names = zip_ref.namelist()
-            zip_ref.extract(zip_content_names[0], path_arquivo)
+    #     with zipfile.ZipFile(arquivo, 'r') as zip_ref:
+    #         zip_content_names = zip_ref.namelist()
+    #         zip_ref.extract(zip_content_names[0], path_arquivo)
             
-        arquivo_interno = os.path.join(path_arquivo, zip_content_names[0])
-        if PREFIXO_PADRAO in arquivo_interno and arquivo_interno.endswith('.pdf'):
-            arquivo_selecionado = arquivo_interno
-        elif arquivo_interno.endswith('.zip'):
-            with zipfile.ZipFile(arquivo_interno, 'r') as zip_ref:
+    #     arquivo_interno = os.path.join(path_arquivo, zip_content_names[0])
+    #     if PREFIXO_PADRAO in arquivo_interno and arquivo_interno.endswith('.pdf'):
+    #         arquivo_selecionado = arquivo_interno
+    #     elif arquivo_interno.endswith('.zip'):
+    #         with zipfile.ZipFile(arquivo_interno, 'r') as zip_ref:
                 
-                zip_ref.extractall(path_arquivo)
+    #             zip_ref.extractall(path_arquivo)
                 
-                arquivos_pdf = glob.glob(os.path.join(path_arquivo, "**", "*.pdf"), recursive=True)
+    #             arquivos_pdf = glob.glob(os.path.join(path_arquivo, "**", "*.pdf"), recursive=True)
                 
-                arquivo_selecionado = None
-                for arquivo in arquivos_pdf:
-                    nome_arquivo = os.path.basename(arquivo)
-                    if PREFIXO_PADRAO in nome_arquivo:
-                        arquivo_selecionado = arquivo
-                        logger.info(f"Arquivo no formato correto encontrado: {nome_arquivo}")
-                        break
+    #             arquivo_selecionado = None
+    #             for arquivo in arquivos_pdf:
+    #                 nome_arquivo = os.path.basename(arquivo)
+    #                 if PREFIXO_PADRAO in nome_arquivo:
+    #                     arquivo_selecionado = arquivo
+    #                     logger.info(f"Arquivo no formato correto encontrado: {nome_arquivo}")
+    #                     break
                 
-                if arquivo_selecionado is None:
-                    raise Exception("Nenhum arquivo no formato correto encontrado.")
-                    return
-        else:
-            raise Exception("O arquivo interno não é um PDF ou ZIP válido, ou o cenario não foi mapeado")
-    return {
-        "file_path": arquivo_selecionado,
-        "trigger_dag_id":"PROSPEC_UPDATER",
-        "task_to_execute": "revisao_restricao"
-    }
+    #             if arquivo_selecionado is None:
+    #                 raise Exception("Nenhum arquivo no formato correto encontrado.")
+    #                 return
+    #     else:
+    #         raise Exception("O arquivo interno não é um PDF ou ZIP válido, ou o cenario não foi mapeado")
+    # return {
+    #     "file_path": arquivo_selecionado,
+    #     "trigger_dag_id":"PROSPEC_UPDATER",
+    #     "task_to_execute": "revisao_restricao"
+    # }
 
 
 def notas_tecnicas_medio_prazo(dadosProduto: dict):
@@ -1086,19 +1095,19 @@ def notas_tecnicas_medio_prazo(dadosProduto: dict):
 if __name__ == '__main__':
     
     dadosProduto = {
-    "dataProduto": "09/2025",
-    "filename": "Notas Técnicas - Medio Prazo.zip",
-    "macroProcesso": "Programação da Operação",
-    "nome": "Notas Técnicas - Medio Prazo",
-    "periodicidade": "2025-09-01T03:00:00.000Z",
-    "periodicidadeFinal": "2025-10-01T02:59:59.000Z",
-    "processo": "Médio Prazo",
-    "s3Key": "webhooks/Notas Técnicas - Medio Prazo/68ac8613b790e437d6529fa1_Notas Técnicas - Medio Prazo.zip",
-    "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiIvc2l0ZXMvOS81Mi83MS9Qcm9kdXRvcy8yODgvMjUtMDgtMjAyNV8xMjQ0MDAiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiTm90YXMgVMOpY25pY2FzIC0gTWVkaW8gUHJhem8iLCJJc0ZpbGUiOiJGYWxzZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTYyMjM2MTgsIm5iZiI6MTc1NjEzNjk3OH0.XVN4hoL9U_d4aPscNto7UdvKxc7XOLCCvhfKYudDnNU",
-    "webhookId": "68ac8613b790e437d6529fa1"
+  "dataProduto": "09/2025",
+  "filename": "CargaMensal_2revquad2529.zip",
+  "macroProcesso": "Programação da Operação",
+  "nome": "Previsões de carga mensal e por patamar - NEWAVE",
+  "periodicidade": "2025-09-01T00:00:00",
+  "periodicidadeFinal": "2025-09-30T23:59:59",
+  "processo": "Previsão de Carga para o PMO",
+  "s3Key": "webhooks/Previsões de carga mensal e por patamar - NEWAVE/688d2cb494f9e32e8e798756_CargaMensal_2revquad2529.zip",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ny9Qcm9kdXRvcy8yMjkvQ2FyZ2FNZW5zYWxfMnJldnF1YWQyNTI5LnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJQcmV2aXPDtWVzIGRlIGNhcmdhIG1lbnNhbCBlIHBvciBwYXRhbWFyIC0gTkVXQVZFIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTQxNjkxMjMsIm5iZiI6MTc1NDA4MjQ4M30.kdmb2eKSpSmXep832Vrw6B7NAAdG_4On23P7cZlj3uM",
+  "webhookId": "688d2cb494f9e32e8e798756"
 }
     
 
-    notas_tecnicas_medio_prazo(dadosProduto)
+    carga_patamar_nw(dadosProduto)
     
 
