@@ -20,7 +20,7 @@ def auth_airflow3():
         "password": __PASSWORD_AIRFLOW,
     }
     response = requests.post(auth_url, json=auth_data)
-    if response.status_code == 200:
+    if response.status_code >= 200 and response.status_code < 300:
         token = response.json().get("access_token")
         return {"Authorization": f"Bearer {token}"}
     else:
