@@ -34,7 +34,7 @@ def trigger_airflow_dag(
 ):
 
     trigger_dag_url = f"{url_airflow}/dags/{dag_id}/dagRuns"
-    json = {"conf": json_produtos}
+    json = {"conf": json_produtos, "logical_date": datetime.datetime.now().isoformat()}
     if momento_req != None:
         json["dag_run_id"]=f"{json_produtos['modelos'][0][0]}{momento_req.strftime('_%d_%m_%Y_%H_%M_%S')}"
 
