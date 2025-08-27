@@ -42,7 +42,8 @@ def trigger_airflow_dag(
     if url_airflow == __API_URL_AIRFLOW:
         answer = requests.post(trigger_dag_url, json=json, auth=get_airflow_auth())
     else:
-        json["logical_date"] = datetime.datetime.now().isoformat()
+        json["logical_date"] = datetime.datetime.now().isoformat().replace(" ", "T")
+        print(json)
         answer = requests.post(trigger_dag_url, json=json, headers=auth_airflow3())
     print(f"Resposta ao triggar a dag: {answer.status_code} - {answer.text}")
     return answer
