@@ -34,7 +34,7 @@ def trigger_airflow_dag(
 ):
 
     trigger_dag_url = f"{url_airflow}/dags/{dag_id}/dagRuns"
-    json = {"conf": json_produtos, "logical_date": datetime.datetime.now().isoformat()}
+    json = {"conf": json_produtos}
     if momento_req != None:
         json["dag_run_id"]=f"{json_produtos['modelos'][0][0]}{momento_req.strftime('_%d_%m_%Y_%H_%M_%S')}"
 
@@ -42,6 +42,7 @@ def trigger_airflow_dag(
     if url_airflow == __API_URL_AIRFLOW:
         answer = requests.post(trigger_dag_url, json=json, auth=get_airflow_auth())
     else:
+        json["logical_date"] = datetime.datetime.now().isoformat()
         answer = requests.post(trigger_dag_url, json=json, headers=auth_airflow3())
     print(f"Resposta ao triggar a dag: {answer.status_code} - {answer.text}")
     return answer
