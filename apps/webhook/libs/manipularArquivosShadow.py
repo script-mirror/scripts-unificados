@@ -50,7 +50,6 @@ from apps.pconjunto import wx_plota_pconjunto
 from apps.gerarProdutos import gerarProdutos2
 from bibliotecas import wx_opweek,rz_dir_tools
 from apps.dbUpdater.libs import carga_ons,chuva,deck_ds,deck_dc,deck_nw,geracao,revisao,temperatura,vazao
-from apps.prospec.libs import update_estudo
 
 
 #constantes path
