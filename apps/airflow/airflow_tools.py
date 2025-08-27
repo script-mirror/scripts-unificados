@@ -13,6 +13,19 @@ __PASSWORD_AIRFLOW = os.getenv('PASSWORD_AIRFLOW')
 def get_airflow_auth():
     return requests.auth.HTTPBasicAuth(__USER_AIRFLOW, __PASSWORD_AIRFLOW)
 
+def auth_airflow3():
+    auth_url = f"https://tradingenergiarz.com/airflow-middle/auth/token"
+    auth_data = {
+        "username": __USER_AIRFLOW,
+        "password": __PASSWORD_AIRFLOW,
+    }
+    response = requests.post(auth_url, json=auth_data)
+    if response.status_code == 200:
+        token = response.json().get("access_token")
+        return {"Authorization": f"Bearer {token}"}
+    else:
+        raise Exception("Falha na autenticação com o Airflow")
+
 def trigger_airflow_dag(
     dag_id: str,
     json_produtos: dict={},
@@ -26,7 +39,10 @@ def trigger_airflow_dag(
         json["dag_run_id"]=f"{json_produtos['modelos'][0][0]}{momento_req.strftime('_%d_%m_%Y_%H_%M_%S')}"
 
     # Faz a chamada para a API do Airflow com autenticação
-    answer = requests.post(trigger_dag_url, json=json, auth=get_airflow_auth())
+    if url_airflow == __API_URL_AIRFLOW:
+        answer = requests.post(trigger_dag_url, json=json, auth=get_airflow_auth())
+    else:
+        answer = requests.post(trigger_dag_url, json=json, headers=auth_airflow3())
     print(f"Resposta ao triggar a dag: {answer.status_code} - {answer.text}")
     return answer
     
