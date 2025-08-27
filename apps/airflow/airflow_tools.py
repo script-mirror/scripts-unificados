@@ -13,9 +13,14 @@ __PASSWORD_AIRFLOW = os.getenv('PASSWORD_AIRFLOW')
 def get_airflow_auth():
     return requests.auth.HTTPBasicAuth(__USER_AIRFLOW, __PASSWORD_AIRFLOW)
 
-def trigger_airflow_dag(dag_id:str,json_produtos:dict={}, momento_req:Optional[datetime.datetime]=None):
+def trigger_airflow_dag(
+    dag_id: str,
+    json_produtos: dict={},
+    momento_req: Optional[datetime.datetime]=None,
+    url_airflow: Optional[str] = __API_URL_AIRFLOW,
+):
 
-    trigger_dag_url = f"{__API_URL_AIRFLOW}/dags/{dag_id}/dagRuns"
+    trigger_dag_url = f"{url_airflow}/dags/{dag_id}/dagRuns"
     json = {"conf": json_produtos}
     if momento_req != None:
         json["dag_run_id"]=f"{json_produtos['modelos'][0][0]}{momento_req.strftime('_%d_%m_%Y_%H_%M_%S')}"
