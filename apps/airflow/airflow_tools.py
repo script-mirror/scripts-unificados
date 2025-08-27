@@ -26,14 +26,15 @@ def trigger_airflow_dag(
         json["dag_run_id"]=f"{json_produtos['modelos'][0][0]}{momento_req.strftime('_%d_%m_%Y_%H_%M_%S')}"
 
     # Faz a chamada para a API do Airflow com autenticação
-    answer = requests.post(trigger_dag_url, json=json, auth=get_airflow_auth(),verify=False)
+    answer = requests.post(trigger_dag_url, json=json, auth=get_airflow_auth())
+    print(f"Resposta ao triggar a dag: {answer.status_code} - {answer.text}")
     return answer
     
 def get_dag_run_state(dag_id:str, dag_run_id:str):
     get_dag_url = f"{__API_URL_AIRFLOW}/dags/{dag_id}/dagRuns/{dag_run_id}"
 
     # Faz a chamada para a API do Airflow com autenticação
-    answer = requests.get(get_dag_url, auth=get_airflow_auth(),verify=False)
+    answer = requests.get(get_dag_url, auth=get_airflow_auth())
     return {"state":answer.json()['state'], "end_datetime":datetime.datetime.strptime(answer.json()['end_date'][0:19] , '%Y-%m-%dT%H:%M:%S')}
 
 if __name__ == '__main__':
