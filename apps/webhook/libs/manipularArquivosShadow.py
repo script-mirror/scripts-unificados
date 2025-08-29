@@ -854,6 +854,12 @@ def carga_newave_preliminar(dadosProduto: dict):
     logger.info(filename)
     logger.info(dadosProduto)
     
+    airflow_tools.trigger_airflow_dag(
+        dag_id="webhook-sintegre",
+        json_produtos=dadosProduto,
+        url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+    )
+    
     DIR_TOOLS.extract(filename,filename[:filename.rfind("/")])
         
     path_decks = "/WX2TB/Documentos/fontes/PMO/decks/ons/nw"
