@@ -14,7 +14,7 @@ app.config.from_pyfile('config.py')
 
 Bootstrap(app)
 
-db = SQLAlchemy(app)
+db_login = SQLAlchemy(app)
 
 
 PATH_SERVER = os.path.dirname(os.path.abspath(__file__))

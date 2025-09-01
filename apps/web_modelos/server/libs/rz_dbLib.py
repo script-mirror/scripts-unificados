@@ -1,8 +1,6 @@
 import pymysql
-import pymssql
 import numpy as np
 import pandas as pd
-import pdb
 import datetime
 import sqlalchemy as db
 import sys
@@ -13,6 +11,7 @@ from sqlalchemy.sql.expression import func
 from sqlalchemy import between, desc, and_
 from datetime import date
 from unidecode import unidecode
+from middle.message import send_whatsapp_message
 
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes")
@@ -23,13 +22,12 @@ load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
 
 # Variaveis globais
-# dateFormat = "%Y-%m-%d" #mysql
-dateFormat = "%Y/%m/%d" #mssql
+dateFormat = "%Y/%m/%d"
 
 class WxDataB:
 
     def __init__(self, dbm='mssql'):
-
+        send_whatsapp_message("debug", "Iniciando conexão com banco de dados " + dbm)
         #DB MSSQL CONFIGURATION
         __HOST_MSSQL = os.getenv('HOST_MSSQL') 
         __PORT_DB_MSSQL = os.getenv('PORT_DB_MSSQL') 
@@ -77,9 +75,7 @@ class WxDataB:
 
     def connectHost(self):
 
-        if self.dbm in ['mssql', 'aws']:
-            conn = pymssql.connect(host=self.dbHost, user=self.dbUser, password=self.dbPassword, database=self.dbDatabase, port=self.port)
-        elif self.dbm in ['mysql', 'mysqlWx']:
+        if self.dbm in ['mysql', 'mysqlWx']:
             conn = pymysql.connect(host=self.dbHost, user=self.dbUser, password=self.dbPassword, database=self.dbDatabase, port=self.port)
 
         return conn

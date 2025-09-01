@@ -414,21 +414,17 @@ def checkUpdateIntervernc(selenium):
 
             try:
 
-                # Formatacao para timestamp no mssql
                 row['Início'] = datetime.datetime.strptime( row['Início'],'%d/%m/%Y %H:%M:%S')
                 row['Início'] = row['Início'].strftime(timestampFormat)
 
-                # Formatacao para timestamp no mssql
                 row['Fim'] = datetime.datetime.strptime( row['Fim'],'%d/%m/%Y %H:%M:%S')
                 row['Fim'] = row['Fim'].strftime(timestampFormat)
             except Exception as e:
                 # Utilizando AM e PM
 
-                # Formatacao para timestamp no mssql
                 row['Início'] = datetime.datetime.strptime( row['Início'],'%m/%d/%Y %H:%M:%S %p')
                 row['Início'] = row['Início'].strftime(timestampFormat)
 
-                # Formatacao para timestamp no mssql
                 row['Fim'] = datetime.datetime.strptime( row['Fim'],'%m/%d/%Y %H:%M:%S %p')
                 row['Fim'] = row['Fim'].strftime(timestampFormat)
 
