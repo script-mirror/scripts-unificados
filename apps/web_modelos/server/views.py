@@ -87,8 +87,6 @@ def add_prefix():
     path = request.path
     query_string = request.query_string.decode()
     res = post_event_trackin(path, query_string)
-    # if res:
-    #   send_message(f"{res.status_code}\n{res.text}")
     if not path.startswith('/middle') and not path.startswith('/static'):
         new_path = '/middle' + path
         if query_string:
