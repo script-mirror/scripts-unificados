@@ -22,7 +22,7 @@ from PMO.scripts_unificados.bibliotecas import wx_dbClass,wx_opweek,wx_dbLib
 from PMO.scripts_unificados.apps.previvaz.libs import wx_geradorPrevs
 from PMO.scripts_unificados.apps.web_modelos.server import utils
 from PMO.scripts_unificados.apps.web_modelos.server.models import RegistrationForm, LoginForm, User
-from PMO.scripts_unificados.apps.web_modelos.server.server import app, db, bp,cache
+from PMO.scripts_unificados.apps.web_modelos.server.server import app, db_login, bp,cache
 from PMO.scripts_unificados.apps.web_modelos.server.caches import rz_cache
 from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_dbLib,rz_temperatura,rz_ena,rz_chuva,db_decks,db_meteorologia
 
