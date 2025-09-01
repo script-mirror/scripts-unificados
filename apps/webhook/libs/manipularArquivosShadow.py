@@ -1065,16 +1065,15 @@ def notas_tecnicas_medio_prazo(dadosProduto: dict):
             zip_ref.extract(excel_file, path_arquivo)
             logger.info(f"Arquivo extraído: {excel_file}")
     
-    arquivos_excel = glob.glob(os.path.join(path_arquivo, "**", "*.xlsx"), recursive=True)
-    arquivos_excel.extend(glob.glob(os.path.join(path_arquivo, "**", "*.xls"), recursive=True))
+    arquivo_xls = os.path.join(path_arquivo, os.path.basename(excel_file))
     
-    logger.info(f"Arquivos Excel encontrados: {arquivos_excel}")
+    logger.info(f"Arquivos Excel encontrados: {arquivo_xls}")
     
-    if not arquivos_excel:
+    if not arquivo_xls:
         logger.error(f"Nenhum arquivo Excel encontrado em {path_arquivo}")
         return
     
-    arquivo_xls = arquivos_excel[-1]
+    
     
     GERAR_PRODUTO.enviar({
         "produto":"NOTAS_TECNICAS",
