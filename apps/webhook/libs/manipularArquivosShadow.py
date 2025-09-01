@@ -524,6 +524,13 @@ def carga_patamar_nw(dadosProduto: dict):
     
 
     filename = get_filename(dadosProduto)
+    
+    airflow_tools.trigger_airflow_dag(
+        dag_id="webhook-sintegre",
+        json_produtos=dadosProduto,
+        url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+    )
+    
     logger.info(filename)
 
     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
@@ -532,7 +539,7 @@ def carga_patamar_nw(dadosProduto: dict):
     if "ons" in dadosProduto["url"]:
         id_fonte = "ons"
     else:
-        id_fonte = "ccee"
+        id_fonte = "ccee" 
         
     dtRef = datetime.datetime.strptime(dadosProduto["dataProduto"], "%m/%Y")
     dtRef_last_saturday = wx_opweek.getLastSaturday(dtRef)
@@ -844,6 +851,12 @@ def carga_newave_preliminar(dadosProduto: dict):
     filename = get_filename(dadosProduto)
     logger.info(filename)
     logger.info(dadosProduto)
+    
+    airflow_tools.trigger_airflow_dag(
+        dag_id="webhook-sintegre",
+        json_produtos=dadosProduto,
+        url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+    )
     
     DIR_TOOLS.extract(filename,filename[:filename.rfind("/")])
         
