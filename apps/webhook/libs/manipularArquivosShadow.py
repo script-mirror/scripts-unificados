@@ -50,7 +50,6 @@ from apps.pconjunto import wx_plota_pconjunto
 from apps.gerarProdutos import gerarProdutos2
 from bibliotecas import wx_opweek,rz_dir_tools
 from apps.dbUpdater.libs import carga_ons,chuva,deck_ds,deck_dc,deck_nw,geracao,revisao,temperatura,vazao
-from apps.prospec.libs import update_estudo
 
 
 #constantes path
@@ -525,6 +524,13 @@ def carga_patamar_nw(dadosProduto: dict):
     
 
     filename = get_filename(dadosProduto)
+    
+    airflow_tools.trigger_airflow_dag(
+        dag_id="webhook-sintegre",
+        json_produtos=dadosProduto,
+        url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+    )
+    
     logger.info(filename)
 
     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
@@ -533,7 +539,7 @@ def carga_patamar_nw(dadosProduto: dict):
     if "ons" in dadosProduto["url"]:
         id_fonte = "ons"
     else:
-        id_fonte = "ccee"
+        id_fonte = "ccee" 
         
     dtRef = datetime.datetime.strptime(dadosProduto["dataProduto"], "%m/%Y")
     dtRef_last_saturday = wx_opweek.getLastSaturday(dtRef)
@@ -846,6 +852,12 @@ def carga_newave_preliminar(dadosProduto: dict):
     logger.info(filename)
     logger.info(dadosProduto)
     
+    airflow_tools.trigger_airflow_dag(
+        dag_id="webhook-sintegre",
+        json_produtos=dadosProduto,
+        url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+    )
+    
     DIR_TOOLS.extract(filename,filename[:filename.rfind("/")])
         
     path_decks = "/WX2TB/Documentos/fontes/PMO/decks/ons/nw"
@@ -1066,16 +1078,15 @@ def notas_tecnicas_medio_prazo(dadosProduto: dict):
             zip_ref.extract(excel_file, path_arquivo)
             logger.info(f"Arquivo extraído: {excel_file}")
     
-    arquivos_excel = glob.glob(os.path.join(path_arquivo, "**", "*.xlsx"), recursive=True)
-    arquivos_excel.extend(glob.glob(os.path.join(path_arquivo, "**", "*.xls"), recursive=True))
+    arquivo_xls = os.path.join(path_arquivo, os.path.basename(excel_file))
     
-    logger.info(f"Arquivos Excel encontrados: {arquivos_excel}")
+    logger.info(f"Arquivos Excel encontrados: {arquivo_xls}")
     
-    if not arquivos_excel:
+    if not arquivo_xls:
         logger.error(f"Nenhum arquivo Excel encontrado em {path_arquivo}")
         return
     
-    arquivo_xls = arquivos_excel[-1]
+    
     
     GERAR_PRODUTO.enviar({
         "produto":"NOTAS_TECNICAS",

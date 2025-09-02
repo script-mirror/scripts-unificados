@@ -1,9 +1,6 @@
 import os 
-import pdb
 import sys
 import time
-import pyodbc
-import pymssql
 import pymysql
 import datetime
 import pandas as pd
@@ -17,6 +14,7 @@ sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.bibliotecas import wx_dbClass,wx_opweek
 from PMO.scripts_unificados.apps.web_modelos.server.caches import rz_cache
 from middle.utils import setup_logger
+from middle.message import send_whatsapp_message
 
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
@@ -26,30 +24,15 @@ class WxDataB:
 
     def __init__(self, DBM='mssql'):
 
-        #DB MSSQL CONFIGURATION
-        __HOST_MSSQL = os.getenv('HOST_MSSQL') 
-        __PORT_DB_MSSQL = os.getenv('PORT_DB_MSSQL') 
-
-        __USER_DB_MSSQL = os.getenv('USER_DB_MSSQL') 
-        __PASSWORD_DB_MSSQL = os.getenv('PASSWORD_DB_MSSQL')
-
-
         #DB MYSQL CONFIGURATION
         __HOST_MYSQL = os.getenv('HOST_MYSQL')
         __PORT_DB_MYSQL = os.getenv('PORT_DB_MYSQL')
 
         __USER_DB_MYSQL = os.getenv('USER_DB_MYSQL')
         __PASSWORD_DB_MYSQL = os.getenv('PASSWORD_DB_MYSQL')
-
-
-        if DBM in ['mssql', 'mssql_odbc']:
-            self.dbHost = __HOST_MSSQL
-            self.dbUser = __USER_DB_MSSQL
-            self.dbPassword = __PASSWORD_DB_MSSQL
-            self.dbDatabase = 'climenergy'
-            self.port = int(__PORT_DB_MSSQL)
-
-        elif DBM == 'mysqlWx':
+        # DEBUG
+        send_whatsapp_message("debug", "Iniciando conexão com banco de dados " + DBM, None)
+        if DBM == 'mysqlWx':
             self.dbHost = __HOST_MYSQL
             self.dbUser = __USER_DB_MYSQL
             self.dbPassword = __PASSWORD_DB_MYSQL
@@ -75,12 +58,7 @@ class WxDataB:
         self.dbDatabase = databaseName
 
     def connectHost(self):
-        if self.dbm == 'mssql':
-            conn = pymssql.connect(host=self.dbHost, user=self.dbUser, password=self.dbPassword, database=self.dbDatabase, port=self.port)
-        elif self.dbm in ['mssql_odbc']:
-            # print(pyodbc.drivers())  # Para verificar o nome do driver
-            conn = pyodbc.connect(driver=f'{{ODBC Driver 17 for SQL Server}};SERVER={self.dbHost},{self.port};DATABASE={self.dbDatabase};UID={self.dbUser};PWD={self.dbPassword}')
-        elif self.dbm in ['mysql', 'mysqlWx']:
+        if self.dbm in ['mysql', 'mysqlWx']:
             conn = pymysql.connect(host=self.dbHost, user=self.dbUser, password=self.dbPassword, database=self.dbDatabase, port=self.port)
         return conn
 

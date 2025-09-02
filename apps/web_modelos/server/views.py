@@ -20,9 +20,9 @@ load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 sys.path.insert(1,"/WX2TB/Documentos/fontes")
 from PMO.scripts_unificados.bibliotecas import wx_dbClass,wx_opweek,wx_dbLib
 from PMO.scripts_unificados.apps.previvaz.libs import wx_geradorPrevs
-from PMO.scripts_unificados.apps.web_modelos.server import utils ,pymssqlLib 
+from PMO.scripts_unificados.apps.web_modelos.server import utils
 from PMO.scripts_unificados.apps.web_modelos.server.models import RegistrationForm, LoginForm, User
-from PMO.scripts_unificados.apps.web_modelos.server.server import app, db, bp,cache
+from PMO.scripts_unificados.apps.web_modelos.server.server import app, db_login, bp,cache
 from PMO.scripts_unificados.apps.web_modelos.server.caches import rz_cache
 from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_dbLib,rz_temperatura,rz_ena,rz_chuva,db_decks,db_meteorologia
 
@@ -31,6 +31,7 @@ from PMO.scripts_unificados.apps.web_modelos.server.controller.bbce_controller i
 
 import urllib.parse
 import json
+from middle.message import send_whatsapp_message
 
 pathBancoProspec = os.path.abspath('/WX2TB/Documentos/fontes/PMO/scripts_unificados/arquivos/db_rodadas_prospec.db')
 
@@ -86,8 +87,6 @@ def add_prefix():
     path = request.path
     query_string = request.query_string.decode()
     res = post_event_trackin(path, query_string)
-    # if res:
-    #   send_message(f"{res.status_code}\n{res.text}")
     if not path.startswith('/middle') and not path.startswith('/static'):
         new_path = '/middle' + path
         if query_string:
@@ -115,13 +114,14 @@ def login():
 
 @bp.route('/signup', methods=['GET', 'POST'])
 def signup():
-  return '<p>Pagina desabilitada, falar com o rodrigo.tenorio@raizen.com ou arthur.moraes2@raizen.com</p>'
+  send_whatsapp_message("debug", "ACESSO AO SIGNUP", None)
   form = RegistrationForm()
   if form.validate_on_submit():
     hashed_password = generate_password_hash(form.password.data, method='pbkdf2:sha256')
     new_user = User(username=form.username.data, email=form.email.data, password=hashed_password)
-    db.session.add(new_user)
-    db.session.commit()
+    send_whatsapp_message("debug", f"usuario: {form.username.data} - email: {form.email.data}", None)
+    db_login.session.add(new_user)
+    db_login.session.commit()
     return redirect(url_for('middle_app.index'))
   return render_template('signup.html', form=form )
 
@@ -252,12 +252,12 @@ def mapa_interativo():
   return render_template('mapa_interativo.html')
 
 @bp.route('/mapa-interativo-tv')
-# @login_required
+@login_required
 def mapa_interativo_tv():
   return render_template('mapa_interativo_tv.html')
 
 @bp.route('/resumo-negociacoes-bbce')
-# @login_required
+@login_required
 def resumo_negociacoes_bbce():
   return render_template('resumo_negociacoes_bbce.html')
 
@@ -276,137 +276,6 @@ def treatListRevisions(lstRv):
         dicRev[rev[0]][rev[1]][rev[2]].append(rev[4])
   return dicRev
 
-
-@bp.route('/modelos/decomp/resultados')
-@login_required
-def decompResultados():
-  flags={'matriz':0}
-  slider=''
-
-  if 'rodada' in request.args:
-    rodada = int(request.args['rodada'])
-    flags['rodada']= int(rodada)
-    flags['smap'] = 'all'
-
-
-    lstRvTreated = pymssqlLib.getRevInformation(flags)
-
-    years = [lstRvTreated[0][0]]
-    months = [lstRvTreated[0][1]]
-    revs = [lstRvTreated[0][2]]
-    if lstRvTreated[0][4] is not None:
-      fcfs = [lstRvTreated[0][4]]
-    else:
-      fcfs = []
-
-    year = lstRvTreated[0][0]
-    month = lstRvTreated[0][1]
-    rev = lstRvTreated[0][2]
-    if fcfs:
-      fcf = fcfs[0]
-    else:
-      fcf = 'all'
-    
-    smap = "all"
-
-    title=str(rodada)
-
-  else:
-    lstRvTreated = treatListRevisions(pymssqlLib.getRevInformation(flags))
-  # Get all YEARS from DB ans assign it to a list
-    years=[]
-    rodada = 'all'
-
-    for year in lstRvTreated:
-      years.append(year)
-    years.sort()
-
-    # Check if an YEAR was provided as part of the URL.
-    # If the YEAR was not provided in URL, a page with all possible YEAR is renderize.
-    if 'year' in request.args:
-      year = int(request.args['year'])
-      title=str(year)
-    else:
-      return render_template('decompResultados.html', years=years)
-
-    # Get all MONTHS from DB ans assign it to a list
-    months=[]
-    for month in lstRvTreated[year]:
-      months.append(month)
-    months.sort()
-
-    # Check if an MONTH was provided as part of the URL.
-    # If the MONTH was not provided in URL, a page with all possible MONTHS is renderize.
-    if 'month' in request.args:
-      month = int(request.args['month'])
-      title=title+"/"+str(month)
-    else:
-      return render_template('decompResultados.html', title=title, months=months, years=years, year=year)
-
-    # Get all REVS from DB ans assign it to a list
-    revs=[]
-    for rev in lstRvTreated[year][month]:
-      revs.append(rev)
-    revs.sort()
-    
-
-    # Check if an REV was provided as part of the URL.
-    # If the REV was not provided in URL, a page with all possible REVS is renderize.
-    if 'rev' in request.args:
-      rev = int(request.args['rev'])
-      fcfs=lstRvTreated[year][month][rev]
-      smap = "all"
-      fcf = 'all'
-      if fcfs:
-        fcf = fcfs[0]
-      title=title+"-REV"+str(rev)
-    else:
-      return render_template('decompResultados.html', title=title, revs= revs, months=months, month=month, years=years, year=year)
-
-    # Check if an FCF was provided as part of the URL.
-    # If the FCF was not provided in URL, a page with all possible FCFs is renderize.
-    if 'fcf' in request.args:
-      fcf = request.args['fcf']
-
-    title=title+" "+str(fcf)
-
-    if 'smap' in request.args:
-      smap = request.args['smap']
-
-    if 'slider' in request.args:
-      slider = request.args['slider']
-
-
-  roundsInfo = {'rodada':rodada, 'year': year, 'month':month, 'rev':rev, 'fcf':fcf, 'smap':smap, 'slider':slider}
-
-  # Get all table results for this revision
-  tableResults = pymssqlLib.getTableResults(roundsInfo)
-  roundsInfo['rounds'] = list(tableResults.keys())
-
-  revisionName = str(year)+'/'+str(month)+'-REV'+str(rev)
-
-  if len(roundsInfo['rounds'])>0:
-    # Check this if this revision already exist in cache
-    # cache = utils.checkCache(revisionName, roundsInfo['rounds'])
-    # if cache:
-    # 	graphicResults = cache 									# Revision already in cache
-    # 	print('Result already in cache')
-    # else:
-    # 	graphicResults, reviStr = pymssqlLib.getRevResultsGraphics(tableResults, roundsInfo)
-    # 	newCache = {revisionName: graphicResults}
-    # 	utils.storeInCache(newCache)							# Revision stored in cache
-    # 	print('Result stored in cache')
-
-    graphicResults, reviStr = pymssqlLib.getRevResultsGraphics(tableResults, roundsInfo)
-    roundsInfo['subMarkets'] = list(graphicResults.keys())
-    roundsInfo['revision'] = reviStr
-
-
-    firstRound = roundsInfo['rounds'][0]
-    return render_template('decompResultados.html' , title=title, smap=smap, fcf=fcf, fcfs=fcfs, revs=revs, rev=rev, months=months, month=month, years=years, year=year, tableResults=tableResults, graphicResults=graphicResults, colorsModel=utils.getColorModels(), firstRound=firstRound, roundsInfo=roundsInfo)
-    # return render_template('decompResultados.html' , title=title, smap=smap, fcf=fcf, fcfs=fcfs, revs=revs, rev=rev, months=months, month=month, years=years, year=year, tableResults=tableResults, colorsModel=utils.getColorModels(), firstRound=firstRound, roundsInfo=roundsInfo)
-  else:
-    return render_template('decompResultados.html' , title=title, smap=smap, fcf=fcf, fcfs=fcfs, revs=revs, rev=rev, months=months, month=month, years=years, year=year)
 
 
 @bp.route('/rdh_submercados')
@@ -456,113 +325,6 @@ def monitoramento_precipitacao_bacia():
 def diferenca_ena_bacia():
   return render_template('diferenca_ena_submercado.html')
 
-
-@bp.route('/modelos/decomp/matriz')
-@login_required
-def matriz():
-  flags={'matriz':1}
-  rodada = 'all'
-  lstRvTreated = treatListRevisions(pymssqlLib.getRevInformation(flags))
-  # Get all YEARS from DB ans assign it to a list
-  years=[]
-  for year in lstRvTreated:
-    years.append(year)
-
-  # Check if an YEAR was provided as part of the URL.
-  # If the YEAR was not provided in URL, a page with all possible YEAR is renderize.
-  if 'year' in request.args:
-    year = int(request.args['year'])
-    title=str(year)
-  else:
-    return render_template('matriz.html', years=years)
-
-  # Get all MONTHS from DB ans assign it to a list
-  months=[]
-  for month in lstRvTreated[year]:
-    months.append(month)
-
-  # Check if an MONTH was provided as part of the URL.
-  # If the MONTH was not provided in URL, a page with all possible MONTHS is renderize.
-  if 'month' in request.args:
-    month = int(request.args['month'])
-    title=title+"/"+str(month)
-  else:
-    return render_template('matriz.html', title=title, months=months, years=years, year=year)
-
-
-
-  # Get all REVS from DB ans assign it to a list
-  revs=[]
-  for rev in lstRvTreated[year][month]:
-    revs.append(rev)
-
-  # Get all FCFs from DB ans assign it to a list
-
-
-  # Check if an REV was provided as part of the URL.
-  # If the REV was not provided in URL, a page with all possible REVS is renderize.
-  if 'rev' in request.args:
-    rev = int(request.args['rev'])
-    fcfs=lstRvTreated[year][month][rev]
-    smap = "all"
-    fcf = 'all'
-    if fcfs:
-      fcf = fcfs[0]
-    title=title+"-REV"+str(rev)
-  else:
-    return render_template('matriz.html', title=title, revs= revs, months=months, month=month, years=years, year=year)
-
-
-  # Check if an FCF was provided as part of the URL.
-  # If the FCF was not provided in URL, a page with all possible FCFs is renderize.
-  if 'fcf' in request.args:
-    fcf = request.args['fcf']
-
-  title=title+" "+str(fcf)
-
-  if 'smap' in request.args:
-    smap = request.args['smap']
-
-  slider=''
-  if 'slider' in request.args:
-    slider = request.args['slider']
-
-  roundsInfo = {'rodada':rodada, 'year': year, 'month':month, 'rev':rev, 'fcf':fcf, 'smap':smap, 'slider':slider}
-
-  # Get all table results for this revision
-  tableResults = pymssqlLib.getTableResults(roundsInfo)
-  roundsInfo['rounds'] = list(tableResults.keys())
-
-
-  revisionName = str(year)+'/'+str(month)+'-REV'+str(rev)
-
-  if len(roundsInfo['rounds'])>0:
-
-    # Check this if this revision already exist in cache	
-    # cache = utils.checkCache(revisionName, roundsInfo['rounds'])
-    # if cache:
-    # 	graphicResults = cache 									# Revision already in cache
-    # 	print('Result already in cache')
-    # else:
-    # 	graphicResults, reviStr = pymssqlLib.getRevResultsGraphics(tableResults, roundsInfo)
-    # 	newCache = {revisionName: graphicResults}
-    # 	utils.storeInCache(newCache)							# Revision stored in cache
-    # 	print('Result stored in cache')
-
-    # graphicResults, reviStr = pymssqlLib.getRevResultsGraphics(tableResults, roundsInfo)
-    # roundsInfo['subMarkets'] = list(graphicResults.keys())
-    # roundsInfo['revision'] = reviStr
-
-    matriz = utils.organizar(tableResults)
-
-    firstRound = roundsInfo['rounds'][0]
-
-
-    return render_template('matriz.html' , title=title, matriz=matriz, smap=smap, fcf=fcf, fcfs=fcfs, revs=revs, rev=rev, months=months, month=month, years=years, year=year, tableResults=tableResults, colorsModel=utils.getColorModels(), firstRound=firstRound, roundsInfo=roundsInfo)
-    return render_template('matriz.html' , title=title, matriz=matriz, smap=smap, fcf=fcf, fcfs=fcfs, revs=revs, rev=rev, months=months, month=month, years=years, year=year, tableResults=tableResults, graphicResults=graphicResults, colorsModel=utils.getColorModels(), firstRound=firstRound, roundsInfo=roundsInfo)
-
-  else:
-    return render_template('matriz.html' , title=title, smap=smap, fcf=fcf, fcfs=fcfs, revs=revs, rev=rev, months=months, month=month, years=years, year=year)
 
 @bp.route('/dashbbce')
 @login_required
@@ -943,8 +705,7 @@ def API_getCargaHoraria():
   for row in carga_db:
     if row[0] not in carga.keys():
       carga[row[0]] = {}
-      
-    # para o mssql, a data vem em formato diferente
+
     try:
       horario = row[1].strftime('%H:%M')
       carga[row[0]][horario] = row[2]
@@ -1837,8 +1598,7 @@ def get_carga_decompPatamar():
 
 
 @bp.route("/API/GET/valor_pld",methods=['GET'])
-# @login___required 
-# retirei o acesso somente com login para que o pessoal consiga acessar.
+@login_required 
 def get_valor_PLD():
   
   data_inicial = request.args['dataInicial']
@@ -2194,7 +1954,7 @@ def API_get_diferenca_chuva_prevista_observada():
   rodadas = {}
   dt_str = request.args.get('data_rodada')
   dt_rodada = utils.formatar_data(dt_str) - datetime.timedelta(days=1)
-  # pdb.set_trace()
+  # pdb_login.set_trace()
 
   if granularidade not in ['bacia', 'subbacia', 'submercado']:
     return jsonify({"erro":f"granularidade {granularidade} invalida"}), 400

@@ -58,7 +58,7 @@ class User(db.Model):
 PRODUCT_MAPPING = {
     
     "Relatório de Acompanhamento Hidrológico": {"funcao": "vazoes_observadas", "id_dag": None},
-    "Precipitação por Satélite.": {"funcao": "psat_file", "id_dag": None},
+    "Precipitação por Satélite – ONS": {"funcao": "psat_file", "id_dag": None},
     "Modelo GEFS": {"funcao": "modelo_gefs", "id_dag": None},
     "Resultados preliminares não consistidos  (vazões semanais - PMO)": {"funcao": "resultados_nao_consistidos_semanal", "id_dag": None},
     "Relatório dos resultados finais consistidos da previsão diária (PDP)": {"funcao": "relatorio_resutados_finais_consistidos", "id_dag": None},
@@ -71,7 +71,7 @@ PRODUCT_MAPPING = {
     "Arquivos dos modelos de previsão de vazões diárias - PDP": {"funcao": "arquivos_modelo_pdp", "id_dag": None},
     "Acomph": {"funcao": "arquivo_acomph", "id_dag": None},
     "RDH": {"funcao": "arquivo_rdh", "id_dag": None},
-    "Histórico de Precipitação por Satélite": {"funcao": "historico_preciptacao", "id_dag": None},
+    "Histórico de Precipitação por Satélite – ONS": {"funcao": "historico_preciptacao", "id_dag": None},
     "Modelo ETA": {"funcao": "modelo_eta", "id_dag": None},
     "Carga por patamar - DECOMP": {"funcao": "carga_patamar", "id_dag": "CARGA_PATAMAR_DECOMP"},
     "Deck Preliminar DECOMP - Valor Esperado": {"funcao": "deck_preliminar_decomp", "id_dag": None},

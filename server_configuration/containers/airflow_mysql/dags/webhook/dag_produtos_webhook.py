@@ -22,7 +22,6 @@ CONFIG_COGNITO = os.getenv("CONFIG_COGNITO")
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.webhook.my_run import PRODUCT_MAPPING
 from PMO.scripts_unificados.apps.webhook.libs import manipularArquivosShadow #comentario
-from PMO.scripts_unificados.apps.prospec.libs.update_estudo import update_weol_dadger_dc_estudo, update_weol_sistema_nw_estudo
 
 def remover_acentos_e_caracteres_especiais(texto):
     import re
