@@ -27,7 +27,7 @@ dateFormat = "%Y/%m/%d"
 class WxDataB:
 
     def __init__(self, dbm='mssql'):
-        send_whatsapp_message("debug", "Iniciando conexão com banco de dados " + dbm)
+        send_whatsapp_message("debug", "Iniciando conexão com banco de dados " + dbm, None)
         #DB MSSQL CONFIGURATION
         __HOST_MSSQL = os.getenv('HOST_MSSQL') 
         __PORT_DB_MSSQL = os.getenv('PORT_DB_MSSQL') 

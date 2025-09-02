@@ -31,7 +31,7 @@ class WxDataB:
         __USER_DB_MYSQL = os.getenv('USER_DB_MYSQL')
         __PASSWORD_DB_MYSQL = os.getenv('PASSWORD_DB_MYSQL')
         # DEBUG
-        send_whatsapp_message("debug", "Iniciando conexão com banco de dados " + DBM)
+        send_whatsapp_message("debug", "Iniciando conexão com banco de dados " + DBM, None)
         if DBM == 'mysqlWx':
             self.dbHost = __HOST_MYSQL
             self.dbUser = __USER_DB_MYSQL
