@@ -196,14 +196,14 @@ with DAG(
 
     # Tarefa para 1.00-ENVIAR-EMAIL-ESTUDOS
     email_estudos = PythonOperator(
-        task_id='run_1_00_enviar_email_estudos',
+        task_id='run_send_e-mail',
         python_callable=run_python_script_with_dynamic_params,
         provide_context=True,
     )
     email_estudos_ssh = SSHOperator(
-        task_id='run_1_00_enviar_email_estudos_ssh',
+        task_id='run_send_e-mail_ssh',
         ssh_conn_id='ssh_master',
-        command="{{ ti.xcom_pull(task_ids='run_1_00_enviar_email_estudos', key='command') }}",
+        command="{{ ti.xcom_pull(task_ids=''run_send_e-mail'', key='command') }}",
         conn_timeout=36000,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -214,7 +214,7 @@ with DAG(
 
     # Tarefa para 1.01-PROSPEC_PCONJUNTO_DEFINITIVO
     pconjunto_definitivo = SSHOperator(
-        task_id='run_1_01_prospec_pconjunto_definitivo',
+        task_id='run_pconjunto_definitivo',
         ssh_conn_id='ssh_master',
         command=CMD_BASE + "prevs P.CONJ rodada Definitiva",
         conn_timeout=36000,
@@ -227,7 +227,7 @@ with DAG(
 
     # Tarefa para 1.02-PROSPEC_PCONJUNTO_PREL
     pconjunto_prel = SSHOperator(
-        task_id='run_1_02_prospec_pconjunto_prel',
+        task_id='run_pconjunto_prel',
         ssh_conn_id='ssh_master',
         command=CMD_BASE + "prevs P.CONJ rodada Preliminar",
         conn_timeout=28800,
@@ -240,7 +240,7 @@ with DAG(
 
     # Tarefa para 1.03-PROSPEC_1RV
     prospec_1rv = SSHOperator(
-        task_id='run_1_03_prospec_1rv',
+        task_id='run_1rv',
         ssh_conn_id='ssh_master',
         command=CMD_BASE + "prevs NEXT-RV rodada Preliminar",
         conn_timeout=28800,
@@ -253,7 +253,7 @@ with DAG(
 
     # Tarefa para 1.04-PROSPEC_EC_EXT
     prospec_ec_ext = SSHOperator(
-        task_id='run_1_04_prospec_ec_ext',
+        task_id='run_ec_ext',
         ssh_conn_id='ssh_master',
         command=CMD_BASE + "prevs EC-EXT rodada Definitiva",
         conn_timeout=28800,
@@ -266,7 +266,7 @@ with DAG(
 
     # Tarefa para 1.05-PROSPEC_CENARIO_10
     prospec_cenario_10 = SSHOperator(
-        task_id='run_1_05_prospec_cenario_10',
+        task_id='run_cenario_10',
         ssh_conn_id='ssh_master',
         command=CMD_BASE + "prevs CENARIOS rodada Preliminar",
         conn_timeout=28800,
@@ -279,7 +279,7 @@ with DAG(
 
     # Tarefa para 1.06-PROSPEC_CENARIO_11
     prospec_cenario_11 = SSHOperator(
-        task_id='run_1_06_prospec_cenario_11',
+        task_id='run_cenario_11',
         ssh_conn_id='ssh_master',
         command=CMD_BASE + "prevs CENARIOS rodada Preliminar, cenario 11",
         conn_timeout=28800,
@@ -292,7 +292,7 @@ with DAG(
 
     # Tarefa para 1.07-PROSPEC_CHUVA_0
     prospec_chuva_0 = SSHOperator(
-        task_id='run_1_07_prospec_chuva_0',
+        task_id='run_chuva_0',
         ssh_conn_id='ssh_master',
         command=CMD_BASE + "prevs P.ZERO rodada Preliminar",
         conn_timeout=28800,
@@ -316,7 +316,7 @@ with DAG(
         provide_context=True,
     )
     run_decomp_ons_grupos = SSHOperator(
-        task_id='run_1_08_prospec_grupos_ons',
+        task_id='run_grupos_ons',
         ssh_conn_id='ssh_master',
         command=CMD_BASE + "prevs ONS-GRUPOS rodada Preliminar",
         conn_timeout=None,
@@ -329,14 +329,14 @@ with DAG(
 
     # Tarefa para 1.10-PROSPEC_GFS
     prospec_gfs = PythonOperator(
-        task_id='run_1_10_prospec_gfs',
+        task_id='run_gfs',
         python_callable=run_python_gfs,
         provide_context=True,
     )
     prospec_gfs_ssh = SSHOperator(
-        task_id='run_1_10_prospec_gfs_ssh',
+        task_id='run_gfs_ssh',
         ssh_conn_id='ssh_master',
-        command="{{ ti.xcom_pull(task_ids='run_1_10_prospec_gfs', key='command') }}",
+        command="{{ ti.xcom_pull(task_ids='run_gfs', key='command') }}",
         conn_timeout=36000,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -347,14 +347,14 @@ with DAG(
 
     # Tarefa para 1.11-PROSPEC_ATUALIZACAO
     prospec_atualizacao = PythonOperator(
-        task_id='run_1_11_prospec_atualizacao',
+        task_id='run_atualizacao',
         python_callable=run_python_script_with_dynamic_params,
         provide_context=True,
     )
     prospec_atualizacao_ssh = SSHOperator(
-        task_id='run_1_11_prospec_atualizacao_ssh',
+        task_id='run_atualizacao_ssh',
         ssh_conn_id='ssh_master',
-        command="{{ ti.xcom_pull(task_ids='run_1_11_prospec_atualizacao', key='command') }}",
+        command="{{ ti.xcom_pull(task_ids='run_atualizacao', key='command') }}",
         conn_timeout=36000,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -365,7 +365,7 @@ with DAG(
 
     # Tarefa para 1.12-PROSPEC_CONSISTIDO
     prospec_consistido = SSHOperator(
-        task_id='run_1_12_prospec_consistido',
+        task_id='run_consistido',
         ssh_conn_id='ssh_master',
         command=CMD_BASE + "prevs CONSISTIDO rodada Preliminar",
         conn_timeout=28800,
@@ -378,7 +378,7 @@ with DAG(
 
     # Tarefa para 1.13-PROSPEC_PCONJUNTO_PREL_PRECIPITACAO
     pconjunto_prel_precipitacao = SSHOperator(
-        task_id='run_1_13_prospec_pconjunto_prel_precipitacao',
+        task_id='run_pconjunto_prel_precipitacao',
         ssh_conn_id='ssh_master',
         command=CMD_BASE + "prevs P.APR rodada Preliminar",
         conn_timeout=None,
@@ -391,14 +391,14 @@ with DAG(
 
     # Tarefa para 1.14-PROSPEC_RODAR_SENSIBILIDADE
     rodar_sensibilidade = PythonOperator(
-        task_id='run_1_14_prospec_rodar_sensibilidade',
+        task_id='run_sensibilidade',
         python_callable=run_sensibilidades_params,
         provide_context=True,
     )
     rodar_sensibilidade_ssh = SSHOperator(
-        task_id='run_1_14_prospec_rodar_sensibilidade_ssh',
+        task_id='run_sensibilidade_ssh',
         ssh_conn_id='ssh_master',
-        command="{{ ti.xcom_pull(task_ids='run_1_14_prospec_rodar_sensibilidade', key='command') }}",
+        command="{{ ti.xcom_pull(task_ids='run_sensibilidade', key='command') }}",
         conn_timeout=36000,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -409,7 +409,7 @@ with DAG(
 
     # Tarefa para 1.16-DECOMP_ONS-TO-CCEE
     decomp_ons_to_ccee = SSHOperator(
-        task_id='run_1_16_decomp_ons_to_ccee',
+        task_id='run_decomp_ons_to_ccee',
         ssh_conn_id='ssh_master',
         command=CMD_BASE_DC,
         conn_timeout=None,
@@ -422,7 +422,7 @@ with DAG(
 
     # Tarefa para 1.17-NEWAVE_ONS-TO-CCEE
     newave_ons_to_ccee = SSHOperator(
-        task_id='run_1_17_newave_ons_to_ccee',
+        task_id='run_newave_ons_to_ccee',
         ssh_conn_id='ssh_master',
         command=CMD_BASE_NW,
         conn_timeout=None,
@@ -435,14 +435,14 @@ with DAG(
 
     # Tarefa para 1.18-PROSPEC_UPDATE
     prospec_update = PythonOperator(
-        task_id='run_1_18_prospec_update',
+        task_id='run_decks_update',
         python_callable=run_prospec_update,
         provide_context=True,
     )
     prospec_update_ssh = SSHOperator(
-        task_id='run_1_18_prospec_update_ssh',
+        task_id='run_decks_update_ssh',
         ssh_conn_id='ssh_master',
-        command="{{ ti.xcom_pull(task_ids='run_1_18_prospec_update', key='command') }}",
+        command="{{ ti.xcom_pull(task_ids='run_decks_update', key='command') }}",
         conn_timeout=36000,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
