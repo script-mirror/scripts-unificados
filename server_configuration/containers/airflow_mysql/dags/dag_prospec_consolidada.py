@@ -10,23 +10,13 @@ from airflow.models import DagBag, DagRun
 from airflow.exceptions import AirflowSkipException
 from airflow.utils.db import create_session
 import pendulum
+from middle.utils import Constants
+consts = Constants()
 
 # Configure logging for debugging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Safely import Constants
-try:
-    from middle.utils import Constants
-    consts = Constants()
-except ImportError as e:
-    logger.error(f"Failed to import Constants from middle.utils: {e}")
-    # Fallback values to allow DAG parsing
-    class Constants:
-        ATIVAR_ENV = "/projetos/env/bin/activate"  # Updated with actual path from log
-        PATH_PROJETOS = "/projetos"  # Updated with actual path from log
-    consts = Constants()
-    logger.warning("Using fallback Constants values. Update paths if incorrect.")
 
 # Comandos base
 CMD_BASE = f"{consts.ATIVAR_ENV} python {consts.PATH_PROJETOS}/estudos-middle/estudos_prospec/main_roda_estudos.py "
@@ -219,6 +209,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.01-PROSPEC_PCONJUNTO_DEFINITIVO
@@ -231,6 +222,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.02-PROSPEC_PCONJUNTO_PREL
@@ -243,6 +235,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.03-PROSPEC_1RV
@@ -255,6 +248,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.04-PROSPEC_EC_EXT
@@ -267,6 +261,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.05-PROSPEC_CENARIO_10
@@ -279,6 +274,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.06-PROSPEC_CENARIO_11
@@ -291,6 +287,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.07-PROSPEC_CHUVA_0
@@ -303,6 +300,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.08-PROSPEC_GRUPOS-ONS
@@ -326,6 +324,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.10-PROSPEC_GFS
@@ -343,6 +342,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.11-PROSPEC_ATUALIZACAO
@@ -360,6 +360,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.12-PROSPEC_CONSISTIDO
@@ -372,6 +373,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.13-PROSPEC_PCONJUNTO_PREL_PRECIPITACAO
@@ -384,6 +386,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.14-PROSPEC_RODAR_SENSIBILIDADE
@@ -401,6 +404,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.16-DECOMP_ONS-TO-CCEE
@@ -413,6 +417,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.17-NEWAVE_ONS-TO-CCEE
@@ -425,6 +430,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Tarefa para 1.18-PROSPEC_UPDATE
@@ -442,6 +448,7 @@ with DAG(
         execution_timeout=timedelta(hours=20),
         get_pty=True,
         trigger_rule="none_failed_min_one_success",
+        do_xcom_push=False,
     )
 
     # Definindo dependências
