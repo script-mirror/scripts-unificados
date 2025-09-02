@@ -23,10 +23,10 @@ except ImportError as e:
     logger.error(f"Failed to import Constants from middle.utils: {e}")
     # Fallback values to allow DAG parsing
     class Constants:
-        ATIVAR_ENV = "/path/to/venv/bin/activate"  # Replace with actual path
-        PATH_PROJETOS = "/path/to/projetos"  # Replace with actual path
+        ATIVAR_ENV = "/projetos/env/bin/activate"  # Updated with actual path from log
+        PATH_PROJETOS = "/projetos"  # Updated with actual path from log
     consts = Constants()
-    logger.warning("Using fallback Constants values. Update paths in production.")
+    logger.warning("Using fallback Constants values. Update paths if incorrect.")
 
 # Comandos base
 CMD_BASE = f"{consts.ATIVAR_ENV} python {consts.PATH_PROJETOS}/estudos-middle/estudos_prospec/main_roda_estudos.py "
@@ -62,7 +62,7 @@ def check_if_dag_is_running(**kwargs):
     logger.info(f"No active runs for {dag_id}")
 
 def run_python_script_with_dynamic_params(**kwargs):
-    params = kwargs.get('params', {})
+    params = kwargs['dag_run'].conf.get('params', {}) if kwargs.get('dag_run') else {}
     logger.info(f"Building command with params: {params}")
     conteudo = ' '.join(f'"{k}" \'{v}\'' if k == "list_email" else f'"{k}" "{v}"' for k, v in params.items())
     command = CMD_BASE + conteudo
@@ -70,7 +70,7 @@ def run_python_script_with_dynamic_params(**kwargs):
     kwargs['ti'].xcom_push(key='command', value=command)
 
 def run_python_gfs(**kwargs):
-    params = kwargs.get('params', {})
+    params = kwargs['dag_run'].conf.get('params', {}) if kwargs.get('dag_run') else {}
     logger.info(f"Building GFS command with params: {params}")
     command = CMD_BASE + "prevs PREVS_PLUVIA_GFS rvs 8 mapas GFS"
     for key, value in params.items():
@@ -80,14 +80,14 @@ def run_python_gfs(**kwargs):
     kwargs['ti'].xcom_push(key='command', value=command)
 
 def run_sensibilidades_params(**kwargs):
-    params = kwargs.get('params', {})
+    params = kwargs['dag_run'].conf.get('params', {}) if kwargs.get('dag_run') else {}
     logger.info(f"Building SENS command with params: {params}")
     command = f"{CMD_BASE_SENS} \"{str(params)}\""
     logger.info(f"Generated SENS command: {command}")
     kwargs['ti'].xcom_push(key='command', value=command)
 
 def run_prospec_update(**kwargs):
-    params = kwargs.get('params', {})
+    params = kwargs['dag_run'].conf.get('params', {}) if kwargs.get('dag_run') else {}
     produto = params.get('produto', 'DEFAULT')
     logger.info(f"Building UPDATE command with params: {params}")
     conteudo = ' '.join(f'"{k}" \'{v}\'' if k == "list_email" else f'"{k}" "{v}"' for k, v in params.items())
