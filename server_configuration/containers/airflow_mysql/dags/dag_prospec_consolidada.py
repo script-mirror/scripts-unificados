@@ -1,4 +1,6 @@
 import os
+import sys
+import logging
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.providers.ssh.operators.ssh import SSHOperator
@@ -7,10 +9,24 @@ from airflow.operators.dummy import DummyOperator
 from airflow.models import DagBag, DagRun
 from airflow.exceptions import AirflowSkipException
 from airflow.utils.db import create_session
-from middle.utils import Constants
 import pendulum
 
-consts = Constants()
+# Configure logging for debugging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Safely import Constants
+try:
+    from middle.utils import Constants
+    consts = Constants()
+except ImportError as e:
+    logger.error(f"Failed to import Constants from middle.utils: {e}")
+    # Fallback values to allow DAG parsing
+    class Constants:
+        ATIVAR_ENV = "/path/to/venv/bin/activate"  # Replace with actual path
+        PATH_PROJETOS = "/path/to/projetos"  # Replace with actual path
+    consts = Constants()
+    logger.warning("Using fallback Constants values. Update paths in production.")
 
 # Comandos base
 CMD_BASE = f"{consts.ATIVAR_ENV} python {consts.PATH_PROJETOS}/estudos-middle/estudos_prospec/main_roda_estudos.py "
@@ -22,66 +38,86 @@ CMD_UPDATE = f"{consts.ATIVAR_ENV} python {consts.PATH_PROJETOS}/estudos-middle/
 # Argumentos padrão
 default_args = {
     'owner': 'airflow',
+    'depends_on_past': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
     'execution_timeout': timedelta(hours=8),
-    'start_date': datetime(2024, 4, 28),
+    'start_date': datetime(2024, 4, 28, tzinfo=pendulum.timezone('America/Sao_Paulo')),
 }
 
 # Funções auxiliares
 def check_if_dag_is_running(**kwargs):
     dag_id = kwargs['dag'].dag_id
     execution_date = kwargs['execution_date']
+    logger.info(f"Checking if DAG {dag_id} is running for execution_date {execution_date}")
     with create_session() as session:
         active_runs = session.query(DagRun).filter(
             DagRun.dag_id == dag_id,
             DagRun.state == 'running',
             DagRun.execution_date != execution_date
-        ).all()
+        ).count()
         if active_runs:
-            raise AirflowSkipException(f"DAG {dag_id} já está em execução. Pulando execução {active_runs}.")
+            logger.warning(f"DAG {dag_id} has {active_runs} active runs")
+            raise AirflowSkipException(f"DAG {dag_id} already running. Skipping execution.")
+    logger.info(f"No active runs for {dag_id}")
 
 def run_python_script_with_dynamic_params(**kwargs):
     params = kwargs.get('params', {})
+    logger.info(f"Building command with params: {params}")
     conteudo = ' '.join(f'"{k}" \'{v}\'' if k == "list_email" else f'"{k}" "{v}"' for k, v in params.items())
     command = CMD_BASE + conteudo
+    logger.info(f"Generated command: {command}")
     kwargs['ti'].xcom_push(key='command', value=command)
 
 def run_python_gfs(**kwargs):
     params = kwargs.get('params', {})
+    logger.info(f"Building GFS command with params: {params}")
     command = CMD_BASE + "prevs PREVS_PLUVIA_GFS rvs 8 mapas GFS"
     for key, value in params.items():
         if value is not None:
             command += f" {key} '{value}'"
+    logger.info(f"Generated GFS command: {command}")
     kwargs['ti'].xcom_push(key='command', value=command)
 
 def run_sensibilidades_params(**kwargs):
     params = kwargs.get('params', {})
+    logger.info(f"Building SENS command with params: {params}")
     command = f"{CMD_BASE_SENS} \"{str(params)}\""
+    logger.info(f"Generated SENS command: {command}")
     kwargs['ti'].xcom_push(key='command', value=command)
 
 def run_prospec_update(**kwargs):
     params = kwargs.get('params', {})
-    produto = params.get('produto', '')
+    produto = params.get('produto', 'DEFAULT')
+    logger.info(f"Building UPDATE command with params: {params}")
     conteudo = ' '.join(f'"{k}" \'{v}\'' if k == "list_email" else f'"{k}" "{v}"' for k, v in params.items())
     command = CMD_UPDATE + conteudo
+    logger.info(f"Generated UPDATE command: {command}")
     kwargs['ti'].xcom_push(key='command', value=command)
     kwargs['ti'].xcom_push(key='produto', value=f'REVISAO-{produto}')
 
 def check_dag_state(**kwargs):
-    dag_id = kwargs.get('dag_id', 'prospec_master')
+    dag_id = kwargs.get('dag_id', 'PROSPEC_MASTER')
+    logger.info(f"Checking if DAG {dag_id} is paused")
     dagbag = DagBag()
     dag = dagbag.get_dag(dag_id)
+    if dag is None:
+        logger.error(f"DAG {dag_id} not found in DagBag")
+        raise ValueError(f"DAG {dag_id} not found")
     if dag.is_paused:
+        logger.info(f"DAG {dag_id} is paused")
         return 'skip_grupos_ons'
+    logger.info(f"DAG {dag_id} is not paused")
     return 'run_1_08_prospec_grupos_ons'
 
 def skip_task():
-    print("A DAG está pausada, a tarefa não será executada.")
+    logger.info("Task skipped due to DAG being paused")
 
-# Função para verificar quais tasks devem ser executadas
 def check_schedule(**kwargs):
     execution_date = kwargs['execution_date'].astimezone(pendulum.timezone('America/Sao_Paulo'))
     dag_run = kwargs.get('dag_run')
     tasks_to_run = []
+    logger.info(f"Checking schedule for execution_date: {execution_date}")
 
     # Mapeamento dos schedule_interval originais
     schedules = {
@@ -104,33 +140,45 @@ def check_schedule(**kwargs):
         '1.18-PROSPEC_UPDATE': None,
     }
 
-    # Verifica se é uma execução manual (dag_run.conf presente e não vazia)
+    # Verifica se é uma execução manual
     if dag_run and dag_run.conf:
-        # Se o parâmetro 'tasks_to_run' estiver presente, usa a lista fornecida
+        logger.info(f"Manual execution detected with conf: {dag_run.conf}")
         requested_tasks = dag_run.conf.get('tasks_to_run', [])
         if requested_tasks:
-            tasks_to_run = [f'run_{task.lower().replace(".", "_").replace("-", "_")}' for task in requested_tasks]
+            tasks_to_run = []
+            for task in requested_tasks:
+                task_id = f'run_{task.lower().replace(".", "_").replace("-", "_")}'
+                if task_id.startswith('run_') and task in schedules:
+                    tasks_to_run.append(task_id)
+                else:
+                    logger.warning(f"Invalid task {task} in tasks_to_run")
+            logger.info(f"Manually requested tasks: {tasks_to_run}")
         else:
-            # Se não houver 'tasks_to_run', executa todas as tasks
             tasks_to_run = [f'run_{dag_name.lower().replace(".", "_").replace("-", "_")}' for dag_name in schedules.keys()]
+            logger.info("No specific tasks requested, running all tasks")
     else:
-        # Execução automática: verifica os horários
+        logger.info("Automatic execution, checking cron schedules")
         for dag_name, schedule in schedules.items():
             if schedule is None:
-                continue  # Pula tasks com schedule_interval=None em execuções automáticas
-            cron = pendulum.CronExpression(schedule)
-            if cron.is_due(execution_date):
-                tasks_to_run.append(f'run_{dag_name.lower().replace(".", "_").replace("-", "_")}')
+                continue
+            try:
+                cron = pendulum.CronExpression(schedule)
+                if cron.is_due(execution_date):
+                    tasks_to_run.append(f'run_{dag_name.lower().replace(".", "_").replace("-", "_")}')
+                    logger.info(f"Task {dag_name} scheduled for execution")
+            except Exception as e:
+                logger.error(f"Error parsing cron for {dag_name}: {e}")
 
     if not tasks_to_run:
         tasks_to_run.append('skip_all')
+        logger.info("No tasks to run, proceeding to skip_all")
     return tasks_to_run
 
 # Definindo a DAG consolidada
 with DAG(
-    dag_id='prospec_master',
+    dag_id='PROSPEC_MASTER',
     default_args=default_args,
-    schedule_interval='* * * * *',  # Executa a cada minuto para verificar schedules
+    schedule_interval='* * * * *',
     catchup=False,
     max_active_runs=1,
     tags=['Prospec'],
@@ -160,6 +208,7 @@ with DAG(
     email_estudos = PythonOperator(
         task_id='run_1_00_enviar_email_estudos',
         python_callable=run_python_script_with_dynamic_params,
+        provide_context=True,
     )
     email_estudos_ssh = SSHOperator(
         task_id='run_1_00_enviar_email_estudos_ssh',
@@ -260,12 +309,13 @@ with DAG(
     check_dag_state_task = BranchPythonOperator(
         task_id='check_dag_state_grupos_ons',
         python_callable=check_dag_state,
-        op_args=['prospec_master'],
+        op_args=['PROSPEC_MASTER'],
         provide_context=True,
     )
     skip_grupos_ons = PythonOperator(
         task_id='skip_grupos_ons',
         python_callable=skip_task,
+        provide_context=True,
     )
     run_decomp_ons_grupos = SSHOperator(
         task_id='run_1_08_prospec_grupos_ons',
@@ -282,6 +332,7 @@ with DAG(
     prospec_gfs = PythonOperator(
         task_id='run_1_10_prospec_gfs',
         python_callable=run_python_gfs,
+        provide_context=True,
     )
     prospec_gfs_ssh = SSHOperator(
         task_id='run_1_10_prospec_gfs_ssh',
@@ -298,6 +349,7 @@ with DAG(
     prospec_atualizacao = PythonOperator(
         task_id='run_1_11_prospec_atualizacao',
         python_callable=run_python_script_with_dynamic_params,
+        provide_context=True,
     )
     prospec_atualizacao_ssh = SSHOperator(
         task_id='run_1_11_prospec_atualizacao_ssh',
@@ -338,6 +390,7 @@ with DAG(
     rodar_sensibilidade = PythonOperator(
         task_id='run_1_14_prospec_rodar_sensibilidade',
         python_callable=run_sensibilidades_params,
+        provide_context=True,
     )
     rodar_sensibilidade_ssh = SSHOperator(
         task_id='run_1_14_prospec_rodar_sensibilidade_ssh',
@@ -378,6 +431,7 @@ with DAG(
     prospec_update = PythonOperator(
         task_id='run_1_18_prospec_update',
         python_callable=run_prospec_update,
+        provide_context=True,
     )
     prospec_update_ssh = SSHOperator(
         task_id='run_1_18_prospec_update_ssh',
@@ -422,3 +476,6 @@ with DAG(
     check_dag_state_task >> [run_decomp_ons_grupos, skip_grupos_ons]
     newave_ons_to_ccee >> prospec_atualizacao
     prospec_update_ssh >> prospec_atualizacao
+
+# Log DAG creation for debugging
+logger.info("DAG PROSPEC_MASTER created successfully")
