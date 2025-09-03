@@ -31,7 +31,6 @@ class WxDataB:
         __USER_DB_MYSQL = os.getenv('USER_DB_MYSQL')
         __PASSWORD_DB_MYSQL = os.getenv('PASSWORD_DB_MYSQL')
         # DEBUG
-        send_whatsapp_message("debug", "Iniciando conexão com banco de dados " + DBM, None)
         if DBM == 'mysqlWx':
             self.dbHost = __HOST_MYSQL
             self.dbUser = __USER_DB_MYSQL
@@ -55,6 +54,7 @@ class WxDataB:
         return self.getDateFormat() + ' %H:%M'
 
     def changeDatabase(self, databaseName):
+        send_whatsapp_message("debug", "wx_dbLib change database " + databaseName, None)
         self.dbDatabase = databaseName
 
     def connectHost(self):
@@ -63,6 +63,7 @@ class WxDataB:
         return conn
 
     def requestServer(self, actionDb):
+        send_whatsapp_message("debug", "wx_dbLib request server " + actionDb, None)
 
         tentativas = 0
         while tentativas < 3:
@@ -88,7 +89,7 @@ class WxDataB:
         return answerDb
 
     def executemany(self, actionDb, values):
-
+        send_whatsapp_message("debug", "wx_dbLib execute many " + actionDb +  " " + values, None)
         tentativas = 0
         while tentativas < 3:
             try:
@@ -116,6 +117,7 @@ class WxDataB:
         return numLinhasInseridas
 
     def execute(self, actionDb, values):
+        send_whatsapp_message("debug", "wx_dbLib execute " + actionDb + " " + values, None)
         if actionDb.lower().split()[0] == "select":
             # Values deve ser uma tuplas com os valores na mesma ordem da query
             conn = self.connectHost()
