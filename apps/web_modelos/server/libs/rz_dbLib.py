@@ -80,7 +80,7 @@ class WxDataB:
         return conn
 
     def requestServer(self, actionDb):
-        send_whatsapp_message("debug", "rz_dblib execute " + actionDb, None)
+        send_whatsapp_message("debug", f"rz_dblib execute {actionDb}" , None)
         try:
             conn = self.connectHost()
             cursor = conn.cursor()
@@ -104,7 +104,7 @@ class WxDataB:
             return 0
 
     def execute(self, actionDb, values):
-        send_whatsapp_message("debug", "rz_dblib execute " + actionDb + " " + values, None)
+        send_whatsapp_message("debug", f"rz_dblib execute {actionDb} {values}", None)
         if actionDb.lower().split()[0] == "select":
             # Values deve ser uma tuplas com os valores na mesma ordem da query
             conn = self.connectHost()
