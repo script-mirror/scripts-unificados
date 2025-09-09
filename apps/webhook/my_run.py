@@ -86,9 +86,9 @@ PRODUCT_MAPPING = {
     'Deck NEWAVE Preliminar': {"funcao": "carga_newave_preliminar", "id_dag": "DECKS_NEWAVE"},
     'DECK NEWAVE DEFINITIVO': {"funcao": None, "id_dag": "DECKS_NEWAVE"}, 
     "DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM": {"funcao": "deck_prev_eolica_semanal_weol", "id_dag": None},
-    "Preliminar - Relatório Mensal de Limites de Intercâmbio": {"funcao": "relatorio_limites_intercambio", "id_dag": None},
+    # "Preliminar - Relatório Mensal de Limites de Intercâmbio": {"funcao": "relatorio_limites_intercambio", "id_dag": None},
     # "Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP": {"funcao": "relatorio_limites_intercambio", "id_dag": None},
-    # "Notas Técnicas - Medio Prazo": {"funcao": "notas_tecnicas_medio_prazo", "id_dag": None},
+    "Notas Técnicas - Medio Prazo": {"funcao": "notas_tecnicas_medio_prazo", "id_dag": None},
 }
 
 
