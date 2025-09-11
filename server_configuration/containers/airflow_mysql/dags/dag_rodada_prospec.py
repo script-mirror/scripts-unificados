@@ -22,7 +22,7 @@ CMD_UPDATE    = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) 
 default_args = {
     'execution_timeout': timedelta(hours=8)
 }
-
+'''
 # Função para verificar se a DAG está em execução
 def check_if_dag_is_running(**kwargs):
     dag_id = kwargs['dag'].dag_id
@@ -90,7 +90,7 @@ with DAG(
     run_script_task >> run_prospec_on_host
 
  # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------      
-'''
+
 # Definindo a DAG para '1.01-PROSPEC_PCONJUNTO_DEFINITIVO'
 with DAG(
     dag_id='1.01-PROSPEC_PCONJUNTO_DEFINITIVO',
@@ -443,7 +443,7 @@ with DAG(
         get_pty=True,
         execution_timeout=timedelta(hours=20),
     )
-'''
+
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '1.15-PROSPEC_RODAR_SENSIBILIDADE'
 # Função que executa o script com parâmetros dinâmicos
@@ -488,7 +488,7 @@ with DAG(
 
     run_script_task >> run_prospec_on_host 
     
-'''    
+
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Converte DC e roda no prospec
 with DAG(
