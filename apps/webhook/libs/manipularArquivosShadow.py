@@ -184,7 +184,7 @@ def resultados_preliminares_consistidos(dadosProduto: dict):
     airflow_tools.trigger_airflow_dag(
         dag_id="1.12-PROSPEC_CONSISTIDO",
         json_produtos=params,
-        url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+        url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
     )
     
 
@@ -256,7 +256,7 @@ def arquivo_acomph(dadosProduto: dict):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.08-PROSPEC_GRUPOS-ONS",
             json_produtos={},
-            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+            url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
             )
         
         airflow_tools.trigger_airflow_dag(
@@ -264,7 +264,7 @@ def arquivo_acomph(dadosProduto: dict):
             json_produtos={
                 'dt_ref':dadosProduto['dataProduto']
                 },
-            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+            url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
             )
 
 def arquivo_rdh(dadosProduto: dict):
@@ -413,7 +413,7 @@ def deck_preliminar_decomp(dadosProduto: dict):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.16-DECOMP_ONS-TO-CCEE",
             json_produtos=dadosProduto,
-            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+            url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
             )
 
     
@@ -522,7 +522,7 @@ def carga_patamar_nw(dadosProduto: dict):
     airflow_tools.trigger_airflow_dag(
         dag_id="webhook-sintegre",
         json_produtos=dadosProduto,
-        url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+        url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
     )
     
     logger.info(filename)
@@ -557,7 +557,7 @@ def carga_patamar_nw(dadosProduto: dict):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.17-NEWAVE_ONS-TO-CCEE",
             json_produtos=dadosProduto,
-            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+            url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
         )
 
     return {
@@ -760,7 +760,7 @@ def resultados_nao_consistidos_semanal(dadosProduto: dict):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.12-PROSPEC_CONSISTIDO",
             json_produtos=params,
-            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+            url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
         )
     else:
         raise Exception(f"Não foi possível extrair mês do nome do arquivo: {zip_filename}")
@@ -825,7 +825,7 @@ def deck_resultados_decomp(dadosProduto: dict):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.16-DECOMP_ONS-TO-CCEE",
             json_produtos=dadosProduto,
-            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+            url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
             )
     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_decks)
     logger.info(path_copia_tmp)
@@ -852,7 +852,7 @@ def carga_newave_preliminar(dadosProduto: dict):
     airflow_tools.trigger_airflow_dag(
         dag_id="webhook-sintegre",
         json_produtos=dadosProduto,
-        url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+        url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
     )
     
     DIR_TOOLS.extract(filename,filename[:filename.rfind("/")])
@@ -882,7 +882,7 @@ def carga_newave_preliminar(dadosProduto: dict):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.17-NEWAVE_ONS-TO-CCEE",
             json_produtos=dadosProduto,
-            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2",
+            url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2",
         )
     
 
