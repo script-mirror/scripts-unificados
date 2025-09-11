@@ -90,6 +90,7 @@ with DAG(
     run_script_task >> run_prospec_on_host
 
  # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------      
+'''
 # Definindo a DAG para '1.01-PROSPEC_PCONJUNTO_DEFINITIVO'
 with DAG(
     dag_id='1.01-PROSPEC_PCONJUNTO_DEFINITIVO',
@@ -442,7 +443,7 @@ with DAG(
         get_pty=True,
         execution_timeout=timedelta(hours=20),
     )
-
+'''
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '1.15-PROSPEC_RODAR_SENSIBILIDADE'
 # Função que executa o script com parâmetros dinâmicos
@@ -487,7 +488,7 @@ with DAG(
 
     run_script_task >> run_prospec_on_host 
     
-    
+'''    
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Converte DC e roda no prospec
 with DAG(
@@ -593,3 +594,4 @@ with DAG(
 
     # Definindo a ordem das tarefas
     run_script_task >> run_prospec_on_host >> trigger_atualizacao
+'''
