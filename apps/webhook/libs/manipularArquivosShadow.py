@@ -370,23 +370,12 @@ def modelo_eta(dadosProduto: dict):
 
 def carga_patamar(dadosProduto: dict):
     filename = get_filename(dadosProduto)
-    airflow_tools.trigger_airflow_dag(
-        dag_id="webhook-sintegre",
-        json_produtos=dadosProduto,
-        url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2",
-    )
-    
     # gerar Produto
     if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
             "produto":"REVISAO_CARGA",
             "path":filename,
         })
-        
-        airflow_tools.trigger_airflow_dag(
-            dag_id="1.18-PROSPEC_UPDATE",
-            json_produtos={"produto": "CARGA-DECOMP"},
-            )
 
 
 def deck_preliminar_decomp(dadosProduto: dict):
@@ -1016,49 +1005,7 @@ def relatorio_limites_intercambio(dadosProduto: dict):
         dag_id="1.18-PROSPEC_UPDATE",
         json_produtos={"produto": "RE-DECOMP"},
     )
-    
-    # filename = get_filename(dadosProduto)
-    # logger.info(filename)
-    # PREFIXO_PADRAO = "RT-ONS DPL"
-    # arquivo = get_filename(dadosProduto)
-    # if '.pdf' in arquivo:
-    #     arquivo_selecionado = arquivo
-    # else:
-    #     path_arquivo = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(arquivo)[:-4])
-    #     os.makedirs(path_arquivo, exist_ok=True)
-        
-    #     with zipfile.ZipFile(arquivo, 'r') as zip_ref:
-    #         zip_content_names = zip_ref.namelist()
-    #         zip_ref.extract(zip_content_names[0], path_arquivo)
-            
-    #     arquivo_interno = os.path.join(path_arquivo, zip_content_names[0])
-    #     if PREFIXO_PADRAO in arquivo_interno and arquivo_interno.endswith('.pdf'):
-    #         arquivo_selecionado = arquivo_interno
-    #     elif arquivo_interno.endswith('.zip'):
-    #         with zipfile.ZipFile(arquivo_interno, 'r') as zip_ref:
-                
-    #             zip_ref.extractall(path_arquivo)
-                
-    #             arquivos_pdf = glob.glob(os.path.join(path_arquivo, "**", "*.pdf"), recursive=True)
-                
-    #             arquivo_selecionado = None
-    #             for arquivo in arquivos_pdf:
-    #                 nome_arquivo = os.path.basename(arquivo)
-    #                 if PREFIXO_PADRAO in nome_arquivo:
-    #                     arquivo_selecionado = arquivo
-    #                     logger.info(f"Arquivo no formato correto encontrado: {nome_arquivo}")
-    #                     break
-                
-    #             if arquivo_selecionado is None:
-    #                 raise Exception("Nenhum arquivo no formato correto encontrado.")
-    #                 return
-    #     else:
-    #         raise Exception("O arquivo interno não é um PDF ou ZIP válido, ou o cenario não foi mapeado")
-    # return {
-    #     "file_path": arquivo_selecionado,
-    #     "trigger_dag_id":"PROSPEC_UPDATER",
-    #     "task_to_execute": "revisao_restricao"
-    # }
+
 
 
 def notas_tecnicas_medio_prazo(dadosProduto: dict):
