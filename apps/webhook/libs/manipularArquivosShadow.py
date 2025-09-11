@@ -183,7 +183,8 @@ def resultados_preliminares_consistidos(dadosProduto: dict):
     
     airflow_tools.trigger_airflow_dag(
         dag_id="1.12-PROSPEC_CONSISTIDO",
-        json_produtos=params
+        json_produtos=params,
+        url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
     )
     
 
@@ -254,14 +255,17 @@ def arquivo_acomph(dadosProduto: dict):
     if dadosProduto.get('enviar', True):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.08-PROSPEC_GRUPOS-ONS",
-            json_produtos={}
+            json_produtos={},
+            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
             )
         
         airflow_tools.trigger_airflow_dag(
             dag_id="1.01-PROSPEC_PCONJUNTO_DEFINITIVO",
             json_produtos={
                 'dt_ref':dadosProduto['dataProduto']
-                })
+                },
+            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+            )
 
 def arquivo_rdh(dadosProduto: dict):
     filename = get_filename(dadosProduto)
@@ -409,6 +413,7 @@ def deck_preliminar_decomp(dadosProduto: dict):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.16-DECOMP_ONS-TO-CCEE",
             json_produtos=dadosProduto,
+            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
             )
 
     
@@ -552,6 +557,7 @@ def carga_patamar_nw(dadosProduto: dict):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.17-NEWAVE_ONS-TO-CCEE",
             json_produtos=dadosProduto,
+            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
         )
 
     return {
@@ -753,7 +759,8 @@ def resultados_nao_consistidos_semanal(dadosProduto: dict):
         
         airflow_tools.trigger_airflow_dag(
             dag_id="1.12-PROSPEC_CONSISTIDO",
-            json_produtos=params
+            json_produtos=params,
+            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
         )
     else:
         raise Exception(f"Não foi possível extrair mês do nome do arquivo: {zip_filename}")
@@ -818,6 +825,7 @@ def deck_resultados_decomp(dadosProduto: dict):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.16-DECOMP_ONS-TO-CCEE",
             json_produtos=dadosProduto,
+            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
             )
     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_decks)
     logger.info(path_copia_tmp)
@@ -874,6 +882,7 @@ def carga_newave_preliminar(dadosProduto: dict):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.17-NEWAVE_ONS-TO-CCEE",
             json_produtos=dadosProduto,
+            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2",
         )
     
 
@@ -993,18 +1002,7 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
         "data":data_produto.date(),
     })
 
-        
-def relatorio_limites_intercambio(dadosProduto: dict):
-    airflow_tools.trigger_airflow_dag(
-        dag_id="webhook-sintegre",
-        json_produtos=dadosProduto,
-        url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2",
-    )
-    sleep(10)
-    airflow_tools.trigger_airflow_dag(
-        dag_id="1.18-PROSPEC_UPDATE",
-        json_produtos={"produto": "RE-DECOMP"},
-    )
+
 
 
 
