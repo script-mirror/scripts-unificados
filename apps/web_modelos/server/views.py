@@ -114,12 +114,11 @@ def login():
 
 @bp.route('/signup', methods=['GET', 'POST'])
 def signup():
-  send_whatsapp_message("debug", "ACESSO AO SIGNUP", None)
   form = RegistrationForm()
   if form.validate_on_submit():
     hashed_password = generate_password_hash(form.password.data, method='pbkdf2:sha256')
     new_user = User(username=form.username.data, email=form.email.data, password=hashed_password)
-    send_whatsapp_message("debug", f"usuario: {form.username.data} - email: {form.email.data}", None)
+    send_whatsapp_message("debug", f"usuario: {form.username.data}\nemail: {form.email.data}", None)
     db_login.session.add(new_user)
     db_login.session.commit()
     return redirect(url_for('middle_app.index'))

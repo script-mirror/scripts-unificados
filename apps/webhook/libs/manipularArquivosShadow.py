@@ -183,7 +183,8 @@ def resultados_preliminares_consistidos(dadosProduto: dict):
     
     airflow_tools.trigger_airflow_dag(
         dag_id="1.12-PROSPEC_CONSISTIDO",
-        json_produtos=params
+        json_produtos=params,
+        url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
     )
     
 
@@ -254,14 +255,17 @@ def arquivo_acomph(dadosProduto: dict):
     if dadosProduto.get('enviar', True):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.08-PROSPEC_GRUPOS-ONS",
-            json_produtos={}
+            json_produtos={},
+            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
             )
         
         airflow_tools.trigger_airflow_dag(
             dag_id="1.01-PROSPEC_PCONJUNTO_DEFINITIVO",
             json_produtos={
                 'dt_ref':dadosProduto['dataProduto']
-                })
+                },
+            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
+            )
 
 def arquivo_rdh(dadosProduto: dict):
     filename = get_filename(dadosProduto)
@@ -370,23 +374,12 @@ def modelo_eta(dadosProduto: dict):
 
 def carga_patamar(dadosProduto: dict):
     filename = get_filename(dadosProduto)
-    airflow_tools.trigger_airflow_dag(
-        dag_id="webhook-sintegre",
-        json_produtos=dadosProduto,
-        url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2",
-    )
-    
     # gerar Produto
     if dadosProduto.get('enviar', True):
         GERAR_PRODUTO.enviar({
             "produto":"REVISAO_CARGA",
             "path":filename,
         })
-        
-        airflow_tools.trigger_airflow_dag(
-            dag_id="1.18-PROSPEC_UPDATE",
-            json_produtos={"produto": "CARGA-DECOMP"},
-            )
 
 
 def deck_preliminar_decomp(dadosProduto: dict):
@@ -420,6 +413,7 @@ def deck_preliminar_decomp(dadosProduto: dict):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.16-DECOMP_ONS-TO-CCEE",
             json_produtos=dadosProduto,
+            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
             )
 
     
@@ -563,6 +557,7 @@ def carga_patamar_nw(dadosProduto: dict):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.17-NEWAVE_ONS-TO-CCEE",
             json_produtos=dadosProduto,
+            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
         )
 
     return {
@@ -764,7 +759,8 @@ def resultados_nao_consistidos_semanal(dadosProduto: dict):
         
         airflow_tools.trigger_airflow_dag(
             dag_id="1.12-PROSPEC_CONSISTIDO",
-            json_produtos=params
+            json_produtos=params,
+            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
         )
     else:
         raise Exception(f"Não foi possível extrair mês do nome do arquivo: {zip_filename}")
@@ -829,6 +825,7 @@ def deck_resultados_decomp(dadosProduto: dict):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.16-DECOMP_ONS-TO-CCEE",
             json_produtos=dadosProduto,
+            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
             )
     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_decks)
     logger.info(path_copia_tmp)
@@ -885,6 +882,7 @@ def carga_newave_preliminar(dadosProduto: dict):
         airflow_tools.trigger_airflow_dag(
             dag_id="1.17-NEWAVE_ONS-TO-CCEE",
             json_produtos=dadosProduto,
+            url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2",
         )
     
 
@@ -1004,61 +1002,8 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
         "data":data_produto.date(),
     })
 
-        
-def relatorio_limites_intercambio(dadosProduto: dict):
-    airflow_tools.trigger_airflow_dag(
-        dag_id="webhook-sintegre",
-        json_produtos=dadosProduto,
-        url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2",
-    )
-    sleep(10)
-    airflow_tools.trigger_airflow_dag(
-        dag_id="1.18-PROSPEC_UPDATE",
-        json_produtos={"produto": "RE-DECOMP"},
-    )
-    
-    # filename = get_filename(dadosProduto)
-    # logger.info(filename)
-    # PREFIXO_PADRAO = "RT-ONS DPL"
-    # arquivo = get_filename(dadosProduto)
-    # if '.pdf' in arquivo:
-    #     arquivo_selecionado = arquivo
-    # else:
-    #     path_arquivo = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(arquivo)[:-4])
-    #     os.makedirs(path_arquivo, exist_ok=True)
-        
-    #     with zipfile.ZipFile(arquivo, 'r') as zip_ref:
-    #         zip_content_names = zip_ref.namelist()
-    #         zip_ref.extract(zip_content_names[0], path_arquivo)
-            
-    #     arquivo_interno = os.path.join(path_arquivo, zip_content_names[0])
-    #     if PREFIXO_PADRAO in arquivo_interno and arquivo_interno.endswith('.pdf'):
-    #         arquivo_selecionado = arquivo_interno
-    #     elif arquivo_interno.endswith('.zip'):
-    #         with zipfile.ZipFile(arquivo_interno, 'r') as zip_ref:
-                
-    #             zip_ref.extractall(path_arquivo)
-                
-    #             arquivos_pdf = glob.glob(os.path.join(path_arquivo, "**", "*.pdf"), recursive=True)
-                
-    #             arquivo_selecionado = None
-    #             for arquivo in arquivos_pdf:
-    #                 nome_arquivo = os.path.basename(arquivo)
-    #                 if PREFIXO_PADRAO in nome_arquivo:
-    #                     arquivo_selecionado = arquivo
-    #                     logger.info(f"Arquivo no formato correto encontrado: {nome_arquivo}")
-    #                     break
-                
-    #             if arquivo_selecionado is None:
-    #                 raise Exception("Nenhum arquivo no formato correto encontrado.")
-    #                 return
-    #     else:
-    #         raise Exception("O arquivo interno não é um PDF ou ZIP válido, ou o cenario não foi mapeado")
-    # return {
-    #     "file_path": arquivo_selecionado,
-    #     "trigger_dag_id":"PROSPEC_UPDATER",
-    #     "task_to_execute": "revisao_restricao"
-    # }
+
+
 
 
 def notas_tecnicas_medio_prazo(dadosProduto: dict):

@@ -194,8 +194,13 @@ class tb_negociacoes_resumo:
     df['produto'] = df['produto'].str.extract(r'SE CON (.{1,}) - Preço Fixo')
     df = pd.merge(df_fechamento_anterior, df, on='produto', how='left')
     
-    df['change_percent'] = ((df['close'] / df['preco_fechamento_anterior']) * 100) - 100
-    df['change_value'] = df['close'] - df['preco_fechamento_anterior']
+    df['preco_fechamento_anterior'] = pd.to_numeric(df['preco_fechamento_anterior'], errors='coerce')
+    df['close'] = pd.to_numeric(df['close'], errors='coerce')
+
+    # Calculate change_percent only where both values are valid numbers
+    mask = (df['close'].notna()) & (df['preco_fechamento_anterior'].notna()) & (df['preco_fechamento_anterior'] != 0)
+    df['change_percent'] = np.where(mask, ((df['close'] / df['preco_fechamento_anterior']) * 100) - 100, np.nan)
+    df['change_value'] = np.where(mask, df['close'] - df['preco_fechamento_anterior'], np.nan)
     
     df = df.sort_values("ordem")
     df = df.fillna('-')
