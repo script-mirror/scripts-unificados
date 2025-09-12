@@ -261,10 +261,7 @@ def gerar_produto(**kwargs):
     manipularArquivosShadow.enviar_tabela_comparacao_weol_whatsapp_email(params)
 
 def python_trigger_dag(**kwargs):
-    params = kwargs.get('dag_run').conf
-    dag_id = params.get('dag_id')
-    conf = params
-    trigger_dag(dag_id, conf)
+    trigger_dag("1.18-PROSPEC_UPDATE", {"produto": "EOLICA"})
     
 with DAG(
     dag_id='webhook_deck_prev_eolica_semanal_weol',
