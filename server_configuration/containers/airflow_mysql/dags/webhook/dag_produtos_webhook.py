@@ -12,6 +12,7 @@ import traceback
 import os
 import subprocess
 from middle.utils import Constants
+from middle.airflow import trigger_dag
 constants = Constants()
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 WHATSAPP_API = os.getenv("WHATSAPP_API")
@@ -259,6 +260,12 @@ def gerar_produto(**kwargs):
     params = kwargs.get('dag_run').conf
     manipularArquivosShadow.enviar_tabela_comparacao_weol_whatsapp_email(params)
 
+def python_trigger_dag(**kwargs):
+    params = kwargs.get('dag_run').conf
+    dag_id = params.get('dag_id')
+    conf = params
+    trigger_dag(dag_id, conf)
+    
 with DAG(
     dag_id='webhook_deck_prev_eolica_semanal_weol',
     start_date=datetime.datetime(2024, 4, 28),
@@ -299,13 +306,11 @@ with DAG(
     )
 
 
-    atualizar_decomp = TriggerDagRunOperator(
+    atualizar_decomp = PythonOperator(
         task_id='eolica_dadger_decomp',
-        trigger_dag_id='1.18-PROSPEC_UPDATE',
-        conf={'produto': 'EOLICA'},
-        wait_for_completion=True,
+        python_callable=python_trigger_dag,
+        provide_context=True,
     )
-
     inicio >> patamares
     patamares >> previsao_final >> gerar_produtos >> atualizar_decomp
 
