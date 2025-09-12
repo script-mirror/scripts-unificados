@@ -37,7 +37,7 @@ with DAG(
     dag_id='gerar_produto_bbce',
     start_date=datetime.datetime(2024, 4, 28),
     catchup=False,
-    schedule="15 9,11,13,16,23 * * 1-5",
+    schedule="15 9,11,13,16,18 * * 1-5",
     default_args={'timezone': 'America/Sao_Paulo'}
 ) as dag:
 
