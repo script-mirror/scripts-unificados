@@ -705,7 +705,7 @@ def processar_produto_TABELA_WEOL_MENSAL(parametros):
     resultado.fileWhats = path_fig
     resultado.msgWhats = f"WEOL Mensal ({(data + datetime.timedelta(days=1)).strftime('%d/%m/%Y')})"
     resultado.flagWhats = True
-    resultado.destinatarioWhats = "Premissas Preco"
+    resultado.destinatarioWhats = "weol"
 
     return resultado
 
@@ -725,7 +725,7 @@ def processar_produto_TABELA_WEOL_SEMANAL(parametros):
     resultado.fileWhats = path_fig
     resultado.msgWhats = f"WEOL Semanal ({(data + datetime.timedelta(days=1)).strftime('%d/%m/%Y')})"
     resultado.flagWhats = True
-    resultado.destinatarioWhats = "Premissas Preco"
+    resultado.destinatarioWhats = "weol"
 
     return resultado
 
@@ -745,7 +745,7 @@ def processar_produto_TABELA_WEOL_DIFF(parametros):
     resultado.fileWhats = path_fig
     resultado.msgWhats = f"WEOL (D-1) ({(data + datetime.timedelta(days=1)).strftime('%d/%m/%Y')})"
     resultado.flagWhats = True
-    resultado.destinatarioWhats = "Premissas Preco"
+    resultado.destinatarioWhats = "weol"
 
     return resultado
 
