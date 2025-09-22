@@ -368,27 +368,6 @@ def modelo_eta(dadosProduto: dict):
                 })
 
 
-def carga_patamar(dadosProduto: dict):
-    filename = get_filename(dadosProduto)
-    airflow_tools.trigger_airflow_dag(
-        dag_id="webhook-sintegre",
-        json_produtos=dadosProduto,
-        url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2",
-    )
-    
-    # gerar Produto
-    if dadosProduto.get('enviar', True):
-        GERAR_PRODUTO.enviar({
-            "produto":"REVISAO_CARGA",
-            "path":filename,
-        })
-        
-        airflow_tools.trigger_airflow_dag(
-            dag_id="1.18-PROSPEC_UPDATE",
-            json_produtos={"produto": "CARGA-DECOMP"},
-            )
-
-
 def deck_preliminar_decomp(dadosProduto: dict):
 
     path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
@@ -845,48 +824,6 @@ def resultados_finais_consistidos(dadosProduto: dict):
     path_decks = os.path.abspath('/WX2TB/Documentos/fontes/PMO/arquivos/decks/{}{:0>2}_RV{}'.format(dataEletrica.anoReferente, dataEletrica.mesReferente, dataEletrica.atualRevisao))
     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_decks)
     logger.info(path_copia_tmp)
-
-
-def carga_newave_preliminar(dadosProduto: dict):
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
-    logger.info(dadosProduto)
-    
-    airflow_tools.trigger_airflow_dag(
-        dag_id="webhook-sintegre",
-        json_produtos=dadosProduto,
-        url_airflow="hhtps://tradingenergiarz.com/airflow-middle/api/v2"
-    )
-    
-    DIR_TOOLS.extract(filename,filename[:filename.rfind("/")])
-        
-    path_decks = "/WX2TB/Documentos/fontes/PMO/decks/ons/nw"
-    
-    path_copia_tmp = DIR_TOOLS.extract(filename,path_decks,True)
-    
-    logger.info(path_copia_tmp)
-    
-    mes_ano = dadosProduto["dataProduto"]
-    mes, ano = mes_ano.split('/')
-    dtRef = datetime.datetime.strptime(f"01/{mes}/{ano}", "%d/%m/%Y")
-    
-    #gerar Produto
-    try:
-        if dadosProduto.get('enviar', True):
-            GERAR_PRODUTO.enviar({
-            "produto":"REVISAO_CARGA_NW_PRELIMINAR",
-            "path":filename,
-            "data":dtRef,
-        })
-    except Exception as e:
-        print(e)
-    if dadosProduto.get('enviar', True): 
-        dadosProduto['dt_ref'] = dadosProduto['dataProduto']
-        airflow_tools.trigger_airflow_dag(
-            dag_id="1.17-NEWAVE_ONS-TO-CCEE",
-            json_produtos=dadosProduto,
-        )
-    
 
 
 def ler_csv_prev_weol_para_dicionario(file):

@@ -213,35 +213,20 @@ with DAG(
 
     for webhookProduct in PRODUCT_MAPPING:
 
-        if PRODUCT_MAPPING[webhookProduct]["funcao"]:
-            produtoEscolhido = BranchPythonOperator(
-                task_id=remover_acentos_e_caracteres_especiais(
-                    # pegando key do produto
-                    webhookProduct
-                ),
-                trigger_rule="none_failed_min_one_success",
-                python_callable = trigger_function,
-                provide_context=True,
-                on_failure_callback=enviar_whatsapp_erro,
-                on_success_callback=enviar_whatsapp_sucesso
-            )
-        if PRODUCT_MAPPING[webhookProduct]["id_dag"]:
-            produtoEscolhidoDag = TriggerDagRunOperator(
-                task_id=f"{remover_acentos_e_caracteres_especiais(webhookProduct)}_dag",
-                conf="{{dag_run.conf}}",  
-                trigger_rule="none_failed_min_one_success",
-                trigger_dag_id = PRODUCT_MAPPING[webhookProduct]["id_dag"],
-            )
-        if PRODUCT_MAPPING[webhookProduct]["id_dag"]:
-
-            inicio >> produtoEscolhido
-            produtoEscolhido >> trigger_updater_estudo >> fim
-            produtoEscolhido >> produtoEscolhidoDag >> fim
-            produtoEscolhido >> fim
-        else:
-            inicio >> produtoEscolhido
-            produtoEscolhido >> trigger_updater_estudo >> fim
-            produtoEscolhido >> fim
+        produtoEscolhido = BranchPythonOperator(
+            task_id=remover_acentos_e_caracteres_especiais(
+                webhookProduct
+            ),
+            trigger_rule="none_failed_min_one_success",
+            python_callable = trigger_function,
+            provide_context=True,
+            on_failure_callback=enviar_whatsapp_erro,
+            on_success_callback=enviar_whatsapp_sucesso
+        )
+    
+        inicio >> produtoEscolhido
+        produtoEscolhido >> trigger_updater_estudo >> fim
+        produtoEscolhido >> fim
 
 
 #=================================================================================================
