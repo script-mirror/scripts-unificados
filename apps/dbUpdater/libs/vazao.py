@@ -124,6 +124,10 @@ def importAcomph(path):
         POSTOS += postos
     df_acomph_post = pd.DataFrame(ACOMPH, columns=["dt_referente","cd_posto","nivel_lido","nivel_conso","defluente_lido","vl_vaz_def_conso","afluente_lido","afluente_conso","vl_vaz_inc_conso","vl_vaz_nat_conso", "dt_acomph"])
     df_acomph_post = df_acomph_post[["dt_referente","cd_posto","vl_vaz_def_conso","vl_vaz_inc_conso","vl_vaz_nat_conso", "dt_acomph"]]
+    
+    # Round float values to 2 decimal places
+    numeric_columns = ["vl_vaz_def_conso", "vl_vaz_inc_conso", "vl_vaz_nat_conso"]
+    df_acomph_post[numeric_columns] = df_acomph_post[numeric_columns].round(2)
     res = requests.post('https://tradingenergiarz.com/api/v2/ons/acomph',
                         json=df_acomph_post.to_dict('records'),
                         headers={
