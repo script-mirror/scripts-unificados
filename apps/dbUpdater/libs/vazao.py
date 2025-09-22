@@ -128,6 +128,7 @@ def importAcomph(path):
     # Round float values to 2 decimal places
     numeric_columns = ["vl_vaz_def_conso", "vl_vaz_inc_conso", "vl_vaz_nat_conso"]
     df_acomph_post[numeric_columns] = df_acomph_post[numeric_columns].round(2)
+    df_acomph_post = df_acomph_post.replace({np.nan: None, np.inf: None, -np.inf: None})
     res = requests.post('https://tradingenergiarz.com/api/v2/ons/acomph',
                         json=df_acomph_post.to_dict('records'),
                         headers={
