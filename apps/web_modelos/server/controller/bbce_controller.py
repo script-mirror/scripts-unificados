@@ -69,7 +69,7 @@ def get_negociacoes_bbce():
     return rz_cache.get_cached(db_bbce.tb_negociacoes_resumo.get_negociacao_bbce, produto, atualizar=atualizar)
 
 @bp.route('/API/get/bbce/resumos-negociacoes/negociacoes-de-interesse', methods=['GET'])
-# @login_required
+@login_required
 def get_negociacoes_interesse_bbce_por_data():
     no_cache = request.args.get('noCache', default=True)
     atualizar = request.args.get('atualizar', default=False)
@@ -81,7 +81,7 @@ def get_negociacoes_interesse_bbce_por_data():
 
 
 @bp.route('/API/get/bbce/resumos-negociacoes/negociacoes-de-interesse/fechamento', methods=['GET'])
-# @login_required
+@login_required
 def get_negociacoes_fechamento_interesse_por_data():
     no_cache = request.args.get('noCache', default=True)
     atualizar = request.args.get('atualizar', default=False)
@@ -91,7 +91,7 @@ def get_negociacoes_fechamento_interesse_por_data():
     return rz_cache.get_cached(db_bbce.tb_negociacoes_resumo.get_negociacoes_fechamento_interesse_por_data, datas, atualizar=atualizar)
 
 @bp.route('/API/get/bbce/resumos-negociacoes/negociacoes-de-interesse/ultima-atualizacao')
-# @login_required
+@login_required
 def get_datahora_ultima_negociacao():
     no_cache = request.args.get('noCache', default=True)
     atualizar = request.args.get('atualizar', default=False)

@@ -29,7 +29,7 @@ def enviar_whatsapp_erro(context):
     task_id = task_instance.task_id
 
     msg = f"❌ Erro na DAG: *{dag_id}*\nTask: *{task_id}*"
-    send_whatsapp_message("debug", msg)
+    send_whatsapp_message("debug", msg, None)
 
 
 def check_file_exist(path_zip,dt_ref):
