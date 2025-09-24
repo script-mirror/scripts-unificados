@@ -57,7 +57,7 @@ def trigger_function(**kwargs):
         try:
             func = getattr(manipularArquivosShadow, product.get("funcao"), None)
             aditional_params = func(params)
-            if aditional_params != None:
+            if aditional_params:
                 kwargs.get('dag_run').conf.update(aditional_params)	
                 next_tasks.append('trigger_external_dag')
 
