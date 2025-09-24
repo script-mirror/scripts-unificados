@@ -653,26 +653,6 @@ def modelo_gefs(dadosProduto: dict):
                 })
 
 
-def vazoes_observadas(dadosProduto: dict):
-
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
-
-    # Data dp relatorio hidrologico vem sempre com a data do dia anterior, portanto e necessario adicionar um dia
-    dtRef = datetime.datetime.strptime(
-        dadosProduto["dataProduto"], "%d/%m/%Y"
-    ) + datetime.timedelta(days=1)
-
-    #novo smap
-    vazao.process_planilha_vazoes_obs(filename)
-    # SmapTools.trigger_dag_SMAP(dtRef)
-    # SmapTools.resultado_cv_obs(
-    #     dtRef.date(),
-    #     fonte_referencia='psat',
-    #     dst_path= os.path.join(PATH_CV,dtRef.strftime("%Y%m%d"),'fontes')
-    #     )
-    
-
 
 def psat_file(dadosProduto: dict):
 
@@ -998,19 +978,19 @@ def notas_tecnicas_medio_prazo(dadosProduto: dict):
 if __name__ == '__main__':
     
     dadosProduto = {
-  "dataProduto": "09/2025",
-  "filename": "CargaMensal_2revquad2529.zip",
-  "macroProcesso": "Programação da Operação",
-  "nome": "Previsões de carga mensal e por patamar - NEWAVE",
-  "periodicidade": "2025-09-01T00:00:00",
-  "periodicidadeFinal": "2025-09-30T23:59:59",
-  "processo": "Previsão de Carga para o PMO",
-  "s3Key": "webhooks/Previsões de carga mensal e por patamar - NEWAVE/688d2cb494f9e32e8e798756_CargaMensal_2revquad2529.zip",
-  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS80Ny9Qcm9kdXRvcy8yMjkvQ2FyZ2FNZW5zYWxfMnJldnF1YWQyNTI5LnppcCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJQcmV2aXPDtWVzIGRlIGNhcmdhIG1lbnNhbCBlIHBvciBwYXRhbWFyIC0gTkVXQVZFIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTQxNjkxMjMsIm5iZiI6MTc1NDA4MjQ4M30.kdmb2eKSpSmXep832Vrw6B7NAAdG_4On23P7cZlj3uM",
-  "webhookId": "688d2cb494f9e32e8e798756"
-}
+            "dataProduto": "06/09/2025",
+            "filename": "Vazões Observadas - 09-06-2025 a 06-09-2025.xlsx",
+            "macroProcesso": "Programação da Operação",
+            "nome": "Relatório de Acompanhamento Hidrológico",
+            "periodicidade": "2025-09-06T00:00:00",
+            "periodicidadeFinal": "2025-09-06T23:59:59",
+            "processo": "Acompanhamento das Condições Hidroenergéticas",
+            "s3Key": "webhooks/Relatório de Acompanhamento Hidrológico/68bd994351c7b8ba11d2d11c_Vazões Observadas - 09-06-2025 a 06-09-2025.xlsx",
+            "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy81Ni9Qcm9kdXRvcy8yMzQvVmF6w7VlcyBPYnNlcnZhZGFzIC0gMDktMDYtMjAyNSBhIDA2LTA5LTIwMjUueGxzeCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJSZWxhdMOzcmlvIGRlIEFjb21wYW5oYW1lbnRvIEhpZHJvbMOzZ2ljbyIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzU3MzQyNjQzLCJuYmYiOjE3NTcyNTYwMDN9.j_wawNct0JI1P3fIzLBfL1LWiEElb4pkeOHSaGG3AQ0",
+            "webhookId": "68bd994351c7b8ba11d2d11c"
+        }
     
 
-    carga_patamar_nw(dadosProduto)
+    vazoes_observadas(dadosProduto)
     
 
