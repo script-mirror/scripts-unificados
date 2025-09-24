@@ -56,7 +56,7 @@ class User(db.Model):
 
 # Mapeamento entre nomes de produtos e funções correspondentes
 PRODUCT_MAPPING = {
-    "Precipitação por Satélite - PMO": {"funcao": "psat_file"},
+    "Precipitação por Satélite – ONS": {"funcao": "psat_file"},
     # "Modelo GEFS": {"funcao": "modelo_gefs"},
     "Resultados preliminares não consistidos  (vazões semanais - PMO)": {"funcao": "resultados_nao_consistidos_semanal"},
     "Relatório dos resultados finais consistidos da previsão diária (PDP)": {"funcao": "relatorio_resutados_finais_consistidos"},
@@ -69,7 +69,7 @@ PRODUCT_MAPPING = {
     "Arquivos dos modelos de previsão de vazões diárias - PDP": {"funcao": "arquivos_modelo_pdp"},
     "Acomph": {"funcao": "arquivo_acomph"},
     "RDH": {"funcao": "arquivo_rdh"},
-    "Histórico de Precipitação por Satélite - PMO": {"funcao": "historico_preciptacao"},
+    "Histórico de Precipitação por Satélite – ONS": {"funcao": "historico_preciptacao"},
     # "Modelo ETA": {"funcao": "modelo_eta"},
     "Deck Preliminar DECOMP - Valor Esperado": {"funcao": "deck_preliminar_decomp"},
     "Decks de entrada e saída - Modelo DESSEM": {"funcao": "deck_entrada_saida_dessem"},
