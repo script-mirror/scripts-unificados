@@ -538,75 +538,75 @@ def importRdh(path):
 
 # ================================== VAZOES OBS - SMAP ========================================================
 
-def process_planilha_vazoes_obs(spreadsheet_path):
+# def process_planilha_vazoes_obs(spreadsheet_path):
 
-    DIR_TOOLS = rz_dir_tools.DirTools()
-    file_path = DIR_TOOLS.get_name_insentive_name(spreadsheet_path)
-    if not file_path:
-        print(f"Arquivo não encontrado! {spreadsheet_path}") 
-        quit()
-    print('Tratando a planilha :'+file_path)
+#     DIR_TOOLS = rz_dir_tools.DirTools()
+#     file_path = DIR_TOOLS.get_name_insentive_name(spreadsheet_path)
+#     if not file_path:
+#         print(f"Arquivo não encontrado! {spreadsheet_path}") 
+#         quit()
+#     print('Tratando a planilha :'+file_path)
 
-    excel = pd.ExcelFile(file_path)
-    with open(PATH_LISTA_VAZOES, encoding='utf-8') as f:
-        infoTrechos = json.load(f)
+#     excel = pd.ExcelFile(file_path)
+#     with open(PATH_LISTA_VAZOES, encoding='utf-8') as f:
+#         infoTrechos = json.load(f)
     
-    vazoes_values = []	
-    for index, station_info in enumerate(infoTrechos):
-        trecho = station_info
+#     vazoes_values = []	
+#     for index, station_info in enumerate(infoTrechos):
+#         trecho = station_info
 
-        # Armazena as variaveis do json
-        nomeArquivoSaida = trecho
-        tipoVazao = infoTrechos[station_info]['iniciais']
-        sheet_name = infoTrechos[station_info]['sheet']
-        codigoEstacao = infoTrechos[station_info]['codigoEstacao']
-        bacia = infoTrechos[station_info]['bacia']
+#         # Armazena as variaveis do json
+#         nomeArquivoSaida = trecho
+#         tipoVazao = infoTrechos[station_info]['iniciais']
+#         sheet_name = infoTrechos[station_info]['sheet']
+#         codigoEstacao = infoTrechos[station_info]['codigoEstacao']
+#         bacia = infoTrechos[station_info]['bacia']
 
-        print(nomeArquivoSaida+' ('+str(index+1)+'/'+str(len(infoTrechos))+')')
+#         print(nomeArquivoSaida+' ('+str(index+1)+'/'+str(len(infoTrechos))+')')
 
-        # Leitura da planilha de vazao utilizando as linhas 4 e 6 como header (multi-level)
-        df = excel.parse(sheet_name, header=[4,6])
-        # Modifica o index para os valores de data e em seguida dropa a coluna
-        df.index = df['Unnamed: 0_level_0']['DATA']
-        df = df.drop( 'Unnamed: 0_level_0', axis=1, level=0)
-        # Remove os index (datas) nulos
-        df = df[df.index.notnull()]
+#         # Leitura da planilha de vazao utilizando as linhas 4 e 6 como header (multi-level)
+#         df = excel.parse(sheet_name, header=[4,6])
+#         # Modifica o index para os valores de data e em seguida dropa a coluna
+#         df.index = df['Unnamed: 0_level_0']['DATA']
+#         df = df.drop( 'Unnamed: 0_level_0', axis=1, level=0)
+#         # Remove os index (datas) nulos
+#         df = df[df.index.notnull()]
 
-        for ii, comp in enumerate(infoTrechos[station_info]['composicao']):
+#         for ii, comp in enumerate(infoTrechos[station_info]['composicao']):
 
-            if 'sheet' not in infoTrechos[station_info]['composicao'][comp]:
-                vazComp = df[comp][infoTrechos[station_info]['composicao'][comp]['tipoVazao']]
+#             if 'sheet' not in infoTrechos[station_info]['composicao'][comp]:
+#                 vazComp = df[comp][infoTrechos[station_info]['composicao'][comp]['tipoVazao']]
 
-            else:
-                df_temp = excel.parse(infoTrechos[station_info]['composicao'][comp]['sheet'], header=[4,6])
-                df_temp.index = df_temp['Unnamed: 0_level_0']['DATA']
-                df_temp = df_temp.drop( 'Unnamed: 0_level_0', axis=1, level=0)
-                df_temp = df_temp[df_temp.index.notnull()]
-                vazComp = df_temp[comp][infoTrechos[station_info]['composicao'][comp]['tipoVazao']]
+#             else:
+#                 df_temp = excel.parse(infoTrechos[station_info]['composicao'][comp]['sheet'], header=[4,6])
+#                 df_temp.index = df_temp['Unnamed: 0_level_0']['DATA']
+#                 df_temp = df_temp.drop( 'Unnamed: 0_level_0', axis=1, level=0)
+#                 df_temp = df_temp[df_temp.index.notnull()]
+#                 vazComp = df_temp[comp][infoTrechos[station_info]['composicao'][comp]['tipoVazao']]
 
-            if ii == 0:
-                vaz_out = vazComp
-            else:
-                if 'tempoViagem' in infoTrechos[station_info]['composicao'][comp]:
-                    tempoViagem = infoTrechos[station_info]['composicao'][comp]['tempoViagem']
-                    # Dias de viagem arredondados para cima (Ex: 13.9h = 1 dia)
-                    diasViagem = math.ceil(tempoViagem/24)
+#             if ii == 0:
+#                 vaz_out = vazComp
+#             else:
+#                 if 'tempoViagem' in infoTrechos[station_info]['composicao'][comp]:
+#                     tempoViagem = infoTrechos[station_info]['composicao'][comp]['tempoViagem']
+#                     # Dias de viagem arredondados para cima (Ex: 13.9h = 1 dia)
+#                     diasViagem = math.ceil(tempoViagem/24)
                     
-                    # Condicao especial para FOA
-                    if nomeArquivoSaida == 'FOA':
-                        vaz_out -= (tempoViagem/(diasViagem*24))*vazComp + ((diasViagem*24 - tempoViagem)/(diasViagem*24))*vazComp.shift(periods=diasViagem)
-                    else:
-                        vaz_out += (tempoViagem/(diasViagem*24))*vazComp.shift(periods=diasViagem) + ((diasViagem*24 - tempoViagem)/(diasViagem*24))*vazComp
-                else:
-                    vaz_out += vazComp
-        if nomeArquivoSaida == 'GOV. JAYME CANET':
-            nomeArquivoSaida = 'MAUA'
+#                     # Condicao especial para FOA
+#                     if nomeArquivoSaida == 'FOA':
+#                         vaz_out -= (tempoViagem/(diasViagem*24))*vazComp + ((diasViagem*24 - tempoViagem)/(diasViagem*24))*vazComp.shift(periods=diasViagem)
+#                     else:
+#                         vaz_out += (tempoViagem/(diasViagem*24))*vazComp.shift(periods=diasViagem) + ((diasViagem*24 - tempoViagem)/(diasViagem*24))*vazComp
+#                 else:
+#                     vaz_out += vazComp
+#         if nomeArquivoSaida == 'GOV. JAYME CANET':
+#             nomeArquivoSaida = 'MAUA'
 
-        for dt, vaz in vaz_out.items():
-            vazoes_values += [nomeArquivoSaida, codigoEstacao, tipoVazao, dt.strftime('%Y-%m-%d 00:00:00'),round(vaz,2)],
+#         for dt, vaz in vaz_out.items():
+#             vazoes_values += [nomeArquivoSaida, codigoEstacao, tipoVazao, dt.strftime('%Y-%m-%d 00:00:00'),round(vaz,2)],
 
-    importar_vazoes_obs_smap(vazoes_values)
-    return vazoes_values
+#     importar_vazoes_obs_smap(vazoes_values)
+#     return vazoes_values
 
 
 def importar_vazoes_obs_smap(vazoes_values):
