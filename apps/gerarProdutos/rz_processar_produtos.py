@@ -765,23 +765,6 @@ def processar_produto_prev_ena_consistido(parametros):
 
     return resultado
 
-def processar_produto_MAPA_PSAT(parametros):
-    resultado = Resultado(parametros)
-    data:datetime.date = parametros['data']
-
-    
-    path_fig = f"/WX2TB/Documentos/dados/psat/zgifs/psat_{data.strftime('%Y%m%d')}12z_smap.png"
-
-    # deixando de enviar produto do psat ja que o mesmo esta sendo enviado pelo JP
-
-    resultado.flagWhats = False
-    if resultado.flagWhats:
-        resultado.fileWhats = path_fig
-        resultado.msgWhats = f"PSAT ({data.strftime('%d/%m/%Y')})"
-        resultado.destinatarioWhats = "Condicao Hidrica"
-
-    return resultado
-
 def processar_produto_NOTAS_TECNICAS(parametros):
     resultado = Resultado(parametros)
     data:datetime.date = parametros['data']

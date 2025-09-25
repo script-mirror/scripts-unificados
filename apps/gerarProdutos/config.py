@@ -42,7 +42,6 @@ PRODUCTS_MAPPING = {
         'TABELA_WEOL_SEMANAL': "processar_produto_TABELA_WEOL_SEMANAL",
         'TABELA_WEOL_DIFF': "processar_produto_TABELA_WEOL_DIFF",
         'PREV_ENA_CONSISTIDO':"processar_produto_prev_ena_consistido",
-        'MAPA_PSAT':'processar_produto_MAPA_PSAT',
         'NOTAS_TECNICAS': 'processar_produto_NOTAS_TECNICAS',
         'FSARH':'processar_produto_FSARH',
     } 
