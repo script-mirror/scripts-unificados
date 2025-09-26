@@ -209,4 +209,4 @@ with DAG(
 
     inicio >> downloadCCEE_ds >> dbUpdater_ds
     dbUpdater_ds >> fim
-    dbUpdater_ds >> downloadCCEE_nw >> dbUpdater_nw >> fim
+    dbUpdater_ds >> downloadCCEE_nw >> fim
