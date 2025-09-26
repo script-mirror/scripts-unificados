@@ -76,7 +76,7 @@ PRODUCT_MAPPING = {
     "Arquivos de Previsão de Carga para o DESSEM": {"funcao": "previsao_carga_dessem"},
     "Decks de entrada do PrevCargaDESSEM": {"funcao": "prevCarga_dessem"},
     "Previsões de carga mensal e por patamar - NEWAVE": {"funcao": "carga_patamar_nw"},
-    "IPDO (Informativo Preliminar Diário da Operação)": {"funcao": "carga_IPDO"},
+    # "IPDO (Informativo Preliminar Diário da Operação)": {"funcao": "carga_IPDO"},
     # "Modelo ECMWF": {"funcao": "modelo_ECMWF"},
     "Dados utilizados na previsão de geração eólica": {"funcao": "dados_geracaoEolica"},
     "Arquivos de Previsão de Carga para o DESSEM - PrevCargaDESSEM": {"funcao": "prevCarga_dessem_saida"},
