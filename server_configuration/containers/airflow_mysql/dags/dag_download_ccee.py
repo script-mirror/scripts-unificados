@@ -194,12 +194,7 @@ with DAG(
         provide_context=True,
     )
 
-    dbUpdater_nw = PythonOperator(
-        trigger_rule="none_failed_min_one_success",
-        task_id='dbUpdater_nw',
-        python_callable=importar_deck_nw,
-        
-    )
+
 #     {
 #     'origem':'ccee',
 #     'product_details':{
