@@ -83,23 +83,6 @@ def leituraPrevEntradaSmap(arquivoPrev,datas):
     prec = prec.set_index('cod')
     return prec
 
-def leituraObsEntradaSmap(arquivoPrev,datas):
-    prec = pd.read_csv(arquivoPrev, sep=' ', skipinitialspace=True, header=None)
-    prec.columns = ['cod','lat','lon']+datas
-
-    # se nao dropar, vai ter valores dobrados para os postos a seguir
-    subBaciasCalculadas = {}
-    subBaciasCalculadas[(-64.66, -09.26)] = ['PSATJIRA','PSATAMY']
-    subBaciasCalculadas[(-51.77, -03.13)] = ['PSATPIME','PSATBSOR','PSATBESP']
-
-    for subBac in subBaciasCalculadas:
-        prec.drop(prec.loc[prec['cod'].isin(subBaciasCalculadas[subBac])].index, inplace=True)
-        prec.loc[(prec['lon']==subBac[0]) & (prec['lat']==subBac[1]),'cod'] = subBaciasCalculadas[subBac][0]
-
-    prec = prec.set_index('cod')
-    return prec
-
-
 
 def leituraPrevModelo(modelo,dataPrevisao,rodada,membro=None):
 
@@ -147,29 +130,26 @@ def leituraPrevModelo(modelo,dataPrevisao,rodada,membro=None):
     elif modelo == 'ecmwf-ens-ext':
         pathModelo = os.path.join(pathArqPrev,'ECMWF-ens')
         padraoNomeArquivos = 'EC-ens{:0>2}-ext_p{}a*.dat'.format(membro,dataPrevisao.strftime('%d%m%y'))
-    elif modelo == 'psat':
-        pathModelo = os.path.join(PATH_ROTINA_CONJUNTO,'Arq_Entrada','Observado')
-        padraoNomeArquivos = 'psat_{}.txt'.format(dataPrevisao.strftime('%d%m%Y'))
+    # elif modelo == 'psat':
+    #     pathModelo = os.path.join(PATH_ROTINA_CONJUNTO,'Arq_Entrada','Observado')
+    #     padraoNomeArquivos = 'psat_{}.txt'.format(dataPrevisao.strftime('%d%m%Y'))
 
     if rodada:
         pathModelo = pathModelo+'_{:0>2}'.format(rodada)
 
     patternFiles = os.path.join(pathModelo,padraoNomeArquivos)
     arquivos = glob.glob(patternFiles)
-
+    
     if not len(arquivos):
         raise Exception('Nao foi encontrado nenhum arquivo como seguinte formato: %s' % patternFiles)
 
     preciptacao = pd.DataFrame()
     for f in arquivos:
-        if modelo == 'psat':
-            dtPrevista = dataPrevisao.date()
-            prec = leituraObsEntradaSmap(f,[dtPrevista])
-        else:
-            match = re.match(r'.*_p[0-9]{6}a([0-9]{6}).dat',f)
-            dataPrevista = match.group(1)
-            dtPrevista = datetime.datetime.strptime(dataPrevista,'%d%m%y').date()
-            prec = leituraPrevEntradaSmap(f,[dtPrevista])
+            
+        match = re.match(r'.*_p[0-9]{6}a([0-9]{6}).dat',f)
+        dataPrevista = match.group(1)
+        dtPrevista = datetime.datetime.strptime(dataPrevista,'%d%m%y').date()
+        prec = leituraPrevEntradaSmap(f,[dtPrevista])
 
         if preciptacao.empty:
             preciptacao = prec

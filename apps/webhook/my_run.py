@@ -56,7 +56,7 @@ class User(db.Model):
 
 # Mapeamento entre nomes de produtos e funções correspondentes
 PRODUCT_MAPPING = {
-    "Precipitação por Satélite – ONS": {"funcao": "psat_file"},
+    # "Relatório de Acompanhamento Hidrológico": {"funcao": "vazoes_observadas"},    
     # "Modelo GEFS": {"funcao": "modelo_gefs"},
     "Resultados preliminares não consistidos  (vazões semanais - PMO)": {"funcao": "resultados_nao_consistidos_semanal"},
     "Relatório dos resultados finais consistidos da previsão diária (PDP)": {"funcao": "relatorio_resutados_finais_consistidos"},

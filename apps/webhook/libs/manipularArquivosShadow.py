@@ -653,31 +653,6 @@ def modelo_gefs(dadosProduto: dict):
                 })
 
 
-
-def psat_file(dadosProduto: dict):
-
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
-
-    path_pconjunto_psat = os.path.join(PATH_ROTINA_CONJUNTO,"Arq_Entrada","Observado")
-    path_copia_tmp = DIR_TOOLS.copy_src(filename, path_pconjunto_psat)
-    logger.info(path_copia_tmp)
-
-
-    dtRef = datetime.datetime.strptime(
-        dadosProduto["dataProduto"], "%d/%m/%Y"
-    )
-
-    #cria figuras
-    plot.plotPrevDiaria(modelo="psat",dataPrevisao=dtRef,rodada=0)
-    if dadosProduto.get('enviar', True):
-        GERAR_PRODUTO.enviar({
-    "produto":"MAPA_PSAT",
-    "data":dtRef.date()
-    })
-    # wx_plota_pconjunto.plota_psat(dtRef)
-
-
 def resultados_nao_consistidos_semanal(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
@@ -978,19 +953,19 @@ def notas_tecnicas_medio_prazo(dadosProduto: dict):
 if __name__ == '__main__':
     
     dadosProduto = {
-            "dataProduto": "06/09/2025",
-            "filename": "Vazões Observadas - 09-06-2025 a 06-09-2025.xlsx",
+            "dataProduto": "24/09/2025",
+            "filename": "psat_24092025.txt",
             "macroProcesso": "Programação da Operação",
-            "nome": "Relatório de Acompanhamento Hidrológico",
-            "periodicidade": "2025-09-06T00:00:00",
-            "periodicidadeFinal": "2025-09-06T23:59:59",
-            "processo": "Acompanhamento das Condições Hidroenergéticas",
-            "s3Key": "webhooks/Relatório de Acompanhamento Hidrológico/68bd994351c7b8ba11d2d11c_Vazões Observadas - 09-06-2025 a 06-09-2025.xlsx",
-            "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy81Ni9Qcm9kdXRvcy8yMzQvVmF6w7VlcyBPYnNlcnZhZGFzIC0gMDktMDYtMjAyNSBhIDA2LTA5LTIwMjUueGxzeCIsInVzZXJuYW1lIjoiZ2lsc2V1Lm11aGxlbkByYWl6ZW4uY29tIiwibm9tZVByb2R1dG8iOiJSZWxhdMOzcmlvIGRlIEFjb21wYW5oYW1lbnRvIEhpZHJvbMOzZ2ljbyIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzU3MzQyNjQzLCJuYmYiOjE3NTcyNTYwMDN9.j_wawNct0JI1P3fIzLBfL1LWiEElb4pkeOHSaGG3AQ0",
-            "webhookId": "68bd994351c7b8ba11d2d11c"
+            "nome": "Precipitação por Satélite – ONS",
+            "periodicidade": "2025-09-24T00:00:00",
+            "periodicidadeFinal": "2025-09-24T23:59:59",
+            "processo": "Meteorologia e clima",
+            "s3Key": "webhooks/Precipitação por Satélite – ONS/68d42644450014d70a3e6056_psat_24092025.txt",
+            "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8zOC9Qcm9kdXRvcy80ODcvcHNhdF8yNDA5MjAyNS50eHQiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiUHJlY2lwaXRhw6fDo28gcG9yIFNhdMOpbGl0ZSDigJMgT05TIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTg4MjA1MzEsIm5iZiI6MTc1ODczMzg5MX0.2mgFER2IWoeq20j5_iarX3-Df9935DJOoj_1F8peL-E",
+            "webhookId": "68d42644450014d70a3e6056"
         }
     
 
-    vazoes_observadas(dadosProduto)
+    psat_file(dadosProduto)
     
 
