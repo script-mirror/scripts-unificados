@@ -118,6 +118,7 @@ def baixarArquivos(produtos, dataPrevisao, mapas, modelos, flagVies, flagPrelimi
     return previsoes
 
 def atualizacaoDiaria(produtos, dataPrevisao, flagVies, flagPreliminar, anosInteresse = []):
+    return None
     global pathResultados, pathPrevisaoDia
 
     requestsPluviaAPI.authenticatePluvia(USER_PLUVIA, PASSWORD_PLUVIA)
