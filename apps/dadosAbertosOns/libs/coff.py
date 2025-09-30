@@ -20,9 +20,9 @@ def tratar_dados(
         colunas_renamed: str) -> pd.DataFrame:
     df = utils.tratamento_df(df, colunas_df, colunas_renamed)
     df = df.set_index(['dt_data_hora'])
-    df['vl_geracao_limitada'] = df['vl_geracao_limitada'].astype(str).replace(',', '.')
+    df['vl_geracao_limitada'] = df['vl_geracao_limitada'].astype(str).str.replace(',', '.')
     df['vl_geracao_limitada'] = df['vl_geracao_limitada'].astype(float)
-    df['vl_geracao_referencia_final'] = df['vl_geracao_referencia_final'].replace(',', '.')
+    df['vl_geracao_referencia_final'] = df['vl_geracao_referencia_final'].str.replace(',', '.')
     df['vl_geracao_referencia_final'] = df['vl_geracao_referencia_final'].astype(float)
     df['id_estado'] = df['id_estado'].astype(str)
     # df = df.groupby('id_estado').resample('h', include_groups=False).sum().replace(nan, 0.0).div(2)
