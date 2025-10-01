@@ -43,10 +43,8 @@ sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 sys.path.insert(1, f"{PATH_PROJETO}/scripts_unificados")
 from apps.airflow import airflow_tools
 from apps.webhook.libs import wx_libs_preco
-from apps.tempo.libs import plot
 from apps.smap.libs import SmapTools
 from apps.dessem import dessem
-from apps.pconjunto import wx_plota_pconjunto
 from apps.gerarProdutos import gerarProdutos2
 from bibliotecas import wx_opweek,rz_dir_tools
 from apps.dbUpdater.libs import carga_ons,chuva,deck_ds,deck_dc,deck_nw,geracao,revisao,temperatura,vazao
