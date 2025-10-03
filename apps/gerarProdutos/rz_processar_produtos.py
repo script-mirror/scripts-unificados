@@ -327,21 +327,6 @@ def processar_produto_RELATORIO_CV(parametros):
     return resultado
 
 
-def processar_produto_DIFERENCA_CV(parametros):
-    resultado = Resultado(parametros)
-    corpoArquivos = rz_aux_libs.compare_fontes_cv(
-        dt_rodada=parametros["data"],
-        src_path=os.path.join(PATH_CV,parametros["data"].strftime('%Y%m%d'),'fontes')
-        )
-    
-    resultado.corpoEmail = corpoArquivos[0]
-    resultado.file = corpoArquivos[1]
-    resultado.assuntoEmail = '[CV] Comparação de resultados {}'.format(parametros["data"].strftime('%d/%m/%Y'))
-    resultado.destinatarioEmail = ['middle@wxe.com.br']
-    resultado.flagEmail = True
-
-    return resultado
-
 
 # def processar_produto_RESULTADO_PREVS(parametros):
 #     resultado = Resultado(parametros)
