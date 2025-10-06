@@ -388,7 +388,7 @@ def deck_entrada_saida_dessem(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
     rename_filename = filename.replace("_2° nível de contingência", "")
-    os.popen(f'{filename} {rename_filename}')
+    os.popen(f'mv {filename} {rename_filename}')
     filename = rename_filename
     logger.info(filename)
 
