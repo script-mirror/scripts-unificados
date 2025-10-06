@@ -387,8 +387,9 @@ def deck_preliminar_decomp(dadosProduto: dict):
 def deck_entrada_saida_dessem(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
-    print(filename)
-    rename_filename = filename[:len("_2° nível de contingência")-5] + ".zip"
+    rename_filename = filename.replace("_2° nível de contingência", "")
+    print(f'filename: {filename}')
+    print(f'rename_filename: {rename_filename}')
     os.popen(f'mv {filename} {rename_filename}')
     filename = rename_filename
     logger.info(filename)
