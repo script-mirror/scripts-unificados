@@ -20,8 +20,12 @@ def tratar_dados(
         colunas_renamed: str) -> pd.DataFrame:
     df = utils.tratamento_df(df, colunas_df, colunas_renamed)
     df = df.set_index(['dt_data_hora'])
-    df['vl_geracao_limitada'] = df['vl_geracao_limitada'].astype(float)
-    df['vl_geracao_referencia_final'] = df['vl_geracao_referencia_final'].astype(float)
+    df['vl_geracao_limitada'] = df['vl_geracao_limitada'].str.replace(',', '.').astype(float)
+    df['vl_geracao_referencia_final'] = df['vl_geracao_referencia_final'].str.replace(',', '.').astype(float)
+    
+    df['vl_geracao'] = df['vl_geracao'].str.replace(',', '.').astype(float)
+    df['vl_disponibilidade'] = df['vl_disponibilidade'].str.replace(',', '.').astype(float)
+    df['vl_geracao_referencia'] = df['vl_geracao_referencia'].str.replace(',', '.').astype(float)
     df['id_estado'] = df['id_estado'].astype(str)
     # df = df.groupby('id_estado').resample('h', include_groups=False).sum().replace(nan, 0.0).div(2)
     df['cd_razao_restricao'] = df['cd_razao_restricao'].fillna('none')
@@ -47,5 +51,5 @@ def inserir(tabela:str, data:datetime.datetime = datetime.datetime.now()):
         )
     
 if __name__ == '__main__':
-    inserir('tb_restricoes_coff_eolica', datetime.datetime(2024, 6, 1))
+    inserir('tb_restricoes_coff_eolica', datetime.date.today())
     pass

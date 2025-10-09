@@ -43,10 +43,8 @@ sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 sys.path.insert(1, f"{PATH_PROJETO}/scripts_unificados")
 from apps.airflow import airflow_tools
 from apps.webhook.libs import wx_libs_preco
-from apps.tempo.libs import plot
 from apps.smap.libs import SmapTools
 from apps.dessem import dessem
-from apps.pconjunto import wx_plota_pconjunto
 from apps.gerarProdutos import gerarProdutos2
 from bibliotecas import wx_opweek,rz_dir_tools
 from apps.dbUpdater.libs import carga_ons,chuva,deck_ds,deck_dc,deck_nw,geracao,revisao,temperatura,vazao
@@ -214,12 +212,6 @@ def arquivos_modelo_pdp(dadosProduto: dict):
     #     )
 
     #gerar Produto
-    if dadosProduto.get('enviar', True):
-        GERAR_PRODUTO.enviar({
-        "produto":"DIFERENCA_CV",
-        "data":dtRef,
-    })
-
     
 def arquivo_acomph(dadosProduto: dict):
     filename = get_filename(dadosProduto)
@@ -319,21 +311,6 @@ def historico_preciptacao(dadosProduto: dict):
     #gerar Produto
     airflow_tools.trigger_airflow_dag(
             dag_id="Mapas_PSAT")
-    try:
-        if dadosProduto.get('enviar', True):
-            GERAR_PRODUTO.enviar({
-            "produto":"PSATH_DIFF",
-            "path":filename,
-        })
-    except:
-        print("Erro PSATH_DIFF")
-    try:
-        GERAR_PRODUTO.enviar({
-        "produto":"DIFERENCA_CV",
-        "data":dtRef,
-    })
-    except:
-        print("Erro DIFERENCA_CV")
 
     
     #gerar Produto
@@ -410,6 +387,11 @@ def deck_preliminar_decomp(dadosProduto: dict):
 def deck_entrada_saida_dessem(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
+    rename_filename = filename.replace("_2° nível de contingência", "")
+    print(f'filename: {filename}')
+    print(f'rename_filename: {rename_filename}')
+    os.popen(f'mv {filename} {rename_filename}')
+    filename = rename_filename
     logger.info(filename)
 
     dtRef = datetime.datetime.strptime(dadosProduto["dataProduto"], '%d/%m/%Y')

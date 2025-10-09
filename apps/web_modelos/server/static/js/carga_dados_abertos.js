@@ -111,9 +111,20 @@ class Options {
         this.spanGaps = 1000 * 60 * 60 * 24 * 2
         this.animation = true;
         this.plugins = {
-            tooltip: true,
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                    title: function(tooltipItems) {
+                        return moment(tooltipItems[0].parsed.x).format('DD/MM/YYYY HH:mm');
+                    },
+                    label: function(context) {
+                        return context.dataset.label + ': ' + context.parsed.y.toLocaleString('pt-BR') + ' MW';
+                    }
+                }
+            },
             legend: { display: true },
-            hover: { mode: null },
+            hover: { mode: 'index', intersect: false },
             title: {display: true, text: mainTitle, font: {size: 16}}
         }
 
@@ -125,15 +136,15 @@ class Options {
         }
         this.interaction = {
             intersect: false,
-            mode: 'x',
+            mode: 'index',
         },
             this.tooltips = {
-                mode: 'x',
+                mode: 'index',
                 intersect: false
             },
             this.hover = {
                 intersect: false,
-                mode: 'x',
+                mode: 'index',
                 axis: 'x',
             },
             this.parsing = {

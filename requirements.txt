@@ -1,0 +1,16 @@
+pyshp
+sqlalchemy
+unidecode
+pdf2image
+selenium
+pyodbc
+PyMySQL
+pymssql
+flask_login
+flask_wtf
+mplfinance
+paramiko
+psutil
+xarray
+cartopy
+pdfplumber

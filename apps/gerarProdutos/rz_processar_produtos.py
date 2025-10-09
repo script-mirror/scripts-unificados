@@ -16,7 +16,7 @@ PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 
 sys.path.insert(1, f"{PATH_PROJETO}/scripts_unificados")
-from apps.gerarProdutos.libs import wx_resultadosProspec ,wx_previsaoGeadaInmet ,rz_cargaPatamar ,rz_deck_dc_preliminar ,rz_aux_libs ,rz_produtos_chuva, html_to_image
+from apps.gerarProdutos.libs import _wx_previsaoGeadaInmet, _wx_resultadosProspec ,rz_cargaPatamar ,rz_deck_dc_preliminar ,rz_aux_libs ,rz_produtos_chuva, html_to_image
 from apps.gerarProdutos.libs.html_to_image import api_html_to_image
 from bibliotecas import  wx_dbLib, wx_emailSender, wx_opweek
 from apps.rodadas import rz_rodadasModelos
@@ -327,21 +327,6 @@ def processar_produto_RELATORIO_CV(parametros):
     return resultado
 
 
-def processar_produto_DIFERENCA_CV(parametros):
-    resultado = Resultado(parametros)
-    corpoArquivos = rz_aux_libs.compare_fontes_cv(
-        dt_rodada=parametros["data"],
-        src_path=os.path.join(PATH_CV,parametros["data"].strftime('%Y%m%d'),'fontes')
-        )
-    
-    resultado.corpoEmail = corpoArquivos[0]
-    resultado.file = corpoArquivos[1]
-    resultado.assuntoEmail = '[CV] Comparação de resultados {}'.format(parametros["data"].strftime('%d/%m/%Y'))
-    resultado.destinatarioEmail = ['middle@wxe.com.br']
-    resultado.flagEmail = True
-
-    return resultado
-
 
 # def processar_produto_RESULTADO_PREVS(parametros):
 #     resultado = Resultado(parametros)
@@ -360,7 +345,7 @@ def processar_produto_DIFERENCA_CV(parametros):
 
 def processar_produto_RESULTADOS_PROSPEC(parametros):
     resultado = Resultado(parametros)
-    corpoE, assuntoE, file, msg_whats = wx_resultadosProspec.gerarEmailResultadosProspec(parametros['path'], parametros['nomerodadaoriginal'], parametros['considerarprevs'], parametros['considerarrv'], parametros['gerarmatriz'], parametros['fazer_media'])
+    corpoE, assuntoE, file, msg_whats = _wx_resultadosProspec.gerarEmailResultadosProspec(parametros['path'], parametros['nomerodadaoriginal'], parametros['considerarprevs'], parametros['considerarrv'], parametros['gerarmatriz'], parametros['fazer_media'])
 
     if corpoE != '':
         resultado.corpoEmail = corpoE
@@ -385,7 +370,7 @@ def processar_produto_PREVISAO_GEADA(parametros):
     else:
         pathSaida = os.path.join(pathArquivos, 'tmp')
 
-    resultado.file = wx_previsaoGeadaInmet.getPrevisaoGeada(dataPrevisao=parametros['data'], pathSaida=pathSaida)
+    resultado.file = _wx_previsaoGeadaInmet.getPrevisaoGeada(dataPrevisao=parametros['data'], pathSaida=pathSaida)
 
     return resultado
 

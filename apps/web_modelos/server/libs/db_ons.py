@@ -63,7 +63,7 @@ class tb_restricoes_coff:
             df_sin['valor'] = df_sin['referencia'] - df_sin['geracao']
             df_sin['valor'][df_sin['valor'] < 0] = 0 
             
-            df_sin['dt_data_hora'] = df_sin['dt_data_hora'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            df_sin['dt_data_hora'] = pd.to_datetime(df_sin['dt_data_hora'].dt).strftime('%Y-%m-%d %H:%M:%S')
             df_sin['id_submercado'] = 'SIN'
             
             df_sin = df_sin[['id_submercado', 'dt_data_hora', 'valor']]
@@ -132,7 +132,7 @@ class tb_geracao_usina:
             df_sin = pd.DataFrame(result, columns=['dt_data_hora', 'valor'])
             if df_sin.empty:
                 return [{}]
-            df_sin['dt_data_hora'] = df_sin['dt_data_hora'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            df_sin['dt_data_hora'] = pd.to_datetime(df_sin['dt_data_hora'].dt).strftime('%Y-%m-%d %H:%M:%S')
             df_sin['id_submercado'] = 'SIN'
             
             if submercado.lower() == 'sin':
@@ -200,7 +200,7 @@ class tb_carga:
             df_sin = pd.DataFrame(result, columns=['dt_data_hora', 'valor'])
             if df_sin.empty:
                 return [{}]
-            df_sin['dt_data_hora'] = df_sin['dt_data_hora'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            df_sin['dt_data_hora'] = pd.to_datetime(df_sin['dt_data_hora'].dt).strftime('%Y-%m-%d %H:%M:%S')
             df_sin['id_submercado'] = 'SIN'
             
             if submercado.lower() == 'sin':
