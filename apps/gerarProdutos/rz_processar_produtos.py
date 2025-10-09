@@ -285,14 +285,14 @@ def processar_produto_RESULTADO_DESSEM(parametros):
     return resultado
 
 
-def processar_produto_PREVISAO_ENA_SUBMERCADO(parametros):
-    resultado = Resultado(parametros)
-    resultado.corpoEmail = rz_aux_libs.gerarPrevisaoEnaSubmercado(parametros["data"])
-    resultado.assuntoEmail = '[ENAS] DESSEM ONS - {}'.format((parametros["data"] + datetime.timedelta(days=2)).strftime('%d/%m/%Y'))
-    resultado.remetenteEmail = 'rev_ena@climenergy.com'
-    resultado.destinatarioEmail = ['middle@wxe.com.br', 'front@wxe.com.br']
-    resultado.flagEmail = True
-    return resultado
+# def processar_produto_PREVISAO_ENA_SUBMERCADO(parametros):
+#     resultado = Resultado(parametros)
+#     resultado.corpoEmail = rz_aux_libs.gerarPrevisaoEnaSubmercado(parametros["data"])
+#     resultado.assuntoEmail = '[ENAS] DESSEM ONS - {}'.format((parametros["data"] + datetime.timedelta(days=2)).strftime('%d/%m/%Y'))
+#     resultado.remetenteEmail = 'rev_ena@climenergy.com'
+#     resultado.destinatarioEmail = ['middle@wxe.com.br', 'front@wxe.com.br']
+#     resultado.flagEmail = True
+#     return resultado
 
 
 def processar_produto_PREVISAO_CARGA_DESSEM(parametros):
@@ -735,20 +735,20 @@ def processar_produto_TABELA_WEOL_DIFF(parametros):
     return resultado
 
 
-def processar_produto_prev_ena_consistido(parametros):
-    resultado = Resultado(parametros)
-    data:datetime.date = parametros['data']
-    titulo = parametros['titulo']
-    html = parametros['html']
+# def processar_produto_prev_ena_consistido(parametros):
+#     resultado = Resultado(parametros)
+#     data:datetime.date = parametros['data']
+#     titulo = parametros['titulo']
+#     html = parametros['html']
     
-    path_fig = api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'prev_ena_consistido_{data}.png'))
-    resultado.fileWhats = path_fig
+#     path_fig = api_html_to_image(html,path_save=os.path.join(PATH_WEBHOOK_TMP,f'prev_ena_consistido_{data}.png'))
+#     resultado.fileWhats = path_fig
 
-    resultado.msgWhats = titulo
-    resultado.flagWhats = True
-    resultado.destinatarioWhats = "Premissas Preco"
+#     resultado.msgWhats = titulo
+#     resultado.flagWhats = True
+#     resultado.destinatarioWhats = "Premissas Preco"
 
-    return resultado
+#     return resultado
 
 def processar_produto_NOTAS_TECNICAS(parametros):
     resultado = Resultado(parametros)

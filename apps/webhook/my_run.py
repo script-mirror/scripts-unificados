@@ -58,8 +58,8 @@ class User(db.Model):
 PRODUCT_MAPPING = {
     # "Relatório de Acompanhamento Hidrológico": {"funcao": "vazoes_observadas"},    
     # "Modelo GEFS": {"funcao": "modelo_gefs"},
-    "Resultados preliminares não consistidos  (vazões semanais - PMO)": {"funcao": "resultados_nao_consistidos_semanal"},
-    "Relatório dos resultados finais consistidos da previsão diária (PDP)": {"funcao": "relatorio_resutados_finais_consistidos"},
+    # "Resultados preliminares não consistidos  (vazões semanais - PMO)": {"funcao": "resultados_nao_consistidos_semanal"},
+    # "Relatório dos resultados finais consistidos da previsão diária (PDP)": {"funcao": "relatorio_resutados_finais_consistidos"},
     # "Níveis de Partida para o DESSEM": {"funcao": "niveis_partida_dessem"},
     "DADVAZ – Arquivo de Previsão de Vazões Diárias (PDP)": {"funcao": "dadvaz_vaz_prev"},
     "Deck e Resultados DECOMP - Valor Esperado": {"funcao": "deck_resultados_decomp"},

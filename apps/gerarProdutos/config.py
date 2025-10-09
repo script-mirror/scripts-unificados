@@ -23,7 +23,7 @@ PRODUCTS_MAPPING = {
         'RDH': "processar_produto_RDH",
         'RELATORIO_BBCE': "processar_produto_RELATORIO_BBCE",
         'RESULTADO_DESSEM': "processar_produto_RESULTADO_DESSEM",
-        'PREVISAO_ENA_SUBMERCADO': "processar_produto_PREVISAO_ENA_SUBMERCADO",
+        # 'PREVISAO_ENA_SUBMERCADO': "processar_produto_PREVISAO_ENA_SUBMERCADO",
         'PREVISAO_CARGA_DESSEM': "processar_produto_PREVISAO_CARGA_DESSEM",
         'RESULTADO_CV': "processar_produto_RESULTADO_CV",
         'RELATORIO_CV': "processar_produto_RELATORIO_CV",
@@ -41,7 +41,7 @@ PRODUCTS_MAPPING = {
         'TABELA_WEOL_MENSAL': "processar_produto_TABELA_WEOL_MENSAL",
         'TABELA_WEOL_SEMANAL': "processar_produto_TABELA_WEOL_SEMANAL",
         'TABELA_WEOL_DIFF': "processar_produto_TABELA_WEOL_DIFF",
-        'PREV_ENA_CONSISTIDO':"processar_produto_prev_ena_consistido",
+        # 'PREV_ENA_CONSISTIDO':"processar_produto_prev_ena_consistido",
         'NOTAS_TECNICAS': 'processar_produto_NOTAS_TECNICAS',
         'FSARH':'processar_produto_FSARH',
     } 
