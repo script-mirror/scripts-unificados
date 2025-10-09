@@ -307,55 +307,52 @@ def importar_rev_consistido(pathZip):
     DIR_TOOLS.remove_src(PATH_DB_UPDATER_TMP)
 
 
-def importar_prev_ena_consistido(path):
-    """ Importa a previsao de vazao do DESSEM" disponibilizado pelo ONS para o banco de dados
-    :param path: Caminho do arquivo
-    :return answer: Numero de linhas inseridas no banco de dados
-    """
+# def importar_prev_ena_consistido(path, dtPrevisao):
+#     """ Importa a previsao de vazao do DESSEM" disponibilizado pelo ONS para o banco de dados
+#     :param path: Caminho do arquivo
+#     :return answer: Numero de linhas inseridas no banco de dados
+#     """
 
-    diaPrevisao = int(os.path.basename(path).split('_')[3])
-    mesPrevisao = int(os.path.basename(path).split('_')[4])
-    anoPrevisao = int(os.path.basename(path).split('_')[5])
-    dtPrevisao = datetime.datetime(anoPrevisao, mesPrevisao, diaPrevisao)
+#     numeroLinhasCabecalho = 4
 
-    numeroLinhasCabecalho = 4
+#     infoPlanilha = {}
+#     infoPlanilha['SUDESTE'] = {'sheet_name':'Diária_6', 'posicaoInfo':[168, 169]}
+#     infoPlanilha['SUL'] = {'sheet_name':'Diária_7', 'posicaoInfo':[56, 57]}
+#     infoPlanilha['NORDESTE'] = {'sheet_name':'Diária_7', 'posicaoInfo':[70,71]}
+#     infoPlanilha['NORTE'] = {'sheet_name':'Diária_7', 'posicaoInfo':[125,126]}
 
-    infoPlanilha = {}
-    infoPlanilha['SUDESTE'] = {'sheet_name':'Diária_6', 'posicaoInfo':[168, 169]}
-    infoPlanilha['SUL'] = {'sheet_name':'Diária_7', 'posicaoInfo':[56, 57]}
-    infoPlanilha['NORDESTE'] = {'sheet_name':'Diária_7', 'posicaoInfo':[70,71]}
-    infoPlanilha['NORTE'] = {'sheet_name':'Diária_7', 'posicaoInfo':[125,126]}
+#     codSubmercado = {'SUDESTE':1, 'SUL':2, 'NORDESTE':3, 'NORTE':4}
 
-    codSubmercado = {'SUDESTE':1, 'SUL':2, 'NORDESTE':3, 'NORTE':4}
+#     sheet_name = ''
 
-    sheet_name = ''
+#     vaues_to_insert = []
+#     for sub in infoPlanilha:
+#         if sheet_name != infoPlanilha[sub]['sheet_name']:
 
-    vaues_to_insert = []
-    for sub in infoPlanilha:
-        if sheet_name != infoPlanilha[sub]['sheet_name']:
+#             df = pd.read_excel(path, sheet_name=infoPlanilha[sub]['sheet_name'], skiprows=numeroLinhasCabecalho)
+#             colunas = df.columns.tolist()
+#             index_submercado = df[df[colunas[4]] ==sub].index[0]
 
-            df = pd.read_excel(path, sheet_name=infoPlanilha[sub]['sheet_name'], skiprows=numeroLinhasCabecalho)
-            colunas = df.columns.tolist()
-            index_submercado = df[df[colunas[4]] ==sub].index[0]
+#             df_values = df.loc[index_submercado+1:index_submercado+2][colunas[2:]]
 
-            df_values = df.loc[index_submercado+1:index_submercado+2][colunas[2:]]
-            df_values.columns = pd.to_datetime(df_values.columns).strftime("%Y-%m-%d")
-            df_values = df_values.T
-            df_values['submercado']  = codSubmercado[sub]
-            df_values['dtPrevisao'] =  dtPrevisao.strftime("%Y-%m-%d")
-            vaues_to_insert += pd.concat([df_values.reset_index().iloc[:,-2:],df_values.reset_index().iloc[:,:-2]],axis=1).values.tolist()
+#             df_values.columns = pd.to_datetime(df_values.columns).strftime("%Y-%m-%d")
+#             df_values = df_values.T
+#             df_values['submercado']  = codSubmercado[sub]
+#             df_values['dtPrevisao'] =  dtPrevisao.strftime("%Y-%m-%d")
+#             vaues_to_insert += pd.concat([df_values.reset_index().iloc[:,-2:],df_values.reset_index().iloc[:,:-2]],axis=1).values.tolist()
+#             pdb.set_trace()
 
-    db_ons = wx_dbClass.db_mysql_master('db_ons')
-    db_ons.connect()
-    tb_prev_ena_submercado = db_ons.getSchema('tb_prev_ena_submercado')
+#     db_ons = wx_dbClass.db_mysql_master('db_ons')
+#     db_ons.connect()
+#     tb_prev_ena_submercado = db_ons.getSchema('tb_prev_ena_submercado')
 
-    query_delete = tb_prev_ena_submercado.delete().where(tb_prev_ena_submercado.c.dt_previsao == dtPrevisao)
-    n_values = db_ons.conn.execute(query_delete).rowcount
-    print(f"{n_values} Linhas deletada na tb_prev_ena_submercado!")
+#     query_delete = tb_prev_ena_submercado.delete().where(tb_prev_ena_submercado.c.dt_previsao == dtPrevisao)
+#     n_values = db_ons.conn.execute(query_delete).rowcount
+#     print(f"{n_values} Linhas deletada na tb_prev_ena_submercado!")
     
-    query_insert = tb_prev_ena_submercado.insert().values(vaues_to_insert)
-    n_values = db_ons.conn.execute(query_insert).rowcount
-    print(f"{n_values} Linhas Inseridas na tb_prev_ena_submercado!")
+#     query_insert = tb_prev_ena_submercado.insert().values(vaues_to_insert)
+#     n_values = db_ons.conn.execute(query_insert).rowcount
+#     print(f"{n_values} Linhas Inseridas na tb_prev_ena_submercado!")
 
 
 if __name__ == '__main__':

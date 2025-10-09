@@ -157,207 +157,121 @@ def monitora_cmo(arquivo):
     except Exception as e:
         raise e
 
-def nao_consistido_rv(arquivo):
-    # print(arquivo)
-    rev = arquivo.split('_')[-1].split('.')[0]
-    assunto = arquivo.split('/')[-1].split('.')[0]
-    path = '/WX2TB/Documentos/fontes/PMO/monitora_ONS/DECOMP/temporarios'
+# def nao_consistido_rv(arquivo):
+#     # print(arquivo)
+#     rev = arquivo.split('_')[-1].split('.')[0]
+#     assunto = arquivo.split('/')[-1].split('.')[0]
+#     path = '/WX2TB/Documentos/fontes/PMO/monitora_ONS/DECOMP/temporarios'
 
-    # Primeira descompactacao do arquivo zipado
-    try:
-        with zipfile.ZipFile(arquivo, 'r') as zip_ref:
-            sleep(1)
-            zip_ref.extractall(path)
-            
-    except:
-        print("Nao foi possivel dezipar arquivo " + arquivo)
-
-    for i in glob.glob(path + '/Nao_Consistido/*' + rev + '*'):
-        # print(i)
-        if rev == 'PMO':
-            sheet = 'Tab-5-6-7'
-            rows = 10
-            skip = 3
-            x = 1
-        else:
-            sheet = 'REV-2'
-            rows = 11
-            skip = 4
-            x = 2
-
-        df = pd.read_excel(i, sheet_name=sheet,nrows = rows-skip+1,skiprows=skip,header=None)
-        # pdb.set_trace()
-        df = df.dropna(axis=1, how='all')
-        df = df.replace(np.nan, '', regex=True)
-        df.loc[0][x]= df.loc[0][x].strftime('%d/%m/%Y')
-        df.loc[2][x]= df.loc[2][x].strftime('%d/%m/%Y')
-        # df = df.style.set_properties(**{'text-align': 'center'})
-        htmlfim = df.to_html(index=False,header=False)
-        htmlfim = htmlfim.replace('border="1"','class="umaLinha"')
-
-    html = '''<html><head>'''
-    html = html + ''' <style type="text/css">'''
-    html = html + '''table {font-family: arial, sans-serif;border-collapse: collapse;width: 1000px;}'''
-    html = html + '''td, th {border: 1px solid #dddddd;text-align: center;padding: 8px;}'''
-    html = html + '''tr:nth-child(4n + 2) td, tr:nth-child(4n + 3) td {background-color: #F2ECEC;}'''
-    html = html + '''.umaLinha tr:nth-child(odd) td{ background-color: #F2ECEC;}'''
-    html = html + '''.umaLinha tr:nth-child(even) td{ background-color: #ffffff;}'''
-    html = html + '''</style></head><body>'''
-    html += '<table class="umaLinha" class="dataframe"><tbody><tr>'
-    html += '<th rowspan="2">REGIOES</th>'
-    if rev != "PMO":
-        # pdb.set_trace()
-
-        html += '<th colspan="2">'+df.loc[0][2]+'<br> a <br>'+df.loc[2][2]+'</th>'
-    else:
-        html += '<th colspan="2">'+df.loc[0][1]+'<br> a <br>'+df.loc[2][1]+'</th>'
-
-
-    if rev == 'PMO':
-        html += '<th colspan="2">Previsao<br>Mensal Inicial<br>'+df.loc[2][3]+'</th></tr>'
-        html += '<tr><td>(Mwmed)</td><td>% MLT</td><td>(Mwmed)</td><td>MLT%</td></tr>'
         
-    else:
-        html += '<th colspan="2">Revisao da<br>Previsao Mensal<br>Incluindo Verificado</th>'
-        html += '<th colspan="2">Previsao<br>Mensal Inicial<br>'+df.loc[2][6]+'</th></tr>'
-        html += '<tr><td>(Mwmed)</td><td>% MLT</td><td>(Mwmed)</td><td>MLT%</td><td>(Mwmed)</td><td>% MLT</td></tr>'
+#     # ENVIA E-MAIL com o CMO e anexo
+#     username = 'rev_ena@climenergy.com'
+#     send_from = 'rev_ena@climenergy.com'
+
+#     send_to = ['middle@wxe.com.br','front@wxe.com.br']
+#     # send_to = ['edson@wxe.com.br']
+#     arq = i
+#     anexo = arquivo
+#     texto = "<b>ENERGIAS NATURAIS AFLUENTES PREVISTAS POR SUBSISTEMA (MWmed)</b><br>"
+#     texto = texto + "Previsao Semanal ONS - Nao Consistido<br><br>"
+#     texto = texto + html
+#     texto = texto + "<br><br>Envio por WX"
+#     assunto = '[ENAS] REVISAO ONS - ' + assunto
+#     # pdb.set_trace()
     
+#     envia_email_wx(send_from, send_to, assunto, texto, anexo, server, port, username, password, isTls=True)
+#     for i in glob.glob(path + '/Nao_Consistido/*'):
+#         try:
+#             os.remove(i)
+#         except:
+#             print('Nao foi possivel deletar o arquivo' + i)
+#     return [assunto, texto]
 
-    for i,row in df.iterrows():
-        if i >= 4:
-            # pdb.set_trace()
+# def dadvaz_pdp(arquivo,str_data):
+#     sheet = 'Diária_6'
+#     skip = 4
+#     lin_SE = 166
 
-            html += '<tr>'
-            if rev != 'PMO':
-                html += '<td>{}</td>'.format(row[1])
-                html += '<td>{:6.0f}</td>'.format(row[2])
-                html += '<td>{:6.0f}</td>'.format(row[3])
-                html += '<td>{:6.0f}</td>'.format(row[4])
-                html += '<td>{:6.0f}</td>'.format(row[5])
-                html += '<td>{:6.0f}</td>'.format(row[6])
-                html += '<td>{:6.0f}</td>'.format(row[7])
-            else:
-                html += '<td>{}</td>'.format(row[0])
-                html += '<td>{:6.0f}</td>'.format(row[1])
-                html += '<td>{:6.0f}</td>'.format(row[2])
-                html += '<td>{:6.0f}</td>'.format(row[3])
-                html += '<td>{:6.0f}</td>'.format(row[4])
+#     # SUDESTE
+#     df = pd.read_excel(arquivo, sheet_name=sheet,skiprows = skip)
+#     colunas = df.columns.tolist()
 
-            html += '</tr>'
+#     cp = df.loc[lin_SE:][colunas[1:]].copy()
+#     cp['SUB'] = 'SUDESTE'
+#     df_SE = cp.reset_index(drop=True)
 
+#     # OUTROS SUBS
+#     sheet = 'Diária_7'
+#     skip = 4
+#     lin_S  = 55
+#     lin_NE  = 69
+#     lin_N = 124
+#     df = pd.read_excel(arquivo, sheet_name=sheet,skiprows = skip)
 
-    html = html + '</tbody></table></body> </html>'
+#     cp = df.loc[lin_S:lin_S+1][colunas[1:]].copy()
+#     cp['SUB'] = 'SUL'
+#     df_S = cp.reset_index(drop=True)
+#     cp = df.loc[lin_NE:lin_NE+1][colunas[1:]].copy()
+#     cp['SUB'] = 'NORDESTE'
+#     df_NE = cp.reset_index(drop=True)
+#     cp = df.loc[lin_N:lin_N+1][colunas[1:]].copy()
+#     cp['SUB'] = 'NORTE'
+#     df_N = cp.reset_index(drop=True)
+#     result = pd.concat([df_SE,df_S,df_NE,df_N])
+#     result = result.reset_index(drop=True)
 
-    # ENVIA E-MAIL com o CMO e anexo
-    username = 'rev_ena@climenergy.com'
-    send_from = 'rev_ena@climenergy.com'
+#     # montando HTML
+#     nome_sub = ['SUDESTE','SUL','NORDESTE','NORTE']
+#     html = '''<html><head>'''
+#     html = html + ''' <style type="text/css">'''
+#     html = html + '''table {font-family: arial, sans-serif;border-collapse: collapse;width: 1000px;}'''
+#     html = html + '''td, th {border: 1px solid #dddddd;text-align: center;padding: 8px;}'''
+#     html = html + '''tr:nth-child(4n + 2) td, tr:nth-child(4n + 3) td {background-color: #F2ECEC;}'''
+#     html = html + '''.umaLinha tr:nth-child(odd) td{ background-color: #F2ECEC;}'''
+#     html = html + '''.umaLinha tr:nth-child(even) td{ background-color: #ffffff;}'''
+#     html = html + '''</style></head><body><table> <tr><th style="font-size:100%;">Submercado<br>'''
+#     html = html + '''<div style="font-size:70%;"> % MLT </div></th> '''
+#     for data in colunas[2:]:
+#         html = html + '      <th style="color: #030303">'+data.strftime('%d/%m/%Y')+'</th>'
+#     html = html + '  </tr>'
 
-    send_to = ['middle@wxe.com.br','front@wxe.com.br']
-    # send_to = ['edson@wxe.com.br']
-    arq = i
-    anexo = arquivo
-    texto = "<b>ENERGIAS NATURAIS AFLUENTES PREVISTAS POR SUBSISTEMA (MWmed)</b><br>"
-    texto = texto + "Previsao Semanal ONS - Nao Consistido<br><br>"
-    texto = texto + html
-    texto = texto + "<br><br>Envio por WX"
-    assunto = '[ENAS] REVISAO ONS - ' + assunto
-    # pdb.set_trace()
-    
-    envia_email_wx(send_from, send_to, assunto, texto, anexo, server, port, username, password, isTls=True)
-    for i in glob.glob(path + '/Nao_Consistido/*'):
-        try:
-            os.remove(i)
-        except:
-            print('Nao foi possivel deletar o arquivo' + i)
-    return [assunto, texto]
+#     for i, sub in enumerate(nome_sub):
+#         # print(i)
+#         # print(' ')
+#         html = html + '<tr> <td rowspan="2" style="color: #030303">'+sub+' <br>'
+#         html = html + '<div style="font-size:70%;"> % MLT </div></td>'
 
-def dadvaz_pdp(arquivo,str_data):
-    sheet = 'Diária_6'
-    skip = 4
-    lin_SE = 166
-
-    # SUDESTE
-    df = pd.read_excel(arquivo, sheet_name=sheet,skiprows = skip)
-    colunas = df.columns.tolist()
-
-    cp = df.loc[lin_SE:][colunas[1:]].copy()
-    cp['SUB'] = 'SUDESTE'
-    df_SE = cp.reset_index(drop=True)
-
-    # OUTROS SUBS
-    sheet = 'Diária_7'
-    skip = 4
-    lin_S  = 55
-    lin_NE  = 69
-    lin_N = 124
-    df = pd.read_excel(arquivo, sheet_name=sheet,skiprows = skip)
-
-    cp = df.loc[lin_S:lin_S+1][colunas[1:]].copy()
-    cp['SUB'] = 'SUL'
-    df_S = cp.reset_index(drop=True)
-    cp = df.loc[lin_NE:lin_NE+1][colunas[1:]].copy()
-    cp['SUB'] = 'NORDESTE'
-    df_NE = cp.reset_index(drop=True)
-    cp = df.loc[lin_N:lin_N+1][colunas[1:]].copy()
-    cp['SUB'] = 'NORTE'
-    df_N = cp.reset_index(drop=True)
-    result = pd.concat([df_SE,df_S,df_NE,df_N])
-    result = result.reset_index(drop=True)
-
-    # montando HTML
-    nome_sub = ['SUDESTE','SUL','NORDESTE','NORTE']
-    html = '''<html><head>'''
-    html = html + ''' <style type="text/css">'''
-    html = html + '''table {font-family: arial, sans-serif;border-collapse: collapse;width: 1000px;}'''
-    html = html + '''td, th {border: 1px solid #dddddd;text-align: center;padding: 8px;}'''
-    html = html + '''tr:nth-child(4n + 2) td, tr:nth-child(4n + 3) td {background-color: #F2ECEC;}'''
-    html = html + '''.umaLinha tr:nth-child(odd) td{ background-color: #F2ECEC;}'''
-    html = html + '''.umaLinha tr:nth-child(even) td{ background-color: #ffffff;}'''
-    html = html + '''</style></head><body><table> <tr><th style="font-size:100%;">Submercado<br>'''
-    html = html + '''<div style="font-size:70%;"> % MLT </div></th> '''
-    for data in colunas[2:]:
-        html = html + '      <th style="color: #030303">'+data.strftime('%d/%m/%Y')+'</th>'
-    html = html + '  </tr>'
-
-    for i, sub in enumerate(nome_sub):
-        # print(i)
-        # print(' ')
-        html = html + '<tr> <td rowspan="2" style="color: #030303">'+sub+' <br>'
-        html = html + '<div style="font-size:70%;"> % MLT </div></td>'
-
-        for ii,cols in enumerate(result):
-            if ii > 0 and ii < 8:
-                html = html + ' <td style="color: #030303">'+str(round(result.loc[i*2][ii]))+'</td>'
-                # print(round(result.loc[i*2][ii]))
-                # print(round(result.loc[i*2+1][ii],1))
-        for ii,cols in enumerate(result):
-            if ii > 0 and ii < 8:
-                if ii == 1:
-                    html = html + '</tr><tr><td style="color: #030303">' + str(round(result.loc[i*2+1][ii],1)) + '</td>'
-                else:
-                    html = html + '<td style="color: #030303">' + str(round(result.loc[i*2+1][ii],1)) + '</td>'
-        html = html +' </tr>'
-    html = html + ' </table>'
+#         for ii,cols in enumerate(result):
+#             if ii > 0 and ii < 8:
+#                 html = html + ' <td style="color: #030303">'+str(round(result.loc[i*2][ii]))+'</td>'
+#                 # print(round(result.loc[i*2][ii]))
+#                 # print(round(result.loc[i*2+1][ii],1))
+#         for ii,cols in enumerate(result):
+#             if ii > 0 and ii < 8:
+#                 if ii == 1:
+#                     html = html + '</tr><tr><td style="color: #030303">' + str(round(result.loc[i*2+1][ii],1)) + '</td>'
+#                 else:
+#                     html = html + '<td style="color: #030303">' + str(round(result.loc[i*2+1][ii],1)) + '</td>'
+#         html = html +' </tr>'
+#     html = html + ' </table>'
 
     
 
-    # ENVIA E-MAIL com o CMO e anexo
-    username = 'rev_ena@climenergy.com'
-    send_from = 'rev_ena@climenergy.com'
-    assunto = "Data: " + str_data
+#     # ENVIA E-MAIL com o CMO e anexo
+#     username = 'rev_ena@climenergy.com'
+#     send_from = 'rev_ena@climenergy.com'
+#     assunto = "Data: " + str_data
 
-    send_to = ['middle@wxe.com.br','front@wxe.com.br','leticia@wxe.com.br']
-    # send_to = ['edson@wxe.com.br']
-    anexo = arquivo
-    texto = "<b>Relatório de Previsão de Vazões Diárias</b><br>"
-    texto = texto + "ENAS Diárias ONS - DESSEM<br><br>"
-    texto = texto + html
-    texto = texto + "<br><br>Envio por WX"
-    assunto = '[ENAS] DESSEM ONS - ' + assunto
-    # pdb.set_trace()
+#     send_to = ['middle@wxe.com.br','front@wxe.com.br','leticia@wxe.com.br']
+#     # send_to = ['edson@wxe.com.br']
+#     anexo = arquivo
+#     texto = "<b>Relatório de Previsão de Vazões Diárias</b><br>"
+#     texto = texto + "ENAS Diárias ONS - DESSEM<br><br>"
+#     texto = texto + html
+#     texto = texto + "<br><br>Envio por WX"
+#     assunto = '[ENAS] DESSEM ONS - ' + assunto
     
-    envia_email_wx(send_from, send_to, assunto, texto, anexo, server, port, username, password, isTls=True)
-    # pdb.set_trace()
+#     envia_email_wx(send_from, send_to, assunto, texto, anexo, server, port, username, password, isTls=True)
 
 
 

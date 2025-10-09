@@ -653,87 +653,81 @@ def modelo_gefs(dadosProduto: dict):
                 })
 
 
-def resultados_nao_consistidos_semanal(dadosProduto: dict):
+# def resultados_nao_consistidos_semanal(dadosProduto: dict):
 
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
-
-    path_decomp_downloads = '/WX2TB/Documentos/fontes/PMO/monitora_ONS/DECOMP/downloads'
-    path_copia_tmp = DIR_TOOLS.copy_src(filename, path_decomp_downloads)
-    logger.info(path_copia_tmp)
-
-    titulo, html = wx_libs_preco.nao_consistido_rv(filename)
+#     filename = get_filename(dadosProduto)
+#     logger.info(filename)
     
-    data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto')[:10], "%d/%m/%Y")
+#     # titulo, html = wx_libs_preco.nao_consistido_rv(filename)
     
-    # manda arquivo .zip para maquina newave'
-    cmd = f"cp {filename} /WX/SERVER_NW/WX4TB/Documentos/fontes/PMO/decomp/entradas/DC_preliminar/;"
-    os.system(cmd)
-    if dadosProduto.get('enviar', True):
-        GERAR_PRODUTO.enviar({
-            "produto":"PREV_ENA_CONSISTIDO",
-            "data":data_produto,
-            "titulo":titulo,
-            "html":html
-        })
+#     # data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto')[:10], "%d/%m/%Y")
     
-    temp_dir = os.path.join(PATH_WEBHOOK_TMP, 'temp_extract_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
-    os.makedirs(temp_dir, exist_ok=True)
+#     # if dadosProduto.get('enviar', True):
+#     #     GERAR_PRODUTO.enviar({
+#     #         "produto":"PREV_ENA_CONSISTIDO",
+#     #         "data":data_produto,
+#     #         "titulo":titulo,
+#     #         "html":html
+#     #     })
     
-    DIR_TOOLS.extract(filename, temp_dir)
+#     temp_dir = os.path.join(PATH_WEBHOOK_TMP, 'temp_extract_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
+#     os.makedirs(temp_dir, exist_ok=True)
     
-    zip_filename = os.path.basename(filename)
-    rev_match = re.search(r'REV(\d+)', zip_filename, re.IGNORECASE)
-    month_match = re.search(r'_(\d{6})_', zip_filename)
+#     DIR_TOOLS.extract(filename, temp_dir)
     
-    if not rev_match:
-        rev_match = re.search(r'REV(\d+)', zip_filename, re.IGNORECASE)
+#     zip_filename = os.path.basename(filename)
+#     pdb.set_trace()
+#     rev_match = re.search(r'REV(\d+)', zip_filename, re.IGNORECASE)
+#     month_match = re.search(r'_(\d{6})_', zip_filename)
     
-    if not month_match:
-        month_match = re.search(r'(\d{6})', zip_filename)
+#     if not rev_match:
+#         rev_match = re.search(r'REV(\d+)', zip_filename, re.IGNORECASE)
+    
+#     if not month_match:
+#         month_match = re.search(r'(\d{6})', zip_filename)
         
-    prevs_files = glob.glob(os.path.join(temp_dir, '**/Prevs_VE.prv'), recursive=True)
+#     prevs_files = glob.glob(os.path.join(temp_dir, '**/Prevs_VE.prv'), recursive=True)
     
-    prevs_file = prevs_files[0]
-    logger.info(f"Arquivo de previsão encontrado em: {prevs_file}")
+#     prevs_file = prevs_files[0]
+#     logger.info(f"Arquivo de previsão encontrado em: {prevs_file}")
     
-    if month_match:
+#     if month_match:
         
-        params = dadosProduto.copy()
-        params["sensibilidade"] = "NÃO CONSISTIDO"
+#         params = dadosProduto.copy()
+#         params["sensibilidade"] = "NÃO CONSISTIDO"
         
-        airflow_tools.trigger_airflow_dag(
-            dag_id="1.12-PROSPEC_CONSISTIDO",
-            json_produtos=params,
-            url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
-        )
-    else:
-        raise Exception(f"Não foi possível extrair mês do nome do arquivo: {zip_filename}")
+#         airflow_tools.trigger_airflow_dag(
+#             dag_id="1.12-PROSPEC_CONSISTIDO",
+#             json_produtos=params,
+#             url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
+#         )
+#     else:
+#         raise Exception(f"Não foi possível extrair mês do nome do arquivo: {zip_filename}")
     
     
 
-def relatorio_resutados_finais_consistidos(dadosProduto: dict):
+# def relatorio_resutados_finais_consistidos(dadosProduto: dict):
 
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
+#     filename = get_filename(dadosProduto)
+#     logger.info(filename)
 
-    path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
-    logger.info(path_copia_tmp)
+#     # path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
+#     # logger.info(path_copia_tmp)
 
-    # wx_libs_preco.dadvaz_pdp(filename,data["dataProduto"])
-    filename_splited = os.path.basename(filename).split('_')
-    diaPrevisao = int(filename_splited[3])
-    mesPrevisao = int(filename_splited[4])
-    anoPrevisao = int(filename_splited[5])
-    dtPrevisao = datetime.datetime(anoPrevisao, mesPrevisao, diaPrevisao)
+#     wx_libs_preco.dadvaz_pdp(filename,data["dataProduto"])
+#     filename_splited = os.path.basename(filename).split('_')
+#     diaPrevisao = int(filename_splited[3])
+#     mesPrevisao = int(filename_splited[4])
+#     anoPrevisao = int(filename_splited[5])
+#     dtPrevisao = datetime.datetime(anoPrevisao, mesPrevisao, diaPrevisao)
 
-    revisao.importar_prev_ena_consistido(filename)
-    if dadosProduto.get('enviar', True):
-        GERAR_PRODUTO.enviar({
-    "produto":"PREVISAO_ENA_SUBMERCADO",
-    "data":dtPrevisao,
+#     # revisao.importar_prev_ena_consistido(filename,dtPrevisao)
+#     if dadosProduto.get('enviar', True):
+#         GERAR_PRODUTO.enviar({
+#     "produto":"PREVISAO_ENA_SUBMERCADO",
+#     "data":dtPrevisao,
     
-    })
+#     })
 
 def niveis_partida_dessem(dadosProduto: dict):
     filename = get_filename(dadosProduto)
@@ -953,19 +947,20 @@ def notas_tecnicas_medio_prazo(dadosProduto: dict):
 if __name__ == '__main__':
     
     dadosProduto = {
-            "dataProduto": "24/09/2025",
-            "filename": "psat_24092025.txt",
-            "macroProcesso": "Programação da Operação",
-            "nome": "Precipitação por Satélite – ONS",
-            "periodicidade": "2025-09-24T00:00:00",
-            "periodicidadeFinal": "2025-09-24T23:59:59",
-            "processo": "Meteorologia e clima",
-            "s3Key": "webhooks/Precipitação por Satélite – ONS/68d42644450014d70a3e6056_psat_24092025.txt",
-            "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8zOC9Qcm9kdXRvcy80ODcvcHNhdF8yNDA5MjAyNS50eHQiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiUHJlY2lwaXRhw6fDo28gcG9yIFNhdMOpbGl0ZSDigJMgT05TIiwiSXNGaWxlIjoiVHJ1ZSIsImlzcyI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiYXVkIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJleHAiOjE3NTg4MjA1MzEsIm5iZiI6MTc1ODczMzg5MX0.2mgFER2IWoeq20j5_iarX3-Df9935DJOoj_1F8peL-E",
-            "webhookId": "68d42644450014d70a3e6056"
-        }
+  "dataProduto": "30/09/2025",
+  "filename": "Relatorio_previsao_diaria_28_09_2025_para_30_09_2025.xls",
+  "macroProcesso": "Programação da Operação",
+  "nome": "Relatório dos resultados finais consistidos da previsão diária (PDP)",
+  "periodicidade": "2025-09-30T00:00:00",
+  "periodicidadeFinal": "2025-09-30T23:59:59",
+  "processo": "Previsão de Vazões Diárias - PDP",
+  "s3Key": "webhooks/Relatório dos resultados finais consistidos da previsão diária (PDP)/68d98616995e02e90c3fc514_Relatorio_previsao_diaria_28_09_2025_para_30_09_2025.xls",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy84Mi9Qcm9kdXRvcy81NDgvUmVsYXRvcmlvX3ByZXZpc2FvX2RpYXJpYV8yOF8wOV8yMDI1X3BhcmFfMzBfMDlfMjAyNS54bHMiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiUmVsYXTDs3JpbyBkb3MgcmVzdWx0YWRvcyBmaW5haXMgY29uc2lzdGlkb3MgZGEgcHJldmlzw6NvIGRpw6FyaWEgKFBEUCkiLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1OTE3Mjc0MiwibmJmIjoxNzU5MDg2MTAyfQ.sQMIZ57iv4NHLxfcWGTMA9Mnh_8yiiRxtbXF64qIc6Q",
+  "webhookId": "68d98616995e02e90c3fc514"
+}
+        
     
 
-    psat_file(dadosProduto)
+    relatorio_resutados_finais_consistidos(dadosProduto)
     
 

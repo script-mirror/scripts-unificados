@@ -448,42 +448,42 @@ def gerarResultadoDessem(data):
 
     return corpoEmail, pathFileOut
 
-def gerarPrevisaoEnaSubmercado(data:datetime):
-    idSubmercados = {1:'Sudeste', 2:'Sul', 3:'Nordeste', 4:'Norte'}
+# def gerarPrevisaoEnaSubmercado(data:datetime):
+#     idSubmercados = {1:'Sudeste', 2:'Sul', 3:'Nordeste', 4:'Norte'}
 
-    db_ons = wx_dbClass.db_mysql_master('db_ons')
-    db_ons.connect()
-    tb_prev_ena_submercado = db_ons.getSchema('tb_prev_ena_submercado')
-    query_ena = tb_prev_ena_submercado.select().where(tb_prev_ena_submercado.c.dt_previsao == data)
-    answer_ena = db_ons.db_execute(query_ena).fetchall()
+#     db_ons = wx_dbClass.db_mysql_master('db_ons')
+#     db_ons.connect()
+#     tb_prev_ena_submercado = db_ons.getSchema('tb_prev_ena_submercado')
+#     query_ena = tb_prev_ena_submercado.select().where(tb_prev_ena_submercado.c.dt_previsao == data)
+#     answer_ena = db_ons.db_execute(query_ena).fetchall()
 
-    previsaoVazao = pd.DataFrame(answer_ena, columns=['CD_SUBMERCADO', 'DT_PREVISAO', 'DT_REFERENTE', 'VL_VAZAO', 'VL_PERC_MLT'])
-    previsaoVazao['SUBMERCADO'] = previsaoVazao['CD_SUBMERCADO'].replace(idSubmercados)
-    previsaoVazao['DT_REFERENTE'] = pd.to_datetime(previsaoVazao['DT_REFERENTE'] , format="%Y-%m-%d")
-    previsaoVazao['VL_PERC_MLT'] = previsaoVazao['VL_PERC_MLT'].round(1)
-
-    header = []
-    tabela = []
-    for sub in previsaoVazao['SUBMERCADO'].unique():
-        filtro1 = previsaoVazao['SUBMERCADO'] == sub
-        if header == []:
-            header = ['Submercado']
-            header += previsaoVazao.loc[filtro1,'DT_REFERENTE'].dt.strftime('%d/%m/%Y').to_list()
-
-        linha = previsaoVazao.loc[filtro1,'VL_VAZAO'].to_list()
-        tabela.append([sub] + linha)
-        linha = previsaoVazao.loc[filtro1,'VL_PERC_MLT'].to_list()
-        tabela.append(["<small>% MLT</small>"] + linha)
-
-    tabela = wx_emailSender.gerarTabela(tabela, header, nthColor=2)
+#     previsaoVazao = pd.DataFrame(answer_ena, columns=['CD_SUBMERCADO', 'DT_PREVISAO', 'DT_REFERENTE', 'VL_VAZAO', 'VL_PERC_MLT'])
+#     previsaoVazao['SUBMERCADO'] = previsaoVazao['CD_SUBMERCADO'].replace(idSubmercados)
+#     previsaoVazao['DT_REFERENTE'] = pd.to_datetime(previsaoVazao['DT_REFERENTE'] , format="%Y-%m-%d")
+#     previsaoVazao['VL_PERC_MLT'] = previsaoVazao['VL_PERC_MLT'].round(1)
     
-    texto = "<b>Relatório de Previsão de Vazões Diárias</b><br>"
-    texto = texto + "ENAS Diárias ONS - DESSEM<br><br>"
+#     header = []
+#     tabela = []
+#     for sub in previsaoVazao['SUBMERCADO'].unique():
+#         filtro1 = previsaoVazao['SUBMERCADO'] == sub
+#         if header == []:
+#             header = ['Submercado']
+#             header += previsaoVazao.loc[filtro1,'DT_REFERENTE'].dt.strftime('%d/%m/%Y').to_list()
 
-    texto = texto + tabela
-    texto = texto + "<br><br>Envio por WX"
+#         linha = previsaoVazao.loc[filtro1,'VL_VAZAO'].to_list()
+#         tabela.append([sub] + linha)
+#         linha = previsaoVazao.loc[filtro1,'VL_PERC_MLT'].to_list()
+#         tabela.append(["<small>% MLT</small>"] + linha)
 
-    return texto
+#     tabela = wx_emailSender.gerarTabela(tabela, header, nthColor=2)
+
+#     texto = "<b>Relatório de Previsão de Vazões Diárias</b><br>"
+#     texto = texto + "ENAS Diárias ONS - DESSEM<br><br>"
+
+#     texto = texto + tabela
+#     texto = texto + "<br><br>Envio por WX"
+    
+#     return texto
 
 
 def gerarRelatoriosResultCv(urlInteresse):
