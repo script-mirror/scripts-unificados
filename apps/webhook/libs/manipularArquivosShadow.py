@@ -711,25 +711,25 @@ def modelo_gefs(dadosProduto: dict):
     
 #     })
 
-def niveis_partida_dessem(dadosProduto: dict):
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
+# def niveis_partida_dessem(dadosProduto: dict):
+#     filename = get_filename(dadosProduto)
+#     logger.info(filename)
 
-    path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
-    logger.info(path_copia_tmp)
+#     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
+#     logger.info(path_copia_tmp)
 
-    vazao.importNiveisDessem(filename)
+#     vazao.importNiveisDessem(filename)
 
 
-def dadvaz_vaz_prev(dadosProduto: dict):
+# def dadvaz_vaz_prev(dadosProduto: dict):
 
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
+#     filename = get_filename(dadosProduto)
+#     logger.info(filename)
 
-    dtReferente = datetime.datetime.strptime(dadosProduto["dataProduto"], '%d/%m/%Y')
-    path_dessem_diario = '/WX2TB/Documentos/fontes/PMO/arquivos/diario/{}/dessem'.format(dtReferente.strftime('%Y%m%d'))
-    path_copia_tmp = DIR_TOOLS.copy_src(filename, path_dessem_diario)
-    logger.info(path_copia_tmp)
+#     dtReferente = datetime.datetime.strptime(dadosProduto["dataProduto"], '%d/%m/%Y')
+#     path_dessem_diario = '/WX2TB/Documentos/fontes/PMO/arquivos/diario/{}/dessem'.format(dtReferente.strftime('%Y%m%d'))
+#     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_dessem_diario)
+#     logger.info(path_copia_tmp)
     
 def deck_resultados_decomp(dadosProduto: dict):
 

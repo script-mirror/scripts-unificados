@@ -653,54 +653,54 @@ def importar_vazoes_obs_smap(vazoes_values):
 #===========================================================================
 
 
-def importNiveisDessem(path):
-    """ Importa o produto "Níveis de Partida para o DESSEM" disponibilizado pelo ONS para o banco de dados
-    :param path: Caminho do arquivo
-    :return answer: Numero de linhas inseridas no banco de dados
-    """
-    print("Importando os niveis de partida para o DESSEM")
-    print("Leitura do arquivo: {0}".format(path))
+# def importNiveisDessem(path):
+#     """ Importa o produto "Níveis de Partida para o DESSEM" disponibilizado pelo ONS para o banco de dados
+#     :param path: Caminho do arquivo
+#     :return answer: Numero de linhas inseridas no banco de dados
+#     """
+#     print("Importando os niveis de partida para o DESSEM")
+#     print("Leitura do arquivo: {0}".format(path))
 
-    dataFormat = "%Y-%m-%d"
+#     dataFormat = "%Y-%m-%d"
     
-    # Abre o arquivo recebido e armazena a primaira aba
-    df_excel = pd.ExcelFile(path)
-    ABAS = df_excel.sheet_names
-    df_excel = df_excel.parse(ABAS[0], header=None)
-    niveis = df_excel.loc[df_excel[0].dropna().index.tolist()]
+#     # Abre o arquivo recebido e armazena a primaira aba
+#     df_excel = pd.ExcelFile(path)
+#     ABAS = df_excel.sheet_names
+#     df_excel = df_excel.parse(ABAS[0], header=None)
+#     niveis = df_excel.loc[df_excel[0].dropna().index.tolist()]
 
-    # Localizacao da data
-    dtReferente = df_excel.loc[0,9]
+#     # Localizacao da data
+#     dtReferente = df_excel.loc[0,9]
 
-    db_ons = wx_dbClass.db_mysql_master('db_ons', connect=True)
-    tb_niveis_dessem = db_ons.db_schemas['tb_niveis_dessem']
-    tb_posto_uhe = db_ons.db_schemas['tb_posto_uhe']
+#     db_ons = wx_dbClass.db_mysql_master('db_ons', connect=True)
+#     tb_niveis_dessem = db_ons.db_schemas['tb_niveis_dessem']
+#     tb_posto_uhe = db_ons.db_schemas['tb_posto_uhe']
 
-    sql_select = db.select(
-        tb_posto_uhe.c.cd_uhe,
-        tb_posto_uhe.c.cd_np
-        )
+#     sql_select = db.select(
+#         tb_posto_uhe.c.cd_uhe,
+#         tb_posto_uhe.c.cd_np
+#         )
 
-    answer = db_ons.db_execute(sql_select).fetchall()
-    codigoUsinas = dict((cd_np, cd_uhe) for (cd_uhe, cd_np) in answer)
-    val = []
-    for index, row in niveis.iterrows():
-        val.append((dtReferente.strftime(dataFormat), codigoUsinas[row[0]],  row[8], row[11]))
+#     answer = db_ons.db_execute(sql_select).fetchall()
+#     codigoUsinas = dict((cd_np, cd_uhe) for (cd_uhe, cd_np) in answer)
+#     val = []
+#     for index, row in niveis.iterrows():
+#         val.append((dtReferente.strftime(dataFormat), codigoUsinas[row[0]],  row[8], row[11]))
 
-    sql_delete = tb_niveis_dessem.delete().where(
-        tb_niveis_dessem.c.dt_referente == dtReferente.strftime(dataFormat)
-        )
-    n_row = db_ons.db_execute(sql_delete).rowcount
-    print(f'Deletado {n_row} linhas da tabela tb_niveis_dessem referente ao dia {dtReferente.strftime(dataFormat)}')
+#     sql_delete = tb_niveis_dessem.delete().where(
+#         tb_niveis_dessem.c.dt_referente == dtReferente.strftime(dataFormat)
+#         )
+#     n_row = db_ons.db_execute(sql_delete).rowcount
+#     print(f'Deletado {n_row} linhas da tabela tb_niveis_dessem referente ao dia {dtReferente.strftime(dataFormat)}')
 
 
-    sql_insert = tb_niveis_dessem.insert().values(val)
-    n_row = db_ons.db_execute(sql_insert).rowcount
-    print(f'Inserido {n_row} novas linhas da tabela tb_niveis_dessem referente ao dia {dtReferente.strftime(dataFormat)}')
+#     sql_insert = tb_niveis_dessem.insert().values(val)
+#     n_row = db_ons.db_execute(sql_insert).rowcount
+#     print(f'Inserido {n_row} novas linhas da tabela tb_niveis_dessem referente ao dia {dtReferente.strftime(dataFormat)}')
 
-    db_ons.db_dispose()
+#     db_ons.db_dispose()
 
-    return True
+#     return True
 
 
 if __name__ == '__main__':
