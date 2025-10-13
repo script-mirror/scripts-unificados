@@ -750,17 +750,17 @@ def processar_produto_TABELA_WEOL_DIFF(parametros):
 
 #     return resultado
 
-def processar_produto_NOTAS_TECNICAS(parametros):
-    resultado = Resultado(parametros)
-    data:datetime.date = parametros['data']
-    arq_xls= parametros['arquivo']
+# def processar_produto_NOTAS_TECNICAS(parametros):
+#     resultado = Resultado(parametros)
+#     data:datetime.date = parametros['data']
+#     arq_xls= parametros['arquivo']
     
-    resultado.fileWhats = arq_xls
-    resultado.msgWhats = f"Notas Técnicas - Médio Prazo({data.strftime('%m/%Y')})"
-    resultado.flagWhats = True
-    resultado.destinatarioWhats = "Notificacoes Produtos" 
+#     resultado.fileWhats = arq_xls
+#     resultado.msgWhats = f"Notas Técnicas - Médio Prazo({data.strftime('%m/%Y')})"
+#     resultado.flagWhats = True
+#     resultado.destinatarioWhats = "Notificacoes Produtos" 
 
-    return resultado
+#     return resultado
 
 
 def processar_produto_FSARH(parametros):
