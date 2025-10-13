@@ -10,7 +10,7 @@ import sqlalchemy as db
 path_fontes = "/WX2TB/Documentos/fontes/"
 sys.path.insert(1,path_fontes)
 from PMO.scripts_unificados.bibliotecas import wx_dbClass , wx_opweek , rz_dir_tools
-from PMO.scripts_unificados.apps.decomp.libs import wx_dadger
+# from PMO.scripts_unificados.apps.decomp.libs import wx_dadger
 
 PATH_DIR_LOCAL = os.path.dirname(os.path.abspath(__file__))
 
@@ -125,127 +125,129 @@ def _cleanup_temp_files(path_dst):
 
 
 def importar_dc_bloco_pq(path_zip, str_fonte='ons'):
-    print(f"[DEBUG] importar_dc_bloco_pq: Iniciando importação PQ para {path_zip}")
+    return None
+    # print(f"[DEBUG] importar_dc_bloco_pq: Iniciando importação PQ para {path_zip}")
 
-    path_dst = _setup_extraction_paths()
-    deck_entrada_zip, path_dadger = _extract_deck_and_dadger(path_zip, path_dst)
-    data_inicio_rv = _parse_deck_info(deck_entrada_zip)
+    # path_dst = _setup_extraction_paths()
+    # deck_entrada_zip, path_dadger = _extract_deck_and_dadger(path_zip, path_dst)
+    # data_inicio_rv = _parse_deck_info(deck_entrada_zip)
 
-    print(f"[DEBUG] importar_dc_bloco_pq: Lendo arquivo dadger")
-    df_dadger, comentarios = wx_dadger.leituraArquivo(path_dadger)
+    # print(f"[DEBUG] importar_dc_bloco_pq: Lendo arquivo dadger")
+    # df_dadger, comentarios = wx_dadger.leituraArquivo(path_dadger)
     
-    print(f"[DEBUG] importar_dc_bloco_pq: Processando bloco PQ")
-    df_bloco_pq = df_dadger['PQ']
+    # print(f"[DEBUG] importar_dc_bloco_pq: Processando bloco PQ")
+    # df_bloco_pq = df_dadger['PQ']
     
-    df_bloco_pq['tipo'] = df_bloco_pq['nome'].str.strip().str[-3:]
-    df_bloco_pq['sub'] = df_bloco_pq['sub'].astype(int)
-    df_bloco_pq['estagio'] = df_bloco_pq['estagio'].astype(int)
-    df_bloco_pq['gerac_p1'] = df_bloco_pq['gerac_p1'].astype(int)
-    df_bloco_pq['gerac_p2'] = df_bloco_pq['gerac_p2'].astype(int)
-    df_bloco_pq['gerac_p3'] = df_bloco_pq['gerac_p3'].astype(int)
+    # df_bloco_pq['tipo'] = df_bloco_pq['nome'].str.strip().str[-3:]
+    # df_bloco_pq['sub'] = df_bloco_pq['sub'].astype(int)
+    # df_bloco_pq['estagio'] = df_bloco_pq['estagio'].astype(int)
+    # df_bloco_pq['gerac_p1'] = df_bloco_pq['gerac_p1'].astype(int)
+    # df_bloco_pq['gerac_p2'] = df_bloco_pq['gerac_p2'].astype(int)
+    # df_bloco_pq['gerac_p3'] = df_bloco_pq['gerac_p3'].astype(int)
     
-    print(f"[DEBUG] importar_dc_bloco_pq: Obtendo ID do deck")
-    id_deck =  importar_id_deck_dc(data_inicio_rv, str_fonte)
+    # print(f"[DEBUG] importar_dc_bloco_pq: Obtendo ID do deck")
+    # id_deck =  importar_id_deck_dc(data_inicio_rv, str_fonte)
     
-    print(f"[DEBUG] importar_dc_bloco_pq: Criando DataFrames de geração por patamar")
-    df_geracao_p1 = df_bloco_pq.pivot(index=['sub','estagio'], values='gerac_p1', columns='tipo').reset_index()
-    df_geracao_p1['patamar'] = 1
-    df_geracao_p1['id_deck'] = id_deck
-    df_geracao_p1 = df_geracao_p1.dropna()
+    # print(f"[DEBUG] importar_dc_bloco_pq: Criando DataFrames de geração por patamar")
+    # df_geracao_p1 = df_bloco_pq.pivot(index=['sub','estagio'], values='gerac_p1', columns='tipo').reset_index()
+    # df_geracao_p1['patamar'] = 1
+    # df_geracao_p1['id_deck'] = id_deck
+    # df_geracao_p1 = df_geracao_p1.dropna()
     
 		
-    df_geracao_p2 = df_bloco_pq.pivot(index=['sub','estagio'], values='gerac_p2', columns='tipo').reset_index()
-    df_geracao_p2['patamar'] = 2
-    df_geracao_p2['id_deck'] = id_deck 
-    df_geracao_p2 = df_geracao_p2.dropna()
+    # df_geracao_p2 = df_bloco_pq.pivot(index=['sub','estagio'], values='gerac_p2', columns='tipo').reset_index()
+    # df_geracao_p2['patamar'] = 2
+    # df_geracao_p2['id_deck'] = id_deck 
+    # df_geracao_p2 = df_geracao_p2.dropna()
     
-    df_geracao_p3 = df_bloco_pq.pivot(index=['sub','estagio'], values='gerac_p3', columns='tipo').reset_index()
-    df_geracao_p3['patamar'] = 3
-    df_geracao_p3['id_deck'] = id_deck
-    df_geracao_p3 = df_geracao_p3.dropna()
+    # df_geracao_p3 = df_bloco_pq.pivot(index=['sub','estagio'], values='gerac_p3', columns='tipo').reset_index()
+    # df_geracao_p3['patamar'] = 3
+    # df_geracao_p3['id_deck'] = id_deck
+    # df_geracao_p3 = df_geracao_p3.dropna()
         
-    print(f"[DEBUG] importar_dc_bloco_pq: Preparando dados para inserção")
-    orden_colunas = ['id_deck', 'estagio', 'patamar', 'sub', 'PCT','PCH','EOL','UFV']
-    geracoes = []
-    geracoes += list(df_geracao_p1[orden_colunas].itertuples(index=False, name=None))
-    geracoes += list(df_geracao_p2[orden_colunas].itertuples(index=False, name=None))
-    geracoes += list(df_geracao_p3[orden_colunas].itertuples(index=False, name=None))
+    # print(f"[DEBUG] importar_dc_bloco_pq: Preparando dados para inserção")
+    # orden_colunas = ['id_deck', 'estagio', 'patamar', 'sub', 'PCT','PCH','EOL','UFV']
+    # geracoes = []
+    # geracoes += list(df_geracao_p1[orden_colunas].itertuples(index=False, name=None))
+    # geracoes += list(df_geracao_p2[orden_colunas].itertuples(index=False, name=None))
+    # geracoes += list(df_geracao_p3[orden_colunas].itertuples(index=False, name=None))
 
-    print(f"[DEBUG] importar_dc_bloco_pq: Conectando ao banco de dados")
-    db_decks = wx_dbClass.db_mysql_master('db_decks')
-    db_decks.connect()
-    tb_dc_dadger_pq = db_decks.getSchema('tb_dc_dadger_pq')
+    # print(f"[DEBUG] importar_dc_bloco_pq: Conectando ao banco de dados")
+    # db_decks = wx_dbClass.db_mysql_master('db_decks')
+    # db_decks.connect()
+    # tb_dc_dadger_pq = db_decks.getSchema('tb_dc_dadger_pq')
 
-    print(f"[DEBUG] importar_dc_bloco_pq: Deletando registros existentes")
-    sql_delete = tb_dc_dadger_pq.delete().where(tb_dc_dadger_pq.c.id_deck == id_deck)
-    n_values = db_decks.conn.execute(sql_delete).rowcount
-    print(f"{n_values} Linhas deletadas na tb_dc_dadger_pq!")
+    # print(f"[DEBUG] importar_dc_bloco_pq: Deletando registros existentes")
+    # sql_delete = tb_dc_dadger_pq.delete().where(tb_dc_dadger_pq.c.id_deck == id_deck)
+    # n_values = db_decks.conn.execute(sql_delete).rowcount
+    # print(f"{n_values} Linhas deletadas na tb_dc_dadger_pq!")
 		
-    print(f"[DEBUG] importar_dc_bloco_pq: Inserindo {len(geracoes)} registros")
-    insert_pq = tb_dc_dadger_pq.insert().values(geracoes)
-    n_values = db_decks.conn.execute(insert_pq).rowcount
-    print(f"{n_values} Linhas inseridas na tabela tb_dc_dadger_pq")
+    # print(f"[DEBUG] importar_dc_bloco_pq: Inserindo {len(geracoes)} registros")
+    # insert_pq = tb_dc_dadger_pq.insert().values(geracoes)
+    # n_values = db_decks.conn.execute(insert_pq).rowcount
+    # print(f"{n_values} Linhas inseridas na tabela tb_dc_dadger_pq")
 
-    db_decks.conn.close()
-    _cleanup_temp_files(path_dst)
-    print(f"[DEBUG] importar_dc_bloco_pq: Processamento concluído")
+    # db_decks.conn.close()
+    # _cleanup_temp_files(path_dst)
+    # print(f"[DEBUG] importar_dc_bloco_pq: Processamento concluído")
 
     
 def importar_dc_bloco_dp(path_zip, str_fonte='ons'):
-    print(f"[DEBUG] importar_dc_bloco_dp: Iniciando importação DP para {path_zip}")
+    return None
+    # print(f"[DEBUG] importar_dc_bloco_dp: Iniciando importação DP para {path_zip}")
 
-    path_dst = _setup_extraction_paths()
-    deck_entrada_zip, path_dadger = _extract_deck_and_dadger(path_zip, path_dst)
-    data_inicio_rv = _parse_deck_info(deck_entrada_zip)
+    # path_dst = _setup_extraction_paths()
+    # deck_entrada_zip, path_dadger = _extract_deck_and_dadger(path_zip, path_dst)
+    # data_inicio_rv = _parse_deck_info(deck_entrada_zip)
 
-    print(f"[DEBUG] importar_dc_bloco_dp: Obtendo ID do deck")
-    id_deck =  importar_id_deck_dc(data_inicio_rv, str_fonte)
+    # print(f"[DEBUG] importar_dc_bloco_dp: Obtendo ID do deck")
+    # id_deck =  importar_id_deck_dc(data_inicio_rv, str_fonte)
 		
-    print(f"[DEBUG] importar_dc_bloco_dp: Lendo arquivo dadger")
-    df_dadger, comentarios = wx_dadger.leituraArquivo(path_dadger)
+    # print(f"[DEBUG] importar_dc_bloco_dp: Lendo arquivo dadger")
+    # df_dadger, comentarios = wx_dadger.leituraArquivo(path_dadger)
     
-    print(f"[DEBUG] importar_dc_bloco_dp: Processando bloco DP")
-    df_bloco_dp = df_dadger['DP']
-    df_bloco_dp=df_bloco_dp.drop(['pat','mnemonico'],axis=1)
-    df_bloco_dp=df_bloco_dp.apply(pd.to_numeric, errors='coerce').dropna()
-    df_bloco_dp['id_deck'] = id_deck
+    # print(f"[DEBUG] importar_dc_bloco_dp: Processando bloco DP")
+    # df_bloco_dp = df_dadger['DP']
+    # df_bloco_dp=df_bloco_dp.drop(['pat','mnemonico'],axis=1)
+    # df_bloco_dp=df_bloco_dp.apply(pd.to_numeric, errors='coerce').dropna()
+    # df_bloco_dp['id_deck'] = id_deck
 
-    print(f"[DEBUG] importar_dc_bloco_dp: Preparando dados de carga e patamar")
-    df_carga = df_bloco_dp[['id_deck','ip','mwmed_p1','mwmed_p2','mwmed_p3','sub']]
-    tb_carga_values = df_carga.values.tolist()
+    # print(f"[DEBUG] importar_dc_bloco_dp: Preparando dados de carga e patamar")
+    # df_carga = df_bloco_dp[['id_deck','ip','mwmed_p1','mwmed_p2','mwmed_p3','sub']]
+    # tb_carga_values = df_carga.values.tolist()
 
-    df_patamar = df_bloco_dp[['id_deck','ip','horas_p1','horas_p2','horas_p3']].drop_duplicates()
-    tb_patamar_values = df_patamar.values.tolist()
+    # df_patamar = df_bloco_dp[['id_deck','ip','horas_p1','horas_p2','horas_p3']].drop_duplicates()
+    # tb_patamar_values = df_patamar.values.tolist()
 
-    print(f"[DEBUG] importar_dc_bloco_dp: Conectando ao banco de dados")
-    db_decks = wx_dbClass.db_mysql_master('db_decks')
-    db_decks.connect()
-    tb_dc_dadger_dp = db_decks.getSchema('tb_dc_dadger_dp')
-    tb_dc_patamar = db_decks.getSchema('tb_dc_patamar')
+    # print(f"[DEBUG] importar_dc_bloco_dp: Conectando ao banco de dados")
+    # db_decks = wx_dbClass.db_mysql_master('db_decks')
+    # db_decks.connect()
+    # tb_dc_dadger_dp = db_decks.getSchema('tb_dc_dadger_dp')
+    # tb_dc_patamar = db_decks.getSchema('tb_dc_patamar')
 
-    print(f"[DEBUG] importar_dc_bloco_dp: Deletando registros existentes DP")
-    delete_dp = tb_dc_dadger_dp.delete().where(tb_dc_dadger_dp.c.id_deck == id_deck)
-    n_values = db_decks.conn.execute(delete_dp).rowcount
-    print(f"{n_values} Linhas deletadas na tabela tb_dc_dadger_dp")
+    # print(f"[DEBUG] importar_dc_bloco_dp: Deletando registros existentes DP")
+    # delete_dp = tb_dc_dadger_dp.delete().where(tb_dc_dadger_dp.c.id_deck == id_deck)
+    # n_values = db_decks.conn.execute(delete_dp).rowcount
+    # print(f"{n_values} Linhas deletadas na tabela tb_dc_dadger_dp")
 
-    print(f"[DEBUG] importar_dc_bloco_dp: Inserindo {len(tb_carga_values)} registros DP")
-    insert_dp = tb_dc_dadger_dp.insert().values(tb_carga_values)
-    n_values = db_decks.conn.execute(insert_dp).rowcount
-    print(f"{n_values} Linhas inseridas na tabela tb_dc_dadger_dp")
+    # print(f"[DEBUG] importar_dc_bloco_dp: Inserindo {len(tb_carga_values)} registros DP")
+    # insert_dp = tb_dc_dadger_dp.insert().values(tb_carga_values)
+    # n_values = db_decks.conn.execute(insert_dp).rowcount
+    # print(f"{n_values} Linhas inseridas na tabela tb_dc_dadger_dp")
 
-    print(f"[DEBUG] importar_dc_bloco_dp: Deletando registros existentes patamar")
-    delete_patamar = tb_dc_patamar.delete().where(tb_dc_patamar.c.id_deck == id_deck)
-    n_values = db_decks.conn.execute(delete_patamar).rowcount
-    print(f"{n_values} Linhas deletadas na tabela tb_dc_patamar")
+    # print(f"[DEBUG] importar_dc_bloco_dp: Deletando registros existentes patamar")
+    # delete_patamar = tb_dc_patamar.delete().where(tb_dc_patamar.c.id_deck == id_deck)
+    # n_values = db_decks.conn.execute(delete_patamar).rowcount
+    # print(f"{n_values} Linhas deletadas na tabela tb_dc_patamar")
 
-    print(f"[DEBUG] importar_dc_bloco_dp: Inserindo {len(tb_patamar_values)} registros patamar")
-    insert_patamar = tb_dc_patamar.insert().values(tb_patamar_values)
-    n_values = db_decks.conn.execute(insert_patamar).rowcount
-    print(f"{n_values} Linhas inseridas na tabela tb_dc_patamar")
+    # print(f"[DEBUG] importar_dc_bloco_dp: Inserindo {len(tb_patamar_values)} registros patamar")
+    # insert_patamar = tb_dc_patamar.insert().values(tb_patamar_values)
+    # n_values = db_decks.conn.execute(insert_patamar).rowcount
+    # print(f"{n_values} Linhas inseridas na tabela tb_dc_patamar")
 
-    db_decks.conn.close()
-    _cleanup_temp_files(path_dst)
-    print(f"[DEBUG] importar_dc_bloco_dp: Processamento concluído")
+    # db_decks.conn.close()
+    # _cleanup_temp_files(path_dst)
+    # print(f"[DEBUG] importar_dc_bloco_dp: Processamento concluído")
 
 
 if __name__ == '__main__':
