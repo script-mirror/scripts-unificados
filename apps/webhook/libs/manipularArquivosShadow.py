@@ -884,43 +884,40 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
 
 
 
-def notas_tecnicas_medio_prazo(dadosProduto: dict):
+# def notas_tecnicas_medio_prazo(dadosProduto: dict):
     
-    arquivo_zip = get_filename(dadosProduto)
-    logger.info(arquivo_zip)
+#     arquivo_zip = get_filename(dadosProduto)
+#     logger.info(arquivo_zip)
     
-    path_arquivo = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(arquivo_zip)[:-4])
-    os.makedirs(path_arquivo, exist_ok=True)
+#     path_arquivo = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(arquivo_zip)[:-4])
+#     os.makedirs(path_arquivo, exist_ok=True)
     
-    with zipfile.ZipFile(arquivo_zip, 'r') as zip_ref:
-        zip_contents = zip_ref.namelist()
-        logger.info(f"Conteúdo do zip: {zip_contents}")
+#     with zipfile.ZipFile(arquivo_zip, 'r') as zip_ref:
+#         zip_contents = zip_ref.namelist()
+#         logger.info(f"Conteúdo do zip: {zip_contents}")
         
-        excel_files = [f for f in zip_contents if f.endswith('.xlsx') or f.endswith('.xls')]
-        for excel_file in excel_files:
-            zip_ref.extract(excel_file, path_arquivo)
-            logger.info(f"Arquivo extraído: {excel_file}")
+#         excel_files = [f for f in zip_contents if f.endswith('.xlsx') or f.endswith('.xls')]
+#         for excel_file in excel_files:
+#             zip_ref.extract(excel_file, path_arquivo)
+#             logger.info(f"Arquivo extraído: {excel_file}")
     
-    arquivo_xls = os.path.join(path_arquivo, os.path.basename(excel_file))
+#     arquivo_xls = os.path.join(path_arquivo, os.path.basename(excel_file))
     
-    logger.info(f"Arquivos Excel encontrados: {arquivo_xls}")
+#     logger.info(f"Arquivos Excel encontrados: {arquivo_xls}")
     
-    if not arquivo_xls:
-        logger.error(f"Nenhum arquivo Excel encontrado em {path_arquivo}")
-        return
-    
-    
-    
-    GERAR_PRODUTO.enviar({
-        "produto":"NOTAS_TECNICAS",
-        "data": datetime.datetime.strptime(dadosProduto.get('dataProduto'), "%m/%Y"),
-        "arquivo": arquivo_xls
-    })
-    if f"GTMIN_CCEE_{(datetime.date.today().replace(day=1, month=datetime.date.today().month+1)).strftime('%m%Y')}" in arquivo_xls.upper():
-        airflow_tools.trigger_airflow_dag(
-            dag_id="1.17-NEWAVE_ONS-TO-CCEE",
-            json_produtos=dadosProduto,
-        )
+#     if not arquivo_xls:
+#         logger.error(f"Nenhum arquivo Excel encontrado em {path_arquivo}")
+#         return
+#     GERAR_PRODUTO.enviar({
+#         "produto":"NOTAS_TECNICAS",
+#         "data": datetime.datetime.strptime(dadosProduto.get('dataProduto'), "%m/%Y"),
+#         "arquivo": arquivo_xls
+#     })
+#     if f"GTMIN_CCEE_{(datetime.date.today().replace(day=1, month=datetime.date.today().month+1)).strftime('%m%Y')}" in arquivo_xls.upper():
+#         airflow_tools.trigger_airflow_dag(
+#             dag_id="1.17-NEWAVE_ONS-TO-CCEE",
+#             json_produtos=dadosProduto,
+#         )
     
     
     
