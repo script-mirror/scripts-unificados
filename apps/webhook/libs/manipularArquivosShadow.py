@@ -453,103 +453,103 @@ def prevCarga_dessem(dadosProduto: dict):
         revisao.atualizar_patamar_ano_atual(filename,dtRef )
 
 
-def carga_patamar_nw(dadosProduto: dict):
+# def carga_patamar_nw(dadosProduto: dict):
     
 
-    filename = get_filename(dadosProduto)
+#     filename = get_filename(dadosProduto)
     
-    airflow_tools.trigger_airflow_dag(
-        dag_id="webhook-sintegre",
-        json_produtos=dadosProduto,
-        url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
-    )
+#     airflow_tools.trigger_airflow_dag(
+#         dag_id="webhook-sintegre",
+#         json_produtos=dadosProduto,
+#         url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
+#     )
     
-    logger.info(filename)
+#     logger.info(filename)
 
-    path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
-    logger.info(path_copia_tmp)
+#     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
+#     logger.info(path_copia_tmp)
 
-    if "ons" in dadosProduto["url"]:
-        id_fonte = "ons"
-    else:
-        id_fonte = "ccee" 
+#     if "ons" in dadosProduto["url"]:
+#         id_fonte = "ons"
+#     else:
+#         id_fonte = "ccee" 
         
-    dtRef = datetime.datetime.strptime(dadosProduto["dataProduto"], "%m/%Y")
-    dtRef_last_saturday = wx_opweek.getLastSaturday(dtRef)
+#     dtRef = datetime.datetime.strptime(dadosProduto["dataProduto"], "%m/%Y")
+#     dtRef_last_saturday = wx_opweek.getLastSaturday(dtRef)
 
-    deck_nw.importar_carga_nw(
-        pathZip = filename, 
-        dataProduto = dtRef, 
-        dataReferente = dtRef_last_saturday, 
-        str_fonte = id_fonte)
+#     deck_nw.importar_carga_nw(
+#         pathZip = filename, 
+#         dataProduto = dtRef, 
+#         dataReferente = dtRef_last_saturday, 
+#         str_fonte = id_fonte)
 
-    #gerar Produto
-    # if dadosProduto.get('enviar', True):
-    #     GERAR_PRODUTO.enviar({
-    #     "produto":"REVISAO_CARGA_NW",
-    #     "path":filename,
-    #     "data_ref": dtRef
-    # })
+#     #gerar Produto
+#     # if dadosProduto.get('enviar', True):
+#     #     GERAR_PRODUTO.enviar({
+#     #     "produto":"REVISAO_CARGA_NW",
+#     #     "path":filename,
+#     #     "data_ref": dtRef
+#     # })
         
-    if dadosProduto.get('enviar', True): 
-        dadosProduto['dt_ref'] = dadosProduto['dataProduto']
-        airflow_tools.trigger_airflow_dag(
-            dag_id="1.17-NEWAVE_ONS-TO-CCEE",
-            json_produtos=dadosProduto,
-            url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
-        )
+#     if dadosProduto.get('enviar', True): 
+#         dadosProduto['dt_ref'] = dadosProduto['dataProduto']
+#         airflow_tools.trigger_airflow_dag(
+#             dag_id="1.17-NEWAVE_ONS-TO-CCEE",
+#             json_produtos=dadosProduto,
+#             url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
+#         )
 
-    return {
-        "file_path": filename,
-        "trigger_dag_id":"PROSPEC_UPDATER",
-        "task_to_execute": "revisao_carga_nw"
-    }
+#     return {
+#         "file_path": filename,
+#         "trigger_dag_id":"PROSPEC_UPDATER",
+#         "task_to_execute": "revisao_carga_nw"
+#     }
 
 
-def carga_IPDO(dadosProduto: dict):
+# def carga_IPDO(dadosProduto: dict):
     
 
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
+#     filename = get_filename(dadosProduto)
+#     logger.info(filename)
 
-    path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
-    logger.info(path_copia_tmp)
+#     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
+#     logger.info(path_copia_tmp)
 
-    dtRef = datetime.datetime.strptime(
-          dadosProduto["dataProduto"], "%d/%m/%Y"
-      )
+#     dtRef = datetime.datetime.strptime(
+#           dadosProduto["dataProduto"], "%d/%m/%Y"
+#       )
 
-    carga_ons.importar_carga_ipdo(filename,dtRef)
+#     carga_ons.importar_carga_ipdo(filename,dtRef)
 
-    #gerar Produto
-    if dadosProduto.get('enviar', True):
-        GERAR_PRODUTO.enviar({
-        "produto":"IPDO",
-        "data":dtRef,
-        "path": filename,
-        "destinatarioWhats": ["Condicao Hidrica"]
-    })
+#     #gerar Produto
+#     if dadosProduto.get('enviar', True):
+#         GERAR_PRODUTO.enviar({
+#         "produto":"IPDO",
+#         "data":dtRef,
+#         "path": filename,
+#         "destinatarioWhats": ["Condicao Hidrica"]
+#     })
     
     
-def modelo_ECMWF(dadosProduto: dict):
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
+# def modelo_ECMWF(dadosProduto: dict):
+#     filename = get_filename(dadosProduto)
+#     logger.info(filename)
     
-    dst = os.path.join(PATH_ROTINA_CONJUNTO, 'Arq_Entrada', 'ECMWF')
-    os.makedirs(dst, exist_ok=True)
-    extracted_files = DIR_TOOLS.extract_specific_files_from_zip(
-        path=filename,
-        files_name_template=['ECMWF_m_*.dat'],
-        date_format='%d%m%y',
-        dst=dst,
-        extracted_files=[])
-    logger.info(extracted_files)
-    if dadosProduto.get('enviar', True):
-        airflow_tools.trigger_airflow_dag(
-            dag_id="PCONJUNTO",
-            json_produtos={
-                'dt_ref':dadosProduto['dataProduto']
-                })
+#     dst = os.path.join(PATH_ROTINA_CONJUNTO, 'Arq_Entrada', 'ECMWF')
+#     os.makedirs(dst, exist_ok=True)
+#     extracted_files = DIR_TOOLS.extract_specific_files_from_zip(
+#         path=filename,
+#         files_name_template=['ECMWF_m_*.dat'],
+#         date_format='%d%m%y',
+#         dst=dst,
+#         extracted_files=[])
+#     logger.info(extracted_files)
+#     if dadosProduto.get('enviar', True):
+#         airflow_tools.trigger_airflow_dag(
+#             dag_id="PCONJUNTO",
+#             json_produtos={
+#                 'dt_ref':dadosProduto['dataProduto']
+#                 })
 
             
 def dados_geracaoEolica(dadosProduto: dict):
@@ -698,25 +698,25 @@ def modelo_gefs(dadosProduto: dict):
 #     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_dessem_diario)
 #     logger.info(path_copia_tmp)
     
-def deck_resultados_decomp(dadosProduto: dict):
+# def deck_resultados_decomp(dadosProduto: dict):
 
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
+#     filename = get_filename(dadosProduto)
+#     logger.info(filename)
 
-    dtInicial, dtFinal = dadosProduto["dataProduto"].split(' - ')
-    dtInicial = datetime.datetime.strptime(dtInicial, '%d/%m/%Y')
-    dataEletrica =  wx_opweek.ElecData(dtInicial.date())
-    # /WX2TB/Documentos/fontes/PMO/arquivos/decks/202101_RV1
-    path_decks = '/WX2TB/Documentos/fontes/PMO/arquivos/decks/{}{:0>2}_RV{}'.format(dataEletrica.anoReferente, dataEletrica.mesReferente, dataEletrica.atualRevisao)
-    if dadosProduto.get('enviar', True): 
-        dadosProduto['dt_ref'] = dadosProduto['dataProduto']
-        airflow_tools.trigger_airflow_dag(
-            dag_id="1.16-DECOMP_ONS-TO-CCEE",
-            json_produtos=dadosProduto,
-            url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
-            )
-    path_copia_tmp = DIR_TOOLS.copy_src(filename, path_decks)
-    logger.info(path_copia_tmp)
+#     dtInicial, dtFinal = dadosProduto["dataProduto"].split(' - ')
+#     dtInicial = datetime.datetime.strptime(dtInicial, '%d/%m/%Y')
+#     dataEletrica =  wx_opweek.ElecData(dtInicial.date())
+#     # /WX2TB/Documentos/fontes/PMO/arquivos/decks/202101_RV1
+#     path_decks = '/WX2TB/Documentos/fontes/PMO/arquivos/decks/{}{:0>2}_RV{}'.format(dataEletrica.anoReferente, dataEletrica.mesReferente, dataEletrica.atualRevisao)
+#     if dadosProduto.get('enviar', True): 
+#         dadosProduto['dt_ref'] = dadosProduto['dataProduto']
+#         airflow_tools.trigger_airflow_dag(
+#             dag_id="1.16-DECOMP_ONS-TO-CCEE",
+#             json_produtos=dadosProduto,
+#             url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
+#             )
+#     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_decks)
+#     logger.info(path_copia_tmp)
     
 
 def resultados_finais_consistidos(dadosProduto: dict):
