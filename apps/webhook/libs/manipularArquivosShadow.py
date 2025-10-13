@@ -349,39 +349,6 @@ def modelo_eta(dadosProduto: dict):
                 })
 
 
-def deck_preliminar_decomp(dadosProduto: dict):
-
-    path_download = os.path.join(PATH_WEBHOOK_TMP,dadosProduto['nome'])
-
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
-
-    # dst_copia = os.path.join('/WX2TB/Documentos/fontes/PMO/converte_dc/input', os.path.basename(filename))
-    DIR_TOOLS.extract(filename, path_download)
-
-    dst_copia = "/WX2TB/Documentos/fontes/PMO/converte_dc/input/"
-    path_copia_tmp = DIR_TOOLS.copy_src(filename, dst_copia)[0]
-    logger.info(path_copia_tmp)
-
-    #deck values
-    deck_dc.importar_dc_bloco_pq(filename)
-    deck_dc.importar_dc_bloco_dp(filename)
-
-    # decomp.importar_deck_entrada(path_copia_tmp, True)
-
-    #gerar Produto
-    if dadosProduto.get('enviar', True):
-        GERAR_PRODUTO.enviar({
-        "produto":"CMO_DC_PRELIMINAR",
-        "path":filename,
-    })
-    if dadosProduto.get('enviar', True): 
-        dadosProduto['dt_ref'] = dadosProduto['dataProduto']
-        airflow_tools.trigger_airflow_dag(
-            dag_id="1.16-DECOMP_ONS-TO-CCEE",
-            json_produtos=dadosProduto,
-            url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
-            )
 
     
 def deck_entrada_saida_dessem(dadosProduto: dict):

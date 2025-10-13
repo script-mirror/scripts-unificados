@@ -71,7 +71,7 @@ PRODUCT_MAPPING = {
     "RDH": {"funcao": "arquivo_rdh"},
     "Histórico de Precipitação por Satélite – ONS": {"funcao": "historico_preciptacao"},
     # "Modelo ETA": {"funcao": "modelo_eta"},
-    "Deck Preliminar DECOMP - Valor Esperado": {"funcao": "deck_preliminar_decomp"},
+    #"Deck Preliminar DECOMP - Valor Esperado": {"funcao": "deck_preliminar_decomp"},
     "Decks de entrada e saída - Modelo DESSEM": {"funcao": "deck_entrada_saida_dessem"},
     "Arquivos de Previsão de Carga para o DESSEM": {"funcao": "previsao_carga_dessem"},
     "Decks de entrada do PrevCargaDESSEM": {"funcao": "prevCarga_dessem"},
