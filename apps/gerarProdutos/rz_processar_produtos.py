@@ -679,7 +679,7 @@ def processar_produto_TABELA_WEOL_MENSAL(parametros):
     resultado = Resultado(parametros)
     data:datetime.date = parametros['data']
     
-    res = req.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol/weighted-average/month/table",
+    res = req.get(f"https://tradingenergiarz.com/api/v2/decks/weol/weighted-average/month/table",
                 params={"dataProduto":str(data), "quantidadeProdutos":15},
                 headers={
                 'Authorization': f'Bearer {get_access_token()}'
@@ -699,7 +699,7 @@ def processar_produto_TABELA_WEOL_SEMANAL(parametros):
     resultado = Resultado(parametros)
     data:datetime.date = parametros['data']
     
-    res = req.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol/weighted-average/week/table",
+    res = req.get(f"https://tradingenergiarz.com/api/v2/decks/weol/weighted-average/week/table",
                   params={"dataProduto":str(data), "quantidadeProdutos":15},
                   headers={
                 'Authorization': f'Bearer {get_access_token()}'
