@@ -719,7 +719,7 @@ def processar_produto_TABELA_WEOL_DIFF(parametros):
     resultado = Resultado(parametros)
     data:datetime.date = parametros['data']
     
-    res = req.get(f"http://{__HOST_SERVIDOR}:8000/api/v2/decks/weol/diff-table",
+    res = req.get(f"https://tradingenergiarz.com/api/v2/decks/weol/diff-table",
                   params={"dataProduto":str(data)},
                   headers={
                 'Authorization': f'Bearer {get_access_token()}'
