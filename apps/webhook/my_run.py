@@ -80,7 +80,7 @@ PRODUCT_MAPPING = {
     # "Modelo ECMWF": {"funcao": "modelo_ECMWF"},
     "Dados utilizados na previsão de geração eólica": {"funcao": "dados_geracaoEolica"},
     "Arquivos de Previsão de Carga para o DESSEM - PrevCargaDESSEM": {"funcao": "prevCarga_dessem_saida"},
-    "DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM": {"funcao": "deck_prev_eolica_semanal_weol"},
+    # "DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM": {"funcao": "deck_prev_eolica_semanal_weol"},
     #"Preliminar - Relatório Mensal de Limites de Intercâmbio": {"funcao": "relatorio_limites_intercambio"},
     #"Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP": {"funcao": "relatorio_limites_intercambio"},
     # "Notas Técnicas - Medio Prazo": {"funcao": "notas_tecnicas_medio_prazo"},
