@@ -1,18 +1,15 @@
 import datetime
 import sys
 from dotenv import load_dotenv
-from airflow.exceptions import AirflowException, AirflowFailException, AirflowSkipException
+from airflow.exceptions import AirflowException, AirflowSkipException
 from airflow.models.dag import DAG
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.operators.python import BranchPythonOperator, PythonOperator
+from airflow.operators.python import BranchPythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-from airflow.providers.ssh.operators.ssh import SSHOperator
 import requests
 import traceback
 import os
-import subprocess
 from middle.utils import Constants
-from middle.airflow import trigger_dag
 constants = Constants()
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 WHATSAPP_API = os.getenv("WHATSAPP_API")
@@ -22,7 +19,7 @@ CONFIG_COGNITO = os.getenv("CONFIG_COGNITO")
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.webhook.my_run import PRODUCT_MAPPING
-from PMO.scripts_unificados.apps.webhook.libs import manipularArquivosShadow #comentario
+from PMO.scripts_unificados.apps.webhook.libs import manipularArquivosShadow
 
 def remover_acentos_e_caracteres_especiais(texto):
     import re
@@ -94,7 +91,6 @@ def get_access_token() -> str:
     return response.json()['access_token']
  
 def enviar_whatsapp_erro(context):
-    # O context contém informações sobre a falha
     task_instance = context['task_instance']
     dag_id = context['dag'].dag_id
     task_id = task_instance.task_id
@@ -154,16 +150,6 @@ def enviar_whatsapp_sucesso(context):
 
 def enviar_evento_event_tracker(context):
     headers = {'accept': 'application/json', 'Authorization': f'Bearer {get_access_token()}'}
-    # O formato do evento deve ser semelhante a este:{
-    #   "eventType": "string",
-    #   "systemOrigin": "string",
-    #   "payload": {},
-    #   "value": 0,
-    #   "userId": "string",
-    #   "sessionId": "string",
-    #   "correlationId": "string",
-    #   "metadata": {}
-    # }
 
     fields = {
         "eventType": "product_processed",
@@ -228,71 +214,3 @@ with DAG(
         inicio >> produtoEscolhido
         produtoEscolhido >> trigger_updater_estudo >> fim
         produtoEscolhido >> fim
-
-
-#=================================================================================================
-
-def deck_prev_eolica_semanal_patamares(**kwargs):
-    params = kwargs.get('dag_run').conf
-    manipularArquivosShadow.deck_prev_eolica_semanal_patamares(params)
-
-def deck_prev_eolica_semanal_previsao_final(**kwargs):
-    params = kwargs.get('dag_run').conf
-    manipularArquivosShadow.deck_prev_eolica_semanal_previsao_final(params)
-
-    
-def gerar_produto(**kwargs):
-    params = kwargs.get('dag_run').conf
-    manipularArquivosShadow.enviar_tabela_comparacao_weol_whatsapp_email(params)
-
-def python_trigger_dag(**kwargs):
-    trigger_dag("1.18-PROSPEC_UPDATE", {"produto": "EOLICA"})
-    
-with DAG(
-    dag_id='webhook_deck_prev_eolica_semanal_weol',
-    start_date=datetime.datetime(2024, 4, 28),
-    catchup=False,
-    schedule=None,
-    default_args={
-        'on_failure_callback': enviar_whatsapp_erro_weol,
-    },
-    tags=['Webhook', 'Prospec']
-    ) as dag:
-    
-    inicio = DummyOperator(
-        task_id='inicio',
-        trigger_rule="none_failed_min_one_success",
-    )
-    
-    patamares = PythonOperator(
-        task_id='inserir_patamares_decomp',
-        trigger_rule="none_failed_min_one_success",
-        python_callable=deck_prev_eolica_semanal_patamares,
-        provide_context=True,
-        retries=4,
-        retry_delay=datetime.timedelta(minutes=2),
-    )
-    
-    previsao_final = PythonOperator(
-        task_id='inserir_previsao_final_weol',
-        python_callable=deck_prev_eolica_semanal_previsao_final,
-        retries=4,
-        retry_delay=datetime.timedelta(minutes=2),
-        provide_context=True
-    )
-
-    gerar_produtos = PythonOperator(
-        task_id='enviar_tabela_comparacao_weol_whatsapp_email',
-        python_callable=gerar_produto,
-        provide_context=True
-    )
-
-
-    atualizar_decomp = PythonOperator(
-        task_id='eolica_dadger_decomp',
-        python_callable=python_trigger_dag,
-        provide_context=True,
-    )
-    inicio >> patamares
-    patamares >> previsao_final >> gerar_produtos >> atualizar_decomp
-
