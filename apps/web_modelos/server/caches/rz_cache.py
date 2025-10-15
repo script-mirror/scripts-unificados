@@ -200,19 +200,13 @@ def import_ena_visualization_api(dt_rodada, id_nova_rodada:str, id_dataviz_chuva
     elif info_rodada['fl_psat']: prioridade = 'psat'
     else: prioridade = None
 
-    modelos = ['ECMWF-AIFS','ECMWF-ENS','ECMWF-EST','ECMWF','ETA','GEFS-EST','GEFS','GFS','PCONJUNTO2','PCONJUNTO','PMEDIA']
-    modelo:str
-    for modelo_base in modelos:
-        if modelo_base in info_rodada['str_modelo'].upper():
-            modelo = modelo_base
-            break
 
     payload = {
             "dataRodada": f"{info_rodada['dt_rodada']}T00:00:00.000Z",
             "dataFinal":  None,
             "mapType": 'ena',
             "idType": f"{info_rodada['id']}",
-            "modelo": modelo,
+            "modelo": info_rodada['str_modelo'].upper(),
             "grupo": grupo,
             "rodada": str(int(info_rodada['hr_rodada'])),
             "viez": viez,
