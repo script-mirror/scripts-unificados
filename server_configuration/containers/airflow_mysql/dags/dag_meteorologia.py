@@ -517,7 +517,7 @@ with DAG(
     run_shell_script = SSHOperator(
         do_xcom_push=False,
         task_id='roda_produtos_cfsv2semanal',
-        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/cfsv2/produtos.sh'}}",
+        command="{{'sudo /WX2TB/Documentos/fontes/tempo/novos_produtos/cfsv2/produtos.sh'}}",
         dag=dag,
         ssh_conn_id='ssh_master',
         conn_timeout = TIME_OUT,
@@ -544,7 +544,7 @@ with DAG(
     run_shell_script = SSHOperator(
         do_xcom_push=False,
         task_id='roda_produtos_cfsv2mensal',
-        command="{{'/WX2TB/Documentos/fontes/tempo/novos_produtos/cfsv2-mensal/produtos.sh'}}",
+        command="{{'sudo /WX2TB/Documentos/fontes/tempo/novos_produtos/cfsv2-mensal/produtos.sh'}}",
         dag=dag,
         ssh_conn_id='ssh_master',
         conn_timeout = TIME_OUT,
