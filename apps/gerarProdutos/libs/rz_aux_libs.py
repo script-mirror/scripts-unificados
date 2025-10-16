@@ -28,6 +28,8 @@ register_matplotlib_converters()
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 __HOST_SERVER = os.getenv('HOST_SERVIDOR') 
+from middle.utils import Constants
+constants = Constants()
 
 URL_COGNITO = os.getenv('URL_COGNITO')
 CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
@@ -265,7 +267,7 @@ def geraRelatorioBbce(data = datetime.datetime.now()):
 
         dados_a_inserir = [{"str_produto": produto, "ordem":i} for i, produto in enumerate(lista_produtos)]
         
-        req.post(f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse",
+        req.post(f"{constants.BASE_URL}/api/v2/bbce/produtos-interesse",
                       json=dados_a_inserir,
                       headers={
                 'Authorization': f'Bearer {get_access_token()}'

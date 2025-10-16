@@ -26,6 +26,8 @@ sys.path.insert(2,path_produtos)
 from PMO.scripts_unificados.bibliotecas import wx_dbClass,rz_dir_tools
 from PMO.scripts_unificados.apps.web_modelos.server.libs import wx_calcEna 
 import os
+from middle.utils import Constants
+constants = Constants()
 
 PATH_LISTA_VAZOES= "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/smap/arquivos/opera-smap/smap_novo/info_vazao_obs.json"
 PATH_CACHE = os.path.join(path_fontes,"PMO","scripts_unificados","apps","web_modelos","server","caches")
@@ -129,7 +131,7 @@ def importAcomph(path):
     numeric_columns = ["vl_vaz_def_conso", "vl_vaz_inc_conso", "vl_vaz_nat_conso"]
     df_acomph_post[numeric_columns] = df_acomph_post[numeric_columns].round(2)
     df_acomph_post = df_acomph_post.replace({np.nan: None, np.inf: None, -np.inf: None})
-    res = requests.post('https://tradingenergiarz.com/api/v2/ons/acomph',
+    res = requests.post(f'{constants.BASE_URL}/api/v2/ons/acomph',
                         json=df_acomph_post.to_dict('records'),
                         headers={
                             'Content-Type': 'application/json',
@@ -218,7 +220,7 @@ def exportAcomph_toDataviz(
     try:
         
         res = requests.post(
-                'https://tradingenergiarz.com/backend/api/map',
+                f'{constants.BASE_URL}/backend/api/map',
                 json=mongo_template,
                 headers={
                     'Content-Type': 'application/json',

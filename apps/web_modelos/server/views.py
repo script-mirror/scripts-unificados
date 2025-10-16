@@ -32,6 +32,8 @@ from PMO.scripts_unificados.apps.web_modelos.server.controller.bbce_controller i
 import urllib.parse
 import json
 from middle.message import send_whatsapp_message
+from middle.utils import Constants
+constants = Constants()
 
 pathBancoProspec = os.path.abspath('/WX2TB/Documentos/fontes/PMO/scripts_unificados/arquivos/db_rodadas_prospec.db')
 
@@ -52,7 +54,7 @@ def post_event_trackin(path, query_string):
     return None
   user_id = f"{current_user.username}|{current_user.email}" if current_user.is_authenticated else None
   res = requests.post(
-    "https://tradingenergiarz.com/backend/api/events",
+    f"{constants.BASE_URL}/backend/api/events",
     json={
       "eventType": "http request",
       "systemOrigin": "/middle",
@@ -73,7 +75,7 @@ def send_message(mensagem):
     }
 
     res = requests.post(
-        "https://tradingenergiarz.com/bot-whatsapp/whatsapp-message",
+        f"{constants.BASE_URL}/bot-whatsapp/whatsapp-message",
         data=fields,
         files=None,
         headers={

@@ -9,7 +9,9 @@ import requests as r
 import sqlalchemy as db
 import mplfinance as fplt
 from dotenv import load_dotenv
+from middle.utils import Constants
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+constants = Constants()
 
 __HOST_SERVER = os.getenv('HOST_SERVIDOR') 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
@@ -116,7 +118,7 @@ def get_tabela_bbce(data:datetime.datetime):
 
 	tb_produtos = database.getSchema('tb_produtos')
 	tb_negociacoes = database.getSchema('tb_negociacoes')
-	produtos_bbce = tuple(pd.DataFrame(	r.get(f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse",
+	produtos_bbce = tuple(pd.DataFrame(	r.get(f"{constants.BASE_URL}/api/v2/bbce/produtos-interesse",
                                            headers={
                 'Authorization': f'Bearer {get_access_token()}'
             }).json())["str_produto"].to_list())
@@ -227,7 +229,7 @@ def get_tabela_bbce(data:datetime.datetime):
 	path_graficos = []
 	if data.weekday() == 4:
 		path_graficos = gerar_grafico(produtosOrdenados, df_negociacoes, produtos_bbce)
-	html = r.get(f"http://{__HOST_SERVER}:8000/api/v2/bbce/produtos-interesse/html?data={data.strftime('%Y-%m-%d')}",
+	html = r.get(f"{constants.BASE_URL}/api/v2/bbce/produtos-interesse/html?data={data.strftime('%Y-%m-%d')}",
               headers={
                 'Authorization': f'Bearer {get_access_token()}'
             }).json()["html"]
