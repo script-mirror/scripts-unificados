@@ -5,7 +5,9 @@ import datetime
 import pytz
 from typing import Optional
 from dotenv import load_dotenv
+from middle.utils import Constants
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+constants = Constants()
 
 __API_URL_AIRFLOW = os.getenv('API_URL_AIRFLOW') 
 __USER_AIRFLOW = os.getenv('USER_AIRFLOW')  
@@ -15,7 +17,7 @@ def get_airflow_auth():
     return requests.auth.HTTPBasicAuth(__USER_AIRFLOW, __PASSWORD_AIRFLOW)
 
 def auth_airflow3():
-    auth_url = f"https://tradingenergiarz.com/airflow-middle/auth/token"
+    auth_url = f"{constants.BASE_URL}/airflow-middle/auth/token"
     auth_data = {
         "username": __USER_AIRFLOW,
         "password": __PASSWORD_AIRFLOW,

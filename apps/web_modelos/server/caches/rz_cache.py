@@ -22,7 +22,8 @@ logging.basicConfig(level=logging.INFO,
                     ])
 logger = logging.getLogger(__name__)
 
-
+from middle.utils import Constants
+constants = Constants()
 
 URL_COGNITO = os.getenv('URL_COGNITO')
 CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
@@ -184,7 +185,7 @@ def import_ena_visualization_api(dt_rodada, id_nova_rodada:str, id_dataviz_chuva
 
   for id_rodada in params['rodadas']:
     print(id_rodada)
-    info_rodada = req.get(f"https://tradingenergiarz.com/api/v2/rodadas/por-id/{id_rodada}", 
+    info_rodada = req.get(f"{constants.BASE_URL}/api/v2/rodadas/por-id/{id_rodada}", 
                           headers={
                 'Authorization': f'Bearer {get_access_token()}'
             }).json()

@@ -26,6 +26,8 @@ from apps.gerarProdutos.config import (
     __PASSWORD_EMAIL_CV,
     WHATSAPP_API,
     )
+from middle.utils import Constants
+constants = Constants()
 
 diretorioApp = os.path.dirname(os.path.abspath(__file__))
 pathArquivos = os.path.join(diretorioApp,'arquivos')
@@ -250,7 +252,7 @@ def processar_produto_RELATORIO_BBCE(parametros):
     resultado.remetenteEmail = 'info_bbce@climenergy.com'
     resultado.flagEmail = True
     
-    res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros['data'].date()}&tipo_negociacao=Boleta Eletronica",
+    res = req.get(f"{constants.BASE_URL}/api/v2/bbce/produtos-interesse/html?data={parametros['data'].date()}&tipo_negociacao=Boleta Eletronica",
                   headers={
             'Authorization': f'Bearer {get_access_token()}'
             })
@@ -258,7 +260,7 @@ def processar_produto_RELATORIO_BBCE(parametros):
     msg = html[1].replace("  ", "").replace("<h3>", "").replace("</h3>", "").replace("<div>", "").replace("</div>", "")[1:][:-1]
     send_whatsapp_message('bbce',msg, api_html_to_image(html[0]))
     
-    res = req.get(f"https://tradingenergiarz.com/api/v2/bbce/produtos-interesse/html?data={parametros['data'].date()}&tipo_negociacao=Mesa",
+    res = req.get(f"{constants.BASE_URL}/api/v2/bbce/produtos-interesse/html?data={parametros['data'].date()}&tipo_negociacao=Mesa",
                   headers={
             'Authorization': f'Bearer {get_access_token()}'
             })
@@ -679,7 +681,7 @@ def processar_produto_TABELA_WEOL_MENSAL(parametros):
     resultado = Resultado(parametros)
     data:datetime.date = parametros['data']
     
-    res = req.get(f"https://tradingenergiarz.com/api/v2/decks/weol/weighted-average/month/table",
+    res = req.get(f"{constants.BASE_URL}/api/v2/decks/weol/weighted-average/month/table",
                 params={"dataProduto":str(data), "quantidadeProdutos":15},
                 headers={
                 'Authorization': f'Bearer {get_access_token()}'
@@ -699,7 +701,7 @@ def processar_produto_TABELA_WEOL_SEMANAL(parametros):
     resultado = Resultado(parametros)
     data:datetime.date = parametros['data']
     
-    res = req.get(f"https://tradingenergiarz.com/api/v2/decks/weol/weighted-average/week/table",
+    res = req.get(f"{constants.BASE_URL}/api/v2/decks/weol/weighted-average/week/table",
                   params={"dataProduto":str(data), "quantidadeProdutos":15},
                   headers={
                 'Authorization': f'Bearer {get_access_token()}'
@@ -719,7 +721,7 @@ def processar_produto_TABELA_WEOL_DIFF(parametros):
     resultado = Resultado(parametros)
     data:datetime.date = parametros['data']
     
-    res = req.get(f"https://tradingenergiarz.com/api/v2/decks/weol/diff-table",
+    res = req.get(f"{constants.BASE_URL}/api/v2/decks/weol/diff-table",
                   params={"dataProduto":str(data)},
                   headers={
                 'Authorization': f'Bearer {get_access_token()}'
