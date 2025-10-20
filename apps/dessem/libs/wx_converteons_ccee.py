@@ -174,10 +174,15 @@ def converter_entdados(dt_referente):
 
             # Existe apenas no ultimo deck do ons ou está comentado no deck da ccee
             # Ira aparecer comentado
-            if id_ in apenas_ons[mnemonico] or id_ in apenas_ons['RE']:
+            if id_ in apenas_ons[mnemonico]:
                 ultimo_entdados_ons[i_linha] = '&'+linha
                 continue
-
+            
+            if  id_ in apenas_ons['RE']:
+                ultimo_entdados_ons[i_linha] = '&'+linha
+                print(f'Restrição RE {id_} existente apenas no deck ONS')
+                print('Linha: ', ultimo_entdados_ons[i_linha])
+                
             # Converter barramento para submercado
             if mnemonico in ['CE','CI']:
                 barramento = info_linha[3][:-1]
