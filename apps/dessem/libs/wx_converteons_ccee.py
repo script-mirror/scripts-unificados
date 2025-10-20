@@ -77,7 +77,7 @@ def converter_entdados(dt_referente):
         mnemonico = info_linha[0]
         if mnemonico in mnemonicos_comentados:
             id_ = info_linha[1]
-            deck_penultimo_ons[mnemonico].add(id_)               
+            deck_penultimo_ons[mnemonico].add(id_)
 
             # de-para de barramento e submercado
             if mnemonico in ['CE','CI']:
@@ -98,23 +98,13 @@ def converter_entdados(dt_referente):
 
         if linha[0] == '&':
             restricao_tmp += linha
-            info_linha = linha.split()
-            if len(info_linha) >= 2:
-                mnemonico = info_linha[0][1:]
-                id_ = info_linha[1]
-                if mnemonico == 'RE': 
-                    for key in mnemonicos_restricoes:
-                        deck_penultimo_ccee[key].add(id_)
             continue
         info_linha = linha.split() 
         mnemonico = info_linha[0]
         if mnemonico in mnemonicos_comentados:
             id_ = info_linha[1]
             deck_penultimo_ccee[mnemonico].add(id_)
-            if mnemonico == 'RE':
-                for key in mnemonicos_restricoes:
-                    deck_penultimo_ccee[key].add(id_)
-                    
+
             restricao_tmp += linha
             
             if id_ != ultimo_id_analisado :
@@ -184,7 +174,7 @@ def converter_entdados(dt_referente):
 
             # Existe apenas no ultimo deck do ons ou está comentado no deck da ccee
             # Ira aparecer comentado
-            if id_ in apenas_ons[mnemonico]:
+            if id_ in apenas_ons[mnemonico] or id_ in apenas_ons['RE']:
                 ultimo_entdados_ons[i_linha] = '&'+linha
                 continue
 
