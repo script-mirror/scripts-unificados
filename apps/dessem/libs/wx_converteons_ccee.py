@@ -178,7 +178,7 @@ def converter_entdados(dt_referente):
                 ultimo_entdados_ons[i_linha] = '&'+linha
                 continue
             
-            if  id_ in apenas_ons['RE']:
+            if  id_ in apenas_ons['RE'] and mnemonico not in ['CE','CI']:
                 ultimo_entdados_ons[i_linha] = '&'+linha
                 print(f'Restrição RE {id_} existente apenas no deck ONS')
                 print('Linha: ', ultimo_entdados_ons[i_linha])
