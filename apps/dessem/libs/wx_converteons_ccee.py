@@ -98,6 +98,11 @@ def converter_entdados(dt_referente):
 
         if linha[0] == '&':
             restricao_tmp += linha
+            mnemonico = info_linha[0][1:]
+            id_ = info_linha[1]
+            if mnemonico == 'RE': 
+                for key in mnemonicos_restricoes:
+                    deck_penultimo_ccee[key].add(id_)
             continue
         info_linha = linha.split() 
         mnemonico = info_linha[0]
