@@ -182,7 +182,7 @@ def converter_entdados(dt_referente):
                 ultimo_entdados_ons[i_linha] = '&'+linha
                 print(f'Restrição RE {id_} existente apenas no deck ONS')
                 print('Linha: ', ultimo_entdados_ons[i_linha])
-                
+                continue
             # Converter barramento para submercado
             if mnemonico in ['CE','CI']:
                 barramento = info_linha[3][:-1]
@@ -239,7 +239,7 @@ def converter_entdados(dt_referente):
     print(f'path_saida_renovaveis {path_saida_renovaveis}')
     
     
-    arquivos_ultimo_deck_ccee = [f'cortdeco.rv{rev_ref_anterior}','dessem.arq',f'mapcut.rv{rev_ref_anterior}','restseg.dat','rstlpp.dat']
+    arquivos_ultimo_deck_ccee = [f'cortdeco.rv{rev_ref_anterior}', 'rmpflx.dat','dessem.arq',f'mapcut.rv{rev_ref_anterior}','restseg.dat','rstlpp.dat']
     
     # Arquivos copiados do ultimo deck ONS sem nenhuma alteracao
     for f in os.listdir(path_ultimo_deck_ons):
