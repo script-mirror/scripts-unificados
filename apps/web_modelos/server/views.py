@@ -120,9 +120,12 @@ def signup():
   if form.validate_on_submit():
     hashed_password = generate_password_hash(form.password.data, method='pbkdf2:sha256')
     new_user = User(username=form.username.data, email=form.email.data, password=hashed_password)
-    send_whatsapp_message("debug", f"usuario: {form.username.data}\nemail: {form.email.data}", None)
-    db_login.session.add(new_user)
-    db_login.session.commit()
+    if '@raizen.com' in form.email.data:
+      send_whatsapp_message("debug", f"usuario: {form.username.data}\nemail: {form.email.data}", None)
+      db_login.session.add(new_user)
+      db_login.session.commit()
+    else:
+       send_whatsapp_message("debug", f"Tentativa de cadastro não aceita\nusuario: {form.username.data}\nemail: {form.email.data}", None)
     return redirect(url_for('middle_app.index'))
   return render_template('signup.html', form=form )
 
