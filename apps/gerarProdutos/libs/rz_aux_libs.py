@@ -916,7 +916,7 @@ def gerarTabelasEmailAcomph(data):
     bacias += ['ITABAPOANA','MUCURI','DOCE','PARAGUAI','IGUAÇU','JACUÍ','URUGUAI','CAPIVARI','ITAJAÍ-AÇU']
     bacias += ['SÃO FRANCISCO','PARNAÍBA','PARAGUAÇU','JEQUITINHONHA','TOCANTINS','AMAZONAS','ARAGUARI','XINGU']
 
-    iMesAtual = (data-datetime.timedelta(days=1)).replace(day=1)
+    iMesAtual = (data).replace(day=1)
     fMesAnterior = iMesAtual-datetime.timedelta(days=1)
     iMesAnterior = fMesAnterior.replace(day=1)
 
@@ -945,8 +945,8 @@ def gerarTabelasEmailAcomph(data):
     enaSubmercadoFormatado = pd.DataFrame()
     diferencaSubmercadoEnaFormatado = pd.DataFrame()
     for siglaSub in submercados:
-        enaSubmercadoFormatado = enaSubmercadoFormatado.append(enaSubmercados[siglaSub])
-        diferencaSubmercadoEnaFormatado = diferencaSubmercadoEnaFormatado.append(difEnaSubmercadoDiaAnterior[siglaSub])
+        enaSubmercadoFormatado = enaSubmercadoFormatado._append(enaSubmercados[siglaSub])
+        diferencaSubmercadoEnaFormatado = diferencaSubmercadoEnaFormatado._append(difEnaSubmercadoDiaAnterior[siglaSub])
 
 
     # Bacias
@@ -999,8 +999,8 @@ def gerarTabelasEmailAcomph(data):
         enaBac.name = bac
         difEnaBac.name = bac
 
-        enaBaciasFormatado = enaBaciasFormatado.append(enaBac)
-        diferencaBaciasEnaFormatado = diferencaBaciasEnaFormatado.append(difEnaBac)
+        enaBaciasFormatado = enaBaciasFormatado._append(enaBac)
+        diferencaBaciasEnaFormatado = diferencaBaciasEnaFormatado._append(difEnaBac)
 
     mlt = wx_dbLib.getMlt()
     df_mlt = pd.DataFrame(mlt, columns=['SUBMERCADO', 'MES', 'MLT'])
