@@ -159,152 +159,152 @@ def atualizar_patamar_ano_atual(pathZip, dataReferente):
 
 
 
-def importar_rev_consistido(pathZip):
-    """ Importa para o banco os valores de previsao de REV
-    :param path: Path da planilha
-    :return None: 
-    """
-    try:
-        db_ons = wx_dbClass.db_mysql_master('db_ons')
+# def importar_rev_consistido(pathZip):
+#     """ Importa para o banco os valores de previsao de REV
+#     :param path: Path da planilha
+#     :return None: 
+#     """
+#     try:
+#         db_ons = wx_dbClass.db_mysql_master('db_ons')
 
-        db_ons.connect()
+#         db_ons.connect()
         
-        tb_ve_bacias = db_ons.getSchema('tb_ve_bacias')
-        tb_ve = db_ons.getSchema('tb_ve')
+#         tb_ve_bacias = db_ons.getSchema('tb_ve_bacias')
+#         tb_ve = db_ons.getSchema('tb_ve')
 
-        tb_submercado = db_ons.getSchema('tb_submercado')
-        tb_bacias_segmentadas = db_ons.getSchema('tb_bacias_segmentadas')
-        real_path = DIR_TOOLS.get_name_insentive_name(pathZip)
+#         tb_submercado = db_ons.getSchema('tb_submercado')
+#         tb_bacias_segmentadas = db_ons.getSchema('tb_bacias_segmentadas')
+#         real_path = DIR_TOOLS.get_name_insentive_name(pathZip)
         
-        DIR_TOOLS.extract(zipFile=real_path,path= PATH_DB_UPDATER_TMP)
-        file_name = os.path.join(PATH_DB_UPDATER_TMP, 'Consistido','Relatório*-preliminar.xls')
+#         DIR_TOOLS.extract(zipFile=real_path,path= PATH_DB_UPDATER_TMP)
+#         file_name = os.path.join(PATH_DB_UPDATER_TMP, 'Consistido','Relatório*-preliminar.xls')
 
-        file_name_match = glob.glob(file_name, recursive=True)
-        if not file_name_match:
-            raise f"Arquivo não encontrado com padrao {file_name}"
+#         file_name_match = glob.glob(file_name, recursive=True)
+#         if not file_name_match:
+#             raise f"Arquivo não encontrado com padrao {file_name}"
 
-        print('Inserindo valores da tabela:\n{}'.format(file_name_match[0]))
-        df_excel = pd.ExcelFile(file_name_match[0])
-        abas = df_excel.sheet_names
+#         print('Inserindo valores da tabela:\n{}'.format(file_name_match[0]))
+#         df_excel = pd.ExcelFile(file_name_match[0])
+#         abas = df_excel.sheet_names
 
-        submercados = ['SUDESTE', 'SUL', 'NORDESTE', 'NORTE']
+#         submercados = ['SUDESTE', 'SUL', 'NORDESTE', 'NORTE']
 
-        if abas[0] == 'Capa':
-            aba_data = 'Capa'
-            aba_NE = 'Tab-12'
-            aba_S_NE_N = 'Tab-13-14-15'
-            linha_data = 4
-        else:
-            aba_data = 'REV-1'
-            aba_NE = 'REV-5'
-            aba_S_NE_N = 'REV-6'
-            linha_data = 5
+#         if abas[0] == 'Capa':
+#             aba_data = 'Capa'
+#             aba_NE = 'Tab-12'
+#             aba_S_NE_N = 'Tab-13-14-15'
+#             linha_data = 4
+#         else:
+#             aba_data = 'REV-1'
+#             aba_NE = 'REV-5'
+#             aba_S_NE_N = 'REV-6'
+#             linha_data = 5
 
-        df_dt = df_excel.parse(aba_data, header=None)
-        dt = df_dt[~df_dt[0].isna()].values.tolist()[-2][0]
-        while dt.weekday() != 5:
-            dt = dt + datetime.timedelta(days=1)
+#         df_dt = df_excel.parse(aba_data, header=None)
+#         dt = df_dt[~df_dt[0].isna()].values.tolist()[-2][0]
+#         while dt.weekday() != 5:
+#             dt = dt + datetime.timedelta(days=1)
         
-        dadosRev = wx_opweek.ElecData(dt.date())
+#         dadosRev = wx_opweek.ElecData(dt.date())
 
-        print('{} (REV{})'.format(dadosRev.data.strftime('%m/%Y'), dadosRev.atualRevisao))
+#         print('{} (REV{})'.format(dadosRev.data.strftime('%m/%Y'), dadosRev.atualRevisao))
 
-        df_SE = df_excel.parse(aba_NE, header=None)
-        df_S_NE_N = df_excel.parse(aba_S_NE_N, header=None)
+#         df_SE = df_excel.parse(aba_NE, header=None)
+#         df_S_NE_N = df_excel.parse(aba_S_NE_N, header=None)
 
-        df_SE[0] = df_SE[0].str.upper()
-        df_S_NE_N[0] = df_S_NE_N[0].str.upper()
+#         df_SE[0] = df_SE[0].str.upper()
+#         df_S_NE_N[0] = df_S_NE_N[0].str.upper()
 
-        bacias_NE = df_SE[0].unique().tolist()
-        bacias_S_NE_N = df_S_NE_N[0].unique().tolist()
+#         bacias_NE = df_SE[0].unique().tolist()
+#         bacias_S_NE_N = df_S_NE_N[0].unique().tolist()
 
-        baciasPercent = [bacia for bacia in bacias_NE if isinstance(bacia, str) and bacia[-1] == '%']
-        baciasPercent += [bacia for bacia in bacias_S_NE_N if isinstance(bacia, str) and bacia[-1] == '%']
+#         baciasPercent = [bacia for bacia in bacias_NE if isinstance(bacia, str) and bacia[-1] == '%']
+#         baciasPercent += [bacia for bacia in bacias_S_NE_N if isinstance(bacia, str) and bacia[-1] == '%']
 
-        for sub in submercados:
-            baciasPercent.remove('{} %'.format(sub))
+#         for sub in submercados:
+#             baciasPercent.remove('{} %'.format(sub))
 
-        bacias = [bacia[:-2] for bacia in baciasPercent]
+#         bacias = [bacia[:-2] for bacia in baciasPercent]
 
-        df_enaSubmercado = df_SE[df_SE[0].isin(submercados)].copy()
-        df_enaSubmercado = pd.concat([df_enaSubmercado,df_S_NE_N[df_S_NE_N[0].isin(submercados)].copy()])
+#         df_enaSubmercado = df_SE[df_SE[0].isin(submercados)].copy()
+#         df_enaSubmercado = pd.concat([df_enaSubmercado,df_S_NE_N[df_S_NE_N[0].isin(submercados)].copy()])
         
-        df_enaBacia = df_SE[df_SE[0].isin(bacias)].copy()
-        df_enaBacia = pd.concat([df_enaBacia,df_S_NE_N[df_S_NE_N[0].isin(bacias)].copy()])
+#         df_enaBacia = df_SE[df_SE[0].isin(bacias)].copy()
+#         df_enaBacia = pd.concat([df_enaBacia,df_S_NE_N[df_S_NE_N[0].isin(bacias)].copy()])
 
-        df_enaBaciaPercent = df_SE[df_SE[0].isin(baciasPercent)].copy()
-        df_enaBaciaPercent = pd.concat([df_enaBaciaPercent,df_S_NE_N[df_S_NE_N[0].isin(baciasPercent)].copy()])
+#         df_enaBaciaPercent = df_SE[df_SE[0].isin(baciasPercent)].copy()
+#         df_enaBaciaPercent = pd.concat([df_enaBaciaPercent,df_S_NE_N[df_S_NE_N[0].isin(baciasPercent)].copy()])
 
-        df_enaBaciaPercent[0] = df_enaBaciaPercent[0].str[:-2]
+#         df_enaBaciaPercent[0] = df_enaBaciaPercent[0].str[:-2]
 
-        dataFormat = "%Y-%m-%d"
+#         dataFormat = "%Y-%m-%d"
 
-        query_submercado = tb_submercado.select()
-        answer_tb_submercado = db_ons.conn.execute(query_submercado).fetchall()
+#         query_submercado = tb_submercado.select()
+#         answer_tb_submercado = db_ons.conn.execute(query_submercado).fetchall()
 
-        codSubmercados = {}
-        for row in answer_tb_submercado:
-            codSubmercados[row[1]] = row[0]
+#         codSubmercados = {}
+#         for row in answer_tb_submercado:
+#             codSubmercados[row[1]] = row[0]
 
-        df_enaSubmercado[0] = df_enaSubmercado[0].replace(codSubmercados)
+#         df_enaSubmercado[0] = df_enaSubmercado[0].replace(codSubmercados)
 
-        select_tb_bacias_segmentadas = tb_bacias_segmentadas.select()
-        answer_tb_bacias_segmentadas = db_ons.conn.execute(select_tb_bacias_segmentadas).fetchall()
+#         select_tb_bacias_segmentadas = tb_bacias_segmentadas.select()
+#         answer_tb_bacias_segmentadas = db_ons.conn.execute(select_tb_bacias_segmentadas).fetchall()
 
-        bacias = {}
-        for row in answer_tb_bacias_segmentadas:
-            bacias[row[1]] = row[0]
-        bacias['PARANAPANEMA (SE)'] = bacias['PARANAPANEMA']
+#         bacias = {}
+#         for row in answer_tb_bacias_segmentadas:
+#             bacias[row[1]] = row[0]
+#         bacias['PARANAPANEMA (SE)'] = bacias['PARANAPANEMA']
 
-        df_enaBacia[0] = df_enaBacia[0].replace(bacias)
-        df_enaBaciaPercent[0] = df_enaBaciaPercent[0].replace(bacias)
+#         df_enaBacia[0] = df_enaBacia[0].replace(bacias)
+#         df_enaBaciaPercent[0] = df_enaBaciaPercent[0].replace(bacias)
 
-        numSemanas = 6
-        colunaInicial = 3
+#         numSemanas = 6
+#         colunaInicial = 3
 
 
-        #TB_VE
-        sql_delete_tb_ve = tb_ve.delete()\
-                    .where(db.and_(tb_ve.c.vl_ano == dadosRev.anoReferente,tb_ve.c.vl_mes == dadosRev.mesReferente,tb_ve.c.cd_revisao == dadosRev.atualRevisao))
-        execute_delete_tb_ve = db_ons.conn.execute(sql_delete_tb_ve)
-        num_linhas_deletadas = execute_delete_tb_ve.rowcount
-        print(f"{num_linhas_deletadas} Linhas deletadas na tabela tb_ve")
+#         #TB_VE
+#         sql_delete_tb_ve = tb_ve.delete()\
+#                     .where(db.and_(tb_ve.c.vl_ano == dadosRev.anoReferente,tb_ve.c.vl_mes == dadosRev.mesReferente,tb_ve.c.cd_revisao == dadosRev.atualRevisao))
+#         execute_delete_tb_ve = db_ons.conn.execute(sql_delete_tb_ve)
+#         num_linhas_deletadas = execute_delete_tb_ve.rowcount
+#         print(f"{num_linhas_deletadas} Linhas deletadas na tabela tb_ve")
 
-        valores = []
-        for index, row in df_enaSubmercado.iterrows():
-            for sem in range(0, numSemanas):
-                dt = dadosRev.primeiroDiaMes + datetime.timedelta(days=sem*7)
-                valores.append((dadosRev.anoReferente, dadosRev.mesReferente, dadosRev.atualRevisao, row[0], dt.strftime(dataFormat), round(row[sem+colunaInicial])))
+#         valores = []
+#         for index, row in df_enaSubmercado.iterrows():
+#             for sem in range(0, numSemanas):
+#                 dt = dadosRev.primeiroDiaMes + datetime.timedelta(days=sem*7)
+#                 valores.append((dadosRev.anoReferente, dadosRev.mesReferente, dadosRev.atualRevisao, row[0], dt.strftime(dataFormat), round(row[sem+colunaInicial])))
 
-        sql_insert_tb_ve = tb_ve.insert(valores)
-        execute_insert_tb_ve = db_ons.conn.execute(sql_insert_tb_ve)
-        num_linhas_inseridas = execute_insert_tb_ve.rowcount
-        print(f"{num_linhas_inseridas} Linhas inseridas na tabela tb_ve")
+#         sql_insert_tb_ve = tb_ve.insert(valores)
+#         execute_insert_tb_ve = db_ons.conn.execute(sql_insert_tb_ve)
+#         num_linhas_inseridas = execute_insert_tb_ve.rowcount
+#         print(f"{num_linhas_inseridas} Linhas inseridas na tabela tb_ve")
         
-        #TB_VE_BACIAS
-        sql_delete_tb_ve_bacias = tb_ve_bacias.delete()\
-                    .where(db.and_(tb_ve_bacias.c.vl_ano == dadosRev.anoReferente,tb_ve_bacias.c.vl_mes == dadosRev.mesReferente,tb_ve_bacias.c.cd_revisao == dadosRev.atualRevisao))
-        execute_delete_tb_ve_bacias = db_ons.conn.execute(sql_delete_tb_ve_bacias)
-        num_linhas_deletadas = execute_delete_tb_ve_bacias.rowcount
-        print(f"{num_linhas_deletadas} Linhas deletadas na tabela tb_ve_bacias")
+#         #TB_VE_BACIAS
+#         sql_delete_tb_ve_bacias = tb_ve_bacias.delete()\
+#                     .where(db.and_(tb_ve_bacias.c.vl_ano == dadosRev.anoReferente,tb_ve_bacias.c.vl_mes == dadosRev.mesReferente,tb_ve_bacias.c.cd_revisao == dadosRev.atualRevisao))
+#         execute_delete_tb_ve_bacias = db_ons.conn.execute(sql_delete_tb_ve_bacias)
+#         num_linhas_deletadas = execute_delete_tb_ve_bacias.rowcount
+#         print(f"{num_linhas_deletadas} Linhas deletadas na tabela tb_ve_bacias")
 
-        valores = []
-        for index, row in df_enaBacia.iterrows():
-            for sem in range(0, numSemanas):
-                dt = dadosRev.primeiroDiaMes + datetime.timedelta(days=sem*7)
-                valorNumerico = round(row[sem+colunaInicial])
-                valorPercent = round(df_enaBaciaPercent[df_enaBaciaPercent[0] == row[0]][sem+colunaInicial].item(),2)
-                valores.append((dadosRev.anoReferente, dadosRev.mesReferente, dadosRev.atualRevisao, row[0], dt.strftime(dataFormat), valorNumerico, valorPercent))
+#         valores = []
+#         for index, row in df_enaBacia.iterrows():
+#             for sem in range(0, numSemanas):
+#                 dt = dadosRev.primeiroDiaMes + datetime.timedelta(days=sem*7)
+#                 valorNumerico = round(row[sem+colunaInicial])
+#                 valorPercent = round(df_enaBaciaPercent[df_enaBaciaPercent[0] == row[0]][sem+colunaInicial].item(),2)
+#                 valores.append((dadosRev.anoReferente, dadosRev.mesReferente, dadosRev.atualRevisao, row[0], dt.strftime(dataFormat), valorNumerico, valorPercent))
         
-        sql_insert_tb_ve_bacias = tb_ve_bacias.insert(valores)
-        execute_insert_tb_ve_bacias = db_ons.conn.execute(sql_insert_tb_ve_bacias)
-        num_linhas_inseridas = execute_insert_tb_ve_bacias.rowcount
-        print(f"{num_linhas_inseridas} Linhas inseridas na tabela tb_ve_bacias")
-    except Exception as e:
-        print(e)
+#         sql_insert_tb_ve_bacias = tb_ve_bacias.insert(valores)
+#         execute_insert_tb_ve_bacias = db_ons.conn.execute(sql_insert_tb_ve_bacias)
+#         num_linhas_inseridas = execute_insert_tb_ve_bacias.rowcount
+#         print(f"{num_linhas_inseridas} Linhas inseridas na tabela tb_ve_bacias")
+#     except Exception as e:
+#         print(e)
 
-    df_excel.close()
-    DIR_TOOLS.remove_src(PATH_DB_UPDATER_TMP)
+#     df_excel.close()
+#     DIR_TOOLS.remove_src(PATH_DB_UPDATER_TMP)
 
 
 # def importar_prev_ena_consistido(path, dtPrevisao):

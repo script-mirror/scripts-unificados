@@ -118,26 +118,26 @@ def processar_produto_PRECIPTACAO_MODELO(parametros):
     return resultado
 
 
-def processar_produto_IPDO(parametros):
-    resultado = Resultado(parametros)
-    dtReferente = parametros["data"]
-    resultado.file = [parametros.get("path")]
+# def processar_produto_IPDO(parametros):
+#     resultado = Resultado(parametros)
+#     dtReferente = parametros["data"]
+#     resultado.file = [parametros.get("path")]
 
-    if not parametros.get("path"):
-        path_file = os.path.join(PATH_WEBHOOK_TMP,"IPDO (Informativo Preliminar Diário da Operação)","IPDO-{}.pdf".format(dtReferente.strftime('%d-%m-%Y')))
-        resultado.file = [path_file]
+#     if not parametros.get("path"):
+#         path_file = os.path.join(PATH_WEBHOOK_TMP,"IPDO (Informativo Preliminar Diário da Operação)","IPDO-{}.pdf".format(dtReferente.strftime('%d-%m-%Y')))
+#         resultado.file = [path_file]
         
-    # resultado.file = ["{}/IPDO-{}.pdf".format(PATH_PLAN_ACOMPH, dtReferente.strftime('%d-%m-%Y'))]
-    resultado.remetenteEmail = 'ipdo@climenergy.com'
-    resultado.assuntoEmail = '[IPDO] Atualização do dia {}'.format(dtReferente.strftime('%d/%m/%Y'))
+#     # resultado.file = ["{}/IPDO-{}.pdf".format(PATH_PLAN_ACOMPH, dtReferente.strftime('%d-%m-%Y'))]
+#     resultado.remetenteEmail = 'ipdo@climenergy.com'
+#     resultado.assuntoEmail = '[IPDO] Atualização do dia {}'.format(dtReferente.strftime('%d/%m/%Y'))
     
-    resultado.fileWhats = os.path.join(os.path.dirname(parametros["path"]), 'IPDO_{}.jpeg'.format(dtReferente.strftime('%Y%m%d')))
-    rz_aux_libs.pdfToJpeg(resultado.file[0], 2, resultado.fileWhats)
+#     resultado.fileWhats = os.path.join(os.path.dirname(parametros["path"]), 'IPDO_{}.jpeg'.format(dtReferente.strftime('%Y%m%d')))
+#     rz_aux_libs.pdfToJpeg(resultado.file[0], 2, resultado.fileWhats)
     
-    resultado.flagWhats = True
-    resultado.flagEmail = True
+#     resultado.flagWhats = True
+#     resultado.flagEmail = True
 
-    return resultado
+#     return resultado
 
 
 def processar_produto_ACOMPH(parametros):
@@ -563,83 +563,83 @@ def processar_produto_REVISAO_CARGA_NW_preliminar(parametros):
 
 
 
-def processar_produto_REVISAO_CARGA_NW(parametros):
-    resultado = Resultado(parametros)
+# def processar_produto_REVISAO_CARGA_NW(parametros):
+#     resultado = Resultado(parametros)
     
-    path = parametros['path']
-    zip_name = os.path.basename(path)
-    dir_nomeMesAtual = datetime.datetime.strptime(zip_name, "RV0_PMO_%B_%Y_carga_mensal.zip").strftime('%B_%Y').capitalize()
-    dataAnoMesAtual = pd.to_datetime(dir_nomeMesAtual, format="%B_%Y")
-    nomeMesAtual = dataAnoMesAtual.strftime("%b%Y").capitalize()
+#     path = parametros['path']
+#     zip_name = os.path.basename(path)
+#     dir_nomeMesAtual = datetime.datetime.strptime(zip_name, "RV0_PMO_%B_%Y_carga_mensal.zip").strftime('%B_%Y').capitalize()
+#     dataAnoMesAtual = pd.to_datetime(dir_nomeMesAtual, format="%B_%Y")
+#     nomeMesAtual = dataAnoMesAtual.strftime("%b%Y").capitalize()
 
-    archive = zipfile.ZipFile(path, 'r')
-    xlfile = archive.open(archive.filelist[0].filename)
-    columns_to_skip = ['WEEK', 'GAUGE', 'REVISION', 'Base_CGH', 'Base_EOL', 'Base_UFV', 'Base_UTE', 'Base_MMGD', 'LOAD_cMMGD']
+#     archive = zipfile.ZipFile(path, 'r')
+#     xlfile = archive.open(archive.filelist[0].filename)
+#     columns_to_skip = ['WEEK', 'GAUGE', 'REVISION', 'Base_CGH', 'Base_EOL', 'Base_UFV', 'Base_UTE', 'Base_MMGD', 'LOAD_cMMGD']
 
-    try:
-        pmo_mes = pd.read_excel(xlfile, usecols=lambda x: x not in columns_to_skip, sheet_name=1)
-    except:
-        pmo_mes = pd.read_excel(xlfile, usecols=lambda x: x not in columns_to_skip)
+#     try:
+#         pmo_mes = pd.read_excel(xlfile, usecols=lambda x: x not in columns_to_skip, sheet_name=1)
+#     except:
+#         pmo_mes = pd.read_excel(xlfile, usecols=lambda x: x not in columns_to_skip)
 
-    datas_list = pmo_mes[pmo_mes.DATE >= dataAnoMesAtual].DATE.unique()[:2]
+#     datas_list = pmo_mes[pmo_mes.DATE >= dataAnoMesAtual].DATE.unique()[:2]
 
-    html_completo_sMMGD = ""
-    html_completo_cMMGD = ""
-    title = ['', 'DIFF', '%']
-    submarket = ['SE', 'S', 'NE', 'N', 'SIN']
+#     html_completo_sMMGD = ""
+#     html_completo_cMMGD = ""
+#     title = ['', 'DIFF', '%']
+#     submarket = ['SE', 'S', 'NE', 'N', 'SIN']
     
-    resultado.msgWhats = "```\n\n"
+#     resultado.msgWhats = "```\n\n"
 
-    resposta_cAdic_NW,resposta_Sistema_NW,arquivo_deckUtilizado = rz_cargaPatamar.gerador_arquivos_cAdic_Sistema_DAT(PATH_WEBHOOK_TMP,dataAnoMesAtual)
-    resultado.file = [resposta_cAdic_NW, resposta_Sistema_NW]
+#     resposta_cAdic_NW,resposta_Sistema_NW,arquivo_deckUtilizado = rz_cargaPatamar.gerador_arquivos_cAdic_Sistema_DAT(PATH_WEBHOOK_TMP,dataAnoMesAtual)
+#     resultado.file = [resposta_cAdic_NW, resposta_Sistema_NW]
     
-    for data in datas_list:
-        html_completo_sMMGD += rz_cargaPatamar.gera_tb_pmo_nw(path, data)[0]
-        html_completo_cMMGD += rz_cargaPatamar.gera_tb_pmo_nw(path, data)[2]
-        lista_sMMGD = rz_cargaPatamar.gera_tb_pmo_nw(path, data)[1][['DIFF', 'PORCENTAGEM']].values.tolist()
-        lista_cMMGD = rz_cargaPatamar.gera_tb_pmo_nw(path, data)[3][['DIFF', 'PORCENTAGEM']].values.tolist()
+#     for data in datas_list:
+#         html_completo_sMMGD += rz_cargaPatamar.gera_tb_pmo_nw(path, data)[0]
+#         html_completo_cMMGD += rz_cargaPatamar.gera_tb_pmo_nw(path, data)[2]
+#         lista_sMMGD = rz_cargaPatamar.gera_tb_pmo_nw(path, data)[1][['DIFF', 'PORCENTAGEM']].values.tolist()
+#         lista_cMMGD = rz_cargaPatamar.gera_tb_pmo_nw(path, data)[3][['DIFF', 'PORCENTAGEM']].values.tolist()
 
-        cmo_cMMGD = [title]
-        cmo_sMMGD = [title]
+#         cmo_cMMGD = [title]
+#         cmo_sMMGD = [title]
 
-        for i, values in enumerate(lista_sMMGD):
-            cmo_sMMGD.append([submarket[i]] + values)
+#         for i, values in enumerate(lista_sMMGD):
+#             cmo_sMMGD.append([submarket[i]] + values)
 
-        for i, values in enumerate(lista_cMMGD):
-            cmo_cMMGD.append([submarket[i]] + values)
+#         for i, values in enumerate(lista_cMMGD):
+#             cmo_cMMGD.append([submarket[i]] + values)
 
-        table_sMMGD = cmo_sMMGD[0], cmo_sMMGD[1], cmo_sMMGD[2], cmo_sMMGD[3], cmo_sMMGD[4], cmo_sMMGD[5]
-        table_sMMGD = tabulate.tabulate(table_sMMGD, tablefmt="pretty")
+#         table_sMMGD = cmo_sMMGD[0], cmo_sMMGD[1], cmo_sMMGD[2], cmo_sMMGD[3], cmo_sMMGD[4], cmo_sMMGD[5]
+#         table_sMMGD = tabulate.tabulate(table_sMMGD, tablefmt="pretty")
 
-        table_cMMGD = cmo_cMMGD[0], cmo_cMMGD[1], cmo_cMMGD[2], cmo_cMMGD[3], cmo_cMMGD[4], cmo_cMMGD[5]
-        table_cMMGD = tabulate.tabulate(table_cMMGD, tablefmt="pretty")
+#         table_cMMGD = cmo_cMMGD[0], cmo_cMMGD[1], cmo_cMMGD[2], cmo_cMMGD[3], cmo_cMMGD[4], cmo_cMMGD[5]
+#         table_cMMGD = tabulate.tabulate(table_cMMGD, tablefmt="pretty")
 
-        resultado.msgWhats += f'\n{pd.to_datetime(data).strftime("%b%Y").capitalize()} - carga sem MMGD\n'
-        resultado.msgWhats += table_sMMGD
+#         resultado.msgWhats += f'\n{pd.to_datetime(data).strftime("%b%Y").capitalize()} - carga sem MMGD\n'
+#         resultado.msgWhats += table_sMMGD
 
-        resultado.msgWhats += f'\n{pd.to_datetime(data).strftime("%b%Y").capitalize()} - carga com MMGD\n'
-        resultado.msgWhats += table_cMMGD
+#         resultado.msgWhats += f'\n{pd.to_datetime(data).strftime("%b%Y").capitalize()} - carga com MMGD\n'
+#         resultado.msgWhats += table_cMMGD
 
-    resultado.msgWhats += "```"
-    resultado.flagEmail = True
+#     resultado.msgWhats += "```"
+#     resultado.flagEmail = True
     
-    # fazendo o split pois cada html vem com mes atual e antigo e queremos separar cada mes em sua string
-    html_completo_sMMGD_split = html_completo_sMMGD.split('<style type')
-    html_completo_sMMGD_parte1 = '<style type' + html_completo_sMMGD_split[1]
-    html_completo_sMMGD_parte2 = '<style type' + html_completo_sMMGD_split[2]
+#     # fazendo o split pois cada html vem com mes atual e antigo e queremos separar cada mes em sua string
+#     html_completo_sMMGD_split = html_completo_sMMGD.split('<style type')
+#     html_completo_sMMGD_parte1 = '<style type' + html_completo_sMMGD_split[1]
+#     html_completo_sMMGD_parte2 = '<style type' + html_completo_sMMGD_split[2]
 
-    html_completo_cMMGD_split = html_completo_cMMGD.split('<style type')
-    html_completo_cMMGD_parte1 = '<style type' + html_completo_cMMGD_split[1]
-    html_completo_cMMGD_parte2 = '<style type' + html_completo_cMMGD_split[2]
+#     html_completo_cMMGD_split = html_completo_cMMGD.split('<style type')
+#     html_completo_cMMGD_parte1 = '<style type' + html_completo_cMMGD_split[1]
+#     html_completo_cMMGD_parte2 = '<style type' + html_completo_cMMGD_split[2]
     
-    resultado.assuntoEmail = f'Revisão carga PMO-NW-{nomeMesAtual}'
-    resultado.corpoEmail = arquivo_deckUtilizado + html_completo_sMMGD_parte1 + html_completo_cMMGD_parte1 + html_completo_sMMGD_parte2 + html_completo_cMMGD_parte2
-    resultado.remetenteEmail = 'rev_carga@climenergy.com'
+#     resultado.assuntoEmail = f'Revisão carga PMO-NW-{nomeMesAtual}'
+#     resultado.corpoEmail = arquivo_deckUtilizado + html_completo_sMMGD_parte1 + html_completo_cMMGD_parte1 + html_completo_sMMGD_parte2 + html_completo_cMMGD_parte2
+#     resultado.remetenteEmail = 'rev_carga@climenergy.com'
     
-    resultado.flagWhats = True
-    resultado.destinatarioWhats = 'PMO'
+#     resultado.flagWhats = True
+#     resultado.destinatarioWhats = 'PMO'
     
-    return resultado
+#     return resultado
 
 
 

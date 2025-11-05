@@ -17,7 +17,7 @@ PRODUCTS_MAPPING = {
 
         'SST': "processar_produto_SST",
         'PRECIPTACAO_MODELO': "processar_produto_PRECIPTACAO_MODELO",
-        'IPDO': "processar_produto_IPDO",
+        # 'IPDO': "processar_produto_IPDO",
         'ACOMPH': "processar_produto_ACOMPH",
         'ACOMPH_TABELA': "processar_produto_ACOMPH_tabelas_whatsapp",
         'RDH': "processar_produto_RDH",
@@ -34,7 +34,7 @@ PRODUCTS_MAPPING = {
         'REVISAO_CARGA': "processar_produto_REVISAO_CARGA",
         'CMO_DC_PRELIMINAR': "processar_produto_CMO_DC_PRELIMINAR",
         'GERA_DIFCHUVA': "processar_produto_GERA_DIFCHUVA",
-        'REVISAO_CARGA_NW': "processar_produto_REVISAO_CARGA_NW",
+        # 'REVISAO_CARGA_NW': "processar_produto_REVISAO_CARGA_NW",
         'PSATH_DIFF': "processar_produto_PSATH_DIFF",
         'SITUACAO_RESERVATORIOS': "processar_produto_SITUACAO_RESERVATORIOS",
         'REVISAO_CARGA_NW_PRELIMINAR': "processar_produto_REVISAO_CARGA_NW_preliminar",
@@ -42,6 +42,6 @@ PRODUCTS_MAPPING = {
         'TABELA_WEOL_SEMANAL': "processar_produto_TABELA_WEOL_SEMANAL",
         'TABELA_WEOL_DIFF': "processar_produto_TABELA_WEOL_DIFF",
         # 'PREV_ENA_CONSISTIDO':"processar_produto_prev_ena_consistido",
-        'NOTAS_TECNICAS': 'processar_produto_NOTAS_TECNICAS',
+        # 'NOTAS_TECNICAS': 'processar_produto_NOTAS_TECNICAS',
         'FSARH':'processar_produto_FSARH',
     } 
