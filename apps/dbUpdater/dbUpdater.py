@@ -6,7 +6,7 @@ import datetime
 
 sys.path.insert(1,os.path.join("/WX2TB/Documentos/fontes"))
 from PMO.scripts_unificados.bibliotecas import wx_opweek,rz_dir_tools
-from PMO.scripts_unificados.apps.dbUpdater.libs import rodadas,chuva,carga_ons,revisao,geracao,temperatura,deck_nw,deck_ds,deck_dc,bbce,vazao
+from PMO.scripts_unificados.apps.dbUpdater.libs import rodadas,chuva,carga_ons,temperatura,deck_ds,bbce,vazao
 
 
 DIR_TOOLS = rz_dir_tools.DirTools()
@@ -183,10 +183,6 @@ if __name__ == '__main__':
         
         elif sys.argv[1].lower() == 'importar_prev_carga_dessem_saida':
             carga_ons.importar_prev_carga_dessem_saida(path_zip = p_path)
-        
-        elif sys.argv[1].lower() == 'importar_carga_ipdo':
-            carga_ons.importar_carga_ipdo(path_zip = p_path, dtRef=p_dataRodada)
-
 
         #CHUVA
         elif sys.argv[1].lower() == 'importar_chuva_observada':
@@ -198,20 +194,7 @@ if __name__ == '__main__':
         elif sys.argv[1].lower() == 'importar_chuva_psath':
             chuva.importar_chuva_psath(path_psath = p_path)
 
-        
-        #REVISAO
-        elif sys.argv[1].lower() == 'atualizar_patamar_ano_atual':
-            revisao.atualizar_patamar_ano_atual(pathZip = p_path, dataReferente = p_dataRodada)
 
-        elif sys.argv[1].lower() == 'importar_rev_consistido':
-            revisao.importar_rev_consistido(pathZip = p_path)
-
-
-        #GERACAO - EOLICA WEOL
-        elif sys.argv[1].lower() == 'importar_eolica_files':
-            geracao.importar_eolica_files(path_zip = p_path)
-
-    
         #TEMPERATURA
         elif sys.argv[1].lower() == 'importar_temperatura_prev_dessem':
             temperatura.importar_temperatura_prev_dessem(path_zip = p_path)
@@ -233,13 +216,6 @@ if __name__ == '__main__':
             bbce.importar_operacoes_bbce(data = p_dataRodada)
 
 
-        #DECK NW
-        elif sys.argv[1].lower() == 'importar_deck_values_nw':
-            deck_nw.importar_deck_values_nw(path_zip = p_path)
-        
-        elif sys.argv[1].lower() == 'importar_carga_nw':
-            deck_nw.importar_carga_nw(pathZip = p_path, dataReferente = p_dataRodada, str_fonte = p_idFonte)
-
         
         #DECK DESSEM
 
@@ -252,13 +228,6 @@ if __name__ == '__main__':
         elif sys.argv[1].lower() == 'importar_ds_bloco_dp':
             deck_ds.importar_ds_bloco_dp(path_zip=p_path,dt_ref=p_dataRodada, str_fonte = p_strFonte)
 
-
-        #DECK DECOMP
-        elif sys.argv[1].lower() == 'importar_dc_bloco_pq':
-            deck_dc.importar_dc_bloco_pq(path_zip=p_path, str_fonte = p_strFonte)
-
-        elif sys.argv[1].lower() == 'importar_dc_bloco_dp':
-            deck_dc.importar_pdo_cmosist_ds(path_zip=p_path, str_fonte = p_strFonte)
 
 
 

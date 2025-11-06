@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 sys.path.insert(1,"/WX2TB/Documentos/fontes")
 from PMO.scripts_unificados.apps.rodadas import rz_rodadasModelos
 from PMO.scripts_unificados.apps.web_modelos.server.server import cache
-from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_ena, rz_chuva,rz_dbLib,db_decks,db_meteorologia,db_ons
+from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_ena, rz_chuva,rz_dbLib
 
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 

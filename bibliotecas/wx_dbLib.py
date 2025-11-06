@@ -14,7 +14,6 @@ sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.bibliotecas import wx_dbClass,wx_opweek
 from PMO.scripts_unificados.apps.web_modelos.server.caches import rz_cache
 from middle.utils import setup_logger
-from middle.message import send_whatsapp_message
 
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))

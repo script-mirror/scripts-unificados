@@ -7,8 +7,7 @@ import datetime
 from airflow.models.dag import DAG
 from airflow.operators.dummy_operator import DummyOperator
 
-from airflow.operators.python import BranchPythonOperator, PythonOperator
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.operators.python import BranchPythonOperator
 from airflow.exceptions import AirflowException
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
@@ -16,11 +15,10 @@ load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
 PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
 sys.path.insert(1,f"{PATH_PROJETO}/scripts_unificados")
 from apps.dessem.libs import wx_mainBalancoDS
-from apps.dbUpdater.libs import deck_nw,deck_ds
+from apps.dbUpdater.libs import deck_ds
 from apps.verificadores.ccee import rz_download_decks_ccee
 from apps.gerarProdutos import gerarProdutos2 
 from bibliotecas import wx_opweek, rz_dir_tools
-from middle.utils import get_auth_header
 from middle.message import send_whatsapp_message
 
 def enviar_whatsapp_erro(context):
@@ -133,23 +131,7 @@ def download_deck_nw(**kwargs):
         return ['dbUpdater_nw']
     except Exception as e:
         raise AirflowException(f"[ERROR] Não foi possivel executar a funcao!: {str(e)}")
-
-def importar_deck_nw(**kwargs):
-    try:
-        ti = kwargs['ti']
-        path = ti.xcom_pull(task_ids='download_deck_nw', key='path')
-
-        data_produto = deck_nw.importar_deck_values_nw(path)
-        kwargs['dag_run'].conf.update(
-            {'origem': 'ccee',
-             'product_details': {'dataProduto': data_produto}}
-        )
-        return ['fim']
-    
-    except Exception as e:
-        raise AirflowException(f"[ERROR] Não foi possivel executar a funcao!: {str(e)}")
-    
-    
+   
 default_args = {
     'execution_timeout': datetime.timedelta(hours=8),
     'retries': 3,
