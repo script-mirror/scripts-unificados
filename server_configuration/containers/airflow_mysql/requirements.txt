@@ -20,6 +20,7 @@ Unidecode
 urllib3
 xarray
 xlrd
+pymssql
 Flask-Bcrypt
 loguru
 workalendar
