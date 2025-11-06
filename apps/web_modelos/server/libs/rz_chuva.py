@@ -13,8 +13,6 @@ from matplotlib.colors import LinearSegmentedColormap
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes")
 from PMO.scripts_unificados.bibliotecas import wx_dbClass,wx_opweek,wx_emailSender,rz_dir_tools
-from PMO.scripts_unificados.apps.tempo.libs import plot
-
 
 DIR_TOOLS = rz_dir_tools.DirTools()
 
@@ -351,68 +349,6 @@ def get_chuvas(dt_rodada,modelo,hr):
     df_merged = pd.merge(df_tb_rodadas, df_tb_chuva, on='id_chuva', how='inner')
     values = df_merged[['dt_prevista', 'vl_chuva', 'dt_rodada', 'str_modelo', 'txt_nome_subbacia', 'txt_submercado', 'txt_bacia']].values
     return values
-
-def dif_tbmaps_chuva_html(dados_modelo1, dados_modelo2,pathSave=None, plotar_mapas=True):
-
-    data_rodada1, modelo_name1, hr_rodada1 = dados_modelo1
-    data_rodada2, modelo_name2, hr_rodada2 = dados_modelo2
-
-    #tranformando para datetime
-    data_rodada1 = datetime.datetime.strptime(data_rodada1,"%d/%m/%Y")
-    data_rodada2 = datetime.datetime.strptime(data_rodada2,"%d/%m/%Y")
-    
-    #padrao nome
-    dt_base = data_rodada1.strftime('%d/%m/%y')
-    dt_subtrai = data_rodada2.strftime('%d/%m/%y')
-    name = f"{modelo_name1} ({dt_base}00z) - {modelo_name2} ({dt_subtrai}00z)"
-
-    df_diff_diario, df_diff_semanal = dif_tb_chuva(dados_modelo1, dados_modelo2,granularidade='bacia')
-    df_diff_semanal = df_diff_semanal.astype(int)
-    df_diff_diario['  -   '] = '-'
-    df_diff_semanal.columns = [f"Semana {i+1}"for i in range(len(df_diff_semanal.columns))]
-
-    df_pivot_complete = pd.concat([df_diff_diario,df_diff_semanal], axis=1)
-    
-    #Tabela estilizada
-    cmap=LinearSegmentedColormap.from_list('rg',['r','w','b'], N=256)
-    diff_styled = df_pivot_complete.style.set_caption(name).format(precision=1).background_gradient(cmap=cmap,axis = None,vmin = -10, vmax = 10)
-    
-    if not pathSave:
-        pathSave = f"/WX2TB/Documentos/saidas-modelos/gefs-eta/{data_rodada1.strftime('%Y%m%d')}00/semana-energ/"
-    if plotar_mapas:
-        plot.plot_diff_acumul_subbacia(dados_modelo1, dados_modelo2,pathSave)
-    padrao_name = data_rodada1.strftime('%d%m%y') + '00z'
-    file_pattern = f"*semana_energ_DIF_{modelo_name1}-{modelo_name2}_{padrao_name}.png"
-    pattern_path = os.path.join(pathSave,file_pattern)
-    files_list = glob.glob(pattern_path)
-
-    img_encodes=''
-    for image_file in files_list:
-        encoded_string = wx_emailSender.get_image_base64(image_file)
-        # Adicionando a imagem codificada ao HTML
-        img_encodes += f'<img src="data:image/png;base64,{encoded_string}" />'
-
-    css = """
-        <style type="text/css">
-        table, th, td {
-            border: 1px solid black;
-            color: white;
-            text-align: center;
-        }
-        th, td {
-            background-color: rgb(120, 30, 119);
-        }
-        caption {
-            background-color: rgb(120, 30, 119);
-            font-size: 20pt;
-            border: 1px solid black;
-        }
-        </style>
-        """
-    html_string = diff_styled.to_html()
-    html_completo = (img_encodes+css+html_string).replace('\n', '').replace('\t', '')
-    return html_completo
-
 
 
 def get_zip_psath_df(path_arq):

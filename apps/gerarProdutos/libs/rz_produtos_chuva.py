@@ -13,16 +13,6 @@ def produto_psath_diff(path_arq,limiar=1):
     template = rz_chuva.get_psath_diff(path_arq,limiar)
     return template
 
-def produto_tbmaps_chuva_diff(data,dados_modelo1=None, dados_modelo2=None):
-
-    if not dados_modelo1 and not dados_modelo2:
-        dados_modelo1 = [data.strftime("%d/%m/%Y"),'PCONJUNTO','0']
-        dados_modelo2 = [(data-datetime.timedelta(days=1)).strftime("%d/%m/%Y"),'PCONJUNTO','0']
-
-    template = rz_chuva.dif_tbmaps_chuva_html(dados_modelo1, dados_modelo2)
-    return template
-
-
 def produto_situacao_reservatorios():
 
     path_libs = os.path.dirname(os.path.abspath(__file__))
