@@ -9,8 +9,6 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-
 sys.path.insert(1, f"{PATH_PROJETO}/scripts_unificados")
 from apps.gerarProdutos.libs import rz_aux_libs ,rz_produtos_chuva
 from apps.gerarProdutos.libs.html_to_image import api_html_to_image
