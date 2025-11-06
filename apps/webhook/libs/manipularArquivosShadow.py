@@ -41,7 +41,7 @@ constants = Constants()
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 sys.path.insert(1, f"{PATH_PROJETO}/scripts_unificados")
-from apps.airflow import airflow_tools
+from server_configuration.containers.airflow_mysql import airflow_tools
 from apps.webhook.libs import wx_libs_preco
 from apps.smap.libs import SmapTools
 from apps.dessem import dessem
@@ -165,32 +165,32 @@ def _verify_file_is_new(filename: str, product_name: str) -> None:
     if not is_new:
         raise Exception("Produto ja inserido")
 
-def resultados_preliminares_consistidos(dadosProduto: dict):
+# def resultados_preliminares_consistidos(dadosProduto: dict):
 
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
+#     filename = get_filename(dadosProduto)
+#     logger.info(filename)
 
-    dst = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(filename)[:-4])
-    DIR_TOOLS.extract(filename, dst, False)
+#     dst = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(filename)[:-4])
+#     DIR_TOOLS.extract(filename, dst, False)
 
-    file = glob.glob(os.path.join(dst, 'Consistido', '*-preliminar.xls'))
+#     file = glob.glob(os.path.join(dst, 'Consistido', '*-preliminar.xls'))
 
-    revisao.importar_rev_consistido(filename)
+#     revisao.importar_rev_consistido(filename)
     
-    params = dadosProduto.copy()
+# #     params = dadosProduto.copy()
     
-    airflow_tools.trigger_airflow_dag(
-        dag_id="1.12-PROSPEC_CONSISTIDO",
-        json_produtos=params,
-        url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
-    )
+# #     airflow_tools.trigger_airflow_dag(
+# #         dag_id="1.12-PROSPEC_CONSISTIDO",
+# #         json_produtos=params,
+# #         url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
+# #     )
     
 
-def entrada_saida_previvaz(dadosProduto: dict):
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
+# def entrada_saida_previvaz(dadosProduto: dict):
+#     filename = get_filename(dadosProduto)
+#     logger.info(filename)
 
-    dtInicial, dtFinal = dadosProduto["dataProduto"].split(' - ')
+#     dtInicial, dtFinal = dadosProduto["dataProduto"].split(' - ')
 
 
 
@@ -299,7 +299,7 @@ def historico_preciptacao(dadosProduto: dict):
 
     chuva.importar_chuva_psath(filename)
 
-    #rodar smap
+    # rodar smap
     # SmapTools.trigger_dag_SMAP(dtRef)
 
     # SmapTools.resultado_cv_obs(
@@ -308,45 +308,44 @@ def historico_preciptacao(dadosProduto: dict):
     #     dst_path= os.path.join(PATH_CV,dtRef.strftime("%Y%m%d"),'fontes')
     #     )
 
-    #gerar Produto
+    # gerar Produto
     airflow_tools.trigger_airflow_dag(
             dag_id="Mapas_PSAT")
 
     
-    #gerar Produto
 
         
 
 
-def modelo_eta(dadosProduto: dict):
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
+# def modelo_eta(dadosProduto: dict):
+#     filename = get_filename(dadosProduto)
+#     logger.info(filename)
 
-    dst = os.path.join(PATH_ROTINA_CONJUNTO, 'Arq_Entrada', 'ETA40')
-    os.makedirs(dst, exist_ok=True)
-    extracted_files = DIR_TOOLS.extract_specific_files_from_zip(
-        path=filename,
-        files_name_template=['ETA40_m_*.dat'],
-        date_format='%d%m%y',
-        dst=dst,
-        extracted_files=[])
-    logger.info(extracted_files)
+#     dst = os.path.join(PATH_ROTINA_CONJUNTO, 'Arq_Entrada', 'ETA40')
+#     os.makedirs(dst, exist_ok=True)
+#     extracted_files = DIR_TOOLS.extract_specific_files_from_zip(
+#         path=filename,
+#         files_name_template=['ETA40_m_*.dat'],
+#         date_format='%d%m%y',
+#         dst=dst,
+#         extracted_files=[])
+#     logger.info(extracted_files)
 
-    dtRef = datetime.datetime.strptime(dadosProduto["dataProduto"],'%d/%m/%Y')
-    dst = os.path.join(PATH_CV,dtRef.strftime('%Y%m%d'),'ETA40','ONS')
-    os.makedirs(dst, exist_ok=True)
-    extracted_files = DIR_TOOLS.extract_specific_files_from_zip(
-        path=filename,
-        files_name_template= ["ETA40_p*a*.dat"],
-        date_format='%d%m%y',
-        dst=dst)
-    logger.info(extracted_files)
-    if dadosProduto.get('enviar', True):
-        airflow_tools.trigger_airflow_dag(
-            dag_id="PCONJUNTO",
-            json_produtos={
-                'dt_ref':dadosProduto['dataProduto']
-                })
+#     dtRef = datetime.datetime.strptime(dadosProduto["dataProduto"],'%d/%m/%Y')
+#     dst = os.path.join(PATH_CV,dtRef.strftime('%Y%m%d'),'ETA40','ONS')
+#     os.makedirs(dst, exist_ok=True)
+#     extracted_files = DIR_TOOLS.extract_specific_files_from_zip(
+#         path=filename,
+#         files_name_template= ["ETA40_p*a*.dat"],
+#         date_format='%d%m%y',
+#         dst=dst)
+#     logger.info(extracted_files)
+#     if dadosProduto.get('enviar', True):
+#         airflow_tools.trigger_airflow_dag(
+#             dag_id="PCONJUNTO",
+#             json_produtos={
+#                 'dt_ref':dadosProduto['dataProduto']
+#                 })
 
 
 
@@ -580,26 +579,26 @@ def prevCarga_dessem_saida(dadosProduto: dict):
     carga_ons.importar_prev_carga_dessem_saida(path_zip = filename)
     
 
-def modelo_gefs(dadosProduto: dict):
+# def modelo_gefs(dadosProduto: dict):
 
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
+#     filename = get_filename(dadosProduto)
+#     logger.info(filename)
     
-    dst = os.path.join(PATH_ROTINA_CONJUNTO, 'Arq_Entrada', 'GEFS')
-    os.makedirs(dst, exist_ok=True)
-    extracted_files = DIR_TOOLS.extract_specific_files_from_zip(
-        path=filename,
-        files_name_template=['GEFS_m_*.dat'],
-        date_format='%d%m%y',
-        dst=dst,
-        extracted_files=[])
-    logger.info(extracted_files)
-    if dadosProduto.get('enviar', True):
-        airflow_tools.trigger_airflow_dag(
-            dag_id="PCONJUNTO",
-            json_produtos={
-                'dt_ref':dadosProduto['dataProduto']
-                })
+#     dst = os.path.join(PATH_ROTINA_CONJUNTO, 'Arq_Entrada', 'GEFS')
+#     os.makedirs(dst, exist_ok=True)
+#     extracted_files = DIR_TOOLS.extract_specific_files_from_zip(
+#         path=filename,
+#         files_name_template=['GEFS_m_*.dat'],
+#         date_format='%d%m%y',
+#         dst=dst,
+#         extracted_files=[])
+#     logger.info(extracted_files)
+#     if dadosProduto.get('enviar', True):
+#         airflow_tools.trigger_airflow_dag(
+#             dag_id="PCONJUNTO",
+#             json_produtos={
+#                 'dt_ref':dadosProduto['dataProduto']
+#                 })
 
 
 # def resultados_nao_consistidos_semanal(dadosProduto: dict):
@@ -719,17 +718,17 @@ def modelo_gefs(dadosProduto: dict):
 #     logger.info(path_copia_tmp)
     
 
-def resultados_finais_consistidos(dadosProduto: dict):
+# def resultados_finais_consistidos(dadosProduto: dict):
 
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
+#     filename = get_filename(dadosProduto)
+#     logger.info(filename)
 
-    dtInicial = dadosProduto["dataProduto"]
-    dtInicial = datetime.datetime.strptime(dtInicial, '%d/%m/%Y')
-    dataEletrica =  wx_opweek.ElecData(dtInicial.date())
-    path_decks = os.path.abspath('/WX2TB/Documentos/fontes/PMO/arquivos/decks/{}{:0>2}_RV{}'.format(dataEletrica.anoReferente, dataEletrica.mesReferente, dataEletrica.atualRevisao))
-    path_copia_tmp = DIR_TOOLS.copy_src(filename, path_decks)
-    logger.info(path_copia_tmp)
+#     dtInicial = dadosProduto["dataProduto"]
+#     dtInicial = datetime.datetime.strptime(dtInicial, '%d/%m/%Y')
+#     dataEletrica =  wx_opweek.ElecData(dtInicial.date())
+#     path_decks = os.path.abspath('/WX2TB/Documentos/fontes/PMO/arquivos/decks/{}{:0>2}_RV{}'.format(dataEletrica.anoReferente, dataEletrica.mesReferente, dataEletrica.atualRevisao))
+#     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_decks)
+#     logger.info(path_copia_tmp)
 
 
 def ler_csv_prev_weol_para_dicionario(file):
@@ -822,12 +821,12 @@ def deck_prev_eolica_semanal_previsao_final(dadosProduto: dict):
     else:
         logger.error(f"Erro ao inserir WEOL. status code: {post_decks_weol.status_code}")
         
-def deck_prev_eolica_semanal_weol(dadosProduto:dict):
-    filename = get_filename(dadosProduto)
-    airflow_tools.trigger_airflow_dag(
-        dag_id="webhook_deck_prev_eolica_semanal_weol",
-        json_produtos=dadosProduto
-        )
+# def deck_prev_eolica_semanal_weol(dadosProduto:dict):
+#     filename = get_filename(dadosProduto)
+#     airflow_tools.trigger_airflow_dag(
+#         dag_id="webhook_deck_prev_eolica_semanal_weol",
+#         json_produtos=dadosProduto
+#         )
     
 def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
     data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto'), "%d/%m/%Y")
@@ -893,20 +892,20 @@ def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
 if __name__ == '__main__':
     
     dadosProduto = {
-  "dataProduto": "30/09/2025",
-  "filename": "Relatorio_previsao_diaria_28_09_2025_para_30_09_2025.xls",
+  "dataProduto": "03/11/2025",
+  "filename": "ACOMPH_03.11.2025.xls",
   "macroProcesso": "Programação da Operação",
-  "nome": "Relatório dos resultados finais consistidos da previsão diária (PDP)",
-  "periodicidade": "2025-09-30T00:00:00",
-  "periodicidadeFinal": "2025-09-30T23:59:59",
-  "processo": "Previsão de Vazões Diárias - PDP",
-  "s3Key": "webhooks/Relatório dos resultados finais consistidos da previsão diária (PDP)/68d98616995e02e90c3fc514_Relatorio_previsao_diaria_28_09_2025_para_30_09_2025.xls",
-  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy84Mi9Qcm9kdXRvcy81NDgvUmVsYXRvcmlvX3ByZXZpc2FvX2RpYXJpYV8yOF8wOV8yMDI1X3BhcmFfMzBfMDlfMjAyNS54bHMiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiUmVsYXTDs3JpbyBkb3MgcmVzdWx0YWRvcyBmaW5haXMgY29uc2lzdGlkb3MgZGEgcHJldmlzw6NvIGRpw6FyaWEgKFBEUCkiLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc1OTE3Mjc0MiwibmJmIjoxNzU5MDg2MTAyfQ.sQMIZ57iv4NHLxfcWGTMA9Mnh_8yiiRxtbXF64qIc6Q",
-  "webhookId": "68d98616995e02e90c3fc514"
+  "nome": "Acomph",
+  "periodicidade": "2025-11-03T00:00:00",
+  "periodicidadeFinal": "2025-11-03T23:59:59",
+  "processo": "Acompanhamento das Condições Hidroenergéticas",
+  "s3Key": "webhooks/Acomph/228275a3-7443-4a24-8c03-d5d0edabf9ee_ACOMPH_03.11.2025.xls",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8xMy81Ni9Qcm9kdXRvcy8yMzAvQUNPTVBIXzAzLjExLjIwMjUueGxzIiwidXNlcm5hbWUiOiJnaWxzZXUubXVobGVuQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IkFjb21waCIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzYyMjY4MTQzLCJuYmYiOjE3NjIxODE1MDN9.5AvwJxcvQ1KAJn2R-0DAApNrawWrM9iPqwr7vFt_HIo",
+  "webhookId": "228275a3-7443-4a24-8c03-d5d0edabf9ee"
 }
         
     
 
-    relatorio_resutados_finais_consistidos(dadosProduto)
+    arquivo_acomph(dadosProduto)
     
 

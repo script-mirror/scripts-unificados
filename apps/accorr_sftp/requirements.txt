@@ -1,7 +1,0 @@
-paramiko
-cryptography
-bcrypt
-pynacl
-pandas
-openpyxl
-python-dotenv
