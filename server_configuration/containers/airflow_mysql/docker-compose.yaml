@@ -3,7 +3,11 @@ version: '3.9'
 services:
 
   airflow-init:
-    build: .
+    build:
+      context: .
+      args:
+        GIT_USERNAME: ${GIT_USERNAME}
+        GIT_TOKEN: ${GIT_TOKEN}
     user: "0:0"
     entrypoint: /bin/bash
     command: >
@@ -32,7 +36,11 @@ services:
       - ${AIRFLOW_PROJ_DIR:-.}:/sources
 
   airflow-web:
-    build: .
+    build:
+      context: .
+      args:
+        GIT_USERNAME: ${GIT_USERNAME}
+        GIT_TOKEN: ${GIT_TOKEN}
     command: webserver
     user: "${AIRFLOW_UID:-50000}:0"
     ports:
@@ -68,7 +76,11 @@ services:
       - /home/admin/jose:/home/admin/jose
 
   airflow-scheduler:
-    build: .
+    build:
+      context: .
+      args:
+        GIT_USERNAME: ${GIT_USERNAME}
+        GIT_TOKEN: ${GIT_TOKEN}
     command: scheduler
     user: "${AIRFLOW_UID:-50000}:0"
     restart: always
