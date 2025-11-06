@@ -1,15 +1,11 @@
 import os
 import sys
-import pdb
-import glob
 import zipfile
 import datetime
 import pandas as pd
 import sqlalchemy as db
 from unidecode import unidecode
 from sqlalchemy.sql.expression import func
-from matplotlib.colors import LinearSegmentedColormap
-
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes")
 from PMO.scripts_unificados.bibliotecas import wx_dbClass,wx_opweek,wx_emailSender,rz_dir_tools

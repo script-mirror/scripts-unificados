@@ -10,7 +10,6 @@ openpyxl
 pandas
 pdf2image
 pdfplumber
-pymssql
 PyMySQL
 pyshp
 requests
