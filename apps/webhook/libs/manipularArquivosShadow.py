@@ -42,7 +42,6 @@ constants = Constants()
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 sys.path.insert(1, f"{PATH_PROJETO}/scripts_unificados")
 from server_configuration.containers.airflow_mysql import airflow_tools
-from apps.webhook.libs import wx_libs_preco
 from apps.smap.libs import SmapTools
 from apps.dessem import dessem
 from apps.gerarProdutos import gerarProdutos2

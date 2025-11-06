@@ -17,7 +17,7 @@ PATH_ARQUIVOS_LOCAL = os.path.join(os.path.dirname(diretorioApp),"arquivos")
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.apps.dbUpdater.libs import vazao
 from PMO.scripts_unificados.bibliotecas import rz_dir_tools
-from PMO.scripts_unificados.apps.airflow import airflow_tools
+from PMO.scripts_unificados.server_configuration.containers.airflow_mysql import airflow_tools
 from PMO.scripts_unificados.apps.smap.libs import BuildStructure
 
 
