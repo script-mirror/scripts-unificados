@@ -3,31 +3,23 @@
 
 import os
 import re
-import pdb
 import sys
-import json
-import time
 import glob
 import locale
 import datetime
 import requests as req
 import sqlalchemy as db
 from dateutil import relativedelta
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
 from PIL import Image
-from pdf2image import convert_from_path
-from selenium import webdriver
 from pandas.plotting import register_matplotlib_converters
 from matplotlib import gridspec
 register_matplotlib_converters()
 
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
-__HOST_SERVER = os.getenv('HOST_SERVIDOR') 
 from middle.utils import Constants
 constants = Constants()
 
@@ -46,7 +38,7 @@ pathArquivos = os.path.join(dirApp,'arquivos')
 
 path_fontes = "/WX2TB/Documentos/fontes/"
 sys.path.insert(1,path_fontes)
-from PMO.scripts_unificados.bibliotecas import wx_dbLib,wx_emailSender,wx_verificaCorImg,wx_opweek,wx_dbClass
+from PMO.scripts_unificados.bibliotecas import wx_dbLib,wx_emailSender,wx_verificaCorImg,wx_dbClass
 from PMO.scripts_unificados.apps.gerarProdutos.libs import rz_relatorio_bbce,configs
 from PMO.scripts_unificados.apps.web_modelos.server.libs import wx_calcEna 
 
@@ -59,72 +51,6 @@ def get_access_token() -> str:
     )
     return response.json()['access_token']
 
-def baixarProduto(data, produto):
-    """ Faz o download de produtos externos a WX
-    :param data: [DATETIME] Data do produtop
-    :param produto: [STR] Nome do produto a ser baixado
-    :return filePath: [STR] Caminho completo do arquivo baixado
-    """
-    
-    print("Tentativa de baixar o produto {} da data {}".format(produto, data.strftime('%d/%m/%Y')))
-    # Pega as configuracoes do config.json
-    confgs = configs.getConfiguration()
-
-    pastaTmp = confgs['paths']['pastaTmp']
-
-    if not os.path.exists(pastaTmp):
-        os.makedirs(pastaTmp)
-
-    flag_baixarProduto = False
-
-    if produto == 'SST':
-
-        # Adiciona o numero maximo de dias do menor mes (fevereiro) possivel em seguida adiciona 1 ate o mes ser o seguinte
-        data_final = data + datetime.timedelta(days=28)
-        while data_final.month == data.month:
-            data_final += datetime.timedelta(days=1)
-
-        url = 'https://www.cpc.ncep.noaa.gov/products/people/mchen/CFSv2FCST/monthly/images/CFSv2.SST.{}.{}.gif'.format(data.strftime('%Y%m%d'), data_final.strftime('%Y%m'))
-
-        flag_baixarProduto = True
-
-    if flag_baixarProduto:
-
-        # 20 tentativas de baixar o produto
-        for i in range(20):
-            file = req.get(url)
-            if file.status_code == 200:
-                filename = url.split('/')[-1]
-                filePath = '{}/{}'.format(pastaTmp, filename)
-                with open(filePath, 'wb') as f:
-                    f.write(file.content)
-
-                    print("\nURL: {}".format(url))
-                    print("Produto: {}".format(filename))
-                    print("Tipo: {}".format(file.headers['content-type']))
-                    print("Path: {}".format(filePath))
-                    return filePath
-                break
-            else:
-                print("Nova tentiva em 5 minutos")
-                time.sleep(60*15)
-    return ''
-
-
-
-
-def pdfToJpeg(pathFile, pageNumber, pathOut):
-    """ Converte PDF para JPG
-    :param pathFile: [str] Path do arquivo PDF a ser convertido
-    :param pathOut: [str] Path do arquivo JPG final
-    :param pageNumber: [int] Numero da pagina a ser convertida
-    :return None: 
-    """
-    pages = convert_from_path(pathFile, 100)
-    pages[pageNumber-1].save(pathOut, 'JPEG')
-
-
-def gerarCompiladoPrevPrecipt(data, modelo, rodada):
 
     confgs = configs.getConfiguration()
 
@@ -221,6 +147,7 @@ def gerarCompiladoPrevPrecipt(data, modelo, rodada):
     print('Arquivo salvo em :\n{}'.format(arquivoSaida))
 
     return arquivoSaida
+
 def is_first_bussines_day(data:datetime.date):
     return (data.day == 1 and (data.weekday() != 5 and data.weekday() != 6)) or ((data.day == 2 or data.day == 3) and data.weekday() == 0)
 
@@ -292,7 +219,6 @@ def autolabelMediaPld(ax, linhas, pontoInicio=0, size=6, cor='black'):
                 xytext=(0, 2),  # 3 points vertical offset
                 textcoords="offset points",
                 ha='center', va='bottom', size=size, color=cor)
-
 
 def gerarResultadoDessem(data):
 
@@ -450,165 +376,6 @@ def gerarResultadoDessem(data):
 
     return corpoEmail, pathFileOut
 
-# def gerarPrevisaoEnaSubmercado(data:datetime):
-#     idSubmercados = {1:'Sudeste', 2:'Sul', 3:'Nordeste', 4:'Norte'}
-
-#     db_ons = wx_dbClass.db_mysql_master('db_ons')
-#     db_ons.connect()
-#     tb_prev_ena_submercado = db_ons.getSchema('tb_prev_ena_submercado')
-#     query_ena = tb_prev_ena_submercado.select().where(tb_prev_ena_submercado.c.dt_previsao == data)
-#     answer_ena = db_ons.db_execute(query_ena).fetchall()
-
-#     previsaoVazao = pd.DataFrame(answer_ena, columns=['CD_SUBMERCADO', 'DT_PREVISAO', 'DT_REFERENTE', 'VL_VAZAO', 'VL_PERC_MLT'])
-#     previsaoVazao['SUBMERCADO'] = previsaoVazao['CD_SUBMERCADO'].replace(idSubmercados)
-#     previsaoVazao['DT_REFERENTE'] = pd.to_datetime(previsaoVazao['DT_REFERENTE'] , format="%Y-%m-%d")
-#     previsaoVazao['VL_PERC_MLT'] = previsaoVazao['VL_PERC_MLT'].round(1)
-    
-#     header = []
-#     tabela = []
-#     for sub in previsaoVazao['SUBMERCADO'].unique():
-#         filtro1 = previsaoVazao['SUBMERCADO'] == sub
-#         if header == []:
-#             header = ['Submercado']
-#             header += previsaoVazao.loc[filtro1,'DT_REFERENTE'].dt.strftime('%d/%m/%Y').to_list()
-
-#         linha = previsaoVazao.loc[filtro1,'VL_VAZAO'].to_list()
-#         tabela.append([sub] + linha)
-#         linha = previsaoVazao.loc[filtro1,'VL_PERC_MLT'].to_list()
-#         tabela.append(["<small>% MLT</small>"] + linha)
-
-#     tabela = wx_emailSender.gerarTabela(tabela, header, nthColor=2)
-
-#     texto = "<b>Relatório de Previsão de Vazões Diárias</b><br>"
-#     texto = texto + "ENAS Diárias ONS - DESSEM<br><br>"
-
-#     texto = texto + tabela
-#     texto = texto + "<br><br>Envio por WX"
-    
-#     return texto
-
-
-def gerarRelatoriosResultCv(urlInteresse):
-
-    downloadDirectory = os.path.join(os.getcwd(), 'arquivos', 'tmp')
-    if not os.path.exists(downloadDirectory):
-        os.makedirs(downloadDirectory)
-
-    chrome_options = webdriver.ChromeOptions()
-    settings = {
-        "recentDestinations": [{
-            "id": "Save as PDF",
-            "origin": "local",
-            "account": ""
-        }],
-        "selectedDestinationId": "Save as PDF",
-        "version": 2,
-        "isHeaderFooterEnabled": False,
-        "customMargins": {},
-        "marginsType": 2,
-    }
-    prefs = {}
-
-    prefs["printing.print_preview_sticky_settings.appState"] = json.dumps(settings)
-    prefs["savefile.default_directory"] = downloadDirectory
-    prefs["download.default_directory"] = str(downloadDirectory)
-    prefs["download.prompt_for_download"] = False
-    prefs["download.directory_upgrade"] = True
-    chrome_options.add_experimental_option('prefs', prefs)
-    chrome_options.add_argument('--kiosk-printing')
-
-    selenium = webdriver.Chrome(options=chrome_options)
-
-    url = 'http://35.173.154.94:8090'
-    selenium.get(url)
-    inp_username = selenium.find_element_by_id('username')
-    inp_username.send_keys('thiago')
-    inp_password = selenium.find_element_by_id('password')
-    inp_password.send_keys('12345678')
-
-    xpath_btn = '//button[@type="submit"]'
-    btn = selenium.find_element_by_xpath(xpath_btn)
-    btn.click()
-
-    selenium.set_window_size(1920, 1080, selenium.window_handles[0])
-    selenium.get(urlInteresse)
-
-    tituloPagina = selenium.execute_script("return document.title")
-    pathPdf = os.path.join(downloadDirectory, tituloPagina+'.pdf')
-    if os.path.exists(pathPdf):
-        os.remove(pathPdf) 
-
-    for i in range(90):
-        print(selenium.execute_script("return $.xhrPool.length"))
-        if selenium.execute_script("return $.xhrPool.length") == 0:
-            break
-        time.sleep(2)
-
-    selenium.execute_script('window.print();')
-    
-    time.sleep(5)
-    selenium.quit()
-
-    return pathPdf
-
-
-def compare_fontes_cv(dt_rodada,src_path):
-
-    teste = glob.glob(src_path+"/*obs*")
-
-    if len(teste) >= 4:
-        diff = {}
-        dados = [os.path.splitext(os.path.basename(name))[0].split('_')[1:] for name in teste]
-
-        print(dados)
-        referencia = 'psat'
-        for tipo,fonte in dados:
-            diff[tipo] = {} if not diff.get(tipo) else diff[tipo]
-            referencia = fonte if fonte == 'pdp' else referencia
-            diff[tipo][fonte] = pd.read_csv(os.path.join(src_path,f"obs_{tipo}_{fonte}.txt"),sep=" ",header=None)
-
-        html = f"<b><h3>Diferenças do chuva-vazão {dt_rodada.strftime('%d/%m/%Y')}</h3></b><br/>"
-        html += f"<p><small>A coluna {referencia} representa o valor obtido e o restante das colunas apresentam a diferença relativa ao {referencia} </small></p><br/>"
-        files = []
-
-        for dado in diff.keys():
-            
-            df_referencia = diff[dado][referencia] 
-            df_referencia.columns = ['Posto',referencia,'Bacia']
-            df_referencia[referencia] = df_referencia[referencia]
-
-            fontes = list(diff[dado].keys())
-            for fonte in fontes:
-                if fonte!=referencia:
-                    df_referencia[fonte] = (diff[dado][referencia][referencia] - diff[dado][fonte][1]).round(1)
-            
-            fontes.remove(referencia)
-            fontes.sort(reverse=True)
-
-            df_out = df_referencia[['Posto','Bacia',referencia]+fontes]
-
-            file = os.path.join(src_path,f"diff{dado.capitalize()}.txt")
-
-            df_out.to_csv(file,sep=" ")
-            files+= file,
-            fonte_menos_prioritaria = fontes[-1]
-            
-            dez_maiores_diff = df_out[fonte_menos_prioritaria].abs().nlargest(10).index
-
-            maiores_valores = df_out.loc[dez_maiores_diff].values.tolist()
-            header = list(df_out.columns)
-            
-            html += f"<br/>Diferença na {dado} com referencia o {referencia}:<br/>"
-            html += wx_emailSender.gerarTabela(maiores_valores, header=header, nthColor=1)
-
-        print(files)
-        html += "<br><br>Envio por WX"
-        return html,files
-    else:
-        print("Não há arquivos o suficiente para comparar.")
-        print(f"Verificar {src_path}")
-        quit()
-
 def autolabel(ax, linhas, pontoInicio=0, size=6):
     """Attach a text label above each bar in *rects*, displaying its height."""
     eixo_x = linhas.get_data()[0]
@@ -621,165 +388,6 @@ def autolabel(ax, linhas, pontoInicio=0, size=6):
                     xytext=(0, 2),  # 3 points vertical offset
                     textcoords="offset points",
                     ha='center', va='bottom', size=size)
-
-# def gerarPlotPrevivaz(dt, modelo, hr_rodada, dt_rev, flagPrel, flagpdp, flagPsat):
-  
-#     rv = wx_opweek.ElecData(dt_rev).atualRevisao
-
-#     # Leitura do prevs e calculo dos postos artificiais
-#     dtInicioAcomph = dt - datetime.timedelta(days=31)
-#     dtInicioAcomph = dtInicioAcomph.replace(day=1)
-
-#     pathLocal = os.path.abspath('.')
-#     dir_saida = os.path.join(pathLocal, 'arquivos', 'tmp')
-
-#     if not os.path.exists(dir_saida):
-#         os.makedirs(dir_saida)
-#     subTitulo = ""
-#     if int(flagPrel):
-#         subTitulo = " (PRE)"
-#     elif int(flagpdp):
-#         subTitulo = " (PDP)"
-#     elif int(flagPsat):
-#         subTitulo = " (PSAT)"
-    
-#     # Formatacao do titulo do grafico
-#     tituloGrafico = "{} {} - RV{} ({})".format(modelo,subTitulo, rv, dt.strftime('%d/%m/%Y'))
-
-#     db_clime = wx_dbLib.DadosClime()
-
-#     # Rodada de interesse
-#     vazao = wx_dbLib.getPrevsCv(data=dt, modelo=modelo, horario_rodada=hr_rodada, preliminar=flagPrel, dt_rev=dt_rev, pdp=flagpdp, psat=flagPsat)
-#     df_vazao = pd.DataFrame(vazao, columns=['CD_POSTO', 'VL_VAZAO', 'DT_REFERENTE', 'STR_MODELO', 'VL_REV'])
-#     df_vazao['DT_REFERENTE'] = pd.to_datetime(df_vazao['DT_REFERENTE'], format="%Y-%m-%d")
-#     df_vazao = df_vazao.pivot(index='CD_POSTO', columns='DT_REFERENTE', values='VL_VAZAO')
-#     df_vazao = wx_calcEna.calcPostosArtificiais_df(df_vazao, ignorar_erros=True)
-#     df_ena = wx_calcEna.gera_ena_df(df_vazao)
-
-#     rodadas_00z_dia = []
-#     if hr_rodada != 0:
-#         rodadas_00z_dia = wx_dbLib.getCadastrosPrevsCv(data=dt, modelo=modelo, dt_rev=dt_rev, horario_rodada=0)
-#     rodadas_00z_dia_anterior = wx_dbLib.getCadastrosPrevsCv(data=(dt-datetime.timedelta(days=1)), modelo=modelo, dt_rev=dt_rev, horario_rodada=0)
-
-#     rodadasComp = []
-#     if len(rodadas_00z_dia):
-#         rodadasComp += [rodadas_00z_dia[0]]
-#     if len(rodadas_00z_dia_anterior):
-#         rodadasComp += [rodadas_00z_dia_anterior[0]]
-
-#     df_enaComp = {}
-#     for r in rodadasComp:
-#         data = r[0]
-#         if r[0].weekday() == 4:
-#             data += datetime.timedelta(days =1)
-#         else:
-#             data = wx_opweek.getLastSaturday(data)
-            
-#         data += datetime.timedelta(days=7)
-
-#         dt_eletrica = wx_opweek.ElecData(data)
-#         dt_rev = dt_eletrica.primeiroDiaMes + datetime.timedelta(days=7*dt_eletrica.atualRevisao)
-#         vazoesComparacao = wx_dbLib.getPrevsCv(data=r[0], modelo=modelo, horario_rodada=r[2], preliminar=int(r[3]), pdp=int(r[4]),dt_rev=dt_rev, psat = int(r[5]))
-#         df_vazoesComparacao = pd.DataFrame(vazoesComparacao, columns=['CD_POSTO', 'VL_VAZAO', 'DT_REFERENTE', 'STR_MODELO', 'VL_REV'])
-#         df_vazoesComparacao['DT_REFERENTE'] = pd.to_datetime(df_vazoesComparacao['DT_REFERENTE'], format="%Y-%m-%d")
-#         df_vazoesComparacao = df_vazoesComparacao.pivot(index='CD_POSTO', columns='DT_REFERENTE', values='VL_VAZAO')
-#         df_vazoesComparacao = wx_calcEna.calcPostosArtificiais_df(df_vazoesComparacao, ignorar_erros=True)
-#         labelCurva = '{}'.format(r[1])
-#         labelCurva += '_{:0>2}z'.format(r[2], r[4])
-#         if r[0]<dt.date():
-#             labelCurva += (r[0]).strftime(' (%d/%m)')
-#         elif r[3]:
-#             labelCurva += ' (PRE)'
-#         elif r[4]:
-#             labelCurva += ' (PDP)'
-#         df_enaComp[labelCurva] = wx_calcEna.gera_ena_df(df_vazoesComparacao)
-#         if len(df_enaComp) == 2:
-#             break
-
-#     acomph = db_clime.getAcomph(dtInicio=dtInicioAcomph)  
-#     df_acomph = pd.DataFrame(acomph, columns=['CD_POSTO', 'DT_REFERENTE', 'VL_VAZ_INC_CONSO', 'VL_VAZ_NAT_CONSO', 'DT_ACOMPH', 'ROW'])
-#     df_acomph_vazNat = df_acomph.pivot(index='CD_POSTO', columns='DT_REFERENTE', values='VL_VAZ_NAT_CONSO')
-#     df_acomph_vazNat = wx_calcEna.calcPostosArtificiais_df(df_acomph_vazNat, ignorar_erros=True)
-#     df_acomph_ena = wx_calcEna.gera_ena_df(df_acomph_vazNat)
-
-#     rev = db_clime.getRevUltima()
-#     valorUltimaRev = rev[0][2]
-#     df_rev = pd.DataFrame(rev, columns=['DT_INICIO_SEMANA', 'VL_ENA', 'CD_REVISAO', 'CD_SUBMERCADO'])
-#     df_rev['CD_SUBMERCADO'].replace({1:'N', 2:'NE', 3:'SE', 4:'S'}, inplace=True)
-#     df_rev = df_rev.pivot(index='CD_SUBMERCADO', columns='DT_INICIO_SEMANA', values='VL_ENA')
-
-#     dtInicialMlt = min(df_acomph_ena.columns)
-#     dtInicialMlt = dtInicialMlt.replace(day=1)
-
-#     dtFinalMlt = max(max(df_ena.columns), max(df_rev.columns))
-#     dtFinalMlt = dtFinalMlt.replace(day=1)
-#     dtFinalMlt = dtFinalMlt + datetime.timedelta(days=31)
-#     dtFinalMlt = dtFinalMlt.replace(day=1)
-#     dtsMlt = pd.date_range(start=dtInicialMlt, end=dtFinalMlt, freq='MS')
-#     mesesMlt = [m.month for m in dtsMlt]
-
-#     mlt = wx_dbLib.getMlt()
-#     df_mlt = pd.DataFrame(mlt, columns=['SUBMERCADO', 'MES', 'MLT'])
-#     df_mlt = (df_mlt[df_mlt['MES'].isin(mesesMlt)]).copy()
-#     df_mlt['DT_REFERENTE'] = df_mlt['MES'].replace(dict(zip(mesesMlt, dtsMlt)))
-#     df_mlt['SUBMERCADO'].replace({1:'N', 2:'NE', 3:'SE', 4:'S'}, inplace=True)
-#     df_mlt = df_mlt.pivot(index='SUBMERCADO', columns='DT_REFERENTE', values='MLT')
-
-#     fig, ax =  plt.subplots(2,2)
-#     plt.gcf().set_size_inches(20, 10)
-#     plt.rcParams['axes.grid'] = True
-#     fig.suptitle('{}'.format(tituloGrafico), fontsize=16)
-
-#     submercados = ['SE', 'S', 'NE', 'N']
-#     for i, sub in enumerate(submercados):
-
-#         media_mensal = df_ena.loc[sub].mean()
-#         mes_referente_oper = wx_opweek.ElecData(min(df_ena.columns).date())
-#         media_mensal_percent = 100*media_mensal/df_mlt.loc[sub, datetime.datetime(mes_referente_oper.anoReferente, mes_referente_oper.mesReferente, 1)]
-        
-#         ax[int(i/2), i%2].set_title("{} - {:.0f} MWm ({:.0f}%)".format(sub, media_mensal, media_mensal_percent))
-        
-
-#         x = list(df_ena.loc[sub].index)
-#         y = list(df_ena.loc[sub].values)
-#         x = x + [x[-1] + datetime.timedelta(days=7)]
-#         y = y + [y[-1]]
-#         label = "{}_{:0>2}z".format(modelo,hr_rodada)
-#         if int(flagPrel):
-#             label += " (PRE)"
-#         elif int(flagpdp):
-#             label += " (PDP)"
-#         elif int(flagPsat):
-#             label += " (PSAT)"
-#         linesPrevista = ax[int(i/2), i%2].step(x, y, where='post', label=label, color="darkorange", linewidth=1.5, zorder=6)
-#         autolabel(ax[int(i/2), i%2], linesPrevista[0], pontoInicio=x[0], size=8)
-
-#         for j, labelRodada in enumerate(df_enaComp):
-#             x = list(df_enaComp[labelRodada].loc[sub].index)
-#             y = list(df_enaComp[labelRodada].loc[sub].values)
-#             x = x + [x[-1] + datetime.timedelta(days=7)]
-#             y = y + [y[-1]]
-#             color = ["burlywood", "antiquewhite"]
-#             linesPrevista = ax[int(i/2), i%2].step(x, y, where='post', label=labelRodada, color=color[j])
-
-#         x = list(df_rev.loc[sub].index)
-#         y = list(df_rev.loc[sub].values)
-#         x = x + [x[-1] + datetime.timedelta(days=7)]
-#         y = y + [np.nan]
-#         ax[int(i/2), i%2].step(x, y, where='post', label="RV{}".format(valorUltimaRev), color="slateblue")
-
-#         ax[int(i/2), i%2].step(df_mlt.loc[sub].index, df_mlt.loc[sub].values, where='post', label="MLT", color="black")
-#         ax[int(i/2), i%2].plot(df_acomph_ena.loc[sub].index, df_acomph_ena.loc[sub].values, label="ACOMPH", color="darkturquoise")
-        
-#         ax[int(i/2), i%2].legend()
-#         ax[int(i/2), i%2].tick_params(axis='x', labelrotation=-20)
-#         ax[int(i/2), i%2].set_ylabel('ENA (MW)')
-#         ax[int(i/2), i%2].grid(color = 'gray', linestyle = '--', linewidth = 0.2)
-#     pathFileOut = os.path.join(dir_saida, 'ENA_'+modelo+'.PNG')
-#     plt.savefig(pathFileOut)
-#     return pathFileOut
-
-
 
 def autolabelAcomph(ax, linhas, cor='black'):
     """Attach a text label above each bar in *rects*, displaying its height."""

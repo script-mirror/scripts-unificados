@@ -1,22 +1,13 @@
 import os
 import sys
 import pdb
-import glob
 import base64
 import datetime
-import io
-import csv
 import logging
-import zipfile
-import pandas as pd
 import requests as req
 import hashlib
-import re
-import shutil
-import subprocess
-from time import sleep
 from dotenv import load_dotenv
-from middle.utils import get_auth_header, Constants
+from middle.utils import  Constants
 
 logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
@@ -45,12 +36,11 @@ from server_configuration.containers.airflow_mysql import airflow_tools
 from apps.smap.libs import SmapTools
 from apps.dessem import dessem
 from apps.gerarProdutos import gerarProdutos2
-from bibliotecas import wx_opweek,rz_dir_tools
-from apps.dbUpdater.libs import carga_ons,chuva,deck_ds,deck_dc,deck_nw,geracao,revisao,temperatura,vazao
+from bibliotecas import rz_dir_tools
+from apps.dbUpdater.libs import carga_ons,chuva,deck_ds,geracao,revisao,temperatura,vazao
 
 
 #constantes path
-PATH_CV = os.path.abspath("/WX2TB/Documentos/chuva-vazao")
 PATH_PCONJUNTO = os.path.join(path_fontes, "PMO", "scripts_unificados","apps","pconjunto") 
 PATH_ROTINA_CONJUNTO = os.path.join(PATH_PCONJUNTO,"pconjunto-ONS")
 PATH_WEBHOOK_TMP = os.path.join(path_webhook, "arquivos","tmp")
@@ -144,54 +134,6 @@ def _handle_webhook_file(payload_webhook: dict, path_download: str) -> str:
         f.write(file_content.content)
     return filename
 
-def _verify_file_is_new(filename: str, product_name: str) -> None:
-    try:
-        with open(filename, "rb") as f:
-            data = f.read()
-    except:
-        print(f"erro ao escrever arquivo no manipularArquivosShadow ")
-        raise
-
-    file_hash = hex_hash(base64.b64encode(data).decode('utf-8'))
-    is_new = req.post(
-        "https://tradingenergiarz.com/api/v2/bot-sintegre/verify",
-        json={"nome": product_name, "fileHash": file_hash},
-        headers={
-                'Authorization': f'Bearer {get_access_token()}'
-            }
-    ).json()
-
-    if not is_new:
-        raise Exception("Produto ja inserido")
-
-# def resultados_preliminares_consistidos(dadosProduto: dict):
-
-#     filename = get_filename(dadosProduto)
-#     logger.info(filename)
-
-#     dst = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(filename)[:-4])
-#     DIR_TOOLS.extract(filename, dst, False)
-
-#     file = glob.glob(os.path.join(dst, 'Consistido', '*-preliminar.xls'))
-
-#     revisao.importar_rev_consistido(filename)
-    
-# #     params = dadosProduto.copy()
-    
-# #     airflow_tools.trigger_airflow_dag(
-# #         dag_id="1.12-PROSPEC_CONSISTIDO",
-# #         json_produtos=params,
-# #         url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
-# #     )
-    
-
-# def entrada_saida_previvaz(dadosProduto: dict):
-#     filename = get_filename(dadosProduto)
-#     logger.info(filename)
-
-#     dtInicial, dtFinal = dadosProduto["dataProduto"].split(' - ')
-
-
 
 def arquivos_modelo_pdp(dadosProduto: dict):
     filename = get_filename(dadosProduto)
@@ -200,17 +142,8 @@ def arquivos_modelo_pdp(dadosProduto: dict):
     dtRef = datetime.datetime.strptime(
           dadosProduto["dataProduto"], "%d/%m/%Y"
       )
-    
-    #rodar smap
     SmapTools.organizar_chuva_vazao_files(pdp_file_zip=filename,files_to_copy=['AJUSTE','PlanilhaUSB'], flag_db=True)
-    # SmapTools.trigger_dag_SMAP(dtRef)
-    # SmapTools.resultado_cv_obs(
-    #     dtRef.date(),
-    #     fonte_referencia='pdp',
-    #     dst_path= os.path.join(PATH_CV,dtRef.strftime("%Y%m%d"),'fontes')
-    #     )
 
-    #gerar Produto
     
 def arquivo_acomph(dadosProduto: dict):
     filename = get_filename(dadosProduto)
@@ -298,57 +231,9 @@ def historico_preciptacao(dadosProduto: dict):
 
     chuva.importar_chuva_psath(filename)
 
-    # rodar smap
-    # SmapTools.trigger_dag_SMAP(dtRef)
-
-    # SmapTools.resultado_cv_obs(
-    #     dtRef.date(),
-    #     fonte_referencia='psat',
-    #     dst_path= os.path.join(PATH_CV,dtRef.strftime("%Y%m%d"),'fontes')
-    #     )
-
-    # gerar Produto
     airflow_tools.trigger_airflow_dag(
             dag_id="Mapas_PSAT")
 
-    
-
-        
-
-
-# def modelo_eta(dadosProduto: dict):
-#     filename = get_filename(dadosProduto)
-#     logger.info(filename)
-
-#     dst = os.path.join(PATH_ROTINA_CONJUNTO, 'Arq_Entrada', 'ETA40')
-#     os.makedirs(dst, exist_ok=True)
-#     extracted_files = DIR_TOOLS.extract_specific_files_from_zip(
-#         path=filename,
-#         files_name_template=['ETA40_m_*.dat'],
-#         date_format='%d%m%y',
-#         dst=dst,
-#         extracted_files=[])
-#     logger.info(extracted_files)
-
-#     dtRef = datetime.datetime.strptime(dadosProduto["dataProduto"],'%d/%m/%Y')
-#     dst = os.path.join(PATH_CV,dtRef.strftime('%Y%m%d'),'ETA40','ONS')
-#     os.makedirs(dst, exist_ok=True)
-#     extracted_files = DIR_TOOLS.extract_specific_files_from_zip(
-#         path=filename,
-#         files_name_template= ["ETA40_p*a*.dat"],
-#         date_format='%d%m%y',
-#         dst=dst)
-#     logger.info(extracted_files)
-#     if dadosProduto.get('enviar', True):
-#         airflow_tools.trigger_airflow_dag(
-#             dag_id="PCONJUNTO",
-#             json_produtos={
-#                 'dt_ref':dadosProduto['dataProduto']
-#                 })
-
-
-
-    
 def deck_entrada_saida_dessem(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
@@ -450,106 +335,7 @@ def prevCarga_dessem(dadosProduto: dict):
     if data_string == f"{anoAtual}-01-01":
         revisao.atualizar_patamar_ano_atual(filename,dtRef )
 
-
-# def carga_patamar_nw(dadosProduto: dict):
-    
-
-#     filename = get_filename(dadosProduto)
-    
-#     airflow_tools.trigger_airflow_dag(
-#         dag_id="webhook-sintegre",
-#         json_produtos=dadosProduto,
-#         url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
-#     )
-    
-#     logger.info(filename)
-
-#     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
-#     logger.info(path_copia_tmp)
-
-#     if "ons" in dadosProduto["url"]:
-#         id_fonte = "ons"
-#     else:
-#         id_fonte = "ccee" 
-        
-#     dtRef = datetime.datetime.strptime(dadosProduto["dataProduto"], "%m/%Y")
-#     dtRef_last_saturday = wx_opweek.getLastSaturday(dtRef)
-
-#     deck_nw.importar_carga_nw(
-#         pathZip = filename, 
-#         dataProduto = dtRef, 
-#         dataReferente = dtRef_last_saturday, 
-#         str_fonte = id_fonte)
-
-#     #gerar Produto
-#     # if dadosProduto.get('enviar', True):
-#     #     GERAR_PRODUTO.enviar({
-#     #     "produto":"REVISAO_CARGA_NW",
-#     #     "path":filename,
-#     #     "data_ref": dtRef
-#     # })
-        
-#     if dadosProduto.get('enviar', True): 
-#         dadosProduto['dt_ref'] = dadosProduto['dataProduto']
-#         airflow_tools.trigger_airflow_dag(
-#             dag_id="1.17-NEWAVE_ONS-TO-CCEE",
-#             json_produtos=dadosProduto,
-#             url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
-#         )
-
-#     return {
-#         "file_path": filename,
-#         "trigger_dag_id":"PROSPEC_UPDATER",
-#         "task_to_execute": "revisao_carga_nw"
-#     }
-
-
-# def carga_IPDO(dadosProduto: dict):
-    
-
-#     filename = get_filename(dadosProduto)
-#     logger.info(filename)
-
-#     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
-#     logger.info(path_copia_tmp)
-
-#     dtRef = datetime.datetime.strptime(
-#           dadosProduto["dataProduto"], "%d/%m/%Y"
-#       )
-
-#     carga_ons.importar_carga_ipdo(filename,dtRef)
-
-#     #gerar Produto
-#     if dadosProduto.get('enviar', True):
-#         GERAR_PRODUTO.enviar({
-#         "produto":"IPDO",
-#         "data":dtRef,
-#         "path": filename,
-#         "destinatarioWhats": ["Condicao Hidrica"]
-#     })
-    
-    
-# def modelo_ECMWF(dadosProduto: dict):
-#     filename = get_filename(dadosProduto)
-#     logger.info(filename)
-    
-#     dst = os.path.join(PATH_ROTINA_CONJUNTO, 'Arq_Entrada', 'ECMWF')
-#     os.makedirs(dst, exist_ok=True)
-#     extracted_files = DIR_TOOLS.extract_specific_files_from_zip(
-#         path=filename,
-#         files_name_template=['ECMWF_m_*.dat'],
-#         date_format='%d%m%y',
-#         dst=dst,
-#         extracted_files=[])
-#     logger.info(extracted_files)
-#     if dadosProduto.get('enviar', True):
-#         airflow_tools.trigger_airflow_dag(
-#             dag_id="PCONJUNTO",
-#             json_produtos={
-#                 'dt_ref':dadosProduto['dataProduto']
-#                 })
-
-            
+      
 def dados_geracaoEolica(dadosProduto: dict):
 
     filename = get_filename(dadosProduto)
@@ -578,315 +364,8 @@ def prevCarga_dessem_saida(dadosProduto: dict):
     carga_ons.importar_prev_carga_dessem_saida(path_zip = filename)
     
 
-# def modelo_gefs(dadosProduto: dict):
-
-#     filename = get_filename(dadosProduto)
-#     logger.info(filename)
-    
-#     dst = os.path.join(PATH_ROTINA_CONJUNTO, 'Arq_Entrada', 'GEFS')
-#     os.makedirs(dst, exist_ok=True)
-#     extracted_files = DIR_TOOLS.extract_specific_files_from_zip(
-#         path=filename,
-#         files_name_template=['GEFS_m_*.dat'],
-#         date_format='%d%m%y',
-#         dst=dst,
-#         extracted_files=[])
-#     logger.info(extracted_files)
-#     if dadosProduto.get('enviar', True):
-#         airflow_tools.trigger_airflow_dag(
-#             dag_id="PCONJUNTO",
-#             json_produtos={
-#                 'dt_ref':dadosProduto['dataProduto']
-#                 })
 
 
-# def resultados_nao_consistidos_semanal(dadosProduto: dict):
-
-#     filename = get_filename(dadosProduto)
-#     logger.info(filename)
-    
-#     # titulo, html = wx_libs_preco.nao_consistido_rv(filename)
-    
-#     # data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto')[:10], "%d/%m/%Y")
-    
-#     # if dadosProduto.get('enviar', True):
-#     #     GERAR_PRODUTO.enviar({
-#     #         "produto":"PREV_ENA_CONSISTIDO",
-#     #         "data":data_produto,
-#     #         "titulo":titulo,
-#     #         "html":html
-#     #     })
-    
-#     temp_dir = os.path.join(PATH_WEBHOOK_TMP, 'temp_extract_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
-#     os.makedirs(temp_dir, exist_ok=True)
-    
-#     DIR_TOOLS.extract(filename, temp_dir)
-    
-#     zip_filename = os.path.basename(filename)
-#     pdb.set_trace()
-#     rev_match = re.search(r'REV(\d+)', zip_filename, re.IGNORECASE)
-#     month_match = re.search(r'_(\d{6})_', zip_filename)
-    
-#     if not rev_match:
-#         rev_match = re.search(r'REV(\d+)', zip_filename, re.IGNORECASE)
-    
-#     if not month_match:
-#         month_match = re.search(r'(\d{6})', zip_filename)
-        
-#     prevs_files = glob.glob(os.path.join(temp_dir, '**/Prevs_VE.prv'), recursive=True)
-    
-#     prevs_file = prevs_files[0]
-#     logger.info(f"Arquivo de previsão encontrado em: {prevs_file}")
-    
-#     if month_match:
-        
-#         params = dadosProduto.copy()
-#         params["sensibilidade"] = "NÃO CONSISTIDO"
-        
-#         airflow_tools.trigger_airflow_dag(
-#             dag_id="1.12-PROSPEC_CONSISTIDO",
-#             json_produtos=params,
-#             url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
-#         )
-#     else:
-#         raise Exception(f"Não foi possível extrair mês do nome do arquivo: {zip_filename}")
-    
-    
-
-# def relatorio_resutados_finais_consistidos(dadosProduto: dict):
-
-#     filename = get_filename(dadosProduto)
-#     logger.info(filename)
-
-#     # path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
-#     # logger.info(path_copia_tmp)
-
-#     wx_libs_preco.dadvaz_pdp(filename,data["dataProduto"])
-#     filename_splited = os.path.basename(filename).split('_')
-#     diaPrevisao = int(filename_splited[3])
-#     mesPrevisao = int(filename_splited[4])
-#     anoPrevisao = int(filename_splited[5])
-#     dtPrevisao = datetime.datetime(anoPrevisao, mesPrevisao, diaPrevisao)
-
-#     # revisao.importar_prev_ena_consistido(filename,dtPrevisao)
-#     if dadosProduto.get('enviar', True):
-#         GERAR_PRODUTO.enviar({
-#     "produto":"PREVISAO_ENA_SUBMERCADO",
-#     "data":dtPrevisao,
-    
-#     })
-
-# def niveis_partida_dessem(dadosProduto: dict):
-#     filename = get_filename(dadosProduto)
-#     logger.info(filename)
-
-#     path_copia_tmp = DIR_TOOLS.copy_src(filename, PATH_PLAN_ACOMPH_RDH)
-#     logger.info(path_copia_tmp)
-
-#     vazao.importNiveisDessem(filename)
-
-
-# def dadvaz_vaz_prev(dadosProduto: dict):
-
-#     filename = get_filename(dadosProduto)
-#     logger.info(filename)
-
-#     dtReferente = datetime.datetime.strptime(dadosProduto["dataProduto"], '%d/%m/%Y')
-#     path_dessem_diario = '/WX2TB/Documentos/fontes/PMO/arquivos/diario/{}/dessem'.format(dtReferente.strftime('%Y%m%d'))
-#     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_dessem_diario)
-#     logger.info(path_copia_tmp)
-    
-# def deck_resultados_decomp(dadosProduto: dict):
-
-#     filename = get_filename(dadosProduto)
-#     logger.info(filename)
-
-#     dtInicial, dtFinal = dadosProduto["dataProduto"].split(' - ')
-#     dtInicial = datetime.datetime.strptime(dtInicial, '%d/%m/%Y')
-#     dataEletrica =  wx_opweek.ElecData(dtInicial.date())
-#     # /WX2TB/Documentos/fontes/PMO/arquivos/decks/202101_RV1
-#     path_decks = '/WX2TB/Documentos/fontes/PMO/arquivos/decks/{}{:0>2}_RV{}'.format(dataEletrica.anoReferente, dataEletrica.mesReferente, dataEletrica.atualRevisao)
-#     if dadosProduto.get('enviar', True): 
-#         dadosProduto['dt_ref'] = dadosProduto['dataProduto']
-#         airflow_tools.trigger_airflow_dag(
-#             dag_id="1.16-DECOMP_ONS-TO-CCEE",
-#             json_produtos=dadosProduto,
-#             url_airflow="https://tradingenergiarz.com/airflow-middle/api/v2"
-#             )
-#     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_decks)
-#     logger.info(path_copia_tmp)
-    
-
-# def resultados_finais_consistidos(dadosProduto: dict):
-
-#     filename = get_filename(dadosProduto)
-#     logger.info(filename)
-
-#     dtInicial = dadosProduto["dataProduto"]
-#     dtInicial = datetime.datetime.strptime(dtInicial, '%d/%m/%Y')
-#     dataEletrica =  wx_opweek.ElecData(dtInicial.date())
-#     path_decks = os.path.abspath('/WX2TB/Documentos/fontes/PMO/arquivos/decks/{}{:0>2}_RV{}'.format(dataEletrica.anoReferente, dataEletrica.mesReferente, dataEletrica.atualRevisao))
-#     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_decks)
-#     logger.info(path_copia_tmp)
-
-
-def ler_csv_prev_weol_para_dicionario(file):
-    reader = csv.reader(file, delimiter=';')
-    headers = next(reader)[1:]
-    data_dict = {}
-    for row in reader:
-        regiao = row[0]
-        valores = row[1:]
-        for i in range(0, len(headers), 3):
-            data_key = f"{headers[i]} {headers[i+2]}"
-            if data_key not in data_dict:
-                data_dict[data_key] = {}
-            if regiao != "Patamares":
-                data_dict[data_key][regiao] = {
-                    "pesado": valores[i],
-                    "medio": valores[i+1],
-                    "leve": valores[i+2]
-                }
-    return data_dict
-    
-    
-    
-def deck_prev_eolica_semanal_patamares(dadosProduto: dict):
-    try:
-        res  = req.get(dadosProduto["url"])
-        zip_file = zipfile.ZipFile(io.BytesIO(res.content))
-    except:
-        zip_file = zipfile.ZipFile(dadosProduto["base64"])
-        
-    
-    patamates_csv_path = [x for x in zip_file.namelist() if "Arquivos Entrada/Dados Cadastrais/Patamares_" in x and ".csv" in x]
-    patamates_csv_path = patamates_csv_path[0]
-    
-    
-    with zip_file.open(patamates_csv_path) as file:
-        content = file.read()
-        df_patamares = pd.read_csv(io.StringIO(content.decode("latin-1")), sep=";")
-        df_patamares.columns = [x[0].lower() + x[1:] for x in df_patamares.columns]
-    df_patamares.columns = ['inicio','patamar','cod_patamar','dia_semana','dia_tipico','tipo_dia','intervalo','dia','semana','mes']
-    post_patamates = req.post(f"https://tradingenergiarz.com/api/v2/decks/patamares", json=df_patamares.to_dict("records"),
-        headers={
-        'Authorization': f'Bearer {get_access_token()}'
-    })
-    if post_patamates.status_code == 200:
-        logger.info("Patamares inseridos com sucesso")
-    else:
-        logger.error(f"Erro ao inserir patamares. status code: {post_patamates.status_code}")
-
-def deck_prev_eolica_semanal_previsao_final(dadosProduto: dict):
-    res  = req.get(dadosProduto["url"])
-    try:
-        res  = req.get(dadosProduto["url"])
-        zip_file = zipfile.ZipFile(io.BytesIO(res.content))
-    except:
-        zip_file = zipfile.ZipFile(dadosProduto["base64"])
-    
-    ## puxando arquivo baixado locakmente ##
-    # zip_file = zipfile.ZipFile("/home/arthur-moraes/Downloads/Deck_PrevMes_20241116.zip")
-    
-    prev_eol_csv_path = [x for x in zip_file.namelist() if "Arquivos Saida/Previsoes Subsistemas Finais/Total/Prev_" in x and ".csv" in x]
-    prev_eol_csv_path = prev_eol_csv_path[0]
-    
-    body_weol = []
-    with zip_file.open(prev_eol_csv_path) as file:
-        content = file.read()
-        info_weol = ler_csv_prev_weol_para_dicionario(io.StringIO(content.decode("latin-1")))
-        for data in info_weol.keys():
-            data_inicio:datetime.datetime = datetime.datetime.strptime(data.split(" ")[0], "%d/%m/%Y")
-            data_fim:datetime.datetime = datetime.datetime.strptime(data.split(" ")[1], "%d/%m/%Y")
-            for submercado in info_weol[data].keys():                
-                for patamar in info_weol[data][submercado].keys():
-                    body_weol.append({
-                        "inicio_semana":str(data_inicio.date()),
-                        "final_semana":str(data_fim.date()),
-                        "rv_atual": wx_opweek.ElecData(data_inicio.date()).atualRevisao,
-                        "mes_eletrico": wx_opweek.ElecData(data_inicio.date()).mesReferente,
-                        "submercado":submercado,
-                        "patamar":patamar,
-                        "valor":info_weol[data][submercado][patamar],
-                        "data_produto":str(datetime.datetime.strptime(dadosProduto['dataProduto'], "%d/%m/%Y").date())})
-        
-    post_decks_weol = req.post(f"https://tradingenergiarz.com/api/v2/decks/weol",
-                               json=body_weol,
-                               headers={
-                'Authorization': f'Bearer {get_access_token()}'
-            })
-    if post_decks_weol.status_code == 200:
-        logger.info("WEOL inserido com sucesso")
-    else:
-        logger.error(f"Erro ao inserir WEOL. status code: {post_decks_weol.status_code}")
-        
-# def deck_prev_eolica_semanal_weol(dadosProduto:dict):
-#     filename = get_filename(dadosProduto)
-#     airflow_tools.trigger_airflow_dag(
-#         dag_id="webhook_deck_prev_eolica_semanal_weol",
-#         json_produtos=dadosProduto
-#         )
-    
-def enviar_tabela_comparacao_weol_whatsapp_email(dadosProduto:dict):
-    data_produto = datetime.datetime.strptime(dadosProduto.get('dataProduto'), "%d/%m/%Y")
-    if dadosProduto.get('enviar', True):
-        GERAR_PRODUTO.enviar({
-        "produto":"TABELA_WEOL_MENSAL",
-        "data":data_produto.date(),
-    })
-    if dadosProduto.get('enviar', True):
-        GERAR_PRODUTO.enviar({
-        "produto":"TABELA_WEOL_SEMANAL",
-        "data":data_produto.date(),
-    })
-    if dadosProduto.get('enviar', True):
-        GERAR_PRODUTO.enviar({
-        "produto":"TABELA_WEOL_DIFF",
-        "data":data_produto.date(),
-    })
-
-
-
-
-
-# def notas_tecnicas_medio_prazo(dadosProduto: dict):
-    
-#     arquivo_zip = get_filename(dadosProduto)
-#     logger.info(arquivo_zip)
-    
-#     path_arquivo = os.path.join(PATH_WEBHOOK_TMP, os.path.basename(arquivo_zip)[:-4])
-#     os.makedirs(path_arquivo, exist_ok=True)
-    
-#     with zipfile.ZipFile(arquivo_zip, 'r') as zip_ref:
-#         zip_contents = zip_ref.namelist()
-#         logger.info(f"Conteúdo do zip: {zip_contents}")
-        
-#         excel_files = [f for f in zip_contents if f.endswith('.xlsx') or f.endswith('.xls')]
-#         for excel_file in excel_files:
-#             zip_ref.extract(excel_file, path_arquivo)
-#             logger.info(f"Arquivo extraído: {excel_file}")
-    
-#     arquivo_xls = os.path.join(path_arquivo, os.path.basename(excel_file))
-    
-#     logger.info(f"Arquivos Excel encontrados: {arquivo_xls}")
-    
-#     if not arquivo_xls:
-#         logger.error(f"Nenhum arquivo Excel encontrado em {path_arquivo}")
-#         return
-#     GERAR_PRODUTO.enviar({
-#         "produto":"NOTAS_TECNICAS",
-#         "data": datetime.datetime.strptime(dadosProduto.get('dataProduto'), "%m/%Y"),
-#         "arquivo": arquivo_xls
-#     })
-#     if f"GTMIN_CCEE_{(datetime.date.today().replace(day=1, month=datetime.date.today().month+1)).strftime('%m%Y')}" in arquivo_xls.upper():
-#         airflow_tools.trigger_airflow_dag(
-#             dag_id="1.17-NEWAVE_ONS-TO-CCEE",
-#             json_produtos=dadosProduto,
-#         )
-    
-    
-    
-    
 
 if __name__ == '__main__':
     

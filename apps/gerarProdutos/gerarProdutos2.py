@@ -135,18 +135,7 @@ class GeradorProdutos():
                 if not resultado.msgWhats:
                     resultado.msgWhats = f'{produto} ({data_str})'
 
-                # esses produtos enviam para o whatsapp do gilseu, os arquivos enviados no email
-                if (parametros['produto'] == 'REVISAO_CARGA_NW') or (parametros['produto'] == 'REVISAO_CARGA_NW_PRELIMINAR'):
-                    msgWhats = " " 
-                    if parametros['produto'] == 'REVISAO_CARGA_NW_PRELIMINAR': msgWhats="PRELIMINAR"
-
-                    for file in resultado.file:
-                        self.send_whatsapp_message(
-                            destinatarioWhats=self.num_whatsapp,
-                            msgWhats = msgWhats,
-                            fileWhats = file
-                        )
-
+               
                 for destino in resultado.destinatarioWhats:
                     print(f"Enviando mensagem para {destino}")
                     self.send_whatsapp_message(
@@ -180,28 +169,7 @@ class GeradorProdutos():
 
         deck_decomp = os.path.abspath('/WX2TB/Documentos/fontes/PMO/converte_dc/input')
 
-        print(f'python {sys.argv[0]} --produto SST --data {data.strftime("%d/%m/%Y")}')
-        print(f'python {sys.argv[0]} --produto IPDO --data {data.strftime("%d/%m/%Y")}')
-        print(f'''python {sys.argv[0]} --produto ACOMPH --path {os.path.join(path_plan_acomph_rdh, f"ACOMPH_{data.strftime('%d.%m.%Y')}.xls")}''')
-        print(f'python {sys.argv[0]} --produto RDH --data {data.strftime("%d/%m/%Y")}')
-        print(f'python {sys.argv[0]} --produto preciptacao_modelo --data {data.strftime("%d/%m/%Y")} --modelo gefs --rodada 0')
-        print(f'python {sys.argv[0]} --produto RELATORIO_BBCE --data {data.strftime("%d/%m/%Y")}')
-        print(f'python {sys.argv[0]} --produto RESULTADO_DESSEM --data {(data + datetime.timedelta(days=1)).strftime("%d/%m/%Y")}')
-        print(f'python {sys.argv[0]} --produto PREVISAO_ENA_SUBMERCADO --data {(data + datetime.timedelta(days=1)).strftime("%d/%m/%Y")}')
-        print(f'python {sys.argv[0]} --produto PREVISAO_CARGA_DESSEM --data {(data + datetime.timedelta(days=1)).strftime("%d/%m/%Y")}')
-        print(f'python {sys.argv[0]} --produto DIFERENCA_CV --data {data.strftime("%d/%m/%Y")}')
-        print(f'python {sys.argv[0]} --produto RESULTADO_PREVS --data {data.strftime("%d/%m/%Y")} modelo PCONJUNTO rodada 0 dtrev {dt_proxRv} preliminar 0 pdp 0 psat 0')
-        print(f'python {sys.argv[0]} --produto ACOMPH --data {data.strftime("%d/%m/%Y")}')
-        print(f'python {sys.argv[0]} --produto RESULTADOS_PROSPEC --nomeRodadaOriginal \'["ecmwf_ens-wx1","ecmwf_ens-wx2"]\' --path \'{filesProspec}\' --destinatarioEmail \'["thiago@wxe.com.br","middle@wxe.com.br"]\' --assuntoEmail \'Assunto do email\' --corpoEmail \'<a1>Coloque aqui o corpo do email</a1>\' --considerarPrevs \'[0]\' --fazer_media 0 --enviar_whats 0')
-        print(f'python {sys.argv[0]} --produto PREVISAO_GEADA --data {data.strftime("%d/%m/%Y")}')
-        print(f'python {sys.argv[0]} --produto REVISAO_CARGA --path {os.path.join(path_plan_acomph_rdh, file_revisaoCargas)}')
-        print(f'python {sys.argv[0]} --produto CMO_DC_PRELIMINAR --path {os.path.join(deck_decomp, "PMO_deck_preliminar.zip")}')
-        print(f'python {sys.argv[0]} --produto GERA_DIFCHUVA --data {data.strftime("%d/%m/%Y")}')
-        print(f'python {sys.argv[0]} --produto REVISAO_CARGA_NW --path {os.path.join(path_plan_acomph_rdh, "RV0_PMO_%B_%Y_carga_mensal.zip")}')
-        print(f'python {sys.argv[0]} --produto REVISAO_CARGA_NW_PRELIMINAR --data {data.strftime("%d/%m/%Y")}')
-        print(f'python {sys.argv[0]} --produto PSATH_DIFF --path {os.path.join(pathArquivosTmp, "psath_%d%m%Y.zip")}')
-        print(f'python {sys.argv[0]} --produto TABELA_WEOL_MENSAL --data {data.strftime("%d/%m/%Y")}')
-        print(f'python {sys.argv[0]} --produto TABELA_WEOL_SEMANAL --data {data.strftime("%d/%m/%Y")}')
+
 
         exit()
 

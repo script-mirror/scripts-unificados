@@ -1,13 +1,9 @@
 import os
 import sys
-import pdb
-import json
-import math
 import datetime
 import numpy as np
 import pandas as pd
 import sqlalchemy as db
-import subprocess
 import os
 import requests
 import logging
@@ -20,10 +16,8 @@ logging.basicConfig(level=logging.INFO,
 
 logger = logging.getLogger(__name__)
 path_fontes = "/WX2TB/Documentos/fontes/"
-path_produtos = "/home/diogopolastrine/Documentos/produtos"
 sys.path.insert(1,path_fontes)
-sys.path.insert(2,path_produtos)
-from PMO.scripts_unificados.bibliotecas import wx_dbClass,rz_dir_tools
+from PMO.scripts_unificados.bibliotecas import wx_dbClass
 from PMO.scripts_unificados.apps.web_modelos.server.libs import wx_calcEna 
 import os
 from middle.utils import Constants
@@ -139,18 +133,7 @@ def importAcomph(path):
                         })
     print(res.status_code)
     print(res.text)
-    # df_acomph_insert['afluente_lido'] = None
 
-    # sql_delete = tb_acomph.delete().where(db.and_(tb_acomph.c.cd_posto.in_(POSTOS) ,tb_acomph.c.dt_acomph == DT_ACOMPH))
-
-    # # trocar de False para True python 3.12+
-    # num_deletados = dataBase.db_execute(sql_delete, False).rowcount
-    # print(f"{num_deletados} linhas deletadas.") 
-
-    # sql_insert = tb_acomph.insert().values(df_acomph_insert.values.tolist())
-    # num_inseridos = dataBase.db_execute(sql_insert, False).rowcount
-    # print(f"{num_inseridos} linhas inseridas.")
-    # print("ACOMPH processado com sucesso!")
     update_acomph_cache(DT_ACOMPH)
     
 
@@ -538,77 +521,6 @@ def importRdh(path):
     cmd += f"python rz_cache.py atualizar_cache_rdh"
     os.system(cmd)
 
-# ================================== VAZOES OBS - SMAP ========================================================
-
-# def process_planilha_vazoes_obs(spreadsheet_path):
-
-#     DIR_TOOLS = rz_dir_tools.DirTools()
-#     file_path = DIR_TOOLS.get_name_insentive_name(spreadsheet_path)
-#     if not file_path:
-#         print(f"Arquivo não encontrado! {spreadsheet_path}") 
-#         quit()
-#     print('Tratando a planilha :'+file_path)
-
-#     excel = pd.ExcelFile(file_path)
-#     with open(PATH_LISTA_VAZOES, encoding='utf-8') as f:
-#         infoTrechos = json.load(f)
-    
-#     vazoes_values = []	
-#     for index, station_info in enumerate(infoTrechos):
-#         trecho = station_info
-
-#         # Armazena as variaveis do json
-#         nomeArquivoSaida = trecho
-#         tipoVazao = infoTrechos[station_info]['iniciais']
-#         sheet_name = infoTrechos[station_info]['sheet']
-#         codigoEstacao = infoTrechos[station_info]['codigoEstacao']
-#         bacia = infoTrechos[station_info]['bacia']
-
-#         print(nomeArquivoSaida+' ('+str(index+1)+'/'+str(len(infoTrechos))+')')
-
-#         # Leitura da planilha de vazao utilizando as linhas 4 e 6 como header (multi-level)
-#         df = excel.parse(sheet_name, header=[4,6])
-#         # Modifica o index para os valores de data e em seguida dropa a coluna
-#         df.index = df['Unnamed: 0_level_0']['DATA']
-#         df = df.drop( 'Unnamed: 0_level_0', axis=1, level=0)
-#         # Remove os index (datas) nulos
-#         df = df[df.index.notnull()]
-
-#         for ii, comp in enumerate(infoTrechos[station_info]['composicao']):
-
-#             if 'sheet' not in infoTrechos[station_info]['composicao'][comp]:
-#                 vazComp = df[comp][infoTrechos[station_info]['composicao'][comp]['tipoVazao']]
-
-#             else:
-#                 df_temp = excel.parse(infoTrechos[station_info]['composicao'][comp]['sheet'], header=[4,6])
-#                 df_temp.index = df_temp['Unnamed: 0_level_0']['DATA']
-#                 df_temp = df_temp.drop( 'Unnamed: 0_level_0', axis=1, level=0)
-#                 df_temp = df_temp[df_temp.index.notnull()]
-#                 vazComp = df_temp[comp][infoTrechos[station_info]['composicao'][comp]['tipoVazao']]
-
-#             if ii == 0:
-#                 vaz_out = vazComp
-#             else:
-#                 if 'tempoViagem' in infoTrechos[station_info]['composicao'][comp]:
-#                     tempoViagem = infoTrechos[station_info]['composicao'][comp]['tempoViagem']
-#                     # Dias de viagem arredondados para cima (Ex: 13.9h = 1 dia)
-#                     diasViagem = math.ceil(tempoViagem/24)
-                    
-#                     # Condicao especial para FOA
-#                     if nomeArquivoSaida == 'FOA':
-#                         vaz_out -= (tempoViagem/(diasViagem*24))*vazComp + ((diasViagem*24 - tempoViagem)/(diasViagem*24))*vazComp.shift(periods=diasViagem)
-#                     else:
-#                         vaz_out += (tempoViagem/(diasViagem*24))*vazComp.shift(periods=diasViagem) + ((diasViagem*24 - tempoViagem)/(diasViagem*24))*vazComp
-#                 else:
-#                     vaz_out += vazComp
-#         if nomeArquivoSaida == 'GOV. JAYME CANET':
-#             nomeArquivoSaida = 'MAUA'
-
-#         for dt, vaz in vaz_out.items():
-#             vazoes_values += [nomeArquivoSaida, codigoEstacao, tipoVazao, dt.strftime('%Y-%m-%d 00:00:00'),round(vaz,2)],
-
-#     importar_vazoes_obs_smap(vazoes_values)
-#     return vazoes_values
 
 
 def importar_vazoes_obs_smap(vazoes_values):
@@ -652,57 +564,6 @@ def importar_vazoes_obs_smap(vazoes_values):
     print('Dados tratados com sucesso!\n')
     return True
 
-#===========================================================================
-
-
-# def importNiveisDessem(path):
-#     """ Importa o produto "Níveis de Partida para o DESSEM" disponibilizado pelo ONS para o banco de dados
-#     :param path: Caminho do arquivo
-#     :return answer: Numero de linhas inseridas no banco de dados
-#     """
-#     print("Importando os niveis de partida para o DESSEM")
-#     print("Leitura do arquivo: {0}".format(path))
-
-#     dataFormat = "%Y-%m-%d"
-    
-#     # Abre o arquivo recebido e armazena a primaira aba
-#     df_excel = pd.ExcelFile(path)
-#     ABAS = df_excel.sheet_names
-#     df_excel = df_excel.parse(ABAS[0], header=None)
-#     niveis = df_excel.loc[df_excel[0].dropna().index.tolist()]
-
-#     # Localizacao da data
-#     dtReferente = df_excel.loc[0,9]
-
-#     db_ons = wx_dbClass.db_mysql_master('db_ons', connect=True)
-#     tb_niveis_dessem = db_ons.db_schemas['tb_niveis_dessem']
-#     tb_posto_uhe = db_ons.db_schemas['tb_posto_uhe']
-
-#     sql_select = db.select(
-#         tb_posto_uhe.c.cd_uhe,
-#         tb_posto_uhe.c.cd_np
-#         )
-
-#     answer = db_ons.db_execute(sql_select).fetchall()
-#     codigoUsinas = dict((cd_np, cd_uhe) for (cd_uhe, cd_np) in answer)
-#     val = []
-#     for index, row in niveis.iterrows():
-#         val.append((dtReferente.strftime(dataFormat), codigoUsinas[row[0]],  row[8], row[11]))
-
-#     sql_delete = tb_niveis_dessem.delete().where(
-#         tb_niveis_dessem.c.dt_referente == dtReferente.strftime(dataFormat)
-#         )
-#     n_row = db_ons.db_execute(sql_delete).rowcount
-#     print(f'Deletado {n_row} linhas da tabela tb_niveis_dessem referente ao dia {dtReferente.strftime(dataFormat)}')
-
-
-#     sql_insert = tb_niveis_dessem.insert().values(val)
-#     n_row = db_ons.db_execute(sql_insert).rowcount
-#     print(f'Inserido {n_row} novas linhas da tabela tb_niveis_dessem referente ao dia {dtReferente.strftime(dataFormat)}')
-
-#     db_ons.db_dispose()
-
-#     return True
 
 
 if __name__ == '__main__':

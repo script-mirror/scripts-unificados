@@ -12,7 +12,14 @@ path.append('/WX2TB/Documentos/fontes/')
 from PMO.scripts_unificados.bibliotecas.wx_dbClass import db_mysql_master
 
 formatos_data = {'mensal':'%Y_%m', 'diario':'%Y_%m_%d', 'anual':'%Y'}
-link_base = {'restricoes_coff_eolica':'https://ons-aws-prod-opendata.s3.amazonaws.com/dataset/restricao_coff_eolica_tm/RESTRICAO_COFF_EOLICA_', 'restricoes_coff_solar':'https://ons-aws-prod-opendata.s3.amazonaws.com/dataset/restricao_coff_fotovoltaica_tm/RESTRICAO_COFF_FOTOVOLTAICA_', 'geracao_usina_2':'https://ons-aws-prod-opendata.s3.amazonaws.com/dataset/geracao_usina_2_ho/GERACAO_USINA-2_', 'geracao_usina':'https://ons-aws-prod-opendata.s3.amazonaws.com/dataset/geracao_usina_2_ho/GERACAO_USINA_', 'carga_global':'https://apicarga.ons.org.br/prd/cargaverificada', 'carga_global_programada':'https://apicarga.ons.org.br/prd/cargaprogramada', 'ons_cmo_semanal':'https://ons-aws-prod-opendata.s3.amazonaws.com/dataset/cmo_se/CMO_SEMANAL_', 'ons_cmo_horario':'https://ons-aws-prod-opendata.s3.amazonaws.com/dataset/cmo_tm/CMO_SEMIHORARIO_'}
+link_base = {'restricoes_coff_eolica':'https://ons-aws-prod-opendata.s3.amazonaws.com/dataset/restricao_coff_eolica_tm/RESTRICAO_COFF_EOLICA_',
+             'restricoes_coff_solar':'https://ons-aws-prod-opendata.s3.amazonaws.com/dataset/restricao_coff_fotovoltaica_tm/RESTRICAO_COFF_FOTOVOLTAICA_',
+             'geracao_usina_2':'https://ons-aws-prod-opendata.s3.amazonaws.com/dataset/geracao_usina_2_ho/GERACAO_USINA-2_',
+             'geracao_usina':'https://ons-aws-prod-opendata.s3.amazonaws.com/dataset/geracao_usina_2_ho/GERACAO_USINA_',
+             'carga_global':'https://apicarga.ons.org.br/prd/cargaverificada',
+             'carga_global_programada':'https://apicarga.ons.org.br/prd/cargaprogramada',
+             'ons_cmo_semanal':'https://ons-aws-prod-opendata.s3.amazonaws.com/dataset/cmo_se/CMO_SEMANAL_', 
+             'ons_cmo_horario':'https://ons-aws-prod-opendata.s3.amazonaws.com/dataset/cmo_tm/CMO_SEMIHORARIO_'}
 
 def request_csv(
         data:datetime.datetime,
