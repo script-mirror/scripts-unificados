@@ -11,7 +11,7 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.apps.airflow import airflow_tools
+from PMO.scripts_unificados.server_configuration.containers.airflow_mysql import airflow_tools
 
 
 diretorioApp = os.getcwd()
