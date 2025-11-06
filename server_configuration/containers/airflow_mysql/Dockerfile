@@ -48,6 +48,6 @@ RUN git config --global credential.helper store && \
     echo "https://${GIT_USERNAME}:${GIT_TOKEN}@github.com" > ~/.git-credentials
 
 RUN echo "Installing dependencies from requirements.txt..." && \
-    pip install --upgrade pip setuptools<67.0.0 wheel &&\
+    pip install --upgrade pip 'setuptools<67.0.0,>=66.0.0' wheel && \
     pip install -r /opt/airflow/requirements.txt && \
     echo "Dependency installation completed."
