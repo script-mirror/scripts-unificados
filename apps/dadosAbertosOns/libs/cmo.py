@@ -6,7 +6,7 @@ import sqlalchemy as sa
 from sys import path
 from io import StringIO
 
-path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas.wx_dbClass import db_mysql_master
 from apps.dadosAbertosOns.libs import utils
 

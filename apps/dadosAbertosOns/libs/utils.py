@@ -8,7 +8,7 @@ import datetime
 import pandas as pd
 from typing import Optional
 
-path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas.wx_dbClass import db_mysql_master
 
 formatos_data = {'mensal':'%Y_%m', 'diario':'%Y_%m_%d', 'anual':'%Y'}
