@@ -586,7 +586,7 @@ def get_prev_carga_dessem_semana(dt_prev):
 
     valores_carga_verificada = semana_carga_verificada_horaria(dt_prev)
 
-    valores_termica_semana = get_gereracao_termica_min_semana(dt_prev)
+    # valores_termica_semana = get_gereracao_termica_min_semana(dt_prev)
 
     #verifica se os dados verificados diarios do dia está completo pelo menos até as 22h
     try:
@@ -643,7 +643,8 @@ def get_prev_carga_dessem_semana(dt_prev):
             else:
                 valores_carga = ultimo_valor_carga
 
-        valor_carga_liquida = valores_carga[dt_str] - valores_renovaveis[dt_str] - valores_termica_semana[dt_str]
+        # valor_carga_liquida = valores_carga[dt_str] - valores_renovaveis[dt_str] - valores_termica_semana[dt_str]
+        valor_carga_liquida = valores_carga[dt_str] - valores_renovaveis[dt_str]
 
         valores_carga_out[dt_str] = valores_carga[dt_str]
         valores_carga_liquida_out[dt_str] = valor_carga_liquida
