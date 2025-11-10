@@ -1,14 +1,9 @@
-import pdb
 import pandas as pd
 import datetime
-from io import StringIO
-from sys import path
-import sqlalchemy
+import sys 
 from numpy import nan
 import warnings
 warnings.filterwarnings("ignore")
-
-
 sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas.wx_dbClass import db_mysql_master
 from apps.dadosAbertosOns.libs import utils

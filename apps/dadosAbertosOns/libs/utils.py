@@ -2,11 +2,11 @@ import pdb
 import requests
 from io import StringIO
 import sqlalchemy
-from sys import path
 from numpy import nan
 import datetime
 import pandas as pd
 from typing import Optional
+import sys
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas.wx_dbClass import db_mysql_master

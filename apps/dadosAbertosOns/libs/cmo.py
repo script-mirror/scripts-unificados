@@ -1,10 +1,7 @@
-import requests
 import pandas as pd
 import datetime
-import pdb
 import sqlalchemy as sa
-from sys import path
-from io import StringIO
+import sys
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas.wx_dbClass import db_mysql_master

@@ -1,7 +1,7 @@
 import pdb
 import pandas as pd
 import datetime
-from sys import path
+import sys
 from numpy import nan
 import warnings
 warnings.filterwarnings("ignore")
