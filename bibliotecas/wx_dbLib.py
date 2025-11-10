@@ -525,6 +525,8 @@ def get_gereracao_termica_min_semana(dt_prev):
     valores = {}
     dt_ini_semana = wx_opweek.getLastSaturday(dt_prev)
     dt_prox_ini_semana = dt_ini_semana + datetime.timedelta(days=7)
+    days_to_sum = datetime.timedelta(days=0)
+    ultimo_balanco_com_valor = None  
 
     dt_aux = dt_ini_semana
 
@@ -536,29 +538,34 @@ def get_gereracao_termica_min_semana(dt_prev):
 
         if balanco:
             ultimo_balanco_com_valor = balanco
-
         else:
             if dt_aux.weekday() == 5:
                 dt_anterior = dt_prev - datetime.timedelta(days=1)
                 balanco = get_Balanco_Dessem(dt_anterior)
-                ultimo_balanco_com_valor = balanco
+                if balanco: 
+                    ultimo_balanco_com_valor = balanco
             else:
                 balanco = ultimo_balanco_com_valor
+        
+        if not balanco:
+            raise ValueError(f"Sem dados de balanco do dessem para {dt_str}, verificar dag DOWNLOAD CCEE")
+            
         try:
             days_to_sum = dt_aux - balanco[0][0]
-        except:
-            logger.error("Sem dados de balanco do dessem, verificar dag DOWNLOAD CCEE")
+        except (IndexError, TypeError) as e:
+            logger.error(f"Erro ao calcular days_to_sum para {dt_str}: {e}")
+            raise 
+            
         df_balanco = pd.DataFrame(balanco, columns = ['dt_data_hora', 'str_subsistema', 'vl_cmo', 'vl_demanda','vl_geracao_renovaveis', 'vl_geracao_hidreletrica','vl_geracao_termica', 'vl_gtmin', 'vl_gtmax', 'vl_intercambio','vl_pld'])
         df_geracao_termica_min = df_balanco[df_balanco['dt_data_hora'] < dt_aux + datetime.timedelta(days=1) ][['dt_data_hora','str_subsistema','vl_gtmin']]
         df_geracao_termica_min['horario'] = df_geracao_termica_min['dt_data_hora'] + days_to_sum
-    
         
         df_geracao_termica_min['str_submercado'] = df_geracao_termica_min['str_subsistema'].map(lambda x: 'SUDESTE' if x == 'SE' else 'SUL' if x == 'S' else 'NORDESTE' if x == 'NE' else 'NORTE')
 
         df_geracao_termica_min = df_geracao_termica_min.set_index('horario').groupby('str_submercado')
         values = df_geracao_termica_min['vl_gtmin'].resample('1H').mean().ffill()
 
-        valores[dt_str]	= values
+        valores[dt_str] = values
 
         dt_aux += datetime.timedelta(days=1)
 
