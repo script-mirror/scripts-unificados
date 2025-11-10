@@ -18,7 +18,7 @@ __CODE_COMPANY_BBCE= os.getenv('CODE_COMPANY_BBCE')
 
 
 path_fontes = '/WX2TB/Documentos/fontes/'
-sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import wx_dbClass
 
 

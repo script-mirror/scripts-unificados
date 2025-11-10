@@ -8,7 +8,7 @@ import xarray as xr
 import sqlalchemy as db
 from datetime import datetime, timedelta
 import requests
-sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import wx_dbClass
 from apps.web_modelos.server.libs import rz_chuva
 

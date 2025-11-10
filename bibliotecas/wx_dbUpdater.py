@@ -9,7 +9,7 @@ import zipfile
 import pandas as pd
 from pathlib import Path
 
-sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import wx_opweek
 from bibliotecas.wx_dbLib import *
 

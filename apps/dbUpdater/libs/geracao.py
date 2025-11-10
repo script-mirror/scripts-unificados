@@ -6,7 +6,7 @@ import zipfile
 import datetime
 import pandas as pd
 
-sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import wx_dbClass
 
 def read_eolica_files(path_zip):

@@ -7,7 +7,7 @@ import sqlalchemy as db
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
-sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import  wx_dbClass,wx_opweek,wx_dbLib
 from apps.web_modelos.server.caches import rz_cache
 

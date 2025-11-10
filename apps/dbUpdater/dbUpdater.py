@@ -3,7 +3,7 @@ import pdb
 import sys
 import datetime
 
-sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import wx_opweek,rz_dir_tools
 from apps.dbUpdater.libs import rodadas,chuva,carga_ons,temperatura,deck_ds,bbce,vazao
 

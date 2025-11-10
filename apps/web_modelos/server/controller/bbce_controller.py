@@ -8,7 +8,7 @@ from flask_login import login_required
 import sqlalchemy as db
 import pandas as pd
 
-sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import wx_dbClass
 from apps.web_modelos.server.server import bp
 from apps.web_modelos.server import utils 

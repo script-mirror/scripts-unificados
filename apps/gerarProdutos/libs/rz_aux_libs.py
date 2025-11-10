@@ -36,7 +36,7 @@ dirApp = os.path.dirname(dirLibs)
 pathArquivos = os.path.join(dirApp,'arquivos')
 
 
-sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import wx_dbLib,wx_emailSender,wx_verificaCorImg,wx_dbClass
 from apps.gerarProdutos.libs import rz_relatorio_bbce,configs
 from apps.web_modelos.server.libs import wx_calcEna 

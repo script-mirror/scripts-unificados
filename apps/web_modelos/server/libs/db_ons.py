@@ -9,7 +9,7 @@ from numpy import array
 import warnings
 warnings.filterwarnings("ignore")
 
-sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas.wx_dbClass import db_mysql_master
 
 def listar_datas():

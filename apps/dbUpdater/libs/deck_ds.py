@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import sqlalchemy as db
 
-sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import wx_dbClass , wx_opweek , rz_dir_tools
 from dessem.libs import wx_renovaveis, wx_pdoCmo
 

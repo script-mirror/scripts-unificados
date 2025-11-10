@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 path_home =  os.path.expanduser("~")
 path_app = os.path.dirname(os.path.realpath(__file__))
 
-sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import wx_opweek
 from apps.newave.libs import wx_dger,wx_sistema,wx_expt,wx_manutt,wx_term,wx_c_adic,wx_confhd,wx_curva,wx_agrint,wx_desvagua,wx_ghmin,wx_modif,wx_patamar,wx_penalid
 from apps.newave.libs import wx_restricao_eletrica

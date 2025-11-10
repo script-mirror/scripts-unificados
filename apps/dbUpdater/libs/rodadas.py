@@ -8,7 +8,7 @@ import pandas as pd
 from sqlalchemy import select,func
 
 path_fontes = "/WX2TB/Documentos/fontes/"
-sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import wx_dbClass , wx_opweek
 
 DROPBOX_MIDDLE_PATH = os.path.join(os.path.expanduser("~"), 'Dropbox', 'WX - Middle')
