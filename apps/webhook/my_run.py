@@ -10,8 +10,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.server_configuration.containers.airflow_mysql import airflow_tools
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from server_configuration.containers.airflow_mysql import airflow_tools
 
 
 diretorioApp = os.getcwd()

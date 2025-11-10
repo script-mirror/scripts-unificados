@@ -10,8 +10,8 @@ except:
   locale.setlocale(locale.LC_ALL, '')
 
 
-sys.path.append('/WX2TB/Documentos/fontes/')
-from PMO.scripts_unificados.bibliotecas.wx_dbClass import db_mysql_master
+sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas.wx_dbClass import db_mysql_master
 
 
 

@@ -9,12 +9,9 @@ import zipfile
 import pandas as pd
 from pathlib import Path
 
-
-
-path_fontes = "/WX2TB/Documentos/fontes/"
-sys.path.insert(1,path_fontes)
-from PMO.scripts_unificados.bibliotecas import wx_opweek
-from PMO.scripts_unificados.bibliotecas.wx_dbLib import *
+sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_opweek
+from bibliotecas.wx_dbLib import *
 
 home_path =  os.path.expanduser("~")
 dropbox_middle_path = os.path.join(home_path, 'Dropbox', 'WX - Middle')

@@ -10,8 +10,8 @@ from selenium.webdriver.support import expected_conditions as EC
 
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import  wx_dbClass
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import  wx_dbClass
 
 PATH_PROFILE="/tmp/rust_mozprofile0vnzgM"
 

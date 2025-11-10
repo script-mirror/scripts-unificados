@@ -6,9 +6,9 @@ import sys
 import shutil
 import datetime
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import wx_opweek
-from PMO.scripts_unificados.apps.dessem.libs import wx_pdoSist
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_opweek
+from apps.dessem.libs import wx_pdoSist
 
 
 path_decks = os.path.abspath(f'/WX2TB/Documentos/fontes/PMO/decks')

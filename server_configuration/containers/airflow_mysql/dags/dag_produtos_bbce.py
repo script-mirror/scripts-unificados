@@ -7,9 +7,9 @@ from airflow.exceptions import AirflowException
 from airflow.operators.python import PythonOperator
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.dbUpdater.libs import bbce
-from PMO.scripts_unificados.apps.gerarProdutos import gerarProdutos2
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from apps.dbUpdater.libs import bbce
+from apps.gerarProdutos import gerarProdutos2
 
 
 def importar_operacoes():

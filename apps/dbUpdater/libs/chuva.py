@@ -8,10 +8,9 @@ import xarray as xr
 import sqlalchemy as db
 from datetime import datetime, timedelta
 import requests
-path_fontes = "/WX2TB/Documentos/fontes/"
-sys.path.insert(1,path_fontes)
-from PMO.scripts_unificados.bibliotecas import wx_dbClass
-from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_chuva
+sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbClass
+from apps.web_modelos.server.libs import rz_chuva
 
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))

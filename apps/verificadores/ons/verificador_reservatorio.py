@@ -4,9 +4,8 @@ import datetime
 import requests
 import pandas as pd
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import  wx_dbLib
-from PMO.scripts_unificados.apps.gerarProdutos import gerarProdutos2
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import  wx_dbLib
 
 
 mapping_postos_names ={'posto': {

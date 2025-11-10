@@ -7,12 +7,9 @@ import sqlalchemy as db
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
-
-
-path_fontes = "/WX2TB/Documentos/fontes/"
-sys.path.insert(1,path_fontes)
-from PMO.scripts_unificados.bibliotecas import  wx_dbClass,wx_opweek,wx_dbLib
-from PMO.scripts_unificados.apps.web_modelos.server.caches import rz_cache
+sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import  wx_dbClass,wx_opweek,wx_dbLib
+from apps.web_modelos.server.caches import rz_cache
 
 
 COLORS = {

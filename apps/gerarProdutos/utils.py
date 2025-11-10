@@ -2,11 +2,8 @@ import os
 import sys
 import requests
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.gerarProdutos.config import (
-    URL_COGNITO,
-    CONFIG_COGNITO,
-    )
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from apps.gerarProdutos.config import ( URL_COGNITO, CONFIG_COGNITO )
 
 
 def get_access_token() -> str:

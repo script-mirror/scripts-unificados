@@ -7,10 +7,10 @@ import pandas as pd
 import requests as req
 from typing import Callable
 from dotenv import load_dotenv
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.apps.rodadas import rz_rodadasModelos
-from PMO.scripts_unificados.apps.web_modelos.server.server import cache
-from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_ena, rz_chuva,rz_dbLib
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from apps.rodadas import rz_rodadasModelos
+from apps.web_modelos.server.server import cache
+from apps.web_modelos.server.libs import rz_ena, rz_chuva,rz_dbLib
 
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 

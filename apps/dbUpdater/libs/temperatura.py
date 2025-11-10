@@ -8,9 +8,8 @@ import datetime
 import pandas as pd
 import sqlalchemy as db
 
-path_fontes = "/WX2TB/Documentos/fontes/"
-sys.path.insert(1,path_fontes)
-from PMO.scripts_unificados.bibliotecas import wx_dbClass
+sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbClass
 
 submercados = {"SECO":1,"S":2,"NE":3,'N':4}
 

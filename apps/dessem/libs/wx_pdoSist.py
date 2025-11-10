@@ -10,8 +10,8 @@ import sqlalchemy as db
 warnings.filterwarnings("ignore")
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import wx_dbClass
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbClass
 
 def getFromFile(path):
 	dir_file = os.path.dirname(path)

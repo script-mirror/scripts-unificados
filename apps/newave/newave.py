@@ -11,15 +11,12 @@ import matplotlib.pyplot as plt
 
 path_home =  os.path.expanduser("~")
 path_app = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_opweek
+from apps.newave.libs import wx_dger,wx_sistema,wx_expt,wx_manutt,wx_term,wx_c_adic,wx_confhd,wx_curva,wx_agrint,wx_desvagua,wx_ghmin,wx_modif,wx_patamar,wx_penalid
 
-
-path_fontes = "/WX2TB/Documentos/fontes/"
-sys.path.insert(1,path_fontes)
-from PMO.scripts_unificados.bibliotecas import wx_opweek
-from PMO.scripts_unificados.apps.newave.libs import wx_dger,wx_sistema,wx_expt,wx_manutt,wx_term,wx_c_adic,wx_confhd,wx_curva,wx_agrint,wx_desvagua,wx_ghmin,wx_modif,wx_patamar,wx_penalid
-
-from PMO.scripts_unificados.apps.newave.libs import wx_restricao_eletrica
-from PMO.scripts_unificados.apps.newave.libs import wx_volume_referencia
+from apps.newave.libs import wx_restricao_eletrica
+from apps.newave.libs import wx_volume_referencia
 
 def montar_decks_base(data_inicio_deck, path_arquivo_base, caminho_saida, IGP_DI):
     

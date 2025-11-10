@@ -5,8 +5,8 @@ from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import InputRequired, Email, Length
 from flask_login import LoginManager, UserMixin
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.apps.web_modelos.server.server import app, db_login
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from apps.web_modelos.server.server import app, db_login
 
 loginManager = LoginManager()
 loginManager.init_app(app)

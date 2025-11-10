@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import matplotlib.dates as mdates
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import wx_dbClass,wx_opweek
-from PMO.scripts_unificados.apps.web_modelos.server.caches import rz_cache
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbClass,wx_opweek
+from apps.web_modelos.server.caches import rz_cache
 from middle.utils import setup_logger
 
 from dotenv import load_dotenv

@@ -36,11 +36,10 @@ dirApp = os.path.dirname(dirLibs)
 pathArquivos = os.path.join(dirApp,'arquivos')
 
 
-path_fontes = "/WX2TB/Documentos/fontes/"
-sys.path.insert(1,path_fontes)
-from PMO.scripts_unificados.bibliotecas import wx_dbLib,wx_emailSender,wx_verificaCorImg,wx_dbClass
-from PMO.scripts_unificados.apps.gerarProdutos.libs import rz_relatorio_bbce,configs
-from PMO.scripts_unificados.apps.web_modelos.server.libs import wx_calcEna 
+sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbLib,wx_emailSender,wx_verificaCorImg,wx_dbClass
+from apps.gerarProdutos.libs import rz_relatorio_bbce,configs
+from apps.web_modelos.server.libs import wx_calcEna 
 
 
 def get_access_token() -> str:

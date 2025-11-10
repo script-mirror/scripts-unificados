@@ -5,9 +5,9 @@ import datetime
 import pandas as pd
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.apps.smap.libs.DadosObservados import VazaoObservada, ChuvaObservada
-from PMO.scripts_unificados.apps.smap.libs.Rodadas import Rodadas
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from apps.smap.libs.DadosObservados import VazaoObservada, ChuvaObservada
+from apps.smap.libs.Rodadas import Rodadas
 
 path_diretorio_libs = os.path.dirname(os.path.abspath(__file__))
 path_diretorio_app_smap = os.path.dirname(path_diretorio_libs)

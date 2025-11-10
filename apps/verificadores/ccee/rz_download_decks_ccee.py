@@ -6,8 +6,8 @@ import requests
 import argparse
 import pandas as pd
  
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import  wx_opweek,wx_download
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import  wx_opweek,wx_download
  
  
 def download_decks_acervo_ccee(pathArquivos, nome_deck_pesquisado, dtAtual=None, numDiasHistorico=35):

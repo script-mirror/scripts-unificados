@@ -14,7 +14,6 @@ sys.path.insert(1,f"{PATH_PROJETO}/scripts_unificados")
 
 from bibliotecas import wx_dbClass
 from apps.web_modelos.server.libs import wx_calcEna 
-from apps.smap.libs import SmapTools 
 from apps.smap.libs.Rodadas import tb_smap
 
 

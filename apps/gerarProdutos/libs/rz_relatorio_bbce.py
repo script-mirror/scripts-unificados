@@ -14,8 +14,8 @@ load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 constants = Constants()
 
 __HOST_SERVER = os.getenv('HOST_SERVIDOR') 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import wx_dbClass
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbClass
 
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 

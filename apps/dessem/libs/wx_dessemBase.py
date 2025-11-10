@@ -10,8 +10,8 @@ import requests
 import pandas as pd
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import wx_opweek, wx_download
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_opweek, wx_download
 
 
 path_decks = os.path.abspath("/WX2TB/Documentos/fontes/PMO/decks")

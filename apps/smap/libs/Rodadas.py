@@ -4,10 +4,8 @@ import datetime
 import pandas as pd
 import sqlalchemy as db
 
-
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.bibliotecas.wx_dbClass import db_mysql_master
-
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas.wx_dbClass import db_mysql_master
 
 class tb_cadastro_rodada():
 

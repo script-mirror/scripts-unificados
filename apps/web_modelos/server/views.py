@@ -11,16 +11,15 @@ import datetime
 import requests
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.bibliotecas import wx_opweek,wx_dbLib
-from PMO.scripts_unificados.apps.web_modelos.server import utils
-from PMO.scripts_unificados.apps.web_modelos.server.models import RegistrationForm, LoginForm, User
-from PMO.scripts_unificados.apps.web_modelos.server.server import app, db_login, bp
-from PMO.scripts_unificados.apps.web_modelos.server.caches import rz_cache
-from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_dbLib,rz_temperatura,rz_ena,db_decks,db_meteorologia
-
-from PMO.scripts_unificados.apps.web_modelos.server.controller.ons_dados_abertos_controller import *
-from PMO.scripts_unificados.apps.web_modelos.server.controller.bbce_controller import *
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_opweek,wx_dbLib
+from apps.web_modelos.server import utils
+from apps.web_modelos.server.models import RegistrationForm, LoginForm, User
+from apps.web_modelos.server.server import app, db_login, bp
+from apps.web_modelos.server.caches import rz_cache
+from apps.web_modelos.server.libs import rz_dbLib,rz_temperatura,rz_ena,db_decks,db_meteorologia
+from apps.web_modelos.server.controller.ons_dados_abertos_controller import *
+from apps.web_modelos.server.controller.bbce_controller import *
 
 import urllib.parse
 from middle.message import send_whatsapp_message

@@ -5,8 +5,8 @@ import sys
 import sqlalchemy as db
 from numpy import nan
 
-sys.path.append('/WX2TB/Documentos/fontes/')
-from PMO.scripts_unificados.bibliotecas.wx_dbClass import db_mysql_master
+sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas.wx_dbClass import db_mysql_master
 
 
 class tb_inmet_estacoes():

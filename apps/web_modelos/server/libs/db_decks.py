@@ -3,8 +3,8 @@ import datetime
 import pandas as pd
 import sys
 import sqlalchemy as db
-sys.path.append('/WX2TB/Documentos/fontes/')
-from PMO.scripts_unificados.bibliotecas.wx_dbClass import db_mysql_master
+sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas.wx_dbClass import db_mysql_master
 
 
 def nome_coluna_para_coluna_tabela(table: db.Table, column: list):

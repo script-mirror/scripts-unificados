@@ -8,12 +8,12 @@ from flask_login import login_required
 import sqlalchemy as db
 import pandas as pd
 
-sys.path.insert(1,'/WX2TB/Documentos/fontes')
-from PMO.scripts_unificados.bibliotecas import wx_dbClass
-from PMO.scripts_unificados.apps.web_modelos.server.server import bp
-from PMO.scripts_unificados.apps.web_modelos.server import utils 
-from PMO.scripts_unificados.apps.web_modelos.server.libs import db_bbce
-from PMO.scripts_unificados.apps.web_modelos.server.caches import rz_cache
+sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbClass
+from apps.web_modelos.server.server import bp
+from apps.web_modelos.server import utils 
+from apps.web_modelos.server.libs import db_bbce
+from apps.web_modelos.server.caches import rz_cache
 
 
 @bp.route('/API/get/produtos-bbce',methods=['GET'])

@@ -9,8 +9,8 @@ import datetime
 import pandas as pd
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.dessem.libs import wx_ptoper
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from apps.dessem.libs import wx_ptoper
 
 def getInfoBlocos():
 	blocos = {}

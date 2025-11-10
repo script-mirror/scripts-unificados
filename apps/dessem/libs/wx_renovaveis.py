@@ -9,8 +9,8 @@ import unidecode
 import pandas as pd
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import wx_opweek
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_opweek
 
 def getFromFile(path):
 	file = open(path, 'r')

@@ -5,8 +5,8 @@ import pandas as pd
 import sqlalchemy as db
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.bibliotecas import wx_dbClass
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbClass
 
 def get_temperatura_obs(dt_ini, dt_fim):
     db_ons = wx_dbClass.db_mysql_master('db_ons')

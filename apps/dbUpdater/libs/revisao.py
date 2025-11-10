@@ -10,9 +10,8 @@ import pandas as pd
 import sqlalchemy as db
 from bs4 import BeautifulSoup
 
-path_fontes = "/WX2TB/Documentos/fontes/"
-sys.path.insert(1,path_fontes)
-from PMO.scripts_unificados.bibliotecas import wx_dbClass , wx_opweek , rz_dir_tools
+sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbClass , wx_opweek , rz_dir_tools
 
 path_libs = os.path.dirname(os.path.abspath(__file__))
 path_db_updater = os.path.dirname(path_libs)

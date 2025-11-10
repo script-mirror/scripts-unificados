@@ -8,9 +8,9 @@ import datetime
 import pandas as pd
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import wx_opweek, wx_dbLib
-from PMO.scripts_unificados.apps.dessem.libs import wx_pdoSist
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_opweek, wx_dbLib
+from apps.dessem.libs import wx_pdoSist
 
 
 def getNomesDiferentesUsinas():

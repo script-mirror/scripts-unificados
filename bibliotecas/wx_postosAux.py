@@ -3,8 +3,8 @@ import datetime
 import pandas as pd
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import wx_dbLib
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbLib
 
 
 def calcPostosArtif(vazao):

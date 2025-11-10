@@ -10,11 +10,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import rz_dir_tools
-from PMO.scripts_unificados.apps.smap.libs.Rodadas import Rodadas
-from PMO.scripts_unificados.apps.verificadores import rz_selenium
-from PMO.scripts_unificados.apps.verificadores.ons import rz_ons
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import rz_dir_tools
+from apps.smap.libs.Rodadas import Rodadas
+from apps.verificadores import rz_selenium
+from apps.verificadores.ons import rz_ons
 
 
 file_path = os.path.dirname(os.path.abspath(__file__))

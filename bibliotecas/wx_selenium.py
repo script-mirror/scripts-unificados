@@ -18,8 +18,8 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from pathlib import Path
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas.wx_configs import getConfiguration
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas.wx_configs import getConfiguration
 
 
 

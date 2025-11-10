@@ -2,9 +2,9 @@ import os
 import sys
 from datetime import datetime, date, timedelta
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.dessem.libs.wx_relatorioIntercambio import readIntercambios,getDataDeck
-from PMO.scripts_unificados.apps.dessem.libs.wx_pdoSist import readPdoSist
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from apps.dessem.libs.wx_relatorioIntercambio import readIntercambios,getDataDeck
+from apps.dessem.libs.wx_pdoSist import readPdoSist
 
 
 def main(pastaDeck=None):

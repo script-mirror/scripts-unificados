@@ -5,9 +5,8 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-
-from PMO.scripts_unificados.apps.dadosAbertosOns.libs import coff, geracao_usina, carga
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from apps.dadosAbertosOns.libs import coff, geracao_usina, carga
 
 tipos_coff = ['eolica', 'solar']
 

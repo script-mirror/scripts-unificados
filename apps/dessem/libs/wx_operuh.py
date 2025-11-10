@@ -12,9 +12,10 @@ import datetime
 
 import pandas as pd
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import wx_selenium,wx_opweek
-from PMO.scripts_unificados.apps.dessem.libs import wx_dessemBase
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+
+from bibliotecas import wx_selenium,wx_opweek
+from apps.dessem.libs import wx_dessemBase
 
 
 

@@ -8,8 +8,8 @@ import pandas as pd
 import numpy as np
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import wx_dbLib,wx_opweek
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbLib,wx_opweek
 
 
 def getListaPostosPrevivaz(arquivosPrev):

@@ -16,9 +16,9 @@ logging.basicConfig(level=logging.INFO,
 
 logger = logging.getLogger(__name__)
 path_fontes = "/WX2TB/Documentos/fontes/"
-sys.path.insert(1,path_fontes)
-from PMO.scripts_unificados.bibliotecas import wx_dbClass
-from PMO.scripts_unificados.apps.web_modelos.server.libs import wx_calcEna 
+sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbClass
+from apps.web_modelos.server.libs import wx_calcEna 
 import os
 from middle.utils import Constants
 constants = Constants()

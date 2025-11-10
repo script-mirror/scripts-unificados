@@ -3,8 +3,8 @@ from airflow import DAG
 import sys
 from airflow.operators.python import PythonOperator
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.apps.dadosAbertosOns.libs import coff, geracao_usina, carga, cmo
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from apps.dadosAbertosOns.libs import coff, geracao_usina, carga, cmo
 
 def get_mes_anterior():
     data = datetime.date.today()

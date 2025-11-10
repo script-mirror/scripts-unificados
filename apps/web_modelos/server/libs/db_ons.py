@@ -9,8 +9,8 @@ from numpy import array
 import warnings
 warnings.filterwarnings("ignore")
 
-sys.path.append('/WX2TB/Documentos/fontes/')
-from PMO.scripts_unificados.bibliotecas.wx_dbClass import db_mysql_master
+sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas.wx_dbClass import db_mysql_master
 
 def listar_datas():
     df = pd.date_range(datetime.datetime(2020, 1, 1), datetime.datetime.now(), freq='D').strftime('%Y-%m-%d')

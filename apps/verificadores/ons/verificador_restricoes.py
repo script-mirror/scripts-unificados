@@ -13,11 +13,11 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.bibliotecas import wx_dbClass,wx_emailSender,rz_dir_tools
-from PMO.scripts_unificados.apps.verificadores.ons import rz_ons
-from PMO.scripts_unificados.apps.verificadores import rz_selenium
-from PMO.scripts_unificados.apps.gerarProdutos import gerarProdutos2 
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbClass,wx_emailSender,rz_dir_tools
+from apps.verificadores.ons import rz_ons
+from apps.verificadores import rz_selenium
+from apps.gerarProdutos import gerarProdutos2 
 
 GERAR_PRODUTO = gerarProdutos2.GeradorProdutos()
 

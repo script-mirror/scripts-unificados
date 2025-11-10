@@ -17,9 +17,9 @@ EVENTS_API = os.getenv("URL_EVENTS_API")
 URL_COGNITO = os.getenv("URL_COGNITO")
 CONFIG_COGNITO = os.getenv("CONFIG_COGNITO")
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.webhook.my_run import PRODUCT_MAPPING
-from PMO.scripts_unificados.apps.webhook.libs import manipularArquivosShadow
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from apps.webhook.my_run import PRODUCT_MAPPING
+from apps.webhook.libs import manipularArquivosShadow
 
 def remover_acentos_e_caracteres_especiais(texto):
     import re

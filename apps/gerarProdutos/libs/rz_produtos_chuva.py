@@ -3,10 +3,10 @@ import sys
 import pdb
 import datetime
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import wx_emailSender
-from PMO.scripts_unificados.apps.verificadores.ons import verificador_reservatorio
-from PMO.scripts_unificados.apps.web_modelos.server.libs import rz_chuva
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_emailSender
+from apps.verificadores.ons import verificador_reservatorio
+from apps.web_modelos.server.libs import rz_chuva
 
 def produto_psath_diff(path_arq,limiar=1):
     limiar = 1

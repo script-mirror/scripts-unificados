@@ -19,15 +19,11 @@ except:
     locale.setlocale(locale.LC_ALL, '')
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.gerarProdutos import rz_processar_produtos
-from PMO.scripts_unificados.bibliotecas import wx_emailSender,wx_opweek
-from PMO.scripts_unificados.apps.gerarProdutos.utils import get_access_token
-from PMO.scripts_unificados.apps.gerarProdutos.config import (
-    PRODUCTS_MAPPING,
-    WHATSAPP_API,
-    NUM_GILSEU
-    )
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from apps.gerarProdutos import rz_processar_produtos
+from bibliotecas import wx_emailSender,wx_opweek
+from apps.gerarProdutos.utils import get_access_token
+from apps.gerarProdutos.config import ( PRODUCTS_MAPPING, WHATSAPP_API, NUM_GILSEU )
 
 
 class GeradorProdutos():

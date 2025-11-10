@@ -22,33 +22,21 @@ try:
 except:
 	locale.setlocale(locale.LC_ALL, '')
 
-
 diretorioApp = os.path.abspath('.')
 appsDir = os.path.dirname(diretorioApp)
-diretorioRaiz = os.path.dirname(appsDir)
-
-pathLibUniversal = os.path.join(diretorioRaiz,'bibliotecas')
-pathLibLocal = os.path.join(diretorioApp,'libs')
 pathArquivos = os.path.join(diretorioApp,'arquivos')
 
-
-pathRodadasApp = os.path.join(appsDir,'rodadas')
-
-sys.path.insert(1, pathLibUniversal)
+sys.path.insert(1, "/WX2TB/Documentos/fontes/PMO/scripts_unificados/bibliotecas/")
+import configs
+import wx_consultaProcessos
+import rz_relatorio_bbce
 import wx_dbLib
 import wx_postosAux
 import wx_emailSender
 import wx_opweek
 
-sys.path.insert(1, "/WX2TB/Documentos/fontes/PMO/scripts_unificados/bibliotecas")
-
-sys.path.insert(1, pathLibLocal)
-import configs
-import wx_consultaProcessos
-import rz_relatorio_bbce
-
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.gerarProdutos.utils import get_access_token
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from apps.gerarProdutos.utils import get_access_token
 
 
 def is_first_bussines_day(data:datetime.date):

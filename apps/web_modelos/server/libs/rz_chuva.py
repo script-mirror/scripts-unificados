@@ -7,8 +7,8 @@ import sqlalchemy as db
 from unidecode import unidecode
 from sqlalchemy.sql.expression import func
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.bibliotecas import wx_dbClass,wx_opweek,wx_emailSender,rz_dir_tools
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbClass,wx_opweek,wx_emailSender,rz_dir_tools
 
 DIR_TOOLS = rz_dir_tools.DirTools()
 

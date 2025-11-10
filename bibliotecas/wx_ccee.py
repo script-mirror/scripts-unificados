@@ -5,8 +5,8 @@ import sys
 import datetime
 import requests
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.bibliotecas import wx_opweek,wx_download
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_opweek,wx_download
 
 
 def download_arquivo_acervo(pathArquivos, nome_arquivo_pesquisa, regex_nome_arquivo=None ,dtAtual=None, numDiasHistorico=28):

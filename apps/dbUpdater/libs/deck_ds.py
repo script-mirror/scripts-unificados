@@ -8,10 +8,9 @@ import numpy as np
 import pandas as pd
 import sqlalchemy as db
 
-path_fontes = "/WX2TB/Documentos/fontes/"
-sys.path.insert(1,path_fontes)
-from PMO.scripts_unificados.bibliotecas import wx_dbClass , wx_opweek , rz_dir_tools
-from PMO.scripts_unificados.apps.dessem.libs import wx_renovaveis, wx_pdoCmo
+sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbClass , wx_opweek , rz_dir_tools
+from dessem.libs import wx_renovaveis, wx_pdoCmo
 
 PATH_DIR_LOCAL = os.path.dirname(os.path.abspath(__file__))
 

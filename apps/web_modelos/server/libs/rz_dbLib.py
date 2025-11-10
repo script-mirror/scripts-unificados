@@ -11,11 +11,10 @@ from sqlalchemy.sql.expression import func
 from sqlalchemy import between, desc, and_
 from datetime import date
 from unidecode import unidecode
-from middle.message import send_whatsapp_message
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.bibliotecas import wx_dbClass,wx_opweek,wx_dbLib
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbClass,wx_opweek,wx_dbLib
 
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))

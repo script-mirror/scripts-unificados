@@ -3,10 +3,9 @@ import pdb
 import sys
 import datetime
 
-
-sys.path.insert(1,os.path.join("/WX2TB/Documentos/fontes"))
-from PMO.scripts_unificados.bibliotecas import wx_opweek,rz_dir_tools
-from PMO.scripts_unificados.apps.dbUpdater.libs import rodadas,chuva,carga_ons,temperatura,deck_ds,bbce,vazao
+sys.path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_opweek,rz_dir_tools
+from apps.dbUpdater.libs import rodadas,chuva,carga_ons,temperatura,deck_ds,bbce,vazao
 
 
 DIR_TOOLS = rz_dir_tools.DirTools()

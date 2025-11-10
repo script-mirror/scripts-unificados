@@ -6,11 +6,11 @@ from flask import request
 import datetime
 from flask_login import login_required
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes")
-from PMO.scripts_unificados.apps.web_modelos.server.server import bp
-from PMO.scripts_unificados.apps.web_modelos.server import utils 
-from PMO.scripts_unificados.apps.web_modelos.server.libs import db_ons
-from PMO.scripts_unificados.apps.web_modelos.server.caches import rz_cache
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from apps.web_modelos.server.server import bp
+from apps.web_modelos.server import utils 
+from apps.web_modelos.server.libs import db_ons
+from apps.web_modelos.server.caches import rz_cache
 
 @bp.route('API/get/ons-dados-abertos/datas', methods=['GET'])
 def API_get_ons_dados_abertos_lista_datas():

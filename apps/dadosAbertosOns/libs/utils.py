@@ -8,8 +8,8 @@ import datetime
 import pandas as pd
 from typing import Optional
 
-path.append('/WX2TB/Documentos/fontes/')
-from PMO.scripts_unificados.bibliotecas.wx_dbClass import db_mysql_master
+path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas.wx_dbClass import db_mysql_master
 
 formatos_data = {'mensal':'%Y_%m', 'diario':'%Y_%m_%d', 'anual':'%Y'}
 link_base = {'restricoes_coff_eolica':'https://ons-aws-prod-opendata.s3.amazonaws.com/dataset/restricao_coff_eolica_tm/RESTRICAO_COFF_EOLICA_',

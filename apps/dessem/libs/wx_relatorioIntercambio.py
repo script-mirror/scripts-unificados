@@ -7,9 +7,9 @@ import numpy as np
 import pandas as pd
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import wx_dbClass
-from PMO.scripts_unificados.apps.dessem.libs import wx_pdoOperLpp,wx_pdoRestoper,wx_pdoOperRsttab,wx_entdados
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbClass
+from apps.dessem.libs import wx_pdoOperLpp,wx_pdoRestoper,wx_pdoOperRsttab,wx_entdados
 
 # logPath = '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/dessem/logs/logREs.txt'
 # log = open(logPath, 'a')

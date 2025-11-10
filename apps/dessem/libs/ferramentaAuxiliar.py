@@ -7,8 +7,8 @@ diretorioRaiz = os.path.abspath('../../../')
 pathLibUniversal = os.path.join(diretorioRaiz,'bibliotecas')
 sys.path.insert(1, pathLibUniversal)
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import wx_dbLib
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbLib
 
 def regex():
 	mnemonico = 'operlpp'

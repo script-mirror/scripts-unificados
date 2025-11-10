@@ -9,9 +9,9 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-path.append('/WX2TB/Documentos/fontes/')
-from PMO.scripts_unificados.bibliotecas.wx_dbClass import db_mysql_master
-from PMO.scripts_unificados.apps.dadosAbertosOns.libs import utils
+path.insert("/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas.wx_dbClass import db_mysql_master
+from apps.dadosAbertosOns.libs import utils
 
 
 def tratar_dados(

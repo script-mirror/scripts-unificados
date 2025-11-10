@@ -16,11 +16,11 @@ pathArquivos = os.path.join(diretorioApp,'arquivos')
 path_decks = os.path.abspath("/WX2TB/Documentos/fontes/PMO/decks")
 
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.apps.gerarProdutos import gerarProdutos2 
-from PMO.scripts_unificados.bibliotecas import wx_opweek,wx_ssh,wx_dbUpdater
-from PMO.scripts_unificados.apps.dessem.libs import wx_operuh, wx_entdados, wx_deflant, wx_dadvaz, wx_operut, wx_respot, wx_dessemBase, wx_renovaveis, wx_cotasr11, wx_configs, wx_relatorioIntercambio, ferramentaAuxiliar, wx_converteons_ccee
-from PMO.scripts_unificados.apps.dbUpdater.libs import deck_ds
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from apps.gerarProdutos import gerarProdutos2 
+from bibliotecas import wx_opweek,wx_ssh,wx_dbUpdater
+from apps.dessem.libs import wx_operuh, wx_entdados, wx_deflant, wx_dadvaz, wx_operut, wx_respot, wx_dessemBase, wx_renovaveis, wx_cotasr11, wx_configs, wx_relatorioIntercambio, ferramentaAuxiliar, wx_converteons_ccee
+from apps.dbUpdater.libs import deck_ds
 
 
 configs = wx_configs.getConfiguration()

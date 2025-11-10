@@ -22,7 +22,6 @@ load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 HOST_SERVIDOR = os.getenv('HOST_SERVIDOR')
 URL_COGNITO = os.getenv('URL_COGNITO')
 CONFIG_COGNITO = os.getenv('CONFIG_COGNITO')
-PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
 
 path_libs = os.path.dirname(os.path.abspath(__file__))
 path_webhook = os.path.dirname(path_libs)
@@ -30,8 +29,7 @@ path_webhook = os.path.dirname(path_libs)
 path_fontes = "/WX2TB/Documentos/fontes/"
 constants = Constants()
 
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-sys.path.insert(1, f"{PATH_PROJETO}/scripts_unificados")
+sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from server_configuration.containers.airflow_mysql import airflow_tools
 from apps.smap.libs import SmapTools
 from apps.dessem import dessem
