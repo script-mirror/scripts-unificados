@@ -1,6 +1,5 @@
 import os
 import re
-import pdb
 import glob
 import shutil
 import zipfile
@@ -23,7 +22,6 @@ class DirTools():
                 return f
         
         return None   
-    
     
     def copy_src(self, src,dst,replace_text=[], upper=False):
 
@@ -58,8 +56,6 @@ class DirTools():
         else:
             print(f"{src} será deletado!")
             os.remove(src)
-             
-         
     
     def downloadFile(self,url, path=''):
 
@@ -103,8 +99,6 @@ class DirTools():
 
         return path
 
-    
-    
     def extrair_zip_mantendo_nome_diretorio(self, zipFile,path_out=None, deleteAfterExtract=False):
         try:
             # Verifica se o caminho fornecido é um arquivo zip
@@ -135,29 +129,6 @@ class DirTools():
             print(f"O arquivo '{zipFile}' não foi encontrado.")
             return None
 
-    def match_insensitive_filename(self,path_init_search:str,file_name_to_match:str):
-        '''
-            Parameters
-            ----------
-                path_init_search: Diretório a começar a procura
-                file_name_to_match: Nome do arquivo a ser procurado
-            
-            Returns
-            -------
-                None, se não encontrar 
-                ou nome real do arquivo no caminho
-            
-        '''
-
-        files = glob.glob(os.path.join(path_init_search,'*'))
-        for file in files:
-            if os.path.isdir(file):
-                self.match_insensitive_filename(file,file_name_to_match)
-            elif os.path.basename(file).lower() == file_name_to_match.lower():
-                return file
-                
-        return None
-
     def get_date_patterns(self,date_format:str):
 
         '''
@@ -184,7 +155,6 @@ class DirTools():
                 "Formato não esta no padrao de data %d, %m, %y ou %Y!",
                 )
 
-    # Função para extrair a data do nome do arquivo
     def extrair_data(self,nome_arquivo:str,file_template:str,date_format:str):
 
         '''
@@ -270,18 +240,6 @@ class DirTools():
                             extracted_files = extracted_files)
 
         return extracted_files
-    def extrair_zip_e_buscar_arquivo(self, zip_path:str, destino_extracao:str, padrao_arquivo:str="*.xlsx"):
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(destino_extracao)
-        
-        padrao_busca = os.path.join(destino_extracao, '**', padrao_arquivo)
-        
-        arquivos_encontrados = glob.glob(padrao_busca, recursive=True)
-        
-        if arquivos_encontrados:
-            return arquivos_encontrados
-        else:
-            return None
 
 if __name__ == '__main__':
     pass
