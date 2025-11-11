@@ -12,7 +12,6 @@ from selenium.webdriver.support import expected_conditions as EC
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import rz_dir_tools
-from apps.smap.libs.Rodadas import Rodadas
 from apps.verificadores import rz_selenium
 from apps.verificadores.ons import rz_ons
 
@@ -148,7 +147,7 @@ def rotina_ecmwf_ons(dt_rodada:datetime.datetime):
 
     if type(df_clusts_ponderado) != type(pd.DataFrame()) : 
         raise "Não foi possivel concluir a rotina, Encerrando"
-    
+    """
     if not df_clusts_ponderado.empty:
         RODADAS = Rodadas()
 
@@ -172,7 +171,7 @@ def rotina_ecmwf_ons(dt_rodada:datetime.datetime):
             modelos_list=[('ECMWF-CLUST',18,dt_rodada)],
             df_probabilidade_grupos=df_prob
             )
-    
+    """
 
     
 if __name__ == "__main__":

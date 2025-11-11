@@ -31,7 +31,6 @@ constants = Constants()
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from server_configuration.containers.airflow_mysql import airflow_tools
-from apps.smap.libs import SmapTools
 from apps.dessem import dessem
 from apps.gerarProdutos import gerarProdutos2
 from bibliotecas import rz_dir_tools
@@ -131,17 +130,6 @@ def _handle_webhook_file(payload_webhook: dict, path_download: str) -> str:
     with open(filename, 'wb') as f:
         f.write(file_content.content)
     return filename
-
-
-def arquivos_modelo_pdp(dadosProduto: dict):
-    filename = get_filename(dadosProduto)
-    logger.info(filename)
-
-    dtRef = datetime.datetime.strptime(
-          dadosProduto["dataProduto"], "%d/%m/%Y"
-      )
-    SmapTools.organizar_chuva_vazao_files(pdp_file_zip=filename,files_to_copy=['AJUSTE','PlanilhaUSB'], flag_db=True)
-
     
 def arquivo_acomph(dadosProduto: dict):
     filename = get_filename(dadosProduto)

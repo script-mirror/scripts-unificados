@@ -35,74 +35,7 @@ def get_access_token() -> str:
         headers={'Content-Type': 'application/x-www-form-urlencoded'}
     )
     return response.json()['access_token']
-"""
-def cache_rodadas_modelos(prefixo,rodadas,reset=False, dias=7):
 
-  granularidade = rodadas['granularidade']
-  dt_rodada = rodadas['dt_rodada']
-  search_list = list(rodadas['rodadas'].keys())
-
-  key = f'{prefixo}:{granularidade}:{dt_rodada}'
-
-  ids_in_cache = []
-  send_cache_data = []
-
-  cache_values_dt_rodada  = cache.get(key)
-  if not cache_values_dt_rodada:
-    cache_values_dt_rodada=[]
-
-  else:
-    for item in cache_values_dt_rodada:
-      
-      ids_in_cache += item['id_rodada'],
-
-      if item['id_rodada'] in search_list:
-        send_cache_data += item,
-
-  ids_faltantes_no_cache = list(set(search_list) - set(ids_in_cache))
-
-  if ids_faltantes_no_cache or reset:
-
-    if reset:
-      ids_faltantes_no_cache = search_list
-      print("Resetando Cache. ", ids_faltantes_no_cache)
-    else:
-      print("Ids Faltantes no Cache. ", ids_faltantes_no_cache)
-
-    if prefixo == 'PREVISAO_ENA':
-      ids_to_search = []
-      for id_faltante in ids_faltantes_no_cache:
-
-        modelo = rodadas['rodadas'][id_faltante]
-        chave = id_faltante
-        ids_to_search += (chave,modelo),
-
-      resultado = rz_ena.get_ena_modelos_smap(ids_to_search,dt_rodada,granularidade, dias=dias)
-    
-    elif prefixo == 'PREVISAO_CHUVA':
-      resultado = rz_chuva.get_chuva_smap_ponderada(ids_faltantes_no_cache,dt_rodada,granularidade)
-      
-    if not resultado:
-      return send_cache_data
-    
-    send_cache_data += resultado
-    cache_values_dt_rodada += resultado
-    
-    cache.set(key,cache_values_dt_rodada, timeout=60*60*24*7)
-
-  return send_cache_data
-"""
-"""
-def atualizar_cache_rodada_modelos(dt_rodada,reset=False): 
-  print(dt_rodada)
-  rodadas = rz_rodadasModelos.Rodadas(dt_rodada = dt_rodada)
-  for granularidade in ['submercado','bacia']:
-    params = rodadas.build_modelo_info_dict(granularidade = granularidade, build_all_models=True)
-    cache_data_ena = cache_rodadas_modelos("PREVISAO_ENA",params,reset)
-    print(f"Cache ENA {granularidade}, ({dt_rodada}) atualizado!")
-    cache_data_chuva = cache_rodadas_modelos("PREVISAO_CHUVA",params,reset)
-    print(f"Cache CHUVA {granularidade} ({dt_rodada}), atualizado!")
-"""
 
 def cache_acomph(prefixo,granularidade,dataInicial,dataFinal=None,flag_atualizar=None,reset=None):
 
@@ -170,88 +103,7 @@ def atualizar_cache_acomph(dt_inicial, reset=False):
   
 
   print("CACHE ACOMPH ATUALIZADO!")
-  
-"""  
-def import_ena_visualization_api(dt_rodada, id_nova_rodada:str, id_dataviz_chuva:str): 
-  print(dt_rodada)
-  rodadas = rz_rodadasModelos.Rodadas(dt_rodada = dt_rodada)
-  params = rodadas.build_modelo_info_dict(granularidade = "submercado", build_all_models=True)
-  print(params)
-  print(id_nova_rodada)
-  print(params['rodadas'][id_nova_rodada])
-  
-  params['rodadas'] = [{x:params['rodadas'][x]} for x in params['rodadas'] if str(x) == id_nova_rodada][0]
-
-  for id_rodada in params['rodadas']:
-    print(id_rodada)
-    info_rodada = req.get(f"{constants.BASE_URL}/api/v2/rodadas/por-id/{id_rodada}", 
-                          headers={
-                'Authorization': f'Bearer {get_access_token()}'
-            }).json()
-    
-    viez = 'remvies' not in info_rodada['str_modelo'].lower()
-
-    if 'ons' in info_rodada['str_modelo'].lower(): grupo = 'ons'
-    elif 'rz' in info_rodada['str_modelo'].lower(): grupo = 'rz'
-    else: grupo = 'rz'
-
-    if info_rodada['fl_preliminar']: prioridade = 'preliminar'
-    elif info_rodada['fl_pdp']: prioridade = 'pdp'
-    elif info_rodada['fl_psat']: prioridade = 'psat'
-    else: prioridade = None
-
-
-    payload = {
-            "dataRodada": f"{info_rodada['dt_rodada']}T00:00:00.000Z",
-            "dataFinal":  None,
-            "mapType": 'ena',
-            "idType": f"{info_rodada['id']}",
-            "modelo": info_rodada['str_modelo'].upper(),
-            "grupo": grupo,
-            "rodada": str(int(info_rodada['hr_rodada'])),
-            "viez": viez,
-            "membro": "0",
-            "propagationBase": "VNA",
-            "priority": prioridade,
-            "measuringUnit": "MWm",
-            "generationProcess": "SMAP",
-            "data": [],
-            "relatedMaps": [
-              {
-                "type": "chuva",
-                "mapId": id_dataviz_chuva,
-              }
-            ]
-        }
-    
-
-    for granularidade in ['submercado','bacia']:
-      params['granularidade'] = granularidade
-      ena = cache_rodadas_modelos("PREVISAO_ENA",params,False)[0]['valores']
-      df = pd.DataFrame(ena).reset_index().rename(columns={'index': 'dt_prevista'})
-      df = df.astype({'dt_prevista': 'datetime64[ns]'})
-      valores_mapa = []
-      
-      for i, row in df.iterrows():
-          for row_index in range(1, len(row.index)):
-              valores_mapa.append({
-                  "valor": row.values[row_index],
-                  "dataReferente": f"{row['dt_prevista']}.000Z".replace(' ', 'T'),
-                  "valorAgrupamento": row.index[row_index]
-              })
-      payload['data'].append({'valoresMapa': valores_mapa, 'agrupamento': granularidade})
-
-    payload['dataFinal'] = f"{df['dt_prevista'].max()}.000Z".replace(' ', 'T')
-    res = req.post('https://tradingenergiarz.com/backend/api/map', json=payload, headers={'Content-Type': 'application/json', "Authorization":f"Bearer {get_access_token()}"})
-
-    if res.status_code == 201:
-      logger.info(f"Rodada id {id_rodada} inserido na API de visualizacao")
-    else:
-      logger.warning(f"Erro ao tentar inserir rodada {id_rodada} na API de visualizacao")
-    
-    # cache_data_chuva = cache_rodadas_modelos("PREVISAO_CHUVA",params,reset)
-    # print(f"Cache CHUVA {granularidade} ({dt_rodada}), atualizado!")
-"""
+ 
 def cache_rdh(ano: str, tipo:str, atualizar:bool = False):
   key = f'{tipo}:{ano}'
 
@@ -274,33 +126,7 @@ def atualizar_cache_rdh(ano: str = str(datetime.datetime.now().year)):
     get_cached("get_df_info_rdh", ano, tipo, atualizar=True)
   print('CACHE RDH ATUALIZADO')
 
-"""
-def cache_comparativo_carga_newave(dt_referente: str,atualizar:bool = False):
-  
-  key = f'NEWAVE:{dt_referente}'
 
-  if not atualizar:
-    cached = cache.get(key)
-    if cached:
-      return cached
-    df_carga_newave_Sistema_cAdic = rz_dbLib.comparativo_carga_newave(dt_referente)
-    
-    cache.set(key, df_carga_newave_Sistema_cAdic, timeout=60*60*24*7)
-    return df_carga_newave_Sistema_cAdic
-  else:
-    df_carga_newave_Sistema_cAdic = rz_dbLib.comparativo_carga_newave(dt_referente)
-    cache.set(key, df_carga_newave_Sistema_cAdic, timeout=60*60*24*7)
-    return df_carga_newave_Sistema_cAdic
-  
-  """
-"""def atualizar_cache_comparativo_carga_newave(dt_referente: str,reset=False): 
-
-  print('Atualizando cache de Carga Newave')
-  
-  cache_comparativo_carga_newave(dt_referente=dt_referente, atualizar=True)
-  
-  print('CACHE CARGA NEWAVE ATUALIZADO')
-"""
 def get_key(function_key, *args):
   key = str(args).replace('(', '').replace(')', '').replace(',', ':').replace('\'', '')
   return f'{function_key}:{key}'
@@ -325,43 +151,6 @@ def get_cached_values(key):
 def set_cache_values(key, data, timeout=60*60*24*7):
     return cache.set(key, data, timeout=timeout) if data else None
 
-
-"""def cache_previsao_modelos(key:str, dts_rodada_list:list,granularidade:str='submercado',atualizar=False):
-
-    cached_values =  get_cached_values(key.lower())
-        
-    df_cached_values = pd.DataFrame(cached_values)
-
-    dts_faltantes = dts_rodada_list
-    if not df_cached_values.empty:
-
-        df_target = df_cached_values[df_cached_values['dt_rodada'].isin(dts_rodada_list)]
-        dts_faltantes = set(dts_rodada_list) - set(df_target['dt_rodada'].unique())
-        
-        if not dts_faltantes and not atualizar:
-            
-            return df_target.to_dict('records')
-        
-    if 'previsao_ena' in key.lower() :
-        previsao_values = rz_ena.get_previsao_ena_smap(dts_faltantes,granularidade=granularidade,priority=False)
-
-    elif 'previsao_chuva' in key.lower():
-        previsao_values = rz_ena.get_previsao_chuva(dts_faltantes,granularidade=granularidade)
-
-    df_values_request = pd.DataFrame(previsao_values)
-    ids_rodadas_request = df_values_request['id_rodada'].unique()
-
-    df_to_append = df_cached_values[~df_cached_values['id_rodada'].isin(ids_rodadas_request)] if not df_cached_values.empty else df_cached_values
-    df_to_cache = pd.concat([df_to_append,df_values_request])
-    cached_values = df_to_cache.to_dict('records')
-
-    set_cache_values(key,cached_values)
-
-    return df_to_cache[df_to_cache['dt_rodada'].isin(dts_rodada_list)].to_dict('records')
-
-"""
-  
-  
 def import_acomph_visualization_api(data_rodada:datetime.date):
   
   data_rodada_date = datetime.datetime.combine(data_rodada + datetime.timedelta(days=1), datetime.time(0))
@@ -490,22 +279,12 @@ def runWithParams():
           
         if argumento == 'id_dataviz_chuva':
           id_dataviz_chuva = sys.argv[i+1]
-
-      #funções
-      #if sys.argv[1].lower() == 'atualizar_cache_rodada_modelos':
-        #atualizar_cache_rodada_modelos(data.strftime("%Y-%m-%d"),reset= reset)
-        
-      #if sys.argv[1].lower() == 'import_ena_visualization_api':
-        #import_ena_visualization_api(data.strftime("%Y-%m-%d"), id_nova_rodada, id_dataviz_chuva)
-        
+       
       if sys.argv[1].lower() == 'atualizar_cache_acomph':
         atualizar_cache_acomph(data, reset= reset)
 
       elif sys.argv[1].lower() == 'atualizar_cache_rdh':
         atualizar_cache_rdh()
-        
-      #elif sys.argv[1].lower() == 'atualizar_cache_comparativo_carga_newave':
-        #atualizar_cache_comparativo_carga_newave(data.strftime('%Y-%m-%d'))
         
       elif sys.argv[1].lower() == 'get_resultado_chuva':
           get_cached('get_resultado_chuva',*sys.argv[2:-1], atualizar=atualizar)
@@ -515,10 +294,5 @@ def runWithParams():
 
 
 if __name__ == '__main__':
-  # rodadas = rz_rodadasModelos.Rodadas(dt_rodada = dt_rodada)
-  # rodadas.build_modelo_info_dict(granularidade = 'submercado', build_all_models=True)
-
-  # teste = cache_rodadas_modelos('PREVISAO_ENA', rodadas)
-  # import_acomph_visualization_api(datetime.date.today())
   runWithParams()
   
