@@ -48,13 +48,11 @@ db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 
-# Modelo de usuário
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
 
-# Mapeamento entre nomes de produtos e funções correspondentes
 PRODUCT_MAPPING = {
     # "Relatório de Acompanhamento Hidrológico": {"funcao": "vazoes_observadas"},    
     # "Modelo GEFS": {"funcao": "modelo_gefs"},
@@ -62,28 +60,28 @@ PRODUCT_MAPPING = {
     # "Relatório dos resultados finais consistidos da previsão diária (PDP)": {"funcao": "relatorio_resutados_finais_consistidos"},
     # "Níveis de Partida para o DESSEM": {"funcao": "niveis_partida_dessem"},
     # "DADVAZ – Arquivo de Previsão de Vazões Diárias (PDP)": {"funcao": "dadvaz_vaz_prev"},
-    #"Deck e Resultados DECOMP - Valor Esperado": {"funcao": "deck_resultados_decomp"},
+    # "Deck e Resultados DECOMP - Valor Esperado": {"funcao": "deck_resultados_decomp"},
     # "Resultados finais consistidos (vazões diárias - PDP)": {"funcao": "resultados_finais_consistidos"},
     # "Resultados preliminares consistidos (vazões semanais - PMO)": {"funcao": "resultados_preliminares_consistidos"},
     # "Arquivos dos modelos de previsão de vazões semanais - PMO": {"funcao": "entrada_saida_previvaz"},
-    "Arquivos dos modelos de previsão de vazões diárias - PDP": {"funcao": "arquivos_modelo_pdp"},
-    "Acomph": {"funcao": "arquivo_acomph"},
-    "RDH": {"funcao": "arquivo_rdh"},
-    "Histórico de Precipitação por Satélite – ONS": {"funcao": "historico_preciptacao"},
+    # "Arquivos dos modelos de previsão de vazões diárias - PDP": {"funcao": "arquivos_modelo_pdp"},
     # "Modelo ETA": {"funcao": "modelo_eta"},
-    #"Deck Preliminar DECOMP - Valor Esperado": {"funcao": "deck_preliminar_decomp"},
-    "Decks de entrada e saída - Modelo DESSEM": {"funcao": "deck_entrada_saida_dessem"},
-    "Arquivos de Previsão de Carga para o DESSEM": {"funcao": "previsao_carga_dessem"},
-    "Decks de entrada do PrevCargaDESSEM": {"funcao": "prevCarga_dessem"},
-    #"Previsões de carga mensal e por patamar - NEWAVE": {"funcao": "carga_patamar_nw"},
+    # "Deck Preliminar DECOMP - Valor Esperado": {"funcao": "deck_preliminar_decomp"},
+    # "Previsões de carga mensal e por patamar - NEWAVE": {"funcao": "carga_patamar_nw"},
     # "IPDO (Informativo Preliminar Diário da Operação)": {"funcao": "carga_IPDO"},
     # "Modelo ECMWF": {"funcao": "modelo_ECMWF"},
-    "Dados utilizados na previsão de geração eólica": {"funcao": "dados_geracaoEolica"},
-    "Arquivos de Previsão de Carga para o DESSEM - PrevCargaDESSEM": {"funcao": "prevCarga_dessem_saida"},
     # "DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM": {"funcao": "deck_prev_eolica_semanal_weol"},
     #"Preliminar - Relatório Mensal de Limites de Intercâmbio": {"funcao": "relatorio_limites_intercambio"},
     #"Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP": {"funcao": "relatorio_limites_intercambio"},
     # "Notas Técnicas - Medio Prazo": {"funcao": "notas_tecnicas_medio_prazo"},
+    "Acomph": {"funcao": "arquivo_acomph"},
+    "RDH": {"funcao": "arquivo_rdh"},
+    "Histórico de Precipitação por Satélite – ONS": {"funcao": "historico_preciptacao"},
+    "Decks de entrada e saída - Modelo DESSEM": {"funcao": "deck_entrada_saida_dessem"},
+    "Arquivos de Previsão de Carga para o DESSEM": {"funcao": "previsao_carga_dessem"},
+    "Decks de entrada do PrevCargaDESSEM": {"funcao": "prevCarga_dessem"},
+    "Dados utilizados na previsão de geração eólica": {"funcao": "dados_geracaoEolica"},
+    "Arquivos de Previsão de Carga para o DESSEM - PrevCargaDESSEM": {"funcao": "prevCarga_dessem_saida"},
 }
 
 
