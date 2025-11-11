@@ -8,9 +8,8 @@ import requests as req
 from typing import Callable
 from dotenv import load_dotenv
 sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
-from apps.rodadas import rz_rodadasModelos
 from apps.web_modelos.server.server import cache
-from apps.web_modelos.server.libs import rz_ena, rz_chuva,rz_dbLib
+from apps.web_modelos.server.libs import rz_ena, rz_dbLib
 
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
@@ -36,7 +35,7 @@ def get_access_token() -> str:
         headers={'Content-Type': 'application/x-www-form-urlencoded'}
     )
     return response.json()['access_token']
-
+"""
 def cache_rodadas_modelos(prefixo,rodadas,reset=False, dias=7):
 
   granularidade = rodadas['granularidade']
@@ -92,8 +91,8 @@ def cache_rodadas_modelos(prefixo,rodadas,reset=False, dias=7):
     cache.set(key,cache_values_dt_rodada, timeout=60*60*24*7)
 
   return send_cache_data
-
-
+"""
+"""
 def atualizar_cache_rodada_modelos(dt_rodada,reset=False): 
   print(dt_rodada)
   rodadas = rz_rodadasModelos.Rodadas(dt_rodada = dt_rodada)
@@ -103,7 +102,7 @@ def atualizar_cache_rodada_modelos(dt_rodada,reset=False):
     print(f"Cache ENA {granularidade}, ({dt_rodada}) atualizado!")
     cache_data_chuva = cache_rodadas_modelos("PREVISAO_CHUVA",params,reset)
     print(f"Cache CHUVA {granularidade} ({dt_rodada}), atualizado!")
-
+"""
 
 def cache_acomph(prefixo,granularidade,dataInicial,dataFinal=None,flag_atualizar=None,reset=None):
 
@@ -172,7 +171,7 @@ def atualizar_cache_acomph(dt_inicial, reset=False):
 
   print("CACHE ACOMPH ATUALIZADO!")
   
-  
+"""  
 def import_ena_visualization_api(dt_rodada, id_nova_rodada:str, id_dataviz_chuva:str): 
   print(dt_rodada)
   rodadas = rz_rodadasModelos.Rodadas(dt_rodada = dt_rodada)
@@ -252,7 +251,7 @@ def import_ena_visualization_api(dt_rodada, id_nova_rodada:str, id_dataviz_chuva
     
     # cache_data_chuva = cache_rodadas_modelos("PREVISAO_CHUVA",params,reset)
     # print(f"Cache CHUVA {granularidade} ({dt_rodada}), atualizado!")
-
+"""
 def cache_rdh(ano: str, tipo:str, atualizar:bool = False):
   key = f'{tipo}:{ano}'
 
@@ -275,7 +274,7 @@ def atualizar_cache_rdh(ano: str = str(datetime.datetime.now().year)):
     get_cached("get_df_info_rdh", ano, tipo, atualizar=True)
   print('CACHE RDH ATUALIZADO')
 
-
+"""
 def cache_comparativo_carga_newave(dt_referente: str,atualizar:bool = False):
   
   key = f'NEWAVE:{dt_referente}'
@@ -293,15 +292,15 @@ def cache_comparativo_carga_newave(dt_referente: str,atualizar:bool = False):
     cache.set(key, df_carga_newave_Sistema_cAdic, timeout=60*60*24*7)
     return df_carga_newave_Sistema_cAdic
   
-  
-def atualizar_cache_comparativo_carga_newave(dt_referente: str,reset=False): 
+  """
+"""def atualizar_cache_comparativo_carga_newave(dt_referente: str,reset=False): 
 
   print('Atualizando cache de Carga Newave')
   
   cache_comparativo_carga_newave(dt_referente=dt_referente, atualizar=True)
   
   print('CACHE CARGA NEWAVE ATUALIZADO')
-
+"""
 def get_key(function_key, *args):
   key = str(args).replace('(', '').replace(')', '').replace(',', ':').replace('\'', '')
   return f'{function_key}:{key}'
@@ -327,7 +326,7 @@ def set_cache_values(key, data, timeout=60*60*24*7):
     return cache.set(key, data, timeout=timeout) if data else None
 
 
-def cache_previsao_modelos(key:str, dts_rodada_list:list,granularidade:str='submercado',atualizar=False):
+"""def cache_previsao_modelos(key:str, dts_rodada_list:list,granularidade:str='submercado',atualizar=False):
 
     cached_values =  get_cached_values(key.lower())
         
@@ -360,7 +359,7 @@ def cache_previsao_modelos(key:str, dts_rodada_list:list,granularidade:str='subm
 
     return df_to_cache[df_to_cache['dt_rodada'].isin(dts_rodada_list)].to_dict('records')
 
-
+"""
   
   
 def import_acomph_visualization_api(data_rodada:datetime.date):
@@ -460,31 +459,6 @@ def printHelper():
     horaRodada = '00'
     atualizar = 'atualizar'
 
-    print("python {} atualizar_cache_acomph data {}".format(
-            sys.argv[0], hoje.strftime("%Y-%m-%d")
-              ))
-
-    print("python {} atualizar_cache_rodada_modelos dt_rodada {}".format(
-            sys.argv[0], 
-              hoje.strftime("%Y-%m-%d"),
-              ))
-    print("python {} import_ena_visualization_api dt_rodada {}".format(
-            sys.argv[0], 
-              hoje.strftime("%Y-%m-%d"),
-              ))
-  
-    print("python {} atualizar_cache_comparativo_carga_newave data {}".format(
-            sys.argv[0], 
-              hoje.strftime("%Y-%m-%d")
-              ))
-  
-    print("python {} get_resultado_chuva {} {} {} atualizar".format(
-            sys.argv[0], 
-            hoje.strftime("%Y-%m-%d"),
-            modelo,
-            horaRodada,
-            atualizar
-            ))
 
 def runWithParams():
 
@@ -518,20 +492,20 @@ def runWithParams():
           id_dataviz_chuva = sys.argv[i+1]
 
       #funções
-      if sys.argv[1].lower() == 'atualizar_cache_rodada_modelos':
-        atualizar_cache_rodada_modelos(data.strftime("%Y-%m-%d"),reset= reset)
+      #if sys.argv[1].lower() == 'atualizar_cache_rodada_modelos':
+        #atualizar_cache_rodada_modelos(data.strftime("%Y-%m-%d"),reset= reset)
         
-      if sys.argv[1].lower() == 'import_ena_visualization_api':
-        import_ena_visualization_api(data.strftime("%Y-%m-%d"), id_nova_rodada, id_dataviz_chuva)
+      #if sys.argv[1].lower() == 'import_ena_visualization_api':
+        #import_ena_visualization_api(data.strftime("%Y-%m-%d"), id_nova_rodada, id_dataviz_chuva)
         
-      elif sys.argv[1].lower() == 'atualizar_cache_acomph':
+      if sys.argv[1].lower() == 'atualizar_cache_acomph':
         atualizar_cache_acomph(data, reset= reset)
 
       elif sys.argv[1].lower() == 'atualizar_cache_rdh':
         atualizar_cache_rdh()
         
-      elif sys.argv[1].lower() == 'atualizar_cache_comparativo_carga_newave':
-        atualizar_cache_comparativo_carga_newave(data.strftime('%Y-%m-%d'))
+      #elif sys.argv[1].lower() == 'atualizar_cache_comparativo_carga_newave':
+        #atualizar_cache_comparativo_carga_newave(data.strftime('%Y-%m-%d'))
         
       elif sys.argv[1].lower() == 'get_resultado_chuva':
           get_cached('get_resultado_chuva',*sys.argv[2:-1], atualizar=atualizar)

@@ -14,8 +14,6 @@ sys.path.insert(1,f"{PATH_PROJETO}/scripts_unificados")
 
 from bibliotecas import wx_dbClass
 from apps.web_modelos.server.libs import wx_calcEna 
-from apps.smap.libs.Rodadas import tb_smap
-
 
 def get_ena_smap(
         id,
@@ -285,7 +283,7 @@ def get_ena_acomph(data_inicial,granularidade,data_final=None):
 
 
 
-
+"""
 def get_previsao_ena_smap(modelos_list:list,granularidade:str='submercado',priority:bool=False):
     
     TB_SMAP = tb_smap()
@@ -308,7 +306,7 @@ def get_previsao_ena_smap(modelos_list:list,granularidade:str='submercado',prior
     df_modelos['dt_rodada'] = pd.to_datetime(df_modelos['dt_rodada'])
 
     return calc_previsao_smap(df_modelos=df_modelos,granularidade=granularidade)
-
+"""
 def calc_previsao_smap(df_modelos:pd.DataFrame,granularidade:str='submercado'):
 
     acomph = {}
@@ -352,8 +350,7 @@ if __name__ == '__main__':
 
     modelos_list=[('PCONJUNTO', 0, '2024-09-04'),('PCONJUNTO', 0, '2024-09-03')]
     # teste = get_previsao_ena_smap(modelos_list)
-    TB_SMAP = tb_smap()
-    df_modelos = TB_SMAP.get_rodadas_do_dia('2024-09-03',column_data='id_smap')
+    #
     pdb.set_trace()
 
 

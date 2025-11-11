@@ -68,7 +68,7 @@ with DAG(
 
     )
 
-    atualizar_cache = SSHOperator(
+    """    atualizar_cache = SSHOperator(
         task_id='atualizar_cache',
         ssh_conn_id='ssh_master',
         command=". /WX2TB/pythonVersions/myVenv38/bin/activate;"
@@ -82,6 +82,6 @@ with DAG(
         cmd_timeout=None,
         get_pty=True,
         trigger_rule="all_success",
-    )
+    )"""
 
     t_run_smap >> t_update_conf >> t_run_previvaz
