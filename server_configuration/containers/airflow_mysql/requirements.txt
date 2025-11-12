@@ -37,4 +37,4 @@ pytz
 six
 tzdata
 Cartopy
-git+https://github.com/raizen-energy/raizen-power-trading-libs-middle.git
+git+https://github.com/wx-middle/libs-middle.git
