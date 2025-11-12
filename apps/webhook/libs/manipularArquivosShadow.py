@@ -248,7 +248,7 @@ def deck_entrada_saida_dessem(dadosProduto: dict):
         "data":dtRef,
     })
     
-    dessem.organizarArquivosOns(dtRef, path_arquivos_ds, importarDb=False, enviarEmail=True)
+    #dessem.organizarArquivosOns(dtRef, path_arquivos_ds, importarDb=False, enviarEmail=True)
     logger.info(f"Triggering DESSEM_convertido, dt_ref: {dadosProduto['dataProduto']}")
     if dadosProduto.get('enviar', True):
         airflow_tools.trigger_airflow_dag(

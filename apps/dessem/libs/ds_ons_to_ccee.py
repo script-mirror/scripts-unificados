@@ -24,7 +24,7 @@ class DessemOnsToCcee:
         path_ccee = path_ons = None
         try:
             # 1. Get decks
-            path_ccee = self.get_latest_deck_ccee(self.today)
+            path_ccee = self.get_latest_deck_ccee(self.today)[0]
             path_ons  = self.get_latest_deck_ons(self.today)
 
             # 2. Create base
@@ -86,8 +86,9 @@ class DessemOnsToCcee:
             if deck:
                 latest_deck = max(deck, key=lambda x: os.path.getctime(os.path.join(path_deck_unzip, x)))
                 full_path = os.path.join(path_deck_unzip, latest_deck)
+                full_path_result = os.path.join(path_deck_unzip, 'Resultado_'+latest_deck)
                 self.logger.info(f"CCEE deck selected: {latest_deck} (RV{rv}, day {date_check.day})")
-                return extract_zip(full_path)
+                return [extract_zip(full_path), extract_zip(full_path_result)]
 
         error_msg = "No CCEE deck found in the last 5 days."
         self.logger.error(error_msg)
