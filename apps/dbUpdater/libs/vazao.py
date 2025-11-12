@@ -44,8 +44,6 @@ def update_acomph_cache(dtRef):
     result = os.popen(cmd)
     print(result.read())    
     
-
-
 def importAcomph(path):
 
     
@@ -218,8 +216,6 @@ def exportAcomph_toDataviz(
     except Exception as e:
         print(f"Erro na serialização JSON: {str(e)}")
         raise
-    
-    
 
 def get_valoresMapa(df_acomph, agrupamento):
     dbOns = wx_dbClass.db_mysql_master('db_ons')
@@ -282,10 +278,6 @@ def get_valoresMapa(df_acomph, agrupamento):
     else:
         print(f"Tipo de agregação não reconhecido: {agrupamento}")
         return []
-    
-    
-        
-
    
 def importRdh(path):
     """ Importa o RDH disponibilizado para o banco de dados
@@ -520,51 +512,6 @@ def importRdh(path):
     cmd = f"cd {PATH_CACHE};"
     cmd += f"python rz_cache.py atualizar_cache_rdh"
     os.system(cmd)
-
-
-
-def importar_vazoes_obs_smap(vazoes_values):
-    
-    db_rodadas = wx_dbClass.db_mysql_master('db_rodadas')
-    db_rodadas.connect()
-    tb_vazoes_obs = db_rodadas.getSchema('tb_vazoes_obs')
-
-    df_values_total = pd.DataFrame(vazoes_values)
-    
-    df_contagem_dias = df_values_total.groupby(0)[[4]].count().reset_index().set_index(4)
-    for num_dias in df_contagem_dias.index.unique():
-
-        subbacias = df_contagem_dias.loc[num_dias][0].unique()
-        df_values = df_values_total[df_values_total[0].isin(subbacias)]
-
-        df_values = df_values.fillna(0)
-
-        dt_min = df_values[3].min()
-        dt_max = df_values[3].max()
-
-        delete_values = (
-            tb_vazoes_obs.delete()
-            .where(
-                db.and_(
-                    tb_vazoes_obs.c.dt_referente >= dt_min,
-                    tb_vazoes_obs.c.dt_referente <= dt_max,
-                    tb_vazoes_obs.c.txt_subbacia.in_(subbacias)
-                )
-            )
-        )
-        num_deletadas = db_rodadas.conn.execute(delete_values).rowcount
-        print(f"{num_deletadas} Linhas deletadas na tb_vazoes_obs" )
-        
-        first_values = df_values.values.tolist()
-        insert_values = tb_vazoes_obs.insert().values(first_values)
-        num_inseridas = db_rodadas.conn.execute(insert_values).rowcount
-        print(f"{num_inseridas} Linhas inseridas na tb_vazoes_obs" )
-
-
-    print('Dados tratados com sucesso!\n')
-    return True
-
-
 
 if __name__ == '__main__':
     path = "/home/diogopolastrine/Documentos/produtos/ACOMPH/ACOMPH_13.05.2025.xls"
