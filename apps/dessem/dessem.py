@@ -21,7 +21,7 @@ from apps.gerarProdutos import gerarProdutos2
 from bibliotecas import wx_opweek,wx_dbUpdater
 from apps.dessem.libs import  wx_relatorioIntercambio,  wx_converteons_ccee
 from apps.dbUpdater.libs import deck_ds
-from run_ds_ons_to_ccee import DessemOnsToCcee
+from apps.dessem.libs.ds_ons_to_ccee import DessemOnsToCcee
 
 
 
