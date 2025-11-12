@@ -25,7 +25,7 @@ def executar_deck_convertido(data):
     print(resultado.stdout)
     
     file = os.path.join(path_deck_convertido, 'PDO_CMOSIST.DAT')
-    deck_ds.importar_pdo_cmosist_ds(path_file = file, dt_ref=data, str_fonte='wx')
+    deck_ds.importar_pdo_cmosist_ds(path_file = file, dt_ref=data, str_fonte='ons_convertido')
     GERAR_PRODUTO.enviar({
         "produto":"RESULTADO_DESSEM",
         "data":data,
