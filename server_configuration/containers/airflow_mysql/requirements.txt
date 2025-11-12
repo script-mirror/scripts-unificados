@@ -3,6 +3,7 @@ dataframe-image
 Flask-Bootstrap
 Flask-Cors
 Flask-WTF
+Flask-Bcrypt
 geos
 mplfinance
 netCDF4
@@ -11,7 +12,6 @@ pandas
 pdf2image
 pdfplumber
 PyMySQL
-pyshp
 requests
 selenium
 Shapely
@@ -20,8 +20,6 @@ Unidecode
 urllib3
 xarray
 xlrd
-pymssql
-Flask-Bcrypt
 loguru
 workalendar
 pydantic
