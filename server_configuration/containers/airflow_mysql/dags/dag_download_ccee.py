@@ -147,7 +147,7 @@ default_args = {
 with DAG(
     default_args = default_args,
     dag_id='DOWNLOAD_CCEE',
-    tags=["Verificador","CCEE","DS","DC","NW","WhatsApp"],
+    tags=["CCEE","DS"],
     start_date=datetime.datetime(2024, 4, 28),
     catchup=False,
     schedule="0 16 * * *",
