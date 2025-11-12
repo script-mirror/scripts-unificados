@@ -21,7 +21,7 @@ from apps.gerarProdutos import gerarProdutos2
 from bibliotecas import wx_opweek,wx_dbUpdater
 from apps.dessem.libs import  wx_relatorioIntercambio,  wx_converteons_ccee
 from apps.dbUpdater.libs import deck_ds
-
+from run_ds_ons_to_ccee import DessemOnsToCcee
 
 
 
@@ -77,28 +77,17 @@ def importar_arquivos_dessem(lista_arquivos, dtRodada, dtReferente,
 
 def executar_deck_convertido(data, executar_prospec=False):
     
-    if data.weekday() == 5:
-        return False
+    #if data.weekday() == 5:
+        #return False
+    ons_to_ccee = DessemOnsToCcee()
+    path_deck_convertido = ons_to_ccee.run_process()
+    #path_deck_convertido = wx_converteons_ccee.converter_entdados(data)
+    print(f'Iniciando simulação do desse para dia {data.strftime("%d/%m/%Y")}')
+    os.chdir(path_deck_convertido)
+    resultado = subprocess.run(['sudo','dessem_21'], capture_output=True, text=True)
+    print(resultado.stdout)
     
-    path_deck_convertido = wx_converteons_ccee.converter_entdados(data)
-
-    if executar_prospec:
-        shutil.make_archive(path_deck_convertido, 'zip', path_deck_convertido)
-        # TODO subir e colocar o deck executar no PROSPEC
-        path_compilado_prospec_zip = 'PATH PARA O COMPILADO DO PROSPEC'
-        path_compilado_prospec = extractFiles(path_compilado_prospec_zip)
-        path_saida_dessem_zip = os.path.join(path_compilado_prospec,
-                                f'DS{data.strftime("%Y%m%d")}.zip')
-        path_saida_dessem = extractFiles(path_saida_dessem_zip)
-        
-    else:
-        print(f'Iniciando simulação do desse para dia {data.strftime("%d/%m/%Y")}')
-        os.chdir(path_deck_convertido)
-        resultado = subprocess.run(['sudo','dessem_21'], capture_output=True, text=True)
-        print(resultado.stdout)
-        path_saida_dessem = path_deck_convertido
-    
-    pdocmoPath = os.path.join(path_saida_dessem, 'PDO_CMOSIST.DAT')
+    pdocmoPath = os.path.join(path_deck_convertido, 'PDO_CMOSIST.DAT')
 
     importar_arquivos_dessem(lista_arquivos=[pdocmoPath], 
                              dtRodada=data-datetime.timedelta(days=1),
