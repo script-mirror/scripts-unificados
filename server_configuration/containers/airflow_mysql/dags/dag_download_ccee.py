@@ -14,7 +14,6 @@ load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), ".env"))
 
 PATH_PROJETO = os.getenv("PATH_PROJETO", "/WX2TB/Documentos/fontes/PMO")
 sys.path.insert(1,f"{PATH_PROJETO}/scripts_unificados")
-from apps.dessem.libs import wx_mainBalancoDS
 from apps.dbUpdater.libs import deck_ds
 from apps.verificadores.ccee import rz_download_decks_ccee
 from apps.gerarProdutos import gerarProdutos2 
@@ -110,7 +109,6 @@ def importar_deck_ds(**kwargs):
             "produto":"RESULTADO_DESSEM",
             "data":dt_ref,
         })
-        wx_mainBalancoDS.main(dt_ref.strftime("%Y%m%d"))
         
         #se for quinta
         if datetime.datetime.now().weekday() == 3:
