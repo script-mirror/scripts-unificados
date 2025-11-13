@@ -25,7 +25,7 @@ class DessemOnsToCcee:
         try:
             # 1. Get decks
             path_ccee = self.get_latest_deck_ccee(self.today)[0]
-            path_ons  = self.get_latest_deck_ons(self.today)
+            path_ons  = self.get_latest_deck_ons(self.today+timedelta(days=1))
 
             # 2. Create base
             path_deck = self.create_deck_base(path_ons, path_ccee)
