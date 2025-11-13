@@ -1,162 +1,105 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block head %} {% endblock %} {% block title %}
+<title>WX Energy</title>
+{% endblock %} {% block content %}
 
-{% block head %}
-{% endblock %}
+<div style="width: 60%; margin-right: auto; margin-left: auto">
+  <canvas id="SUDESTE"></canvas>
+</div>
 
-{% block title %}
-	<title> WX Energy </title>
-{% endblock %}
+<div style="width: 60%; margin-right: auto; margin-left: auto">
+  <canvas id="SUL"></canvas>
+</div>
 
+<div style="width: 60%; margin-right: auto; margin-left: auto">
+  <canvas id="NORDESTE"></canvas>
+</div>
 
-{% block content %} 
+<div style="width: 60%; margin-right: auto; margin-left: auto">
+  <canvas id="NORTE"></canvas>
+</div>
 
-  <div style="width:60%;margin-right:auto;margin-left: auto;">
-    <canvas id="SUDESTE"></canvas>
-  </div>
+{% endblock %} {% block scripts %}
 
-  <div style="width:60%;margin-right:auto;margin-left: auto;">
-    <canvas id="SUL"></canvas>
-  </div>
+<script>
+  var charts = {};
+  var graficos = document.getElementsByTagName("canvas");
+  var newDataset_acomp = {};
 
-  <div style="width:60%;margin-right:auto;margin-left: auto;">
-    <canvas id="NORDESTE"></canvas>
-  </div>
-
-  <div style="width:60%;margin-right:auto;margin-left: auto;">
-    <canvas id="NORTE"></canvas>
-  </div>
-
-
-{% endblock %}
-
-
-{% block scripts %}
-
- <script>
-  
-    var charts = {}
-    var graficos = document.getElementsByTagName("canvas")
-    var newDataset_acomp = {}
-
-   $(window).on('load', function(){
-
+  $(window).on("load", function () {
     // configure the request to be sync
     // jQuery.ajaxSetup({async:false});
 
+    for (var i = 0; i < graficos.length; i++) {
+      sub = graficos[i].id;
 
-    for (var i = 0; i<graficos.length ; i++){
-      sub = graficos[i].id
-
-      ctx = document.getElementById(sub).getContext('2d');
+      ctx = document.getElementById(sub).getContext("2d");
 
       charts[sub] = new Chart(ctx, {
-            type: 'line',
-            options: {
-              title: {
-                display: true,
-                text: sub,
-              },
-              tooltips: {
-                mode: 'x-axis'
-              },
+        type: "line",
+        options: {
+          title: {
+            display: true,
+            text: sub,
+          },
+          tooltips: {
+            mode: "x-axis",
+          },
+        },
+      });
+
+      $.get(
+        "/middle/API/getlst2acomph",
+        { submercado: sub },
+        function (resposta) {
+          submercado = resposta["submercado"];
+          delete resposta.submercado;
+
+          datas_acomph = Object.keys(resposta);
+
+          for (var i = 0; i < datas_acomph.length; i++) {
+            // for (var i = 0; i < 1; i++){
+            var eixo_x = [];
+            var eixo_y = [];
+
+            for (var dia = 0; dia < i; dia++) {
+              eixo_y.push(null);
             }
-          })
 
+            var dt;
+            for (data_acomph_ref in resposta[datas_acomph[i]]) {
+              dt = new Date(data_acomph_ref);
+              eixo_x.push(dt.toLocaleDateString());
+              eixo_y.push(resposta[datas_acomph[i]][data_acomph_ref]);
+            }
 
-      $.get("/middle/API/getlst2acomph",{'submercado': sub},  function(resposta) {
+            for (var dia = 0; dia < datas_acomph.length; dia++) {
+              dt.setDate(dt.getDate() + 1);
+              eixo_x.push(dt.toLocaleDateString());
+              eixo_y.push(null);
+            }
 
-        submercado = resposta['submercado']
-        delete resposta.submercado
+            var dt_acomph = new Date(datas_acomph[i]);
+            newDataset_acomp[dt_acomph] = {
+              label: dt_acomph.toLocaleDateString(),
+              backgroundColor: "rgba(128, 143, 133, 1)",
+              borderColor: "rgba(128, 143, 133, 1)",
+              fill: false,
+              data: eixo_y,
+            };
 
-        datas_acomph = Object.keys(resposta)
+            if (i == 0) {
+              charts[submercado].data.labels = eixo_x;
+            }
 
-  
-
-        for (var i = 0; i < datas_acomph.length; i++){
-        // for (var i = 0; i < 1; i++){
-          var eixo_x = []
-          var eixo_y = []
-
-
-          for (var dia = 0; dia < i; dia++){
-            eixo_y.push(null)
+            charts[submercado].data.datasets.push(newDataset_acomp[dt_acomph]);
+            charts[submercado].update();
           }
-
-          var dt 
-          for (data_acomph_ref in resposta[datas_acomph[i]]){
-            dt = new Date(data_acomph_ref)
-            eixo_x.push(dt.toLocaleDateString())
-            eixo_y.push(resposta[datas_acomph[i]][data_acomph_ref])
-          }
-
-          for (var dia = 0; dia < datas_acomph.length; dia++){
-            dt.setDate(dt.getDate() + 1)
-            eixo_x.push(dt.toLocaleDateString())
-            eixo_y.push(null)
-          }
-
-
-          var dt_acomph = new Date(datas_acomph[i])
-          newDataset_acomp[dt_acomph] = {
-            label: dt_acomph.toLocaleDateString(),
-            backgroundColor: 'rgba(128, 143, 133, 1)',
-            borderColor: 'rgba(128, 143, 133, 1)',
-            fill: false,
-            data: eixo_y,
-          }
-
-          if (i == 0){
-            charts[submercado].data.labels = eixo_x
-          }
-
-
-          charts[submercado].data.datasets.push(newDataset_acomp[dt_acomph]);
-          charts[submercado].update();
-
-
         }
+      );
+    }
+  });
 
-
-        // for (var i = 0; i < 0; i++){
-
-        //   var eixo_x = []
-        //   var eixo_y = []
-        //   console.log(resposta[datas_acomph[i]])
-
-        //   for (data_acomph_ref in resposta[datas_acomph[i]]){
-        //     var dt = new Date(data_acomph_ref)
-        //     console.log(dt)
-        //     eixo_x.push(dt.toLocaleDateString())
-        //     eixo_y.push(resposta[datas_acomph[i]][data_acomph_ref])
-        //   }
-
-        //   var dt_acomph = new Date(datas_acomph[i])
-
-        //   var newDataset_rdh = {
-        //       label: dt_acomph.toLocaleDateString(),
-        //       backgroundColor: 'rgba(128, 143, 133, 1)',
-        //       borderColor: 'rgba(128, 143, 133, 1)',
-        //       fill: false,
-        //       data: eixo_y,
-        //     }
-
-        //     if (i = 0){
-        //       charts[submercado].data.labels = eixo_x
-        //     }
-
-        //     charts[submercado].data.datasets.push(newDataset_rdh);
-        //     charts[submercado].update();
-        //   }
-
-        })
-      }
-    })
-
-
-    $(window).on('ready', function(){
-
-    })
-
+  $(window).on("ready", function () {});
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>

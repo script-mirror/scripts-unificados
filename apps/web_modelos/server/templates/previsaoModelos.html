@@ -1,300 +1,190 @@
-{% extends "base.html" %}
-
-{% block head %}
-{% endblock %}
-
-{% block title %}
-	<title> WX Energy </title>
-{% endblock %}
-
-
-{% block content %} 
-
-         <!-- <table class="table table-bordered mb-5 table-responsive" id="table_ECMWF" style="text-align:center;width:100%"> -->
-
-<!--           <div style="width: 200">
-          <table class="table table-responsive" style="text-align:center">
-            <thead>
-              <tr>
-                <th scope="col">Bacia</th>
-                <th scope="col">Data</th>
-                <th scope="col">Rodada</th>
-                <th scope="col">Semana 1</th>
-                <th scope="col">Semana 2</th>
-                <th scope="col">Semana 3</th>
-                <th scope="col">Total</th>
-              </tr>
-            </thead>
-            <tbody id="bodyECMWF">
-            </tbody>
-         </table>
-       </div> -->
-
-
- 
+{% extends "base.html" %} {% block head %} {% endblock %} {% block title %}
+<title>WX Energy</title>
+{% endblock %} {% block content %}
 
 <div class="container">
   <div class="dropdown">
-    <button class="btn bg-wx-original-claro dropdown-toggle mx-1 mt-3" type="button" id="modelsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    <button
+      class="btn bg-wx-original-claro dropdown-toggle mx-1 mt-3"
+      type="button"
+      id="modelsDropdown"
+      data-toggle="dropdown"
+      aria-haspopup="true"
+      aria-expanded="false"
+    >
       Modelo
     </button>
-    <div id = "modelsDropdown-menu" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-    </div>
+    <div
+      id="modelsDropdown-menu"
+      class="dropdown-menu"
+      aria-labelledby="dropdownMenuButton"
+    ></div>
   </div>
 
-  <div class="table-responsive" id="tableModels">
-
-  </div>
+  <div class="table-responsive" id="tableModels"></div>
 </div>
 
-
-<!--   <div class="table-responsive" id="tableModels">
-    {% for enaN in matriz %}
-    {% for enaNE in matriz[enaN] %}
-        <table hidden="true" class="table table-bordered table-cenarios" id="Norte: {{ enaN }}% e Nordeste: {{ enaNE }}%">
-
-            <tr>
-              <td class="table-secondary" colspan="2">SUDESTE</td>
-              {% for enaSE in matriz[enaN][enaNE]['aux']['enaPercentSudeste'] %}
-              <td class="table-secondary" >{{ enaSE }}%</td>
-              {% endfor %}
-            </tr>
-            <tr>
-            <td class="table-active" colspan="2">SUL</td>
-              {% for enaSE in matriz[enaN][enaNE]['aux']['enaPrimeiraSemanaSudeste'] %}
-              <td class="table-secondary" >{{ enaSE }}</td>
-              {% endfor %}
-            </tr>
-
-
-            {% for enaS in matriz[enaN][enaNE] %}
-            {% if enaS != 'aux' %}
-            <tr>
-              <td class="table-active" >{{ enaS }}%</td>
-              <td class="table-active" >{{ matriz[enaN][enaNE]['aux']['enaPrimeiraSemanaSul'][loop.index0-1]}}</td>
-            {% for enaSE in matriz[enaN][enaNE][enaS] %}
-              <td><a href="/modelos/decomp/resultados?rodada={{ matriz[enaN][enaNE][enaS][enaSE][0] }}">R${{ matriz[enaN][enaNE][enaS][enaSE][1] }}</td>
-            {% endfor %}
-            </tr>
-            {% endif %}
-            {% endfor %}
-        </table>
-    {% endfor %}
-    {% endfor %}
-  </div> -->
-
-
-
 <!-- Page Content -->
-{% endblock %}
+{% endblock %} {% block scripts %}
 
+<script>
+  $(window).on("load", function () {
+    // configure the requesto to be sync
+    jQuery.ajaxSetup({ async: false });
 
-{% block scripts %}
+    $.get("/middle/API/getprevmodels", function (data) {
+      models = Object.keys(data);
+      console.log(models);
 
- <script>
+      dropDownMenu = document.getElementById("modelsDropdown-menu");
+      tableModels = document.getElementById("tableModels");
 
-    $(window).on('load', function(){
-      // configure the requesto to be sync
-      jQuery.ajaxSetup({async:false});
+      for (i = 0; i < models.length; i++) {
+        // console.log(models[i])
+        a = document.createElement("a");
+        a.classList.add("dropdown-item");
+        a.href = "#";
+        a.innerHTML = models[i];
+        dropDownMenu.appendChild(a);
+        table = document.createElement("table");
+        table.setAttribute("hidden", "true");
+        table.classList.add("table", "table-bordered", "table-models");
+        table.id = models[i];
+        tableModels.appendChild(table);
 
-      $.get("/middle/API/getprevmodels", function(data) {
+        row = table.insertRow(-1);
 
-        models = Object.keys(data)
-        console.log(models)
-        
-        dropDownMenu = document.getElementById("modelsDropdown-menu")
-        tableModels = document.getElementById("tableModels")
+        cell = row.insertCell(-1);
+        cell.classList.add("table-secondary");
+        cell.innerHTML = "Bacia";
+        row.appendChild(cell);
+        cell = row.insertCell(-1);
+        cell.classList.add("table-secondary");
+        cell.innerHTML = "Data";
+        row.appendChild(cell);
+        cell = row.insertCell(-1);
+        cell.classList.add("table-secondary");
+        cell.innerHTML = "Rodada";
+        row.appendChild(cell);
+        cell = row.insertCell(-1);
+        cell.classList.add("table-secondary");
+        cell.innerHTML = "Semana 1";
+        row.appendChild(cell);
+        cell = row.insertCell(-1);
+        cell.classList.add("table-secondary");
+        cell.innerHTML = "Semana 2";
+        row.appendChild(cell);
+        cell = row.insertCell(-1);
+        cell.classList.add("table-secondary");
+        cell.innerHTML = "Semana 3";
+        row.appendChild(cell);
+        cell = row.insertCell(-1);
+        cell.classList.add("table-secondary");
+        cell.innerHTML = "Total";
+        row.appendChild(cell);
 
-        for (i=0; i<models.length; i++){
-          // console.log(models[i])
-          a = document.createElement("a");
-          a.classList.add("dropdown-item")
-          a.href="#"
-          a.innerHTML = models[i]
-          dropDownMenu.appendChild(a)
-          table = document.createElement("table");
-          table.setAttribute("hidden", "true")
-          table.classList.add("table", "table-bordered", "table-models")
-          table.id = models[i]
-          tableModels.appendChild(table)
-          
-          row = table.insertRow(-1);
+        bacias = Object.keys(data[models[i]]);
 
-          cell = row.insertCell(-1);
-          cell.classList.add("table-secondary")
-          cell.innerHTML = "Bacia"
-          row.appendChild(cell)
-          cell = row.insertCell(-1);
-          cell.classList.add("table-secondary")
-          cell.innerHTML = "Data"
-          row.appendChild(cell)
-          cell = row.insertCell(-1);
-          cell.classList.add("table-secondary")
-          cell.innerHTML = "Rodada"
-          row.appendChild(cell)
-          cell = row.insertCell(-1);
-          cell.classList.add("table-secondary")
-          cell.innerHTML = "Semana 1"
-          row.appendChild(cell)
-          cell = row.insertCell(-1);
-          cell.classList.add("table-secondary")
-          cell.innerHTML = "Semana 2"
-          row.appendChild(cell)
-          cell = row.insertCell(-1);
-          cell.classList.add("table-secondary")
-          cell.innerHTML = "Semana 3"
-          row.appendChild(cell)
-          cell = row.insertCell(-1);
-          cell.classList.add("table-secondary")
-          cell.innerHTML = "Total"
-          row.appendChild(cell)
+        for (j = 0; j < bacias.length; j++) {
+          datas = Object.keys(data[models[i]][bacias[j]]).sort().reverse();
 
-          bacias = Object.keys(data[models[i]])
+          for (k = 0; k < datas.length; k++) {
+            rodadas = Object.keys(data[models[i]][bacias[j]][datas[k]])
+              .sort()
+              .reverse();
 
-          for (j=0; j<bacias.length; j++){
-            // row = table.insertRow(-1);
-            // baciaCell = row.insertCell(-1);
-            // baciaCell.innerHTML = bacias[j]
-            datas = Object.keys(data[models[i]][bacias[j]]).sort().reverse()
-            // baciaCell.setAttribute("rowspan", datas.length+1)
-            // row.appendChild(baciaCell)
+            for (l = 0; l < rodadas.length; l++) {
+              row = table.insertRow(-1);
+              baciaCell = row.insertCell(-1);
+              baciaCell.innerHTML = bacias[j];
 
-            for (k=0; k<datas.length; k++){
-              // dataCell = document.createElement("td");
-              // dataCell.innerHTML = datas[k]
-              // row.appendChild(dataCell)
-              rodadas = Object.keys(data[models[i]][bacias[j]][datas[k]]).sort().reverse()
-              // console.log(rodadas)
-              // console.log("datas.length):"+datas.length+" rodadas.length:"+rodadas.length)
-              // baciaCell.setAttribute("rowspan", (datas.length)*(rodadas.length))
-              // dataCell.setAttribute("rowspan", rodadas.length)
+              dataCell = row.insertCell(-1);
+              dataCell.innerHTML = datas[k];
 
-              for (l=0; l<rodadas.length; l++ ){
-                row = table.insertRow(-1);
-                baciaCell = row.insertCell(-1);
-                baciaCell.innerHTML = bacias[j]
+              rodadaCell = row.insertCell(-1);
+              rodadaCell.innerHTML = rodadas[l];
+              semanas = Object.keys(
+                data[models[i]][bacias[j]][datas[k]][rodadas[l]]
+              );
 
-                dataCell = row.insertCell(-1);
-                dataCell.innerHTML = datas[k]
+              for (m = 0; m < semanas.length; m++) {
+                prevCell = row.insertCell(-1);
+                prev =
+                  data[models[i]][bacias[j]][datas[k]][rodadas[l]][semanas[m]];
+                prevCell.innerHTML = prev;
 
-
-                rodadaCell = row.insertCell(-1);
-                rodadaCell.innerHTML = rodadas[l]
-                semanas = Object.keys(data[models[i]][bacias[j]][datas[k]][rodadas[l]])
-
-                for (m=0; m<semanas.length; m++){
-                  prevCell = row.insertCell(-1);
-                  prev = data[models[i]][bacias[j]][datas[k]][rodadas[l]][semanas[m]]
-                  prevCell.innerHTML = prev
-                  // if (Number(prev)<5){
-                  //   prevCell.style.backgroundColor= "#657279"
-                  // }
-                  // else if (5<=Number(prev) && Number(prev)<10){
-                  //   prevCell.style.backgroundColor= "#3B7FA2"
-                  // }
-                  // else if (10<=Number(prev) && Number(prev)<15){
-                  //   prevCell.style.backgroundColor= "#43A488"
-                  // }
-                  // else if (15<=Number(prev) && Number(prev)<20){
-                  //   prevCell.style.backgroundColor= "#81A23B"
-                  // }
-                  // else if (20<=Number(prev) && Number(prev)<30){
-                  //   prevCell.style.backgroundColor= "#81A23B"
-                  // }
-                  // else if (30<=Number(prev)){
-                  //   prevCell.style.backgroundColor= "#782E6E"
-                  // }
-
-                  if (Number(prev)<5){
-                    prevCell.style.backgroundColor= "rgb(180, 240, 250)"
-                  }
-                  else if (5<=Number(prev) && Number(prev)<20){
-                    prevCell.style.backgroundColor= "rgb(20, 100, 210)"
-                  }
-                  else if (20<=Number(prev) && Number(prev)<40){
-                    prevCell.style.backgroundColor= "rgb(30, 180, 30)"
-                  }
-                  else if (40<=Number(prev) && Number(prev)<75){
-                    prevCell.style.backgroundColor= "rgb(255, 232, 120)"
-                  }
-                  else if (75<=Number(prev) && Number(prev)<120){
-                    prevCell.style.backgroundColor= "rgb(255, 192, 60)"
-                  }
-                  else if (120<=Number(prev) && Number(prev)<200){
-                    prevCell.style.backgroundColor= "rgb(255, 20, 0)"
-                  }
-                  else if (200<=Number(prev) ){
-                    prevCell.style.backgroundColor= "rgb(251, 94, 107)"
-                  }
-                  //prevCell.style.color = "white"
-                  prevCell.style.fontWeight = "650"
-                  row.appendChild(prevCell)
+                if (Number(prev) < 5) {
+                  prevCell.style.backgroundColor = "rgb(180, 240, 250)";
+                } else if (5 <= Number(prev) && Number(prev) < 20) {
+                  prevCell.style.backgroundColor = "rgb(20, 100, 210)";
+                } else if (20 <= Number(prev) && Number(prev) < 40) {
+                  prevCell.style.backgroundColor = "rgb(30, 180, 30)";
+                } else if (40 <= Number(prev) && Number(prev) < 75) {
+                  prevCell.style.backgroundColor = "rgb(255, 232, 120)";
+                } else if (75 <= Number(prev) && Number(prev) < 120) {
+                  prevCell.style.backgroundColor = "rgb(255, 192, 60)";
+                } else if (120 <= Number(prev) && Number(prev) < 200) {
+                  prevCell.style.backgroundColor = "rgb(255, 20, 0)";
+                } else if (200 <= Number(prev)) {
+                  prevCell.style.backgroundColor = "rgb(251, 94, 107)";
                 }
+                //prevCell.style.color = "white"
+                prevCell.style.fontWeight = "650";
+                row.appendChild(prevCell);
               }
-              // dataCell = row.insertCell(0);
-              // dataCell.innerHTML = datas[k]
-              // dataCell.setAttribute("rowspan", rodadas.length)
             }
-
-            // baciaCell = row.insertCell(0);
-            // baciaCell.innerHTML = bacias[j]
-            // baciaCell.setAttribute("rowspan", datas.length)
-            // row.appendChild(baciaCell)
-
           }
-
-          let headerCell = null;
-          let headerCell2 = null;
-
-          for (let row of table.rows) {
-            const firstCell = row.cells[0];
-            const secondCell = row.cells[1];
-            
-            if (headerCell === null || firstCell.innerText !== headerCell.innerText) {
-              headerCell = firstCell;
-            } else {
-              headerCell.rowSpan++;
-              firstCell.remove();
-            }
-
-            if (headerCell2 === null || secondCell.innerText !== headerCell2.innerText) {
-              headerCell2 = secondCell;
-            } else {
-              headerCell2.rowSpan++;
-              secondCell.remove();
-            }
-
-          }
-
-
         }
-      })
 
-    })
+        let headerCell = null;
+        let headerCell2 = null;
 
-$(document).ready(function() {
+        for (let row of table.rows) {
+          const firstCell = row.cells[0];
+          const secondCell = row.cells[1];
 
-    var tableName = $("#modelsDropdown-menu a")[0].innerText
+          if (
+            headerCell === null ||
+            firstCell.innerText !== headerCell.innerText
+          ) {
+            headerCell = firstCell;
+          } else {
+            headerCell.rowSpan++;
+            firstCell.remove();
+          }
+
+          if (
+            headerCell2 === null ||
+            secondCell.innerText !== headerCell2.innerText
+          ) {
+            headerCell2 = secondCell;
+          } else {
+            headerCell2.rowSpan++;
+            secondCell.remove();
+          }
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    var tableName = $("#modelsDropdown-menu a")[0].innerText;
     var table = document.getElementById(tableName);
-    table.hidden = false
-    $("#modelsDropdown")[0].innerText=tableName
+    table.hidden = false;
+    $("#modelsDropdown")[0].innerText = tableName;
+  });
 
-})
-
-
-
-$(function(){
-    $("#modelsDropdown-menu").on("click", "a", function(event){
-      tableName = event.target.text
+  $(function () {
+    $("#modelsDropdown-menu").on("click", "a", function (event) {
+      tableName = event.target.text;
       var table = document.getElementById(tableName);
-      $("table.table-models").each(function( index ) {
-        $( this )[0].hidden=true
-      })
-      table.hidden = false
-      $("#modelsDropdown")[0].innerText=event.target.text
-     })
- })
-
+      $("table.table-models").each(function (index) {
+        $(this)[0].hidden = true;
+      });
+      table.hidden = false;
+      $("#modelsDropdown")[0].innerText = event.target.text;
+    });
+  });
 </script>
 
 {% endblock %}
