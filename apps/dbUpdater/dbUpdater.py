@@ -5,7 +5,7 @@ import datetime
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import wx_opweek,rz_dir_tools
-from apps.dbUpdater.libs import rodadas,chuva,carga_ons,temperatura,deck_ds,bbce,vazao
+from apps.dbUpdater.libs import chuva,carga_ons,temperatura,deck_ds,bbce,vazao
 
 
 DIR_TOOLS = rz_dir_tools.DirTools()
@@ -157,27 +157,7 @@ if __name__ == '__main__':
             elif argumento == 'str_fonte':
                 p_strFonte = sys.argv[i+1]
 
-            
-        
-        #RODADA
-        if sys.argv[1].lower() == 'importar_chuva':
-            rodadas.importar_chuva(data=p_dataRodada, rodada=p_rodada,
-                                modelo=p_modelo, flag_estudo=p_estudo)
 
-        elif sys.argv[1].lower() == 'importar_smap':
-            rodadas.importar_smap(data=p_dataRodada, rodada=p_rodada,
-                                modelo=p_modelo, flag_preliminar=p_preliminar,
-                                flag_pdp=p_pdp, flag_psat=p_psat,
-                                flag_estudo=p_estudo, 
-                                dt_inicio_previsao_chuva=p_inicioPrevisao)
-            
-        elif sys.argv[1].lower() == 'importar_prevs':
-            rodadas.importar_prevs(data=p_dataRodada, rodada=p_rodada,
-                                modelo=p_modelo, dt_rv=p_dtRv,
-                                flag_preliminar=p_preliminar,
-                                flag_pdp=p_pdp, flag_psat=p_psat, 
-                                flag_estudo=p_estudo)
-            
         #CARGA ONS
         
         elif sys.argv[1].lower() == 'importar_prev_carga_dessem_saida':
