@@ -235,10 +235,6 @@ def deck_entrada_saida_dessem(dadosProduto: dict):
     path_copia_tmp = DIR_TOOLS.copy_src(filename, path_dessem_diario)
     logger.info(path_copia_tmp)
     
-    path_arquivos_ds ="/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/dessem/arquivos".format(
-            dtRef.strftime("%Y%m%d")
-        )
-
     deck_ds.importar_ds_bloco_dp(filename,dtRef,str_fonte='ons')
     deck_ds.importar_pdo_cmosist_ds(path_file=filename, dt_ref=dtRef, str_fonte='ons')
 
@@ -248,7 +244,6 @@ def deck_entrada_saida_dessem(dadosProduto: dict):
         "data":dtRef,
     })
     
-    #dessem.organizarArquivosOns(dtRef, path_arquivos_ds, importarDb=False, enviarEmail=True)
     logger.info(f"Triggering DESSEM_convertido, dt_ref: {dadosProduto['dataProduto']}")
     if dadosProduto.get('enviar', True):
         airflow_tools.trigger_airflow_dag(
