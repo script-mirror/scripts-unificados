@@ -39,6 +39,7 @@ class DessemOnsToCcee:
             entdados = self.adjust_tm(entdados)
             entdados = self.update_load(entdados, df_carga)
             entdados = self.adjust_di(entdados)
+            entdados = self.uncoment_entdados(entdados, map_ccee)
             entdados = self.coment_entdados(entdados, map_ccee)
             entdados = self.adjust_barras(entdados, map_ccee['BARRA'])
             self.write_file(path_deck, 'entdados.dat', entdados)
@@ -259,6 +260,20 @@ class DessemOnsToCcee:
         self.logger.info(f"{commented} lines commented because they do not exist in CCEE")
         return result
 
+    def uncoment_entdados(self, entdados: List[str], map_ccee: Dict[str, Any]) -> List[str]:
+        self.logger.info("Uncommenting records not present in CCEE deck")
+        result = []
+        for line in entdados:
+            parts = line.split()
+            if parts[0] in ['&RE', '&LU', '&FI', '&FH', '&FE', '&FT', '&FC', '&FR'] and parts[1] in map_ccee['RE']:
+                line = line[1:]  # remove '&'
+            elif parts[0] == '&CI' and parts[1] in map_ccee['CI']:
+                line = line[1:]   # remove '&'
+            elif parts[0] == '&CE' and parts[1] in map_ccee['CE']:
+                line = line[1:]   # remove '&'
+            result.append(line)
+        return result
+    
     def adjust_barras(self, entdados: List[str], map_ccee: Dict[str, Dict]) -> List[str]:
         self.logger.info("Adjusting bar voltages according to CCEE mapping")
         adjusted = 0
