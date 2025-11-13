@@ -41,6 +41,7 @@ class DessemOnsToCcee:
             entdados = self.adjust_di(entdados)
             entdados = self.uncoment_entdados(entdados, map_ccee)
             entdados = self.coment_entdados(entdados, map_ccee)
+            entdados = self.adjust_di(entdados)
             entdados = self.adjust_barras(entdados, map_ccee['BARRA'])
             self.write_file(path_deck, 'entdados.dat', entdados)
 
