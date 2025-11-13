@@ -1,66 +1,78 @@
-
 {% import "bootstrap/wtf.html" as wtf %}
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+      crossorigin="anonymous"
+    />
 
-	  <title> Login  </title>
+    <title>Login</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/signin.css') }}"/>
-
-<!--     <style>
-      body { 
-          background-image: url('{{ url_for('static', filename='images/logo_completo.png') }}');
-          background-repeat: no-repeat;
-          background-attachment: fixed;
-          background-position: center; 
-        }
-      img { opacity : 0.5 }
-    </style> -->
-
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/signin.css') }}"
+    />
   </head>
-<body>
-
-  <div class="container mt-5 mb-5"> 
-    <form class="form-signin" method="POST" action="/middle/login">
-      <img class="mb-4" src="{{ url_for('static', filename='images/Raizen-Power_LOGO_RGB_Principal-02.png') }}" alt="" height="150">
-      <!-- <h1 class="form-signin-heading text-center">Please sign in</h1> -->
-      {{ form.hidden_tag() }}
-      {{ wtf.form_field(form.username) }}
-      {{ wtf.form_field(form.password) }}
-      {{ wtf.form_field(form.remember) }}
-
-      {% if flag == 1 %}
+  <body>
+    <div class="container mt-5 mb-5">
+      <form class="form-signin" method="POST" action="/middle/login">
+        <img
+          class="mb-4"
+          src="{{ url_for('static', filename='images/Raizen-Power_LOGO_RGB_Principal-02.png') }}"
+          alt=""
+          height="150"
+        />
+        <!-- <h1 class="form-signin-heading text-center">Please sign in</h1> -->
+        {{ form.hidden_tag() }} {{ wtf.form_field(form.username) }} {{
+        wtf.form_field(form.password) }} {{ wtf.form_field(form.remember) }} {%
+        if flag == 1 %}
         <div class="alert alert-danger text-center" role="alert">
           Senha incorreta!
         </div>
-      {% elif flag == 2 %}
+        {% elif flag == 2 %}
         <div class="alert alert-danger text-center" role="alert">
-        Usuário não encontrado!
+          Usuário não encontrado!
         </div>
-      {% endif %}
+        {% endif %}
 
-      <button class="btn btn-lg btn-primary btn-block" type="submit">Entrar</button>
+        <button class="btn btn-lg btn-primary btn-block" type="submit">
+          Entrar
+        </button>
 
-      <div class='text-center mt-5'>
-        Não possui uma conta? <a href='/middle/signup'>Cadastre-se</a>
-      </div>
-
-    </form>
-  </div>
-
+        <div class="text-center mt-5">
+          Não possui uma conta? <a href="/middle/signup">Cadastre-se</a>
+        </div>
+      </form>
+    </div>
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+      integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+      integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+      integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+      crossorigin="anonymous"
+    ></script>
   </body>
 </html>

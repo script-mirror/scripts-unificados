@@ -1,214 +1,182 @@
-{% extends "base.html" %}
-
-{% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pagina_menu_principal.css') }}"/>
-{% endblock %}
-
-{% block title %}
-	<title> Raizen </title>
-{% endblock %}
-
-
-{% block content %} 
+{% extends "base.html" %} {% block head %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/pagina_menu_principal.css') }}"
+/>
+{% endblock %} {% block title %}
+<title>Raizen</title>
+{% endblock %} {% block content %}
 
 <!-- Page Content -->
 
 <div class="container">
-	<div class="row mt-4">
-			<div class="col-12 col-md-6 col-lg-4">
-				<div class="row">
-					<div class="col-6 item-menu my-1">
-						<a href="https://tradingenergiarz.com/clima/" target="_blank"> 
-								<button type="button" class="btn p-3 btn-block text-center background-blue">METEOROLOGIA</button>
-						</a>
-					</div>
-					<div class="col-6 item-menu my-1">
-						<a href="/middle/rdh_submercados"> 
-							<button type="button" class="btn  p-3 btn-block text-center  background-blue">MONITOR. HIDROLÓGICO</button>
-						</a>
-					</div>
-					<!-- <div class="col-6 item-menu my-1">
-						<a href="/middle/monitoramento_precipitacao_bacia"> 
-							<button type="button" class="btn  p-3 btn-block text-center background-blue">MONITORAÇÂO PRECIPTAÇÂO</button>
-						</a>
-					</div> -->
-					<!-- <div class="col-6 item-menu my-1">
-						<a href="/middle/chuva-ena-diaria"> 
-							<button type="button" class="btn  p-3 btn-block text-center background-blue">ENA<br>DIÁRIA</button>
-						</a>
-					</div> -->
-					<div class="col-6 item-menu my-1">
-						<a href="/middle/curvas-anuais-acomph"> 
-							<button type="button" class="btn  p-3 btn-block text-center background-blue">ENA<br>ACOMPH</button>
-						</a>
-					</div>
-					<div class="col-6 item-menu my-1">
-						<a href="/middle/curvas-anuais-armazenamento"> 
-							<button type="button" class="btn  p-3 btn-block text-center background-blue">EAR<br>SUBMERCADO</button>
-						</a>
-					</div>
-					<!-- <div class="col-6 item-menu my-1">
-						<a href="/middle/tabela_previsao_modelos"> 
-							<button type="button" class="btn  p-3 btn-block text-center background-blue">PREVISÃO MODELOS</button>
-						</a>
-					</div> -->
-					<div class="col-6 item-menu my-1">
-						<a href="/middle/ena-mlt"> 
-							<button type="button" class="btn  p-3 btn-block text-center background-blue">ENA<br>MLT</button>
-						</a>
-					</div>
-					<div class="col-6 item-menu my-1">
-						<a href="/middle/mapa-interativo"> 
-							<button type="button" class="btn  p-3 btn-block text-center background-blue">MAPAS<br>INTERATIVOS</button>
-						</a>
-					</div>
-			</div>
-		</div>
+  <div class="row mt-4">
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="row">
+        <div class="col-6 item-menu my-1">
+          <a href="https://tradingenergiarz.com/clima/" target="_blank">
+            <button
+              type="button"
+              class="btn p-3 btn-block text-center background-blue"
+            >
+              METEOROLOGIA
+            </button>
+          </a>
+        </div>
+        <div class="col-6 item-menu my-1">
+          <a href="/middle/rdh_submercados">
+            <button
+              type="button"
+              class="btn p-3 btn-block text-center background-blue"
+            >
+              MONITOR. HIDROLÓGICO
+            </button>
+          </a>
+        </div>
+        <div class="col-6 item-menu my-1">
+          <a href="/middle/curvas-anuais-acomph">
+            <button
+              type="button"
+              class="btn p-3 btn-block text-center background-blue"
+            >
+              ENA<br />ACOMPH
+            </button>
+          </a>
+        </div>
+        <div class="col-6 item-menu my-1">
+          <a href="/middle/curvas-anuais-armazenamento">
+            <button
+              type="button"
+              class="btn p-3 btn-block text-center background-blue"
+            >
+              EAR<br />SUBMERCADO
+            </button>
+          </a>
+        </div>
+        <div class="col-6 item-menu my-1">
+          <a href="/middle/ena-mlt">
+            <button
+              type="button"
+              class="btn p-3 btn-block text-center background-blue"
+            >
+              ENA<br />MLT
+            </button>
+          </a>
+        </div>
+        <div class="col-6 item-menu my-1">
+          <a href="/middle/mapa-interativo">
+            <button
+              type="button"
+              class="btn p-3 btn-block text-center background-blue"
+            >
+              MAPAS<br />INTERATIVOS
+            </button>
+          </a>
+        </div>
+      </div>
+    </div>
 
-		<div class="col-12 col-md-6 col-lg-4">
-			<div class="row">
-				<div class="col-6 item-menu my-1">
-					<a href="/middle/carga"> 
-						<button type="button"  class="btn  p-3 btn-block text-center  background-orange">CARGA HORARIA</button>
-					</a>
-				</div>
-				<div class="col-6 item-menu my-1">
-					<a href="/middle/rdh"> 
-						<button type="button" class="btn p-3 btn-block text-center background-orange">RDH</button>
-					</a>
-				</div>
-				<div class="col-6 item-menu my-1">
-					<a href="/middle/estudos-dessem"> 
-						<button type="button" class="btn  p-3 btn-block text-center background-orange">BALANÇO DESSEM</button>
-					</a>
-				</div>
-				<div class="col-6 item-menu my-1">
-					<a href="/middle/dash_historico_decomp"> 
-						<button type="button" class="btn  p-3 btn-block text-center background-orange">HISTORICO DECOMP</button>
-					</a>
-				</div>
-				<!-- <div class="col-6 item-menu my-1">
-					<a href="/middle/comparativo_carga_newave"> 
-						<button type="button"  class="btn  p-3 btn-block text-center background-orange">COMPARATIVO CARGA</button>
-					</a>
-				</div> -->
-				<!-- <div class="col-6 item-menu my-1">
-					<a href="/middle/acompanhamento_ipdo"> 
-						<button type="button" class="btn  p-3 btn-block text-center background-orange">ACOMP. IPDO</button>
-					</a>
-				</div> -->
-				<!-- <div class="col-6 item-menu my-1">
-					<a href="/middle/curvas-carga-dessem-decomp-newave"> 
-						<button type="button" class="btn  p-3 btn-block text-center background-orange">CARGAS<br>DESSEM<br>DECOMP<br>NEWAVE</button>
-					</a>
-				</div> -->
-				<div class="col-6 item-menu my-1">
-					<a href="/middle/carga-dados-abertos"> 
-						<button type="button"  class="btn  p-3 btn-block text-center background-orange">CARGA<br>DADOS ABERTOS</button>
-					</a>
-				</div>
-			</div>
-		</div>
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="row">
+        <div class="col-6 item-menu my-1">
+          <a href="/middle/carga">
+            <button
+              type="button"
+              class="btn p-3 btn-block text-center background-orange"
+            >
+              CARGA HORARIA
+            </button>
+          </a>
+        </div>
+        <div class="col-6 item-menu my-1">
+          <a href="/middle/rdh">
+            <button
+              type="button"
+              class="btn p-3 btn-block text-center background-orange"
+            >
+              RDH
+            </button>
+          </a>
+        </div>
+        <div class="col-6 item-menu my-1">
+          <a href="/middle/estudos-dessem">
+            <button
+              type="button"
+              class="btn p-3 btn-block text-center background-orange"
+            >
+              BALANÇO DESSEM
+            </button>
+          </a>
+        </div>
+        <div class="col-6 item-menu my-1">
+          <a href="/middle/dash_historico_decomp">
+            <button
+              type="button"
+              class="btn p-3 btn-block text-center background-orange"
+            >
+              HISTORICO DECOMP
+            </button>
+          </a>
+        </div>
+        <div class="col-6 item-menu my-1">
+          <a href="/middle/carga-dados-abertos">
+            <button
+              type="button"
+              class="btn p-3 btn-block text-center background-orange"
+            >
+              CARGA<br />DADOS ABERTOS
+            </button>
+          </a>
+        </div>
+      </div>
+    </div>
 
-		<div class="col-12 col-md-6 col-lg-4">
-			<div class="row">
-				<!-- <div class="col-6 item-menu my-1">
-					<a href="/middle/prospec_preco"> 
-						<button type="button" class="btn  p-3 btn-block text-center background-green">PREÇOS PROSPEC</button>
-					</a>
-				</div> -->
-				<!-- <div class="col-6 item-menu my-1">
-					<a href="/middle/precos_ec"> 
-						<button type="button"  class="btn  p-3 btn-block text-center background-green">PREÇOS MEMBROS<br>EC-EXT</button>
-					</a>
-				</div> -->
-				<!-- <div class="col-6 item-menu my-1 ">
-					<a href="/middle/calculadora_pld"> 
-						<button type="button" class="btn  p-3 btn-block text-center background-green">CALCULADORA<br>PREÇO PLD</button>
-					</a>
-				</div> -->
-				<div class="col-6 item-menu my-1 ">
-					<a href="/middle/negociacoes-bbce"> 
-						<button type="button" class="btn  p-3 btn-block text-center background-green">DASHBOARD<br>NEGOCIAÇÕES BBCE</button>
-					</a>
-				</div>
-				<div class="col-6 item-menu my-1 ">
-					<a href="/middle/resumo-negociacoes-bbce"> 
-						<button type="button" class="btn  p-3 btn-block text-center background-green">RESUMO<br>NEGOCIAÇÕES BBCE</button>
-					</a>
-				</div>
-				<div class="col-6 item-menu my-1">
-					<a href="/middle/geradorPrevs"> 
-						<button type="button" class="btn  p-3 btn-block text-center background-grey">GERADOR<br>PREVS</button>
-					</a>
-				</div>
-				<div class="col-6 item-menu my-1">
-					<a href="/middle/geracao_eolica"> 
-						<button type="button" class="btn  p-3 btn-block text-center background-grey">GERAÇÂO EÓLICA</button>
-					</a>
-				</div>
-			</div>
-		</div>
-	</div>
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="row">
+        <div class="col-6 item-menu my-1">
+          <a href="/middle/negociacoes-bbce">
+            <button
+              type="button"
+              class="btn p-3 btn-block text-center background-green"
+            >
+              DASHBOARD<br />NEGOCIAÇÕES BBCE
+            </button>
+          </a>
+        </div>
+        <div class="col-6 item-menu my-1">
+          <a href="/middle/resumo-negociacoes-bbce">
+            <button
+              type="button"
+              class="btn p-3 btn-block text-center background-green"
+            >
+              RESUMO<br />NEGOCIAÇÕES BBCE
+            </button>
+          </a>
+        </div>
+        <div class="col-6 item-menu my-1">
+          <a href="/middle/geradorPrevs">
+            <button
+              type="button"
+              class="btn p-3 btn-block text-center background-grey"
+            >
+              GERADOR<br />PREVS
+            </button>
+          </a>
+        </div>
+        <div class="col-6 item-menu my-1">
+          <a href="/middle/geracao_eolica">
+            <button
+              type="button"
+              class="btn p-3 btn-block text-center background-grey"
+            >
+              GERAÇÂO EÓLICA
+            </button>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-
-
-<!-- 		<div class="col-6 col-sm-6 col-md-6 col-lg-3 col-xl-2 item-menu my-1">
-			<a href="/middle/modelos/decomp/resultados"> 
-				<button type="button" class="btn bg-wx-original-medio p-3 btn-block text-center">RESULTADOS DECOMP</button>
-			</a>
-		</div> -->
-
-<!-- 		<div class="col-6 col-sm-6 col-md-6 col-lg-3 col-xl-2 item-menu my-1">
-			<a href="/middle/modelos/decomp/matriz"> 
-				<button type="button" class="btn bg-wx-original-medio p-3 btn-block text-center">SIMULAÇÕES PROSPEC</button>
-			</a>
-		</div> -->
-
-<!-- 		<div class="col-6 col-sm-6 col-md-6 col-lg-3 col-xl-2 item-menu my-1">
-			<a href="/middle/modelos/clima/prec"> 
-				<button type="button" class="btn bg-wx-original-medio p-3 btn-block text-center">PREVISÃO PRECIPTAÇÃO</button>
-			</a>
-		</div>
- -->
-
-<!-- 		<div class="col-6 col-sm-6 col-md-6 col-lg-3 col-xl-2 item-menu my-1">
-			<a href="/middle/acomph_comp"> 
-				<button type="button" class="btn bg-wx-original-medio p-3 btn-block text-center">COMPARAÇÂO ACOMPH</button>
-			</a>
-		</div> -->
-
-	<!-- <hr>
-	
-	<div class="row">
-
-		<div class="col-6 col-sm-6 col-md-6 col-lg-3 col-xl-2 item-menu my-1">
-			<a href="/middle/palavras-Aneel"> 
-				<button type="button" class="btn bg-wx-original-medio p-3 btn-block text-center">PAUTA ANEEL</button>
-			</a>
-		</div> -->
-
-		<!-- <div class="col-6 col-sm-6 col-md-6 col-lg-3 col-xl-2 item-menu my-1">
-			<a href="/middle/dash_bbce"> 
-				<button type="button" class="btn bg-raizen-original-medio p-3 btn-block text-center">NEGOCIAÇÕES BBCE</button>
-			</a>
-		</div> -->
-
-<!-- 		<div class="col-6 col-sm-6 col-md-6 col-lg-3 col-xl-2">
-			<a href="/middle/dash_bbce"> 
-				<div class="panel panel-default text-center">
-					<div class="panel-heading">
-						<button id="clearButton" type="button" class="btn bg-wx-original-medio m-1 icon-negociacoes_bbce buttonIconsPers"></span></button>
-					</div>
-				</div>
-			</a>
-		</div> -->
-
 <!-- Page Content -->
-{% endblock %}
-
-
-{% block scripts %}
-
-{% endblock %}
+{% endblock %} {% block scripts %} {% endblock %}

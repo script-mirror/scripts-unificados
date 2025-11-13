@@ -1,308 +1,169 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+      crossorigin="anonymous"
+    />
 
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style_bbce.css') }}">
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='css/style_bbce.css') }}"
+    />
 
     <title>Hello, world!</title>
   </head>
   <body>
-
-<div class="container" id="tabelasBBCE">
-<!--   <div class="tableBBCE">
-    <table class="table table-dark" style="float: left" >
-      <thead>
-        <tr>
-          <th  colspan="6"scope="col">SE CON ANU JAN/20 DEZ/20 - Preço Fixo</th>
-        </tr>
-      </thead>
-        <thead>
-        <tr>
-          <th scope="col">#</th>
-          <th scope="col">Qtd Compra</th>
-          <th scope="col">$ Compra</th>
-          <th scope="col">Qtd Venda</th>
-          <th scope="col">$ Venda</th>
-          <th scope="col" ></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="idProd">3158806</td>
-          <td class="melhorOpt">1</td>
-          <td class="melhorOpt">R$ 263,50</td>
-          <td>1</td>
-          <td>R$ 262,00</td>
-        </tr>
-
-        <tr>
-          <td class="idProd">3158806</td>
-          <td>1</td>
-          <td>R$ 263,50</td>
-          <td>1</td>
-          <td>R$ 262,00</td>
-        </tr>
-
-        <tr>
-          <td class="idProd">3158806</td>
-          <td>1</td>
-          <td>R$ 263,50</td>
-          <td>1</td>
-          <td>R$ 262,00</td>
-        </tr>
-
-        <tr>
-          <td class="idProd">3158806</td>
-          <td>1</td>
-          <td>R$ 263,50</td>
-          <td>1</td>
-          <td>R$ 262,00</td>
-        </tr>
-
-        <tr>
-          <td class="idProd">3158806</td>
-          <td>1</td>
-          <td>R$ 263,50</td>
-          <td>1</td>
-          <td>R$ 262,00</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="tableBBCE ml-5">
-   <table class="table table-dark" style="float: left">
-      <thead class="thead-dark">
-        <tr>
-          <th scope="col">#</th>
-          <th scope="col">Qtd Compra</th>
-          <th scope="col">$ Compra</th>
-          <th scope="col">Qtd Venda</th>
-          <th scope="col">$ Venda</th>
-          <th scope="col" ></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="idProd" >3158806</td>
-          <td>1</td>
-          <td>R$ 263,50</td>
-          <td>1</td>
-          <td>R$ 262,00</td>
-        </tr>
-
-        <tr>
-          <td class="idProd">3158806</td>
-          <td>1</td>
-          <td>R$ 263,50</td>
-          <td>1</td>
-          <td>R$ 262,00</td>
-        </tr>
-
-        <tr>
-          <td class="idProd">3158806</td>
-          <td>1</td>
-          <td>R$ 263,50</td>
-          <td class="wxOpt">1</td>
-          <td class="wxOpt">R$ 262,00</td>
-        </tr>
-
-        <tr>
-          <td class="idProd">3158806</td>
-          <td>1</td>
-          <td>R$ 263,50</td>
-          <td>1</td>
-          <td>R$ 262,00</td>
-        </tr>
-
-        <tr>
-          <td class="idProd">3158806</td>
-          <td>1</td>
-          <td>R$ 263,50</td>
-          <td>1</td>
-          <td>R$ 262,00</td>
-        </tr>
-      </tbody>
-    </table>
-  </div> -->
-</div>
+    <div class="container" id="tabelasBBCE"></div>
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.3.1.js" ></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+      integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+      integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+      crossorigin="anonymous"
+    ></script>
 
     <script>
+      var teste;
+      $(window).on("load", function () {
+        // configure the requesto to be sync
+        jQuery.ajaxSetup({ async: false });
 
-    var teste;
-    $(window).on('load', function(){
+        $.get("/middle/API/get/prodBBCE", function (data) {
+          teste = data;
+          console.log(data);
 
-      
-      // configure the requesto to be sync
-      jQuery.ajaxSetup({async:false});
+          produtos = Object.keys(data);
 
-      $.get("/middle/API/get/prodBBCE", function(data) {
-        teste = data
-        console.log(data)
+          tabelasBBCE = document.getElementById("tabelasBBCE");
 
-        produtos = Object.keys(data)
+          for (i = 0; i < produtos.length; i++) {
+            div = document.createElement("div");
+            div.classList.add("tableBBCE");
 
-        tabelasBBCE = document.getElementById("tabelasBBCE")
+            table = document.createElement("table");
+            div.appendChild(table);
+            // table.setAttribute("hidden", "true")
+            table.classList.add("table", "table-bordered", "table-dark");
+            table.style.float = "left";
 
-        for (i=0; i<produtos.length; i++){
-          
-          div = document.createElement("div");
-          div.classList.add("tableBBCE")
-          
-          table = document.createElement("table");
-          div.appendChild(table)
-          // table.setAttribute("hidden", "true")
-          table.classList.add("table", "table-bordered", "table-dark")
-          table.style.float= "left"
-
-          thead = document.createElement("thead");
-          tr = document.createElement("tr");
-          th = document.createElement("th");
-          th.colSpan = 6;
-          th.innerHTML = produtos[i]
-          tr.appendChild(th)
-          thead.appendChild(tr)
-          table.appendChild(thead)
-
-          thead = document.createElement("thead");
-          table.appendChild(thead)
-          tr = document.createElement("tr");
-          thead.appendChild(tr)
-
-          th = document.createElement("th");
-          th.innerHTML = "#"
-          tr.appendChild(th)
-          
-          th = document.createElement("th");
-          th.innerHTML = "Qtd Compra"
-          tr.appendChild(th)
-          
-          th = document.createElement("th");
-          th.innerHTML = "$ Compra"
-          tr.appendChild(th)
-
-          th = document.createElement("th");
-          th.innerHTML = "Qtd Venda"
-          tr.appendChild(th)
-          
-          th = document.createElement("th");
-          th.innerHTML = "$ Venda"
-          tr.appendChild(th)
-
-          tbody = document.createElement("tbody");
-          table.appendChild(tbody)
-
-          models = data[produtos[i]]['model']
-
-          // var car = {type:"Fiat", model:"500", color:"white"};
-          var classesColors = {0:"amarelo", 1:"wxOpt", 2:"melhorOpt", 3:"vermelho", 4:"amarelo"}
-
-          for (ii=0; ii<models.length; ii++){
+            thead = document.createElement("thead");
             tr = document.createElement("tr");
-            tbody.appendChild(tr)
+            th = document.createElement("th");
+            th.colSpan = 6;
+            th.innerHTML = produtos[i];
+            tr.appendChild(th);
+            thead.appendChild(tr);
+            table.appendChild(thead);
 
-            td = document.createElement("td");
-            td.innerHTML = models[ii]["$id"]
-            td.classList.add("idProd")
-            tr.appendChild(td)
+            thead = document.createElement("thead");
+            table.appendChild(thead);
+            tr = document.createElement("tr");
+            thead.appendChild(tr);
 
+            th = document.createElement("th");
+            th.innerHTML = "#";
+            tr.appendChild(th);
 
-            td = document.createElement("td");
-            if (models[ii]["quantidadeCompra"] != 0){
-              td.innerHTML = models[ii]["quantidadeCompra"]
-              td.classList.add(classesColors[models[ii]["statusLimiteCompra"]])
+            th = document.createElement("th");
+            th.innerHTML = "Qtd Compra";
+            tr.appendChild(th);
+
+            th = document.createElement("th");
+            th.innerHTML = "$ Compra";
+            tr.appendChild(th);
+
+            th = document.createElement("th");
+            th.innerHTML = "Qtd Venda";
+            tr.appendChild(th);
+
+            th = document.createElement("th");
+            th.innerHTML = "$ Venda";
+            tr.appendChild(th);
+
+            tbody = document.createElement("tbody");
+            table.appendChild(tbody);
+
+            models = data[produtos[i]]["model"];
+
+            // var car = {type:"Fiat", model:"500", color:"white"};
+            var classesColors = {
+              0: "amarelo",
+              1: "wxOpt",
+              2: "melhorOpt",
+              3: "vermelho",
+              4: "amarelo",
+            };
+
+            for (ii = 0; ii < models.length; ii++) {
+              tr = document.createElement("tr");
+              tbody.appendChild(tr);
+
+              td = document.createElement("td");
+              td.innerHTML = models[ii]["$id"];
+              td.classList.add("idProd");
+              tr.appendChild(td);
+
+              td = document.createElement("td");
+              if (models[ii]["quantidadeCompra"] != 0) {
+                td.innerHTML = models[ii]["quantidadeCompra"];
+                td.classList.add(
+                  classesColors[models[ii]["statusLimiteCompra"]]
+                );
+              }
+              tr.appendChild(td);
+
+              td = document.createElement("td");
+              if (models[ii]["quantidadeCompra"] != 0) {
+                td.innerHTML = models[ii]["precoCompra"];
+                td.classList.add(
+                  classesColors[models[ii]["statusLimiteCompra"]]
+                );
+              }
+              tr.appendChild(td);
+
+              td = document.createElement("td");
+              if (models[ii]["quantidadeVenda"] != 0) {
+                td.innerHTML = models[ii]["quantidadeVenda"];
+                td.classList.add(
+                  classesColors[models[ii]["statusLimiteVenda"]]
+                );
+              }
+              tr.appendChild(td);
+
+              td = document.createElement("td");
+              if (models[ii]["quantidadeVenda"] != 0) {
+                td.innerHTML = models[ii]["precoVenda"];
+                td.classList.add(
+                  classesColors[models[ii]["statusLimiteVenda"]]
+                );
+              }
+              tr.appendChild(td);
+
+              console.log(models[ii]);
             }
-            tr.appendChild(td)
 
-            td = document.createElement("td");
-            if (models[ii]["quantidadeCompra"] != 0){
-              td.innerHTML = models[ii]["precoCompra"]
-              td.classList.add(classesColors[models[ii]["statusLimiteCompra"]])
-            }
-            tr.appendChild(td)
-
-            td = document.createElement("td");
-            if (models[ii]["quantidadeVenda"] != 0){
-              td.innerHTML = models[ii]["quantidadeVenda"]
-              td.classList.add(classesColors[models[ii]["statusLimiteVenda"]])
-            }
-            tr.appendChild(td)
-
-            td = document.createElement("td");
-            if (models[ii]["quantidadeVenda"] != 0){
-              td.innerHTML = models[ii]["precoVenda"]
-              td.classList.add(classesColors[models[ii]["statusLimiteVenda"]])
-            }
-            tr.appendChild(td)
-
-            console.log(models[ii])
+            tabelasBBCE.appendChild(div);
           }
-
-          tabelasBBCE.appendChild(div)
-        }
-
-
-  // <div class="tableBBCE">
-  //   <table class="table table-dark" style="float: left" >
-  //     <thead>
-  //       <tr>
-  //         <th  colspan="6"scope="col">SE CON ANU JAN/20 DEZ/20 - Preço Fixo</th>
-  //       </tr>
-  //     </thead>
-  //       <thead>
-  //       <tr>
-  //         <th scope="col">#</th>
-  //         <th scope="col">Qtd Compra</th>
-  //         <th scope="col">$ Compra</th>
-  //         <th scope="col">Qtd Venda</th>
-  //         <th scope="col">$ Venda</th>
-  //         <th scope="col" ></th>
-  //       </tr>
-  //     </thead>
-  //     <tbody>
-  //       <tr>
-  //         <td class="idProd">3158806</td>
-  //         <td class="melhorOpt">1</td>
-  //         <td class="melhorOpt">R$ 263,50</td>
-  //         <td>1</td>
-  //         <td>R$ 262,00</td>
-  //       </tr>
-
-  //       <tr>
-  //         <td class="idProd">3158806</td>
-  //         <td>1</td>
-  //         <td>R$ 263,50</td>
-  //         <td>1</td>
-  //         <td>R$ 262,00</td>
-  //       </tr>
-
-  //       <tr>
-  //         <td class="idProd">3158806</td>
-  //         <td>1</td>
-  //         <td>R$ 263,50</td>
-  //         <td>1</td>
-  //         <td>R$ 262,00</td>
-  //       </tr>
-
-  //     </tbody>
-  //   </table>
-  // </div>
-
-
-
-      })
-    })
-  </script>
-
+        });
+      });
+    </script>
   </body>
 </html>
