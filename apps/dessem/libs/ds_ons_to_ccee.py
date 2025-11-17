@@ -234,8 +234,7 @@ class DessemOnsToCcee:
                                 parts[5] = str(REST[parts[2]]['min']['value'])
                                 result.append(self.format_line(parts, line))
                                 adjusted += 1
-                                update = True
-                                
+                                update = True              
             if not update:
                 result.append(line)
         self.logger.info(f"{adjusted} LIM records adjusted in operuh.dat")

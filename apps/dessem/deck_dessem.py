@@ -39,11 +39,14 @@ class DeckDessem():
             
             deck_date = self.read_data_deck(path_deck_unzip)
             
-            df = self.read_cmo_sist(path_deck_unzip, deck_date )
-            self.post_data(df)
+            df_rn = self.read_renovaveis(path_deck_unzip, deck_date )
+            #elf.post_data(df)
             
-            df = self.read_load_pdo(path_deck_unzip, deck_date)
-            self.post_data(df)
+            df_cmo = self.read_cmo_sist(path_deck_unzip, deck_date )
+            #self.post_data(df)
+            
+            df_load = self.read_load_pdo(path_deck_unzip, deck_date)
+            #self.post_data(df)
             
             
         except Exception as e:
@@ -152,34 +155,43 @@ class DeckDessem():
         df['SUB'] = df['SUB'].replace({'SE': 1, 'S': 2, 'NE': 3, 'N': 4})
         return df
     
-    def read_tm(self, path: str) -> pd.DataFrame:
-        pdo_file = self.read_file(path, 'entdados.dat')
-        data, load = [], False
-        current_date = None
-        for line in pdo_file:
-            words = line.split()
+    def read_renovaveis(self, path: str, date_deck) -> pd.DataFrame:
+        file = self.read_file(path, 'renovaveis.dat')
+        next_friday = (4 - date_deck.weekday() + 7) % 7
+        end_date = date_deck + timedelta(days=next_friday+1)
+        list_date = pd.date_range(start=date_deck, end=end_date, freq='30min')
+        df = pd.DataFrame()
+
+        for line in file:
             parts = line.split(';')
 
-            if words and words[0].lower() == 'te':
-                current_date = datetime.strptime(words[-1].strip(), "%d/%m/%Y")
-                self.logger.debug(f"PDO date: {current_date.strftime('%d/%m/%Y')}")
+            if parts[0].strip().upper() == 'EOLICA':
+                df = pd.concat([df, pd.DataFrame([pd.Series({
+                        'BARRA': parts[1].strip(),
+                        'FONTE': parts[2].split('_')[-1].strip(),
+                        'SUB': None,
+                        **{date: None for date in list_date}
+                    })])], ignore_index=True)
 
-            if parts[0].strip().lower() == 'iper':
-                load = True
-                continue
+            elif parts[0].strip().upper() == 'EOLICASUBM':
+                df.loc[df['BARRA'] == parts[1].strip(), 'SUB'] = parts[2].strip()
 
-            if load and '-' not in parts[0] and current_date:
-                minuto = (int(parts[0].strip()) - 1) * 30
-                date_load = current_date + timedelta(minutes=minuto)
-                if int(parts[0].strip()) < 49:
-                    data.append({
-                        'DATA': date_load,
-                        'SUB': parts[2].strip(),
-                        'CARGA': parts[4].strip()
-                    })
-
-        df = pd.DataFrame(data)
-        df = df[df['SUB'] != 'FC']
+            elif parts[0].strip().upper() == 'EOLICA-GERACAO':
+                date = next((dt for dt in list_date if dt.day == int(parts[2].strip())), None)
+                star_date = datetime(date.year, date.month, int(parts[2].strip()), int(parts[3].strip()), int(parts[4].strip())*30, 0)
+                date = next((dt for dt in list_date if dt.day == int(parts[5].strip())), None)
+                end_date = datetime(date.year, date.month, int(parts[5].strip()), int(parts[6].strip()), int(parts[7].strip())*30, 0)
+                list_date_power = pd.date_range(start=star_date, end=end_date, freq='30min', inclusive='both')
+                
+                for dt in list_date_power:
+                    df.loc[df['BARRA'] == parts[1].strip(), dt] = float(parts[8].strip())
+        
+        df = df.copy()  
+        columns = df.columns[3:]
+        df[columns] = df[columns].apply(pd.to_numeric, errors='coerce')
+        df_agg = df.groupby(['SUB', 'FONTE'], as_index=False)[columns].sum()
+        df_melt = df_agg.melt(id_vars=['SUB', 'FONTE'],value_vars=columns, var_name='DATA', value_name='VALOR')
+        df = df_melt.pivot_table(index=['SUB', 'DATA'], columns='FONTE', values='VALOR', aggfunc='sum', fill_value=0).reset_index()
         df['SUB'] = df['SUB'].replace({'SE': 1, 'S': 2, 'NE': 3, 'N': 4})
         return df
     
