@@ -214,6 +214,7 @@ class DessemOnsToCcee:
         adjusted = 0
         result = []
         for line in operuh:
+            update = False
             parts = line.split()
             self.logger.info(f"Processing line: {line.strip()}")
             if len(parts) > 5:
@@ -224,17 +225,18 @@ class DessemOnsToCcee:
                                 deck_date <= datetime.strptime(REST[parts[2]]['max']['df'], '%d/%m/%Y'):
                                 self.logger.info(f"Adjusting max value for HQ {parts[2]} from {parts[6]} to {REST[parts[2]]['max']}")
                                 parts[6] = str(REST[parts[2]]['max'])
-
+                                result.append(self.format_line(parts, line))
+                                update = True
                         if 'min' in REST[parts[2]]:
                             if deck_date >= datetime.strptime(REST[parts[2]]['min']['di'], '%d/%m/%Y') and\
                                 deck_date <= datetime.strptime(REST[parts[2]]['min']['df'], '%d/%m/%Y'):
                                 self.logger.info(f"Adjusting min value for HQ {parts[2]} from {parts[5]} to {REST[parts[2]]['min']}")  
                                 parts[5] = str(REST[parts[2]]['min']['value'])
+                                result.append(self.format_line(parts, line))
                                 adjusted += 1
-                        result.append(self.format_line(parts, line))
-                else:
-                    result.append(line)   
-            else:
+                                update = True
+                                
+            if not update:
                 result.append(line)
         self.logger.info(f"{adjusted} LIM records adjusted in operuh.dat")
         return result
