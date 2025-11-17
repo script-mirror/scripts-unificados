@@ -216,7 +216,7 @@ class DessemOnsToCcee:
         for line in operuh:
             update = False
             parts = line.split()
-            self.logger.info(f"Processing line: {line.strip()}")
+            self.logger.debug(f"Processing line: {line.strip()}")
             if len(parts) > 5:
                 if parts[1] == 'LIM':
                     if parts[2] in REST:
