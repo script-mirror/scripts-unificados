@@ -160,7 +160,7 @@ if __name__ == '__main__':
 
         #CARGA ONS
         
-        elif sys.argv[1].lower() == 'importar_prev_carga_dessem_saida':
+        if sys.argv[1].lower() == 'importar_prev_carga_dessem_saida':
             carga_ons.importar_prev_carga_dessem_saida(path_zip = p_path)
 
         #CHUVA
