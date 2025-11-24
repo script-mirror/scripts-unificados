@@ -1,275 +1,252 @@
 import os
 import re
-import pdb
 import sys
 import warnings
 import datetime
 import numpy as np
 import pandas as pd
 import sqlalchemy as db
+import logging
+
 warnings.filterwarnings("ignore")
 
+# ===================================================================
+# LOGGER SIMPLES E LIMPO - SÓ NA TELA (sem arquivo)
+# ===================================================================
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s | %(levelname)-8s | %(message)s',
+    datefmt='%H:%M:%S',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+
+log = logging.getLogger(__name__)
+
+# ===================================================================
+# Seu código com logs claros e úteis (só no terminal)
+# ===================================================================
 
 sys.path.insert(1,"/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import wx_dbClass
 
-def getFromFile(path):
-	dir_file = os.path.dirname(path)
-	fullname_file = os.path.basename(path)
-	name_file, extension_file = fullname_file.split('.')
 
-	path = os.path.join(dir_file, f'{name_file.lower()}.{extension_file}')
-	if not os.path.exists(path):
-		path = os.path.join(dir_file, f'{name_file.upper()}.{extension_file}')
-  
-	file = open(path, 'r', encoding="latin-1")
-	return file.readlines()
+def getFromFile(path):
+    dir_file = os.path.dirname(path)
+    fullname_file = os.path.basename(path)
+    name_file, extension_file = fullname_file.split('.')
+
+    tentativa1 = os.path.join(dir_file, f'{name_file.lower()}.{extension_file}')
+    tentativa2 = os.path.join(dir_file, f'{name_file.upper()}.{extension_file}')
+
+    if os.path.exists(tentativa1):
+        caminho = tentativa1
+    elif os.path.exists(tentativa2):
+        caminho = tentativa2
+    else:
+        log.error(f"Arquivo não encontrado: {path}")
+        raise FileNotFoundError(path)
+
+    log.info(f"Lendo: {caminho}")
+    with open(caminho, 'r', encoding="latin-1") as f:
+        return f.readlines()
+
 
 def leituraArquivo(filePath):
+    log.info(f"Procurando e lendo arquivo: {filePath}")
+    arquivo = getFromFile(filePath)
+    dados = {'SIST': []}
+    iLine = 0
 
-	arquivo = getFromFile(filePath)
+    while iLine < len(arquivo):
+        line = arquivo[iLine].strip()
 
-	dados = {'SIST':[]}
-	iLine = 0
-	while iLine != len(arquivo)-1:
-		line = arquivo[iLine]
+        if '------;--------;------;------------;' in line:
+            log.info("Bloco SIST encontrado!")
+            iLine += 4
+            bloco = []
+            while iLine < len(arquivo):
+                bloco.append(arquivo[iLine])
+                iLine += 1
+            dados['SIST'] = bloco
+            log.info(f"Bloco SIST extraído → {len(bloco)} linhas")
+            break
+        iLine += 1
 
-		if '------;--------;------;------------;'  in line:
-			iLine += 4
-			line = arquivo[iLine]
-			bloco = []
-			while iLine != len(arquivo)-1:
-				bloco.append(line)
-				iLine += 1
-				line = arquivo[iLine]
-			dados['SIST'] = bloco
-			continue
-		else:
-			iLine += 1
+    return dados
 
-	return dados
 
 def getInfoBlocos():
-	blocos = {}
-
-	blocos['SIST'] = {'campos':[
-						'iper',
-						'pat',
-						'sist',
-						'cmo',
-						'demanda',
-						'perdas',
-						'gpqusi',
-						'gfixbar',
-						'grenova',
-						'somatgh',
-						'somatgt',
-						'conseleva',
-						'import.',
-						'export.',
-						'cortcarg.',
-						'saldo',
-						'recebimento',
-						'somagtmin',
-						'somatgtmax',
-						'earm',
-				],
-				'regex':'(.{6});(.{8});(.{6});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.*)',
-				'formatacao':'{:>6};{:>8};{:>6};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};'}
-	return blocos
+    return {
+        'SIST': {
+            'campos': ['iper','pat','sist','cmo','demanda','perdas','gpqusi','gfixbar','grenova','somatgh',
+                       'somatgt','conseleva','import.','export.','cortcarg.','saldo','recebimento',
+                       'somagtmin','somatgtmax','earm'],
+            'regex': r'(.{6});(.{8});(.{6});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});' +
+                     r'(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{20});(.*)'
+        }
+    }
 
 
 def extrairInfoBloco(listaLinhas, mnemonico, regex):
+    blocos = []
+    if mnemonico not in listaLinhas or not listaLinhas[mnemonico]:
+        log.warning(f"Bloco {mnemonico} não encontrado")
+        return blocos
 
-	blocos = []
-	if mnemonico in listaLinhas:
-		for i, linha in enumerate(listaLinhas[mnemonico]):
-			infosLinha = re.split(regex, linha)
-			blocos.append(infosLinha[1:-2])   # ultimo termo da lista e o que sobra da expressao regex (/n)
+    for linha in listaLinhas[mnemonico]:
+        partes = re.split(regex, linha)
+        if len(partes) > 3:
+            blocos.append(partes[1:-2])
+    return blocos
 
-	return blocos
 
-# def leituraCmo(data, pathArquivos, comentatio = '', fonte='ccee'):
 def leituraSist(pdoSistPath):
-	
-	infoBlocos = getInfoBlocos()
-	pdoSist    = leituraArquivo(pdoSistPath)
-	precos     = extrairInfoBloco(pdoSist, 'SIST', infoBlocos['SIST']['regex'])
-	df_sist    = pd.DataFrame(precos, columns=infoBlocos['SIST']['campos'])
-
-	return df_sist
+    log.info(f"Processando PDO_SIST: {pdoSistPath}")
+    info = getInfoBlocos()
+    dados = leituraArquivo(pdoSistPath)
+    linhas = extrairInfoBloco(dados, 'SIST', info['SIST']['regex'])
+    df = pd.DataFrame(linhas, columns=info['SIST']['campos'])
+    log.info(f"DataFrame criado → {df.shape[0]} linhas, {df.shape[1]} colunas")
+    return df
 
 
 def calculoIntercambio(df_sist):
-	for i in range(1,49):
-		df_aux = df_sist[df_sist['iper'] == i].apply(np.sum, axis = 0)
-		ande = df_aux['demanda'] - df_aux['grenova']-df_aux['somatgh'] -df_aux['somatgt'] + df_aux['conseleva']
-		df_sist.iat[df_sist[df_sist['sist'] == 'SE'][df_sist['iper'] == i]['somatgh'].index.values[0], 6] = df_sist[df_sist['sist'] == 'SE'][df_sist['iper'] == i]['somatgh'] + ande
+    log.info("Calculando intercâmbio e ajustando SE/CO...")
+    df_sist = df_sist.copy()
+    df_sist[['demanda','grenova','somatgh','somatgt','conseleva']] = df_sist[['demanda','grenova','somatgh','somatgt','conseleva']].astype(float)
 
-	df_sist['intercambio'] = df_sist.apply(lambda  x:x['demanda']-x['grenova']-x['somatgh'] -x['somatgt'] + x['conseleva'], axis=1)
+    for i in range(1, 49):
+        filtro = df_sist['iper'].astype(int) == i
+        aux = df_sist[filtro].iloc[:, 4:12].astype(float).sum()
+        ande = aux['demanda'] - aux['grenova'] - aux['somatgh'] - aux['somatgt'] + aux['conseleva']
+        se_idx = df_sist[(df_sist['sist'] == 'SE') & filtro].index
+        if not se_idx.empty:
+            df_sist.loc[se_idx, 'somatgh'] = float(df_sist.loc[se_idx, 'somatgh']) + ande
 
-	return df_sist
+    df_sist['intercambio'] = (df_sist['demanda'] - df_sist['grenova'] - df_sist['somatgh'] -
+                              df_sist['somatgt'] + df_sist['conseleva'])
+    return df_sist
 
 
 def insertData(df_sist, dataDeck):
-	df_out = pd.DataFrame()
-	for subm in df_sist[df_sist['iper'] == 1]['sist']:
-		iper = 1
-		while iper < 48:
-			dict_aux = {'dataHora':str(dataDeck.day)+'/'+str(dataDeck.month)+'/'+str(dataDeck.year)+ ' '+ str(int((int(iper-1)*30)/60)).zfill(2)+':00',
-			             'sist': subm,
-						 'cmo':str(int((int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper]['cmo'])+int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper+1]['cmo']))/2)),
-						 'demanda':str(int((int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper]['demanda'])+int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper+1]['demanda'])
-						 + int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper]['conseleva']) + int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper+1]['conseleva']))/2)),
-						 'grenova':str(int((int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper]['grenova'])+int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper+1]['grenova']))/2)),
-						 'somatgh':str(int((int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper]['somatgh'])+int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper+1]['somatgh']))/2)),
-						 'somatgt':str(int((int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper]['somatgt'])+int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper+1]['somatgt']))/2)),
-						 'somagtmin':str(int((int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper]['somagtmin'])+int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper+1]['somagtmin']))/2)),
-						 'somagtmax':str(int((int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper]['somatgtmax'])+int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper+1]['somatgtmax']))/2)),
-						 'intercambio':str(int((int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper]['intercambio'])+int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper+1]['intercambio']))/2)),
-						 'pld':str(int((int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper]['pld'])+int(df_sist[df_sist['sist'] == subm][df_sist['iper'] == iper+1]['pld']))/2)) }
-			df_out = df_out.append(dict_aux,ignore_index=True)
-			iper = iper + 2
-	return df_out
+    log.info("Convertendo para formato horário (média de 30 em 30 min)")
+    df_out = pd.DataFrame()
+    subs = df_sist[df_sist['iper'].astype(int) == 1]['sist'].unique()
 
+    for subm in subs:
+        for i in range(1, 48, 2):
+            l1 = df_sist[(df_sist['sist'] == subm) & (df_sist['iper'].astype(int) == i)]
+            l2 = df_sist[(df_sist['sist'] == subm) & (df_sist['iper'].astype(int) == i+1)]
+            if l1.empty or l2.empty: continue
+
+            def avg(col): return str(int((float(l1.iloc[0][col]) + float(l2.iloc[0][col])) / 2))
+
+            hora = f"{int((i-1)*0.5):02d}:00"
+            dict_aux = {
+                'dataHora': f"{dataDeck.day}/{dataDeck.month}/{dataDeck.year} {hora}",
+                'sist': subm,
+                'cmo': avg('cmo'),
+                'demanda': avg('demanda'),
+                'grenova': avg('grenova'),
+                'somatgh': avg('somatgh'),
+                'somatgt': avg('somatgt'),
+                'somagtmin': avg('somagtmin'),
+                'somagtmax': avg('somatgtmax'),
+                'intercambio': avg('intercambio'),
+                'pld': '0'
+            }
+            df_out = pd.concat([df_out, pd.DataFrame([dict_aux])], ignore_index=True)
+    return df_out
 
 
 def calculo_pld(lista_input, PLD_min, PLDmax_h, PLDmax_estr):
-    
-	# ajusta PLDs para piso e teto
-	for i in range(len(lista_input)):
-		if float(lista_input[i]) > PLDmax_h:
-			lista_input[i] = PLDmax_h
-		if float(lista_input[i]) < PLD_min:
-			lista_input[i] = PLD_min
-    
-	# método iterativo para adequação a PLDmax estrutural
-	PLD_md0 = sum(lista_input) /len(lista_input)
-	PLD_md = PLD_md0
-    
-	f_est0 = PLDmax_estr / PLD_md0
-	f_est = f_est0
-	contCalc = 0
-	dif = (PLD_md - PLDmax_estr)
+    lista = [float(x) for x in lista_input]
+    # piso e teto horário
+    lista = [max(PLD_min, min(PLDmax_h, x)) for x in lista]
+    # ajuste estrutural
+    media = sum(lista) / len(lista)
+    cont = 0
+    while media > PLDmax_estr + 0.01 and cont < 30:
+        lista = [round(x * PLDmax_estr / media, 2) for x in lista]
+        media = sum(lista) / len(lista)
+        cont += 1
+    return lista
 
-	while dif > 0.01:
-		#print(f_est)
-		
-		lista_aux = [round(element * f_est, 2) for element in lista_input]
-        
-		lista_input = lista_aux
-        
-		PLD_md = sum(lista_input) / len(lista_input)
-        
-		f_est = PLDmax_estr / PLD_md
-
-		dif = (PLD_md - PLDmax_estr)
-
-		contCalc = contCalc + 1
-		if contCalc > 20:
-			break
-	lista_output = lista_input
-    
-	return lista_output
 
 def calculaPLD(df_sist, data):
-	db_ons = wx_dbClass.db_mysql_master('db_ons')
-	db_ons.connect()
-	tb_pld = db_ons.getSchema('tb_pld')
-	ano = data.year
-	query_get_ano_pld = db.select(tb_pld).where(db.and_(tb_pld.c.str_ano == ano))
+    log.info("Buscando limites de PLD no banco...")
+    db_ons = wx_dbClass.db_mysql_master('db_ons')
+    db_ons.connect()
+    tb = db_ons.getSchema('tb_pld')
+    result = db_ons.conn.execute(db.select(tb).where(tb.c.str_ano == data.year)).fetchall()
+    if not result:
+        log.error("Limites de PLD não encontrados!")
+        return
+    PLDmax_h, PLDmax_estr, PLDmin = result[0].vl_PLDmax_hora, result[0].vl_PLDmax_estr, result[0].vl_PLDmin
 
-	colunas = db_ons.conn.execute(query_get_ano_pld)
+    subs = ['SE','S','NE','N']
+    plds = []
+    for s in subs:
+        cmo = df_sist[df_sist['sist'] == s]['cmo'].tolist()
+        plds.append(calculo_pld(cmo, PLDmin, PLDmax_h, PLDmax_estr))
 
-	for valor in colunas:
-		PLDmax_hora = valor.vl_PLDmax_hora
-		PLDmax_estr = valor.vl_PLDmax_estr
-		PLDmin = valor.vl_PLDmin
-
-	listPldSE = calculo_pld(df_sist[df_sist['sist'] == 'SE']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr) 
-	listPldS  = calculo_pld(df_sist[df_sist['sist'] == 'S']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr)
-	listPldNE = calculo_pld(df_sist[df_sist['sist'] == 'NE']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr)
-	listPldN  = calculo_pld(df_sist[df_sist['sist'] == 'N']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr)
-
-	listPld = []
-	for i in range(len(listPldSE)):
-		listPld.append(listPldSE[i])
-		listPld.append(listPldS[i])
-		listPld.append(listPldNE[i])
-		listPld.append(listPldN[i])
-
-	df_sist['pld'] = listPld
-
-def readPdoSist(path, data, pathOut ):
-	#Leitura PDO Sist
-	try:
-		df_sist = leituraSist(path + '/pdo_sist.dat')
-	except:
-		df_sist = leituraSist(path + '/PDO_SIST.DAT')
-
-	df_sist                = df_sist.drop(columns=['perdas', 'gpqusi','gfixbar','import.', 'export.','cortcarg.','saldo','recebimento'])
-	df_sist['iper']        = df_sist['iper'].astype(int)
-	df_sist                = df_sist.loc[df_sist['iper'] <= 48]
-	df_sist['demanda']     = df_sist['demanda'].astype(float)
-	df_sist['demanda']     = df_sist['demanda'].astype(int)
-	df_sist['grenova']     = df_sist['grenova'].astype(float)
-	df_sist['grenova']     = df_sist['grenova'].astype(int)
-	df_sist['somatgh']     = df_sist['somatgh'].astype(float)
-	df_sist['somatgh']     = df_sist['somatgh'].astype(int)
-	df_sist['conseleva']   = df_sist['conseleva'].astype(float)
-	df_sist['conseleva']   = df_sist['conseleva'].astype(int)
-	df_sist['somatgt']     = df_sist['somatgt'].astype(float)
-	df_sist['somatgt']     = df_sist['somatgt'].astype(int)
-	df_sist['somagtmin']   = df_sist['somagtmin'].astype(float)
-	df_sist['somagtmin']   = df_sist['somagtmin'].astype(int)
-	df_sist['somatgtmax']   = df_sist['somatgtmax'].astype(float)
-	df_sist['somatgtmax']   = df_sist['somatgtmax'].astype(int)
-	df_sist['earm']        = df_sist['earm'].astype(float)
-	df_sist['earm']        = df_sist['earm'].astype(int)
-	df_sist['cmo']         = df_sist['cmo'].astype(float)
-	df_sist['sist']        = df_sist['sist'].str.strip()
-
-	df_sist = calculoIntercambio(df_sist)
-	pdoSist = df_sist.loc[df_sist['sist'] != 'FC']
-
-	calculaPLD(pdoSist, data)
+    pld_final = [x for sub in zip(*plds) for x in sub]
+    df_sist['pld'] = pld_final[:len(df_sist)]
+    log.info("PLD calculado e aplicado")
 
 
-	pdoSist = insertData(pdoSist, data)
+def readPdoSist(path, data, pathOut=None):
+    log.info("="*60)
+    log.info(f"INICIANDO PROCESSAMENTO PDO_SIST → {data.strftime('%d/%m/%Y')}")
+    log.info("="*60)
 
-	db_decks = wx_dbClass.db_mysql_master('db_decks')
-	db_decks.connect()
-	tb_balanco_dessem = db_decks.getSchema('tb_balanco_dessem')
-	balanco_dessem_lista = pdoSist.values.tolist()
+    # Leitura
+    try:
+        df_sist = leituraSist(os.path.join(path, 'pdo_sist.dat'))
+    except:
+        df_sist = leituraSist(os.path.join(path, 'PDO_SIST.DAT'))
 
-	for lista in balanco_dessem_lista:
-		data_str = lista[0]
-		data = datetime.datetime.strptime(data_str, '%d/%m/%Y %H:%M')
-		lista[0] = data
-	balanco_dessem_lista = list(balanco_dessem_lista)
-	
-	dt = data.date()
-	dia_inicio = datetime.datetime.combine(dt, datetime.time.min)
-	dia_fim = datetime.datetime.combine(data, datetime.time.max)
-	delete_balanco_dessem = tb_balanco_dessem.delete().where(tb_balanco_dessem.c.dt_data_hora.between(dia_inicio, dia_fim))
-	db_decks.conn.execute(delete_balanco_dessem)
-	insert_balanco_dessem = tb_balanco_dessem.insert().values(balanco_dessem_lista).prefix_with('IGNORE')
-	db_decks.conn.execute(insert_balanco_dessem)
+    # Limpeza
+    cols_drop = ['perdas','gpqusi','gfixbar','import.','export.','cortcarg.','saldo','recebimento']
+    df_sist = df_sist.drop(columns=[c for c in cols_drop if c in df_sist.columns], errors='ignore')
+    df_sist = df_sist[df_sist['iper'].astype(int) <= 48]
+    df_sist['sist'] = df_sist['sist'].str.strip()
 
-if '__main__' == __name__:
+    # Conversões
+    num_cols = ['demanda','grenova','somatgh','conseleva','somatgt','somagtmin','somatgtmax','earm','cmo']
+    for c in num_cols:
+        if c in df_sist.columns:
+            df_sist[c] = pd.to_numeric(df_sist[c], errors='coerce').fillna(0).astype(int)
 
-	diretorioRaiz = os.path.abspath('../../../')
-	pathLibUniversal = os.path.join(diretorioRaiz,'bibliotecas')
-	sys.path.insert(1, pathLibUniversal)
+    # Processamentos
+    df_sist = calculoIntercambio(df_sist)
+    df_final = df_sist[df_sist['sist'] != 'FC']
+    calculaPLD(df_final, data)
+    resultado = insertData(df_final, data)
 
-	import wx_dbLib
+    # Inserção no banco
+    db_decks = wx_dbClass.db_mysql_master('db_decks')
+    db_decks.connect()
+    tb = db_decks.getSchema('tb_balanco_dessem')
 
-	path = os.path.abspath(r'/home/thiago/workspace/wx/alpha/apps/dessem/arquivos/20210217/entrada/ons_entrada_saida/pdo_sist.dat')
-	leituraSist(path)
+    valores = []
+    for _, row in resultado.iterrows():
+        dt = datetime.datetime.strptime(row['dataHora'], '%d/%m/%Y %H:%M')
+        valores.append([dt, row['sist'], row['cmo'], row['demanda'], row['grenova'],
+                        row['somatgh'], row['somatgt'], row['somagtmin'], row['somagtmax'],
+                        row['intercambio'], row['pld']])
 
-	# data = datetime.datetime.now()
-	# data = datetime.datetime(2021,2,10)
-	# path = os.path.abspath(r'/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/dessem/arquivos/20210210/saida/resultados/PDO_CMOSIST.DAT')
-	# gerarCurvasPrecos(data, path)
-	# gerarCurvasPrecos(data, path)
-	# leituraCmo(data, path, comentatio = '', fonte='wx')
+    # Delete + Insert
+    ini = datetime.datetime.combine(data.date(), datetime.time.min)
+    fim = datetime.datetime.combine(data.date(), datetime.time.max)
+    db_decks.conn.execute(tb.delete().where(tb.c.dt_data_hora.between(ini, fim)))
+    db_decks.conn.execute(tb.insert().values(valores).prefix_with('IGNORE'))
+
+    log.info(f"Sucesso! {len(valores)} registros inseridos para {data.date()}")
+    log.info("PROCESSAMENTO FINALIZADO\n")
+
+
+if __name__ == '__main__':
+    caminho = r'/home/thiago/workspace/wx/alpha/apps/dessem/arquivos/20210217/entrada/ons_entrada_saida'
+    data = datetime.datetime(2021, 2, 17)
+    readPdoSist(caminho, data)
