@@ -119,15 +119,11 @@ def importar_deck_ds(**kwargs):
         pathConfigRE = '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/dessem/config_RE'
         pastaDeck =  (datetime.datetime.today() + datetime.timedelta(days = 1)).strftime("%Y%m%d")
         dataDeck = getDataDeck(pathEntrada)
-        try:
-            readIntercambios(pathEntrada, pathSaida, pathConfigRE, dataDeck, '')
-        except:
-            print ('Erro na leitura dos INTERCAMBIOS do deck: ', pastaDeck)
+        
+        readIntercambios(pathEntrada, pathSaida, pathConfigRE, dataDeck, '')
 
-        try:
-            readPdoSist(pathSaida, dataDeck, '')
-        except:
-            print ('Erro na leitura do PDO SIST do deck: ', pastaDeck)
+        readPdoSist(pathSaida, dataDeck, '')
+
         
         #se for quinta
         if datetime.datetime.now().weekday() == 3:
