@@ -445,5 +445,7 @@ def gera_ena_df(vazao, divisao='submercado'):
         enaSub = pd.DataFrame(columns=ena.columns)
         for sub in df_produtibilidade['STR_SIGLA'].unique():
             postosPorSubmercado = df_produtibilidade[df_produtibilidade['STR_SIGLA']==sub].index
-            enaSub.loc[sub] = ena[ena.index.isin(postosPorSubmercado)].sum()
+            valores_soma = ena[ena.index.isin(postosPorSubmercado)].sum()
+            if isinstance(valores_soma, pd.Series):
+                enaSub.loc[sub] = valores_soma
         return enaSub
