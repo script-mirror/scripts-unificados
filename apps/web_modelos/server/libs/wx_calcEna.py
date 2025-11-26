@@ -101,9 +101,6 @@ def calcPostosArtificiais_df(
 ) -> pd.DataFrame:
     ordemCalculoPostos = [226, 118, 109, 119, 104, 116, 160, 171, 175, 176, 203, 230, 244, 252, 320, 37, 38, 39, 40, 42, 43, 44, 45, 46, 66, 75, 298, 317, 315, 316, 304, 127, 126, 131, 132, 292, 299, 302, 303, 306, 318, 227, 228, 81, 183, 172, 178]
 
-    if not isinstance(vazao.columns, pd.DatetimeIndex):
-        vazao.columns = pd.to_datetime(vazao.columns)
-
     idxJan = vazao.columns.strftime('%m') == '01'
     idxfev = vazao.columns.strftime('%m') == '02'
     idxMar = vazao.columns.strftime('%m') == '03'
@@ -442,17 +439,8 @@ def gera_ena_df(vazao, divisao='submercado'):
         return enaBacia
 
     elif divisao == 'submercado':
-        if ena.empty or len(ena.columns) == 0:
-            return pd.DataFrame()
-        
-        enaSub = pd.DataFrame(index=[], columns=ena.columns)
+        enaSub = pd.DataFrame(columns=ena.columns)
         for sub in df_produtibilidade['STR_SIGLA'].unique():
             postosPorSubmercado = df_produtibilidade[df_produtibilidade['STR_SIGLA']==sub].index
-            postos_existentes = ena.index.isin(postosPorSubmercado)
-            
-            if postos_existentes.any():
-                valores_soma = ena[postos_existentes].sum()
-                if isinstance(valores_soma, pd.Series) and not valores_soma.empty:
-                    enaSub.loc[sub] = valores_soma
-        
+            enaSub.loc[sub] = ena[ena.index.isin(postosPorSubmercado)].sum()
         return enaSub
