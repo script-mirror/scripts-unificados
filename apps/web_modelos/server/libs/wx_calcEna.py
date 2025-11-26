@@ -101,6 +101,9 @@ def calcPostosArtificiais_df(
 ) -> pd.DataFrame:
     ordemCalculoPostos = [226, 118, 109, 119, 104, 116, 160, 171, 175, 176, 203, 230, 244, 252, 320, 37, 38, 39, 40, 42, 43, 44, 45, 46, 66, 75, 298, 317, 315, 316, 304, 127, 126, 131, 132, 292, 299, 302, 303, 306, 318, 227, 228, 81, 183, 172, 178]
 
+    if not isinstance(vazao.columns, pd.DatetimeIndex):
+        vazao.columns = pd.to_datetime(vazao.columns)
+
     idxJan = vazao.columns.strftime('%m') == '01'
     idxfev = vazao.columns.strftime('%m') == '02'
     idxMar = vazao.columns.strftime('%m') == '03'
