@@ -3,6 +3,7 @@ import re
 import sys
 import warnings
 import datetime
+from datetime import date
 import numpy as np
 import pandas as pd
 import sqlalchemy as db
@@ -300,6 +301,7 @@ def calculaPLD(df_sist, data):
 
 
 def readPdoSist(path, data, pathOut):
+    data = datetime.strptime(data, '%Y-%m-%d')
     logger.info(f"=== INÍCIO DO PROCESSAMENTO ===")
     logger.info(f"Data de referência: {data}")
     logger.info(f"Pasta de entrada: {path}")
