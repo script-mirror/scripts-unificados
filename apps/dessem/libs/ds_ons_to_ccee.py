@@ -24,6 +24,7 @@ class DessemOnsToCcee:
         path_ccee = path_ons = None
         try:
             deck_date = self.today + timedelta(days=1)
+            deck_date = self.today
             self.logger.info(f"Processing decks for date: {deck_date.strftime('%Y-%m-%d')}")
             # 1. Get decks
             path_ccee = self.get_latest_deck_ccee(self.today)[0]
@@ -210,7 +211,12 @@ class DessemOnsToCcee:
 
     def adjust_predictability(self, operuh: List[str], deck_date) -> List[str]:
         self.logger.info("Adjusting TM field to 0 in operuh.dat")
-        REST = {'09101':{'min':{'di':'15/11/2025', 'df':'31/12/2025', 'value':4600.00}}}
+        REST = {'09101':{'min':{'di':'15/11/2025', 'df':'31/12/2025', 'value':4600.00}},
+                '09071':{'min':{'di':'15/11/2025', 'df':'31/12/2025', 'value':744.00}},
+                '08874':{'min':{'di':'15/11/2025', 'df':'31/12/2025', 'value':147.00}},
+                '99212':{'var':{'di':'15/11/2025', 'df':'31/12/2025', 'value':500.00}},
+                '09125':{'comment':{'di':'15/11/2025', 'df':'31/12/2025'}},
+                '99219':{'comment':{'di':'15/11/2025', 'df':'31/12/2025'}}}
         adjusted = 0
         result = []
         for line in operuh:
@@ -218,23 +224,38 @@ class DessemOnsToCcee:
             parts = line.split()
             self.logger.debug(f"Processing line: {line.strip()}")
             if len(parts) > 5:
-                if parts[1] == 'LIM':
-                    if parts[2] in REST:
-                        if 'max' in REST[parts[2]]:
-                            if deck_date >= datetime.strptime(REST[parts[2]]['max']['di'], '%d/%m/%Y') and\
-                                deck_date <= datetime.strptime(REST[parts[2]]['max']['df'], '%d/%m/%Y'):
-                                self.logger.info(f"Adjusting max value for HQ {parts[2]} from {parts[6]} to {REST[parts[2]]['max']}")
-                                parts[6] = str(REST[parts[2]]['max'])
-                                result.append(self.format_line(parts, line))
-                                update = True
-                        if 'min' in REST[parts[2]]:
-                            if deck_date >= datetime.strptime(REST[parts[2]]['min']['di'], '%d/%m/%Y') and\
-                                deck_date <= datetime.strptime(REST[parts[2]]['min']['df'], '%d/%m/%Y'):
-                                self.logger.info(f"Adjusting min value for HQ {parts[2]} from {parts[5]} to {REST[parts[2]]['min']}")  
-                                parts[5] = str(REST[parts[2]]['min']['value'])
-                                result.append(self.format_line(parts, line))
-                                adjusted += 1
-                                update = True              
+                if parts[2] in REST:                
+                    if 'max' in REST[parts[2]] and parts[1] == 'LIM':
+                        if deck_date >= datetime.strptime(REST[parts[2]]['max']['di'], '%d/%m/%Y') and\
+                            deck_date <= datetime.strptime(REST[parts[2]]['max']['df'], '%d/%m/%Y'):
+                            self.logger.info(f"Adjusting max value for HQ {parts[2]} from {parts[6]} to {REST[parts[2]]['max']['value']}")
+                            parts[6] = str(REST[parts[2]]['max'])
+                            result.append(self.format_line(parts, line))
+                            update = True
+                    if 'min' in REST[parts[2]] and  parts[1] == 'LIM':
+                        if deck_date >= datetime.strptime(REST[parts[2]]['min']['di'], '%d/%m/%Y') and\
+                            deck_date <= datetime.strptime(REST[parts[2]]['min']['df'], '%d/%m/%Y'):
+                            self.logger.info(f"Adjusting min value for HQ {parts[2]} from {parts[5]} to {REST[parts[2]]['min']['value']}")  
+                            parts[5] = str(REST[parts[2]]['min']['value'])
+                            result.append(self.format_line(parts, line))
+                            adjusted += 1
+                            update = True 
+                    if 'var' in REST[parts[2]] and  parts[1] == 'VAR':
+                        if deck_date >= datetime.strptime(REST[parts[2]]['var']['di'], '%d/%m/%Y') and\
+                            deck_date <= datetime.strptime(REST[parts[2]]['var']['df'], '%d/%m/%Y'):
+                            self.logger.info(f"Adjusting var value for HQ {parts[2]} from {parts[-1]} to {REST[parts[2]]['var']['value']}")  
+                            parts[-1] = str(REST[parts[2]]['var']['value'])
+                            parts[-2] = str(REST[parts[2]]['var']['value'])
+                            result.append(self.format_line(parts, line))
+                            adjusted += 1
+                            update = True 
+                    if 'comment' in REST[parts[2]]:
+                        if deck_date >= datetime.strptime(REST[parts[2]]['comment']['di'], '%d/%m/%Y') and\
+                            deck_date <= datetime.strptime(REST[parts[2]]['comment']['df'], '%d/%m/%Y'):
+                            self.logger.info(f"Commenting line for HQ {parts[2]} as per REST rules")
+                            result.append('&' + line)
+                            adjusted += 1
+                            update = True             
             if not update:
                 result.append(line)
         self.logger.info(f"{adjusted} LIM records adjusted in operuh.dat")

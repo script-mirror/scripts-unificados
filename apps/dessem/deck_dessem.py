@@ -1,9 +1,10 @@
 import sys
 import os
 import pandas as pd
+import numpy as np
 from datetime import datetime, timedelta
 from middle.utils import html_to_image
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from middle.message import send_whatsapp_message
 from middle.utils import setup_logger, Constants, html_style # noqa: E402
 from middle.utils.file_manipulation import extract_zip
@@ -38,6 +39,9 @@ class DeckDessem():
             path_deck_unzip = extract_zip(base_path)
             
             deck_date = self.read_data_deck(path_deck_unzip)
+            
+            df_pdo = self.read_pdo_sist(path_deck_unzip, deck_date )
+            
             
             df_rn = self.read_renovaveis(path_deck_unzip, deck_date )
             #elf.post_data(df)
@@ -128,6 +132,53 @@ class DeckDessem():
         df['SUB'] = df['SUB'].replace({'SE': 1, 'S': 2, 'NE': 3, 'N': 4})
         return df
 
+    
+    
+    def read_pdo_sist(self, path: str, deck_date) -> pd.DataFrame:
+        
+        def _calculate_pld(v, min, max_h, max_s, tol=.01, it=30):
+            pld = [max(min, min(max_h, float(x))) for x in v]
+            for _ in range(it):
+                avg = sum(pld)/len(pld)
+                if abs(avg - max_s) <= tol: break
+                pld = [max(min, min(max_h, round(x*max_s/avg, 2))) for x in pld]
+            return pld
+                    
+        
+        self.logger.info("Reading load data from pdo_sist.dat")
+        pdo_file = self.read_file(path, 'pdo_sist.dat')
+        data, load = [], False
+        for line in pdo_file:
+            parts = line.split(';') 
+              
+            if parts[0].strip().lower() == 'iper':
+                load = True
+                columns = line.split(';')[0:3] + last_line.split(';')[3:-1]
+                columns = [col.strip() for col in columns]
+                continue
+
+            if load and '-' not in parts[0]:
+                minuto = (int(parts[0].strip()) - 1) * 30
+                date = deck_date + timedelta(minutes=minuto)
+                if int(parts[0].strip()) < 49:
+                    parts[0] = date.strftime('%Y-%m-%d %H:%M:%S')
+                    data.append(dict(zip(columns, [valor.strip() for valor in parts])))
+            last_line = line
+        df = pd.DataFrame(data)
+        df = df[df['Sist'] != 'FC']
+        df['Sist'] = df['Sist'].replace({'SE': 1, 'S': 2, 'NE': 3, 'N': 4})
+        df['IPER'] = pd.to_datetime(df['IPER'])
+        df = df.drop(['Pat','Perdas'], axis=1)
+        df = df.set_index('IPER')
+        df = df.replace('--', np.nan)
+        cols_to_convert = [col for col in df.columns if col != 'Sist']
+        df[cols_to_convert] = df[cols_to_convert].astype(float)
+        df = df.groupby([df.index.date, df.index.hour, 'Sist']).mean().reset_index()
+        df['DATA'] = pd.to_datetime(df['level_0'].astype(str) + ' ' + df['IPER'].astype(str).str.zfill(2) + ':00:00')
+        df = df.drop(['level_0','IPER'], axis=1)
+        
+        return df
+    
 
     def read_tm(self, path: str, deck_date) -> pd.DataFrame:
         pdo_file = self.read_file(path, 'entdados.dat')

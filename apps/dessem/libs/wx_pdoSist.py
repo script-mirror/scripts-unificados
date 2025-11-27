@@ -212,9 +212,7 @@ def insertData(df_sist, dataDeck):
 
 
 def calculo_pld(lista_input, PLD_min, PLDmax_h, PLDmax_estr):
-    logger.debug(f"calculo_pld chamado – len(lista)={len(lista_input)}, PLDmin={PLD_min}, PLDmax_h={PLDmax_h}, PLDmax_estr={PLDmax_estr}")
 
-    # Ajuste piso/teto
     for i in range(len(lista_input)):
         val = float(lista_input[i])
         if val > PLDmax_h:
@@ -229,7 +227,6 @@ def calculo_pld(lista_input, PLD_min, PLDmax_h, PLDmax_estr):
         lista_input = [round(x * f_est, 2) for x in lista_input]
         PLD_md = sum(lista_input) / len(lista_input)
         cont += 1
-    logger.debug(f"calculo_pld finalizado após {cont} iterações – média final: {PLD_md:.2f}")
     return lista_input
 
 
