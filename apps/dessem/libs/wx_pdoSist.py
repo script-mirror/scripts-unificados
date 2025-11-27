@@ -146,6 +146,39 @@ def extrairInfoBloco(listaLinhas, mnemonico, regex):
     return blocos
 
 
+def read_pdo_sist(path: str) -> pd.DataFrame:        
+    
+    pdo_file = read_file(path, 'pdo_sist.dat')
+    data, load = [], False
+    for line in pdo_file:
+        parts = line.split(';') 
+            
+        if parts[0].strip().lower() == 'iper':
+            load = True
+            columns = line.split(';')[0:3] + last_line.split(';')[3:-1]
+            columns = [col.strip() for col in columns]
+            continue
+
+        if load and '-' not in parts[0]:
+            data.append(dict(zip(columns, [valor.strip() for valor in parts])))
+        last_line = line
+    df = pd.DataFrame(data)
+    
+    return df
+    
+
+def read_file( directory: str, file_find: str):
+    logger.info(f"Searching for file with prefix '{file_find}' in: {directory}")
+    for file in os.listdir(directory):
+        if file.lower().startswith(file_find.lower()):
+            file_path = os.path.join(directory, file)
+            logger.info(f"File found: {file}")
+            with open(file_path, 'r', encoding='latin-1', errors='ignore') as f:
+                lines = f.readlines()
+            logger.debug(f"File read: {len(lines)} lines")
+            return lines
+
+
 def leituraSist(pdoSistPath):
     logger.info(f"leituraSist iniciado – caminho: {pdoSistPath}")
     infoBlocos = getInfoBlocos()
@@ -271,12 +304,16 @@ def readPdoSist(path, data, pathOut):
     logger.info(f"Pasta de entrada: {path}")
 
     # Leitura do arquivo
-    try:
-        df_sist = leituraSist(os.path.join(path, 'pdo_sist.dat'))
-    except Exception as e:
-        logger.warning(f"pdo_sist.dat não encontrado, tentando PDO_SIST.DAT")
-        df_sist = leituraSist(os.path.join(path, 'PDO_SIST.DAT'))
-
+    
+    df_sist = read_pdo_sist(path)
+    
+    
+    """    try:
+            df_sist = leituraSist(os.path.join(path, 'pdo_sist.dat'))
+        except Exception as e:
+            logger.warning(f"pdo_sist.dat não encontrado, tentando PDO_SIST.DAT")
+            df_sist = leituraSist(os.path.join(path, 'PDO_SIST.DAT'))
+    """
     logger.info(f"DataFrame bruto carregado: {df_sist.shape}")
 
     # Limpeza e tipagem
