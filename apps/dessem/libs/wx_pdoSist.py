@@ -301,7 +301,6 @@ def calculaPLD(df_sist, data):
 
 
 def readPdoSist(path, data, pathOut):
-    data = datetime.datetime.strptime(data, '%Y-%m-%d').date()
     logger.info(f"=== INÍCIO DO PROCESSAMENTO ===")
     logger.info(f"Data de referência: {data}")
     logger.info(f"Pasta de entrada: {path}")
