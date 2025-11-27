@@ -59,7 +59,6 @@ def read_pdo_sist( path: str, deck_date) -> pd.DataFrame:
     df['intercambio'] = ( df['demanda'] - df['grenova'] - df['somatgh'] - df['somatgt'] + df['conseleva']) 
     return df
 
-
 def read_file( directory: str, file_find: str):
     logger.info(f"Searching for file with prefix '{file_find}' in: {directory}")
     for file in os.listdir(directory):
@@ -71,58 +70,66 @@ def read_file( directory: str, file_find: str):
             logger.debug(f"File read: {len(lines)} lines")
             return lines
 
+
 def calculo_pld(lista_input, PLD_min, PLDmax_h, PLDmax_estr):
+    
+	# ajusta PLDs para piso e teto
+	for i in range(len(lista_input)):
+		if float(lista_input[i]) > PLDmax_h:
+			lista_input[i] = PLDmax_h
+		if float(lista_input[i]) < PLD_min:
+			lista_input[i] = PLD_min
+    
+	# método iterativo para adequação a PLDmax estrutural
+	PLD_md0 = sum(lista_input) /len(lista_input)
+	PLD_md = PLD_md0
+    
+	f_est0 = PLDmax_estr / PLD_md0
+	f_est = f_est0
+	contCalc = 0
+	dif = (PLD_md - PLDmax_estr)
 
-    for i in range(len(lista_input)):
-        val = float(lista_input[i])
-        if val > PLDmax_h:
-            lista_input[i] = PLDmax_h
-        if val < PLD_min:
-            lista_input[i] = PLD_min
-
-    PLD_md = sum(lista_input) / len(lista_input)
-    cont = 0
-    while abs(PLD_md - PLDmax_estr) > 0.01 and cont < 30:
-        f_est = PLDmax_estr / PLD_md
-        lista_input = [round(x * f_est, 2) for x in lista_input]
-        PLD_md = sum(lista_input) / len(lista_input)
-        cont += 1
-    return lista_input
-
+	while dif > 0.01:	
+		lista_aux = [round(element * f_est, 2) for element in lista_input]
+		lista_input = lista_aux
+		PLD_md = sum(lista_input) / len(lista_input)
+		f_est = PLDmax_estr / PLD_md
+		dif = (PLD_md - PLDmax_estr)
+		contCalc = contCalc + 1
+		if contCalc > 20:
+			break
+	lista_output = lista_input
+    
+	return lista_output
 
 def calculaPLD(df_sist, data):
-    logger.info("calculaPLD iniciado")
-    db_ons = wx_dbClass.db_mysql_master('db_ons')
-    db_ons.connect()
-    tb_pld = db_ons.getSchema('tb_pld')
-    query = db.select(tb_pld).where(tb_pld.c.str_ano == data.year)
-    result = db_ons.conn.execute(query).fetchall()
+	db_ons = wx_dbClass.db_mysql_master('db_ons')
+	db_ons.connect()
+	tb_pld = db_ons.getSchema('tb_pld')
+	ano = data.year
+	query_get_ano_pld = db.select(tb_pld).where(db.and_(tb_pld.c.str_ano == ano))
 
-    if not result:
-        logger.error(f"Não encontrado limite de PLD para o ano {data.year}")
-        return
+	colunas = db_ons.conn.execute(query_get_ano_pld)
 
-    PLDmax_hora = result[0].vl_PLDmax_hora
-    PLDmax_estr = result[0].vl_PLDmax_estr
-    PLDmin = result[0].vl_PLDmin
-    logger.info(f"Limites PLD {data.year}: min={PLDmin}, max_hora={PLDmax_hora}, max_estr={PLDmax_estr}")
+	for valor in colunas:
+		PLDmax_hora = valor.vl_PLDmax_hora
+		PLDmax_estr = valor.vl_PLDmax_estr
+		PLDmin = valor.vl_PLDmin
 
-    regioes = {'SE': 'SE', 'S': 'S', 'NE': 'NE', 'N': 'N'}
-    listas_pld = {}
-    for sigla, nome in regioes.items():
-        lista_cmo = df_sist[df_sist['sist'] == nome]['cmo'].astype(float).tolist()
-        listas_pld[sigla] = calculo_pld(lista_cmo, PLDmin, PLDmax_hora, PLDmax_estr)
+	listPldSE = calculo_pld(df_sist[df_sist['sist'] == 'SE']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr) 
+	listPldS  = calculo_pld(df_sist[df_sist['sist'] == 'S']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr)
+	listPldNE = calculo_pld(df_sist[df_sist['sist'] == 'NE']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr)
+	listPldN  = calculo_pld(df_sist[df_sist['sist'] == 'N']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr)
 
-    # Monta lista final intercalada
-    listPld = []
-    for i in range(len(listas_pld['SE'])):
-        for reg in ['SE', 'S', 'NE', 'N']:
-            listPld.append(listas_pld[reg][i])
+	listPld = []
+	for i in range(len(listPldSE)):
+		listPld.append(listPldSE[i])
+		listPld.append(listPldS[i])
+		listPld.append(listPldNE[i])
+		listPld.append(listPldN[i])
 
-    df_sist = df_sist.copy()
-    df_sist['pld'] = listPld
-    logger.info("PLDs calculados e inseridos no DataFrame")
-    return df_sist
+	df_sist['pld'] = listPld
+
 
 def readPdoSist(path, data, pathOut):
     logger.info(f"=== INÍCIO DO PROCESSAMENTO ===")
@@ -135,7 +142,7 @@ def readPdoSist(path, data, pathOut):
     logger.info(f"DataFrame bruto carregado: {df_sist.shape}")
 
     numeric_cols = ['demanda', 'grenova', 'somatgh', 'conseleva', 'somatgt',
-                    'somagtmin', 'somatgtmax', 'earm', 'cmo']
+                    'somagtmin', 'somatgtmax', 'earm', 'intercambio']
     for col in numeric_cols:
         if col in df_sist.columns:
             df_sist[col] = pd.to_numeric(df_sist[col], errors='coerce').fillna(0).astype(int)
@@ -167,10 +174,7 @@ def readPdoSist(path, data, pathOut):
     fim_dia = datetime.datetime.combine(data, datetime.time.max)
 
     logger.info(f"Apagando registros existentes entre {inicio_dia} e {fim_dia}")
-    
-    
-    
-    
+       
     # Persistência no banco
     db_decks = wx_dbClass.db_mysql_master('db_decks')
     db_decks.connect()
