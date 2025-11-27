@@ -301,7 +301,7 @@ def calculaPLD(df_sist, data):
 
 
 def readPdoSist(path, data, pathOut):
-    data = datetime.datetime.strptime(data, '%Y-%m-%d')
+    data = datetime.datetime.strptime(data, '%Y-%m-%d').date()
     logger.info(f"=== INÍCIO DO PROCESSAMENTO ===")
     logger.info(f"Data de referência: {data}")
     logger.info(f"Pasta de entrada: {path}")
@@ -357,8 +357,8 @@ def readPdoSist(path, data, pathOut):
         registros.append(linha)
 
     # Delete + Insert
-    inicio_dia = datetime.datetime.combine(data.date(), datetime.time.min)
-    fim_dia = datetime.datetime.combine(data.date(), datetime.time.max)
+    inicio_dia = datetime.datetime.combine(data, datetime.time.min)
+    fim_dia = datetime.datetime.combine(data, datetime.time.max)
 
     logger.info(f"Apagando registros existentes entre {inicio_dia} e {fim_dia}")
     delete_stmt = tb_balanco.delete().where(
