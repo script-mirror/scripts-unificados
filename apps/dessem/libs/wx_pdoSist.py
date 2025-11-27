@@ -1,151 +1,21 @@
 import os
-import re
 import sys
 import warnings
 import datetime
-from datetime import date
-import numpy as np
 import pandas as pd
 import sqlalchemy as db
 import logging
-from logging.handlers import RotatingFileHandler
 
-# ====================== CONFIGURAÇÃO DO LOGGER ======================
-try:
-    import colorlog
-    handler = colorlog.StreamHandler()
-    handler.setFormatter(colorlog.ColoredFormatter(
-        "%(log_color)s%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-        datefmt="%H:%M:%S",
-        log_colors={
-            'DEBUG':    'cyan',
-            'INFO':     'green',
-            'WARNING':  'yellow',
-            'ERROR':    'red',
-            'CRITICAL': 'red,bg_white',
-        }))
-except ImportError:
-    # fallback sem cores
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter(
-        "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-        datefmt="%H:%M:%S"
-    ))
+logging.basicConfig(
+    level=logging.INFO,  
+    format='%(asctime)s - %(levelname)s - %(message)s' 
+)
 
-# Logger principal
-logger = logging.getLogger("PDO_SIST")
-logger.setLevel(logging.DEBUG)        # Muda para INFO se quiser menos detalhe
-if not logger.handlers:
-    logger.addHandler(handler)
-
-# Opcional: salvar também em arquivo (máximo 5MB, 5 backups)
-file_handler = RotatingFileHandler("pdo_sist_debug.log", maxBytes=5_000_000, backupCount=5)
-file_handler.setFormatter(logging.Formatter(
-    "%(asctime)s | %(levelname)-8s | %(funcName)s | %(lineno)d | %(message)s"
-))
-logger.addHandler(file_handler)
-# =====================================================================
-
+logger = logging.getLogger()
 warnings.filterwarnings("ignore")
 
 sys.path.insert(1, "/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import wx_dbClass
-
-
-def getFromFile(path):
-    logger.info(f"getFromFile chamado com path: {path}")
-    dir_file = os.path.dirname(path)
-    fullname_file = os.path.basename(path)
-    name_file, extension_file = os.path.splitext(fullname_file)
-    extension_file = extension_file.lstrip('.')
-
-    possible_paths = [
-        os.path.join(dir_file, f'{name_file.lower()}.{extension_file}'),
-        os.path.join(dir_file, f'{name_file.upper()}.{extension_file}'),
-        os.path.join(dir_file, f'{name_file.lower()}.{extension_file.upper()}'),
-        os.path.join(dir_file, f'{name_file.upper()}.{extension_file.upper()}'),
-    ]
-
-    for p in possible_paths:
-        if os.path.exists(p):
-            logger.debug(f"Arquivo encontrado: {p}")
-            with open(p, 'r', encoding="latin-1") as f:
-                lines = f.readlines()
-            logger.info(f"Arquivo lido com sucesso – {len(lines)} linhas")
-            return lines
-
-    logger.error(f"Arquivo não encontrado em nenhum dos caminhos tentados: {possible_paths}")
-    raise FileNotFoundError(f"Não foi possível localizar o arquivo: {path}")
-
-
-def leituraArquivo(filePath):
-    logger.info(f"leituraArquivo iniciado para: {filePath}")
-    arquivo = getFromFile(filePath)
-
-    dados = {'SIST': []}
-    iLine = 0
-    total_linhas = len(arquivo)
-
-    while iLine < total_linhas:
-        line = arquivo[iLine].rstrip("\n")
-        logger.debug(f"Linha {iLine+1}/{total_linhas}: {line[:100]}{'...' if len(line)>100 else ''}")
-
-        if '------;--------;------;------------;' in line:
-            logger.info("Cabeçalho do bloco SIST encontrado")
-            iLine += 4
-            if iLine >= total_linhas:
-                logger.warning("Fim do arquivo alcançado após cabeçalho")
-                break
-            line = arquivo[iLine]
-            bloco = []
-            while iLine < total_linhas:
-                bloco.append(arquivo[iLine])
-                iLine += 1
-                if iLine < total_linhas:
-                    line = arquivo[iLine]
-                else:
-                    break
-            dados['SIST'] = bloco
-            logger.info(f"Bloco SIST extraído com {len(bloco)} linhas")
-            break
-        else:
-            iLine += 1
-
-    logger.info("leituraArquivo finalizado")
-    return dados
-
-
-def getInfoBlocos():
-    logger.debug("getInfoBlocos chamado")
-    blocos = {
-        'SIST': {
-            'campos': [
-                'iper', 'pat', 'sist', 'cmo', 'demanda', 'perdas', 'gpqusi', 'gfixbar',
-                'grenova', 'somatgh', 'somatgt', 'conseleva', 'import.', 'export.',
-                'cortcarg.', 'saldo', 'recebimento', 'somagtmin', 'somatgtmax', 'earm'
-            ],
-            'regex': r'(.{6});(.{8});(.{6});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{12});(.{20});(.*)',
-            'formatacao': '{:>6};{:>8};{:>6};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>12};{:>20};'
-        }
-    }
-    return blocos
-
-
-def extrairInfoBloco(listaLinhas, mnemonico, regex):
-    logger.debug(f"extrairInfoBloco chamado para mnemonico={mnemonico}")
-    blocos = []
-    if mnemonico in listaLinhas:
-        logger.info(f"Bloco {mnemonico} encontrado com {len(listaLinhas[mnemonico])} linhas")
-        for i, linha in enumerate(listaLinhas[mnemonico]):
-            infosLinha = re.split(regex, linha)
-            if len(infosLinha) < 3:
-                logger.warning(f"Linha {i+1} do bloco {mnemonico} não casou com regex: {linha.strip()}")
-                continue
-            blocos.append(infosLinha[1:-2])  # remove vazio inicial e resto final
-    else:
-        logger.warning(f"Bloco {mnemonico} não encontrado na estrutura")
-    return blocos
-
 
 def read_pdo_sist(path: str) -> pd.DataFrame:        
     
@@ -163,12 +33,9 @@ def read_pdo_sist(path: str) -> pd.DataFrame:
         if load and '-' not in parts[0]:
             data.append(dict(zip(columns, [valor.strip() for valor in parts])))
         last_line = line
-    df = pd.DataFrame(data)
-    print(df)
-    
+    df = pd.DataFrame(data)    
     return df
     
-
 def read_file( directory: str, file_find: str):
     logger.info(f"Searching for file with prefix '{file_find}' in: {directory}")
     for file in os.listdir(directory):
@@ -179,17 +46,6 @@ def read_file( directory: str, file_find: str):
                 lines = f.readlines()
             logger.debug(f"File read: {len(lines)} lines")
             return lines
-
-
-def leituraSist(pdoSistPath):
-    logger.info(f"leituraSist iniciado – caminho: {pdoSistPath}")
-    infoBlocos = getInfoBlocos()
-    pdoSist = leituraArquivo(pdoSistPath)
-    precos = extrairInfoBloco(pdoSist, 'SIST', infoBlocos['SIST']['regex'])
-    df_sist = pd.DataFrame(precos, columns=infoBlocos['SIST']['campos'])
-    logger.info(f"DataFrame SIST criado: {df_sist.shape[0]} linhas × {df_sist.shape[1]} colunas")
-    return df_sist
-
 
 def calculoIntercambio(df_sist):
     logger.info("calculoIntercambio iniciado")
@@ -306,16 +162,8 @@ def readPdoSist(path, data, pathOut):
     logger.info(f"Pasta de entrada: {path}")
 
     # Leitura do arquivo
-    
     df_sist = read_pdo_sist(path)
-    
-    
-    """    try:
-            df_sist = leituraSist(os.path.join(path, 'pdo_sist.dat'))
-        except Exception as e:
-            logger.warning(f"pdo_sist.dat não encontrado, tentando PDO_SIST.DAT")
-            df_sist = leituraSist(os.path.join(path, 'PDO_SIST.DAT'))
-    """
+
     logger.info(f"DataFrame bruto carregado: {df_sist.shape}")
 
     # Limpeza e tipagem
