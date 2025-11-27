@@ -43,7 +43,7 @@ def read_pdo_sist( path: str, deck_date) -> pd.DataFrame:
     df = df[df['sist'] != 'FC']
     df['sist'] = df['sist'].replace({'SE': 1, 'S': 2, 'NE': 3, 'N': 4})
     df['iper'] = pd.to_datetime(df['iper'])
-    colums_drop = ['perdas', 'gpqusi', 'gfixbar', 'import.', 'export.', 'cortcarg.', 'saldo', 'recebimento', 'pat']
+    colums_drop = ['perdas', 'gpqusi', 'gfixbar', 'import.', 'export.', 'cortcarg.', 'saldo', 'recebimento','earm', 'pat']
     df = df.drop(colums_drop, axis=1)
     df = df.set_index('iper')
     df = df.replace('--', np.nan)
