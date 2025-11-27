@@ -103,33 +103,38 @@ def calculo_pld(lista_input, PLD_min, PLDmax_h, PLDmax_estr):
 	return lista_output
 
 def calculaPLD(df_sist, data):
-	db_ons = wx_dbClass.db_mysql_master('db_ons')
-	db_ons.connect()
-	tb_pld = db_ons.getSchema('tb_pld')
-	ano = data.year
-	query_get_ano_pld = db.select(tb_pld).where(db.and_(tb_pld.c.str_ano == ano))
+    db_ons = wx_dbClass.db_mysql_master('db_ons')
+    db_ons.connect()
+    tb_pld = db_ons.getSchema('tb_pld')
+    ano = data.year
+    query_get_ano_pld = db.select(tb_pld).where(db.and_(tb_pld.c.str_ano == ano))
 
-	colunas = db_ons.conn.execute(query_get_ano_pld)
+    colunas = db_ons.conn.execute(query_get_ano_pld)
 
-	for valor in colunas:
-		PLDmax_hora = valor.vl_PLDmax_hora
-		PLDmax_estr = valor.vl_PLDmax_estr
-		PLDmin = valor.vl_PLDmin
+    for valor in colunas:
+        PLDmax_hora = valor.vl_PLDmax_hora
+        PLDmax_estr = valor.vl_PLDmax_estr
+        PLDmin = valor.vl_PLDmin
+  
+    """PLDmax_hora = 1542.23 
+    PLDmax_estr = 751.73
+    PLDmin = 58.6"""
 
-	listPldSE = calculo_pld(df_sist[df_sist['sist'] == 'SE']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr) 
-	listPldS  = calculo_pld(df_sist[df_sist['sist'] == 'S']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr)
-	listPldNE = calculo_pld(df_sist[df_sist['sist'] == 'NE']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr)
-	listPldN  = calculo_pld(df_sist[df_sist['sist'] == 'N']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr)
 
-	listPld = []
-	for i in range(len(listPldSE)):
-		listPld.append(listPldSE[i])
-		listPld.append(listPldS[i])
-		listPld.append(listPldNE[i])
-		listPld.append(listPldN[i])
+    listPldSE = calculo_pld(df_sist[df_sist['sist'] == 'SE']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr) 
+    listPldS  = calculo_pld(df_sist[df_sist['sist'] == 'S']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr)
+    listPldNE = calculo_pld(df_sist[df_sist['sist'] == 'NE']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr)
+    listPldN  = calculo_pld(df_sist[df_sist['sist'] == 'N']['cmo'].tolist(), PLDmin, PLDmax_hora, PLDmax_estr)
 
-	df_sist['pld'] = listPld
+    listPld = []
+    for i in range(len(listPldSE)):
+        listPld.append(listPldSE[i])
+        listPld.append(listPldS[i])
+        listPld.append(listPldNE[i])
+        listPld.append(listPldN[i])
 
+    df_sist['pld'] = listPld
+    return df_sist
 
 def readPdoSist(path, data, pathOut):
     logger.info(f"=== INÍCIO DO PROCESSAMENTO ===")
@@ -156,9 +161,6 @@ def readPdoSist(path, data, pathOut):
                      'somagtmin', 'somatgtmax', 'earm', 'intercambio',  'pld']
     df_sist = df_sist[comlumns_order]
        
-    # Preparação para insert
-    logger.info(f"Total de registros para insert: {len(df_sist)}")
-
 
     # Converte string de data para datetime
     registros = []
