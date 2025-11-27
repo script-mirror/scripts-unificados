@@ -15,8 +15,8 @@ logging.basicConfig(
 logger = logging.getLogger()
 warnings.filterwarnings("ignore")
 
-#sys.path.insert(1, "/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
-#from bibliotecas import wx_dbClass
+sys.path.insert(1, "/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+from bibliotecas import wx_dbClass
 
 def read_pdo_sist( path: str, deck_date) -> pd.DataFrame:
           
@@ -124,8 +124,6 @@ def calculaPLD(df_sist, data):
     logger.info("PLDs calculados e inseridos no DataFrame")
     return df_sist
 
-def wx_dbClass():
-    pass
 def readPdoSist(path, data, pathOut):
     logger.info(f"=== INÍCIO DO PROCESSAMENTO ===")
     logger.info(f"Data de referência: {data}")
