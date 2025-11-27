@@ -50,7 +50,7 @@ def read_pdo_sist( path: str, deck_date) -> pd.DataFrame:
     cols_to_convert = [col for col in df.columns if col != 'sist']
     df[cols_to_convert] = df[cols_to_convert].astype(float)
     df = df.groupby([df.index.date, df.index.hour, 'sist']).mean().reset_index()
-    df['dataHora'] = pd.to_datetime(df['level_0'].astype(str) + ' ' + df['iper'].astype(str).str.zfill(2) + ':00:00')
+    df['dataHora'] = pd.to_datetime(df['level_0'].astype(str) + ' ' + df['iper'].astype(str).str.zfill(2) + ':00')
     df = df.drop(['level_0','iper'], axis=1)
     df['sist'] = df['sist'].replace({ 1:'SE', 2:'S',3:'NE', 4:'N'})
     df['ande'] = (df['demanda']- df['grenova']- df['somatgh'] - df['somatgt'] + df['conseleva'])
