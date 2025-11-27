@@ -124,7 +124,6 @@ def calculaPLD(df_sist, data):
     logger.info("PLDs calculados e inseridos no DataFrame")
     return df_sist
 
-
 def readPdoSist(path, data, pathOut):
     logger.info(f"=== INÍCIO DO PROCESSAMENTO ===")
     logger.info(f"Data de referência: {data}")
@@ -145,6 +144,11 @@ def readPdoSist(path, data, pathOut):
     # Cálculos
     df_sist = calculaPLD(df_sist, data)
     df_sist['dataHora'] = df_sist['dataHora'].dt.strftime('%d/%m/%Y %H:%M')
+    
+    comlumns_order = ['dataHora', 'sist','cmo', 'demanda', 'grenova', 'somatgh', 'somatgt',
+                     'somagtmin', 'somatgtmax', 'earm', 'intercambio',  'pld']
+    df_sist = df_sist[comlumns_order]
+       
     # Preparação para insert
     logger.info(f"Total de registros para insert: {len(df_sist)}")
 
@@ -163,6 +167,9 @@ def readPdoSist(path, data, pathOut):
     fim_dia = datetime.datetime.combine(data, datetime.time.max)
 
     logger.info(f"Apagando registros existentes entre {inicio_dia} e {fim_dia}")
+    
+    
+    
     
     # Persistência no banco
     db_decks = wx_dbClass.db_mysql_master('db_decks')
