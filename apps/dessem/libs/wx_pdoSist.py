@@ -15,8 +15,8 @@ logging.basicConfig(
 logger = logging.getLogger()
 warnings.filterwarnings("ignore")
 
-sys.path.insert(1, "/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
-from bibliotecas import wx_dbClass
+#sys.path.insert(1, "/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
+#from bibliotecas import wx_dbClass
 
 def read_pdo_sist( path: str, deck_date) -> pd.DataFrame:
           
@@ -53,6 +53,10 @@ def read_pdo_sist( path: str, deck_date) -> pd.DataFrame:
     df['dataHora'] = pd.to_datetime(df['level_0'].astype(str) + ' ' + df['iper'].astype(str).str.zfill(2) + ':00:00')
     df = df.drop(['level_0','iper'], axis=1)
     df['sist'] = df['sist'].replace({ 1:'SE', 2:'S',3:'NE', 4:'N'})
+    df['ande'] = (df['demanda']- df['grenova']- df['somatgh'] - df['somatgt'] + df['conseleva'])
+    df['somatgh'] = ( df['somatgh'] - df['ande']) 
+    df = df.drop(['ande'], axis=1)
+    df['intercambio'] = ( df['demanda'] - df['grenova'] - df['somatgh'] - df['somatgt'] + df['conseleva']) 
     return df
 
 
@@ -66,22 +70,6 @@ def read_file( directory: str, file_find: str):
                 lines = f.readlines()
             logger.debug(f"File read: {len(lines)} lines")
             return lines
-
-def calculoIntercambio(df_sist):
-    logger.info("calculoIntercambio iniciado")
-    df = df_sist.copy()
-    for i in range(1, 49):
-        df_aux = df[df['iper'] == i].apply(pd.to_numeric, errors='coerce').sum()
-        ande = df_aux['demanda'] - df_aux['grenova'] - df_aux['somatgh'] - df_aux['somatgt'] + df_aux['conseleva']
-        idx = df[(df['sist'] == 'SE') & (df['iper'] == i)].index
-        if not idx.empty:
-            df.loc[idx, 'somatgh'] = df.loc[idx, 'somatgh'].astype(float) + ande
-
-    df['intercambio'] = df.apply(
-        lambda x: x['demanda'] - x['grenova'] - x['somatgh'] - x['somatgt'] + x['conseleva'], axis=1
-    )
-    logger.info("calculoIntercambio concluído")
-    return df
 
 def calculo_pld(lista_input, PLD_min, PLDmax_h, PLDmax_estr):
 
@@ -156,7 +144,6 @@ def readPdoSist(path, data, pathOut):
 
 
     # Cálculos
-    df_sist = calculoIntercambio(df_sist)
     df_sist = calculaPLD(df_sist, data)
 
     # Preparação para insert
