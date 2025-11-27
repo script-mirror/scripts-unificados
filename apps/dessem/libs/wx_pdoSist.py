@@ -147,7 +147,7 @@ def readPdoSist(path, data, pathOut):
     logger.info(f"DataFrame bruto carregado: {df_sist.shape}")
 
     numeric_cols = ['demanda', 'grenova', 'somatgh', 'conseleva', 'somatgt',
-                    'somagtmin', 'somatgtmax', 'earm', 'intercambio']
+                    'somagtmin', 'somatgtmax', 'intercambio']
     for col in numeric_cols:
         if col in df_sist.columns:
             df_sist[col] = pd.to_numeric(df_sist[col], errors='coerce').fillna(0).astype(int)
@@ -158,7 +158,7 @@ def readPdoSist(path, data, pathOut):
     df_sist['dataHora'] = df_sist['dataHora'].dt.strftime('%d/%m/%Y %H:%M')
     
     comlumns_order = ['dataHora', 'sist','cmo', 'demanda', 'grenova', 'somatgh', 'somatgt',
-                     'somagtmin', 'somatgtmax', 'earm', 'intercambio',  'pld']
+                     'somagtmin', 'somatgtmax', 'intercambio',  'pld']
     df_sist = df_sist[comlumns_order]
        
 
