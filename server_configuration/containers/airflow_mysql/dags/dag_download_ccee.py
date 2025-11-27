@@ -117,7 +117,6 @@ def importar_deck_ds(**kwargs):
         })
         
         pathConfigRE = '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/dessem/config_RE'
-        pastaDeck =  (datetime.datetime.today() + datetime.timedelta(days = 1)).strftime("%Y%m%d")
         dataDeck = getDataDeck(pathEntrada)
         
         readIntercambios(pathEntrada, pathSaida, pathConfigRE, dataDeck, '')
@@ -125,11 +124,8 @@ def importar_deck_ds(**kwargs):
         readPdoSist(pathSaida, dataDeck, '')
 
         
-        #se for quinta
-        if datetime.datetime.now().weekday() == 3:
-            return ['download_deck_nw']
-        else:
-            return ['fim']
+
+        return ['fim']
     
     except Exception as e:
         raise AirflowException(f"[ERROR] Não foi possivel executar a funcao!: {str(e)}")
