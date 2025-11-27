@@ -741,9 +741,9 @@ def carga_dessem_plot(dt_prev,pathFileOut):
         if "PREVISTO" in datas_preliminares[dt_str_aux]:
             dt_str_table += "*"
 
-        liquida_max_value_sin = valores_carga_liquida[dt_str_aux].reset_index().groupby('horario')[0].sum().max().round(2)
+        liquida_max_value_sin = int(valores_carga_liquida[dt_str_aux].reset_index().groupby('horario')[0].sum().max())
 
-        media_carga_sin = valores_carga[dt_str_aux].reset_index().groupby('horario')['vl_carga'].sum().mean().round(2)
+        media_carga_sin = int(valores_carga[dt_str_aux].reset_index().groupby('horario')['vl_carga'].sum().mean())
 
         table_liquida	+= [dt_str_table, media_carga_sin,liquida_max_value_sin],
 
