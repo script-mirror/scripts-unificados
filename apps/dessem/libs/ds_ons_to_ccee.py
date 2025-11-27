@@ -223,8 +223,8 @@ class DessemOnsToCcee:
             update = False
             parts = line.split()
             self.logger.debug(f"Processing line: {line.strip()}")
-            if len(parts) > 5:
-                if parts[2] in REST:                
+            if len(parts) > 3:
+                if parts[2] in REST: 
                     if 'max' in REST[parts[2]] and parts[1] == 'LIM':
                         if deck_date >= datetime.strptime(REST[parts[2]]['max']['di'], '%d/%m/%Y') and\
                             deck_date <= datetime.strptime(REST[parts[2]]['max']['df'], '%d/%m/%Y'):
