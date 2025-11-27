@@ -156,13 +156,14 @@ def read_pdo_sist(path: str) -> pd.DataFrame:
         if parts[0].strip().lower() == 'iper':
             load = True
             columns = line.split(';')[0:3] + last_line.split(';')[3:-1]
-            columns = [col.strip() for col in columns]
+            columns = [col.strip().lower() for col in columns]
             continue
 
         if load and '-' not in parts[0]:
             data.append(dict(zip(columns, [valor.strip() for valor in parts])))
         last_line = line
     df = pd.DataFrame(data)
+    print(df)
     
     return df
     
