@@ -111,10 +111,10 @@ def importar_deck_ds(**kwargs):
 
         deck_ds.importar_deck_values_ds(path_zip=path,dt_ref= dt_ref,str_fonte='ccee')
 
-        GERAR_PRODUTO.enviar({
+        """GERAR_PRODUTO.enviar({
             "produto":"RESULTADO_DESSEM",
             "data":dt_ref,
-        })
+        })"""
         
         pathConfigRE = '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/dessem/config_RE'
         dataDeck = getDataDeck(pathEntrada)
