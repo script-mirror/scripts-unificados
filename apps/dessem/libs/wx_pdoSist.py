@@ -5,6 +5,7 @@ import datetime
 import pandas as pd
 import sqlalchemy as db
 import logging
+import numpy as np
 
 logging.basicConfig(
     level=logging.INFO,  
@@ -17,8 +18,9 @@ warnings.filterwarnings("ignore")
 sys.path.insert(1, "/WX2TB/Documentos/fontes/PMO/scripts_unificados/")
 from bibliotecas import wx_dbClass
 
-def read_pdo_sist(path: str) -> pd.DataFrame:        
-    
+def read_pdo_sist( path: str, deck_date) -> pd.DataFrame:
+          
+    logger.info("Reading load data from pdo_sist.dat")
     pdo_file = read_file(path, 'pdo_sist.dat')
     data, load = [], False
     for line in pdo_file:
@@ -31,11 +33,29 @@ def read_pdo_sist(path: str) -> pd.DataFrame:
             continue
 
         if load and '-' not in parts[0]:
-            data.append(dict(zip(columns, [valor.strip() for valor in parts])))
+            minuto = (int(parts[0].strip()) - 1) * 30
+            date = deck_date + datetime.timedelta(minutes=minuto)
+            if int(parts[0].strip()) < 49:
+                parts[0] = date.strftime('%Y-%m-%d %H:%M:%S')
+                data.append(dict(zip(columns, [valor.strip() for valor in parts])))
         last_line = line
-    df = pd.DataFrame(data)    
+    df = pd.DataFrame(data)
+    df = df[df['sist'] != 'FC']
+    df['sist'] = df['sist'].replace({'SE': 1, 'S': 2, 'NE': 3, 'N': 4})
+    df['iper'] = pd.to_datetime(df['iper'])
+    colums_drop = ['perdas', 'gpqusi', 'gfixbar', 'import.', 'export.', 'cortcarg.', 'saldo', 'recebimento', 'pat']
+    df = df.drop(colums_drop, axis=1)
+    df = df.set_index('iper')
+    df = df.replace('--', np.nan)
+    cols_to_convert = [col for col in df.columns if col != 'sist']
+    df[cols_to_convert] = df[cols_to_convert].astype(float)
+    df = df.groupby([df.index.date, df.index.hour, 'sist']).mean().reset_index()
+    df['dataHora'] = pd.to_datetime(df['level_0'].astype(str) + ' ' + df['iper'].astype(str).str.zfill(2) + ':00:00')
+    df = df.drop(['level_0','iper'], axis=1)
+    df['sist'] = df['sist'].replace({ 1:'SE', 2:'S',3:'NE', 4:'N'})
     return df
-    
+
+
 def read_file( directory: str, file_find: str):
     logger.info(f"Searching for file with prefix '{file_find}' in: {directory}")
     for file in os.listdir(directory):
@@ -62,45 +82,6 @@ def calculoIntercambio(df_sist):
     )
     logger.info("calculoIntercambio concluído")
     return df
-
-
-def insertData(df_sist, dataDeck):
-    logger.info("insertData iniciado")
-    df_out = pd.DataFrame()
-    subsistemas = df_sist[df_sist['iper'] == 1]['sist'].unique()
-    logger.debug(f"Subsistemas encontrados: {list(subsistemas)}")
-
-    for subm in subsistemas:
-        iper = 1
-        while iper < 48:
-            try:
-                cmo1 = float(df_sist[(df_sist['sist'] == subm) & (df_sist['iper'] == iper)]['cmo'].iloc[0])
-                cmo2 = float(df_sist[(df_sist['sist'] == subm) & (df_sist['iper'] == iper + 1)]['cmo'].iloc[0])
-                cmo_media = int((cmo1 + cmo2) / 2)
-
-                # mesma lógica para as outras colunas...
-                demanda1 = int(df_sist[(df_sist['sist'] == subm) & (df_sist['iper'] == iper)]['demanda'].iloc[0])
-                demanda2 = int(df_sist[(df_sist['sist'] == subm) & (df_sist['iper'] == iper + 1)]['demanda'].iloc[0])
-                conseleva1 = int(df_sist[(df_sist['sist'] == subm) & (df_sist['iper'] == iper)]['conseleva'].iloc[0])
-                conseleva2 = int(df_sist[(df_sist['sist'] == subm) & (df_sist['iper'] == iper + 1)]['conseleva'].iloc[0])
-                demanda_media = int((demanda1 + demanda2 + conseleva1 + conseleva2) / 2)
-
-                # ... (demais campos com mesmo padrão)
-
-                dict_aux = {
-                    'dataHora': f"{dataDeck.day}/{dataDeck.month}/{dataDeck.year} {int((iper-1)*30//60):02d}:00",
-                    'sist': subm,
-                    'cmo': str(cmo_media),
-                    'demanda': str(demanda_media),
-                    # completar os demais campos se precisar...
-                }
-                df_out = pd.concat([df_out, pd.DataFrame([dict_aux])], ignore_index=True)
-            except Exception as e:
-                logger.error(f"Erro ao processar iper={iper}, sist={subm}: {e}")
-            iper += 2
-    logger.info(f"insertData concluído – {len(df_out)} registros gerados")
-    return df_out
-
 
 def calculo_pld(lista_input, PLD_min, PLDmax_h, PLDmax_estr):
 
@@ -155,22 +136,17 @@ def calculaPLD(df_sist, data):
     logger.info("PLDs calculados e inseridos no DataFrame")
     return df_sist
 
-
+def wx_dbClass():
+    pass
 def readPdoSist(path, data, pathOut):
     logger.info(f"=== INÍCIO DO PROCESSAMENTO ===")
     logger.info(f"Data de referência: {data}")
     logger.info(f"Pasta de entrada: {path}")
 
     # Leitura do arquivo
-    df_sist = read_pdo_sist(path)
+    df_sist = read_pdo_sist(path, datetime.datetime.combine(data, datetime.datetime.min.time()))
 
     logger.info(f"DataFrame bruto carregado: {df_sist.shape}")
-
-    # Limpeza e tipagem
-    colunas_remover = ['perdas', 'gpqusi', 'gfixbar', 'import.', 'export.', 'cortcarg.', 'saldo', 'recebimento']
-    df_sist = df_sist.drop(columns=[c for c in colunas_remover if c in df_sist.columns])
-    df_sist['iper'] = df_sist['iper'].astype(int)
-    df_sist = df_sist[df_sist['iper'] <= 48]
 
     numeric_cols = ['demanda', 'grenova', 'somatgh', 'conseleva', 'somatgt',
                     'somagtmin', 'somatgtmax', 'earm', 'cmo']
@@ -178,16 +154,13 @@ def readPdoSist(path, data, pathOut):
         if col in df_sist.columns:
             df_sist[col] = pd.to_numeric(df_sist[col], errors='coerce').fillna(0).astype(int)
 
-    df_sist['sist'] = df_sist['sist'].str.strip()
 
     # Cálculos
     df_sist = calculoIntercambio(df_sist)
-    df_sist = df_sist[df_sist['sist'] != 'FC']
     df_sist = calculaPLD(df_sist, data)
 
     # Preparação para insert
-    pdoSist_final = insertData(df_sist, data)
-    logger.info(f"Total de registros para insert: {len(pdoSist_final)}")
+    logger.info(f"Total de registros para insert: {len(df_sist)}")
 
     # Persistência no banco
     db_decks = wx_dbClass.db_mysql_master('db_decks')
@@ -196,7 +169,7 @@ def readPdoSist(path, data, pathOut):
 
     # Converte string de data para datetime
     registros = []
-    for reg in pdoSist_final.itertuples(index=False):
+    for reg in df_sist.itertuples(index=False):
         data_str = reg.dataHora
         dt = datetime.datetime.strptime(data_str, '%d/%m/%Y %H:%M')
         linha = list(reg)
@@ -222,5 +195,8 @@ def readPdoSist(path, data, pathOut):
 
 if __name__ == '__main__':
     logger.info("Script iniciado diretamente")
+    path = "C:/Users/cs341053/Downloads/DES_202511/Resultado_DS_CCEE_112025_SEMREDE_RV3D24"
+    data = datetime.date(2025, 11, 24)
+    readPdoSist(path, data, '')
 
     

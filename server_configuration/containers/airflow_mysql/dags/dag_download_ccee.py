@@ -122,9 +122,7 @@ def importar_deck_ds(**kwargs):
         readIntercambios(pathEntrada, pathSaida, pathConfigRE, dataDeck, '')
 
         readPdoSist(pathSaida, dataDeck, '')
-
         
-
         return ['fim']
     
     except Exception as e:
