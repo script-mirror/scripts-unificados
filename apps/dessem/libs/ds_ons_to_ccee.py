@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import shutil
 import re
@@ -16,14 +15,15 @@ class DessemOnsToCcee:
         self.today = datetime.now()
         self.logger.info(f"DeckProcessor initialized for date: {self.today.strftime('%Y-%m-%d')}")
 
-    def run_process(self) -> None:
+    def run_process(self, deck_date=None) -> None:
         self.logger.info("="*60)
         self.logger.info("STARTING DESSEM DECK PROCESSING ONS-TO-CCEE")
         self.logger.info("="*60)
 
         path_ccee = path_ons = None
         try:
-            deck_date = self.today + timedelta(days=1)
+            if not deck_date:
+                deck_date = self.today + timedelta(days=1)
             self.logger.info(f"Processing decks for date: {deck_date.strftime('%Y-%m-%d')}")
            
             # 1. Get decks
@@ -35,10 +35,10 @@ class DessemOnsToCcee:
 
             # 3. Read data
             df_carga = self.read_load_pdo(path_ons)
-            map_ccee = self.map_entdados_ccee(self.find_file(path_ccee, 'entdados.dat'))
+            map_ccee = self.map_entdados_ccee(self.read_file(path_ccee, 'entdados.dat'))
 
             # 4. Process entdados
-            entdados = self.find_file(path_deck, 'entdados.dat')
+            entdados = self.read_file(path_deck, 'entdados.dat')
             entdados = self.adjust_tm(entdados)
             entdados = self.update_load(entdados, df_carga)
             entdados = self.adjust_di(entdados)
@@ -49,11 +49,11 @@ class DessemOnsToCcee:
             self.write_file(path_deck, 'entdados.dat', entdados)
 
             # 5. Process operuh.dat
-            operuh = self.adjust_predictability(self.find_file(path_deck, 'operuh.dat'), deck_date)
+            operuh = self.adjust_predictability(self.read_file(path_deck, 'operuh.dat'), deck_date)
             self.write_file(path_deck, 'operuh.dat', operuh)
             
             # 5. Process dessem.arq
-            dessem_arq = self.find_file(path_deck, 'dessem.arq')
+            dessem_arq = self.read_file(path_deck, 'dessem.arq')
             dessem_arq = self.comment_arq(dessem_arq)
             self.write_file(path_deck, 'dessem.arq', dessem_arq)
 
@@ -160,7 +160,7 @@ class DessemOnsToCcee:
 
         return path_dest
 
-    def find_file(self, directory: str, file_find: str) -> List[str]:
+    def read_file(self, directory: str, file_find: str) -> List[str]:
         self.logger.info(f"Searching for file with prefix '{file_find}' in: {directory}")
         for file in os.listdir(directory):
             if file.lower().startswith(file_find.lower()):
@@ -252,7 +252,7 @@ class DessemOnsToCcee:
                     if 'comment' in REST[parts[2]]:
                         if deck_date >= datetime.strptime(REST[parts[2]]['comment']['di'], '%d/%m/%Y') and\
                             deck_date <= datetime.strptime(REST[parts[2]]['comment']['df'], '%d/%m/%Y'):
-                            self.logger.info(f"Commenting line for HQ {parts[2]} as per REST rules")
+                            self.logger.info(f"Commenting line: {line[:-1]}")
                             result.append('&' + line)
                             adjusted += 1
                             update = True             
@@ -388,7 +388,7 @@ class DessemOnsToCcee:
 
     def read_load_pdo(self, path: str) -> pd.DataFrame:
         self.logger.info("Reading load data from pdo_sist.dat")
-        pdo_file = self.find_file(path, 'pdo_sist.dat')
+        pdo_file = self.read_file(path, 'pdo_sist.dat')
         data, load = [], False
         current_date = None
 
