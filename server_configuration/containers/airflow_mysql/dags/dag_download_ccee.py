@@ -104,26 +104,29 @@ def importar_deck_ds(**kwargs):
     try:
         ti = kwargs['ti']
         path = ti.xcom_pull(task_ids='download_deck_ds', key='path')
-        dt_ref = ti.xcom_pull(task_ids='download_deck_ds', key='dt_ref')
+        list_data = [ti.xcom_pull(task_ids='download_deck_ds', key='dt_ref')]
         pathEntrada = ti.xcom_pull(task_ids='download_deck_ds', key='path_in')
         pathSaida    = ti.xcom_pull(task_ids='download_deck_ds', key='path_out')
-        print(dt_ref)
-
-        deck_ds.importar_deck_values_ds(path_zip=path,dt_ref= dt_ref,str_fonte='ccee')
-
-        GERAR_PRODUTO.enviar({
-            "produto":"RESULTADO_DESSEM",
-            "data":dt_ref,
-        })
+        print(list_data)
         
-        pathConfigRE = '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/dessem/config_RE'
-        dataDeck = getDataDeck(pathEntrada)
-        
-        readIntercambios(pathEntrada, pathSaida, pathConfigRE, dataDeck, '')
+        date_now = datetime.datetime.now().replace(hour=0,minute=0,second=0) 
+        list_data = [(date_now - datetime.timedelta(days=day))  for day in range(0,25) ]
+        for dt_ref in list_data:
+            deck_ds.importar_deck_values_ds(path_zip=path,dt_ref= dt_ref,str_fonte='ccee')
 
-        readPdoSist(pathSaida, dataDeck, '')
+            """GERAR_PRODUTO.enviar({
+                "produto":"RESULTADO_DESSEM",
+                "data":dt_ref,
+            })"""
+            
+            pathConfigRE = '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/dessem/config_RE'
+            dataDeck = getDataDeck(pathEntrada)
+            
+            readIntercambios(pathEntrada, pathSaida, pathConfigRE, dataDeck, '')
 
-        
+            readPdoSist(pathSaida, dataDeck, '')
+
+            
 
         return ['fim']
     
