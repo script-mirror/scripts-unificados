@@ -24,8 +24,8 @@ class DessemOnsToCcee:
         path_ccee = path_ons = None
         try:
             deck_date = self.today + timedelta(days=1)
-            deck_date = self.today
             self.logger.info(f"Processing decks for date: {deck_date.strftime('%Y-%m-%d')}")
+           
             # 1. Get decks
             path_ccee = self.get_latest_deck_ccee(self.today)[0]
             path_ons  = self.get_latest_deck_ons(deck_date)
