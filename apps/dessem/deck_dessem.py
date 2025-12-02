@@ -136,15 +136,26 @@ class DeckDessem():
     
     def read_pdo_sist(self, path: str, deck_date) -> pd.DataFrame:
         
-        def _calculate_pld(v, min, max_h, max_s, tol=.01, it=30):
-            pld = [max(min, min(max_h, float(x))) for x in v]
-            for _ in range(it):
-                avg = sum(pld)/len(pld)
-                if abs(avg - max_s) <= tol: break
-                pld = [max(min, min(max_h, round(x*max_s/avg, 2))) for x in pld]
-            return pld
-                    
-        
+        PLD_MIN = 58.60
+        PLD_MAX_HORA = 1542.23
+        PLD_MAX_ESTR = 751.73
+        TOL = 0.01
+        MAX_IT = 20
+
+        @staticmethod
+        def adjust_pld(valores: List[float]) -> List[float]:
+            v = [max(PLD_MIN, min(PLD_MAX_HORA, float(x))) for x in valores]
+            media = sum(v) / len(v)
+            if media <= PLD_MAX_ESTR:
+                return [round(x, 2) for x in v]
+
+            for _ in range(MAX_IT):
+                v = [min(PLD_MAX_HORA, x * PLD_MAX_ESTR / media) for x in v]
+                media = sum(v) / len(v)
+                if media <= PLD_MAX_ESTR + TOL:
+                    break
+            return [round(x, 2) for x in v]
+       
         self.logger.info("Reading load data from pdo_sist.dat")
         pdo_file = self.read_file(path, 'pdo_sist.dat')
         data, load = [], False
@@ -165,6 +176,8 @@ class DeckDessem():
                     data.append(dict(zip(columns, [valor.strip() for valor in parts])))
             last_line = line
         df = pd.DataFrame(data)
+        
+        # Cleaning and transforming DataFrame
         df = df[df['Sist'] != 'FC']
         df['Sist'] = df['Sist'].replace({'SE': 1, 'S': 2, 'NE': 3, 'N': 4})
         df['IPER'] = pd.to_datetime(df['IPER'])
@@ -177,7 +190,13 @@ class DeckDessem():
         df['DATA'] = pd.to_datetime(df['level_0'].astype(str) + ' ' + df['IPER'].astype(str).str.zfill(2) + ':00:00')
         df = df.drop(['level_0','IPER'], axis=1)
         
-        return df
+        # calculate PLD
+        df_sist = df.copy()            
+        pld = {s: adjust_pld(df_sist[df_sist['sist'] == s]['cmo'].tolist()) for s in df['sist'].unique()}
+        
+        df_sist['pld'] = [pld[row['sist']].pop(0) for _, row in df_sist.iterrows()]
+        
+        return df_sist
     
 
     def read_tm(self, path: str, deck_date) -> pd.DataFrame:

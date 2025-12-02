@@ -49,8 +49,8 @@ class DessemOnsToCcee:
             self.write_file(path_deck, 'entdados.dat', entdados)
 
             # 5. Process operuh.dat
-            operuh = self.adjust_predictability(self.read_file(path_deck, 'operuh.dat'), deck_date)
-            self.write_file(path_deck, 'operuh.dat', operuh)
+            #operuh = self.adjust_predictability(self.read_file(path_deck, 'operuh.dat'), deck_date)
+            #self.write_file(path_deck, 'operuh.dat', operuh)
             
             # 5. Process dessem.arq
             dessem_arq = self.read_file(path_deck, 'dessem.arq')
