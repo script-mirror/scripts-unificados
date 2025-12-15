@@ -1,5 +1,9 @@
 version: '3.9'
 
+networks:
+  airflow-network:
+    driver: bridge
+
 services:
 
   airflow-init:
@@ -8,6 +12,8 @@ services:
       args:
         GIT_USERNAME: ${GIT_USERNAME}
         GIT_TOKEN: ${GIT_TOKEN}
+    networks:
+      - airflow-network
     user: "0:0"
     entrypoint: /bin/bash
     command: >
@@ -27,6 +33,9 @@ services:
       AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
       NEW_RELIC_INSERT_KEY: '7fbf1e391a7b4ca633fb6d9d176b810dFFFFNRAL'
       AIRFLOW__CORE__LOGGING_LEVEL: INFO
+      http_proxy: ""
+      https_proxy: ""
+      no_proxy: "localhost,127.0.0.1"
       _AIRFLOW_DB_MIGRATE: 'true'
       _AIRFLOW_WWW_USER_CREATE: 'true'
       _AIRFLOW_WWW_USER_USERNAME: ${WEB_USER}
@@ -43,6 +52,8 @@ services:
         GIT_TOKEN: ${GIT_TOKEN}
     command: webserver
     user: "${AIRFLOW_UID:-50000}:0"
+    networks:
+      - airflow-network
     ports:
       - "8080:8080"
     restart: always
@@ -61,6 +72,9 @@ services:
       AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
       NEW_RELIC_INSERT_KEY: '7fbf1e391a7b4ca633fb6d9d176b810dFFFFNRAL'
       AIRFLOW__CORE__LOGGING_LEVEL: INFO
+      http_proxy: ""
+      https_proxy: ""
+      no_proxy: "localhost,127.0.0.1"
     volumes:
       - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
       - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
@@ -83,6 +97,8 @@ services:
         GIT_TOKEN: ${GIT_TOKEN}
     command: scheduler
     user: "${AIRFLOW_UID:-50000}:0"
+    networks:
+      - airflow-network
     restart: always
     depends_on:
       - airflow-init
@@ -99,6 +115,9 @@ services:
       AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
       NEW_RELIC_INSERT_KEY: '7fbf1e391a7b4ca633fb6d9d176b810dFFFFNRAL'
       AIRFLOW__CORE__LOGGING_LEVEL: INFO
+      http_proxy: ""
+      https_proxy: ""
+      no_proxy: "localhost,127.0.0.1"
     volumes:
       - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
       - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
