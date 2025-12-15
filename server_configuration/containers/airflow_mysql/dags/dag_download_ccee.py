@@ -68,7 +68,7 @@ def download_deck_ds(**kwargs):
         path_out_deck = '/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/dessem/arquivos/' + pastaDeck 
         
         print("Iniciando delay inicial...")
-        time.sleep(random.uniform(300, 600))  # 5-10 minutos
+        time.sleep(random.uniform(60, 180))  # 1-3 minutos (reduzido de 5-10min)
         
         max_attempts = 15  
         for attempt in range(max_attempts):
@@ -79,7 +79,7 @@ def download_deck_ds(**kwargs):
                     path=path_arquivos,
                     deck='dessem',
                     file_name=consts.CCEE_DECK_DESSEM,
-                    max_retries=15  
+                    max_retries=10  # Reduzido de 15 para 10
                 )
              
                 zip_interno_entrada, zip_interno_saida = check_file_exist(path_zip, dt_ref)
@@ -96,25 +96,29 @@ def download_deck_ds(**kwargs):
                     print(DIR_TOOLS.extrair_zip_mantendo_nome_diretorio(
                         zip_interno_entrada, path_out=path_arquivos, deleteAfterExtract=True
                     ))
-                    break
+                    
+                    # Push dos valores (corrigindo indentação)
+                    kwargs['ti'].xcom_push(key='path', value=path_zip)
+                    kwargs['ti'].xcom_push(key='dt_ref', value=dt_ref)
+                    kwargs['ti'].xcom_push(key='path_in', value=path_entrada)
+                    kwargs['ti'].xcom_push(key='path_out', value=path_saida)
+                    
+                    return ['dbUpdater_ds']
                 else:
-                        raise ValueError("Arquivo específico não encontrado no ZIP")
+                    raise ValueError("Arquivo específico não encontrado no ZIP")
                         
             except Exception as e:
-                    print(f"Tentativa {attempt + 1} falhou: {str(e)}")
-                    if attempt == max_attempts - 1:
-                        raise e
-                        
-                    wait_time = 1800 + (attempt * 600)  
-                    print(f"Aguardando {wait_time//60} minutos...")
-                    time.sleep(wait_time)
-            
-            kwargs['ti'].xcom_push(key='path', value=path_zip)
-            kwargs['ti'].xcom_push(key='dt_ref', value=dt_ref)
-            kwargs['ti'].xcom_push(key='path_in', value=path_entrada)
-            kwargs['ti'].xcom_push(key='path_out', value=path_saida)
-            
-            return ['dbUpdater_ds']
+                print(f"Tentativa {attempt + 1} falhou: {str(e)}")
+                if attempt == max_attempts - 1:
+                    raise e
+                    
+                wait_time = 120 + (attempt * 60)  # 2min + 1min por tentativa (reduzido de 30min base)
+                print(f"Aguardando {wait_time//60} minutos e {wait_time%60} segundos...")
+                time.sleep(wait_time)
+        
+        # Este código nunca será executado devido ao return dentro do loop
+        print("Todas as tentativas falharam")
+        raise ValueError("Não foi possível processar nenhum arquivo")
     
     except Exception as e:
         print(f"Erro completo: {str(e)}")
@@ -150,9 +154,9 @@ def importar_deck_ds(**kwargs):
         raise AirflowException(f"[ERROR] Não foi possível executar a função!: {str(e)}")
 
 default_args = {
-    'execution_timeout': datetime.timedelta(hours=12),  
+    'execution_timeout': datetime.timedelta(hours=8), 
     'retries': 2,  
-    'retry_delay': datetime.timedelta(hours=1),  
+    'retry_delay': datetime.timedelta(minutes=30), 
 }
     
 with DAG(
@@ -174,7 +178,7 @@ with DAG(
         task_id='download_deck_ds',
         python_callable=download_deck_ds,
         provide_context=True,
-        execution_timeout=datetime.timedelta(hours=12), 
+        execution_timeout=datetime.timedelta(hours=8),  
         on_failure_callback=enviar_whatsapp_erro,
     )
 
